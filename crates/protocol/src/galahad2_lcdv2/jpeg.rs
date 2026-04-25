@@ -79,8 +79,7 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 ///
 /// # See also
 ///
-/// - `build_upload_jpeg_request` (Phase 0d Task 8) — same plumbing
-///   with cmd 15.
+/// - [`build_upload_jpeg_request`] — same plumbing with cmd 15.
 /// - The `lconnect-image` workspace crate produces 480x480 JPEG bytes
 ///   suitable for direct use here.
 #[must_use = "returns the request packet bytes; dropping without writing has no effect"]
@@ -93,6 +92,70 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
     }
     Ok(
         BCommandPacket::build_packets_for_write(Command::SendJpeg as u8, jpeg_bytes)
+            .map(|p| *p.as_bytes())
+            .collect(),
+    )
+}
+
+/// Build the BCommandPacket sequence for `UploadJpeg` (cmd 15).
+///
+/// Wraps `jpeg_bytes` in B-class chunks via
+/// [`BCommandPacket::build_packets_for_write`].
+///
+/// # Caveats
+///
+/// **The wire shape for cmd 15 is presumed**, not verified live —
+/// derived by analogy from cmd 20 (`SetLEDColors`) for the same
+/// reasons documented on [`build_send_jpeg_request`].
+///
+/// **The semantic difference between cmd 14 (`SendJpeg`) and cmd 15
+/// (`UploadJpeg`) is also presumed.** The enum naming in
+/// `Galahad2Vision/Commands.cs:11-12` suggests:
+///
+/// - `SendJpeg` (cmd 14) — transient frame, displayed and discarded.
+/// - `UploadJpeg` (cmd 15) — stored on-device for later display.
+///
+/// Neither command has a located C# call site, so this distinction
+/// is unverified. Treat both as opaque byte-stream uploads until a
+/// live capture differentiates them.
+///
+/// **Do not interleave cmd 14 and cmd 15 writes on the same device
+/// handle.** Same caveat as on [`build_send_jpeg_request`].
+///
+/// **Partial-write recovery is undefined.** Same caveat as on
+/// [`build_send_jpeg_request`].
+///
+/// # Errors
+///
+/// Returns [`crate::Error::InvalidJpegSize`] when `jpeg_bytes.is_empty()`
+/// or `jpeg_bytes.len() > MAX_JPEG_BYTES`.
+///
+/// # Examples
+///
+/// ```
+/// use lconnect_protocol::galahad2_lcdv2::jpeg::build_upload_jpeg_request;
+///
+/// let payload = [0xFF, 0xD8, 0xFF, 0xE0];
+/// let packets = build_upload_jpeg_request(&payload).expect("valid size");
+/// assert_eq!(packets.len(), 1);
+/// assert_eq!(packets[0][1], 15, "Command = UploadJpeg");
+/// ```
+///
+/// # See also
+///
+/// - [`build_send_jpeg_request`] — same plumbing with cmd 14.
+/// - The `lconnect-image` workspace crate produces 480x480 JPEG bytes
+///   suitable for direct use here.
+#[must_use = "returns the request packet bytes; dropping without writing has no effect"]
+pub fn build_upload_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTPUT_LEN]>> {
+    if jpeg_bytes.is_empty() || jpeg_bytes.len() > MAX_JPEG_BYTES {
+        return Err(crate::Error::InvalidJpegSize {
+            size: jpeg_bytes.len(),
+            max: MAX_JPEG_BYTES,
+        });
+    }
+    Ok(
+        BCommandPacket::build_packets_for_write(Command::UploadJpeg as u8, jpeg_bytes)
             .map(|p| *p.as_bytes())
             .collect(),
     )
