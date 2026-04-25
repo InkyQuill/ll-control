@@ -7,13 +7,25 @@
 //!
 //! # SendJpeg vs UploadJpeg
 //!
-//! Both commands appear in the C# `Commands` enum but neither has a
-//! located call site in any of the L-Connect.Core, L-Connect3, or
-//! L-Connect-Service codebases. The wire shapes here are presumed from
-//! the BCommandPacket convention used by `SetLEDColors` (cmd 20) — the
-//! only B-class write whose call site we can read directly. If a future
-//! reverse-engineering session uncovers the actual UI dispatch path,
-//! revise the doc-comments accordingly.
+//! Neither command has a located call site in any of the
+//! L-Connect.Core, L-Connect3, or L-Connect-Service codebases — the
+//! wire shapes were originally derived by analogy with
+//! `SetLEDColors` (cmd 20), the only B-class write whose call site we
+//! can read directly.
+//!
+//! **Cmd 14 (`SendJpeg`) is now live-verified on FW 1.6.** See
+//! `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`: the
+//! presumed wire shape — chunked BCommandPacket with raw JPEG bytes
+//! starting at offset 11, no frame header — drives the LCD reliably.
+//! Empirically the firmware decodes and displays within ~50 ms but
+//! auto-reverts after a bounded hold time (see
+//! [`build_send_jpeg_request`]'s caveats).
+//!
+//! **Cmd 15 (`UploadJpeg`) is codec-verified only.** A live 56-packet
+//! transfer ACK'd in full but produced no visible LCD change in either
+//! default mode or after `LCDControl{mode=Application}` preflight; the
+//! activation path is unknown on FW 1.6. See
+//! [`build_upload_jpeg_request`]'s caveats.
 //!
 //! Source: `Galahad2Vision/Commands.cs:11,12` (`SendJpeg = 14`,
 //! `UploadJpeg = 15`).
@@ -50,17 +62,31 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 ///
 /// # Caveats
 ///
-/// **The wire shape for cmd 14 is presumed**, not verified live. It is
-/// derived by analogy from cmd 20 (`SetLEDColors`) — the only B-class
-/// write command whose call site we have read directly. Both use the
-/// same `BCommandPacket::build_packets_for_write` chunking, with
-/// per-chunk Command/DataSize replicated and PacketNumber incrementing
-/// from 0. There is no `isFanLed` flag byte or zero pad: the payload IS
-/// the JPEG bytes, starting at offset 11 of the first packet.
+/// **Cmd 14 is verified live on FW 1.6** (capture file
+/// `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`). The wire
+/// shape — chunked BCommandPacket with raw JPEG bytes starting at
+/// offset 11, per-chunk Command and DataSize replicated, PacketNumber
+/// incrementing from 0, no `isFanLed` flag and no zero pad — matches
+/// firmware expectations across 21-, 46-, and 56-packet transfers
+/// without tearing.
 ///
-/// If a future investigation surfaces a different wire shape (e.g., a
-/// header byte distinguishing JPEG mode, a frame index, an end-of-frame
-/// sentinel), this codec must be updated and a live capture committed.
+/// **Cmd 14 is a transient single-frame command, NOT a persistent
+/// display.** The firmware decodes and displays the JPEG within
+/// ~50 ms of the last packet but auto-reverts to LocalUI default
+/// after a bounded hold time. User-observed approximations (not
+/// firmware-documented timeouts):
+/// - Default LocalUI mode: ~2 second hold.
+/// - [`super::lcd::LCDControlMode::Application`] (set via
+///   [`super::lcd::build_lcd_control_request`]): ~20 second hold
+///   (~10x extension).
+///
+/// For sustained static-image display, the daemon must send a fresh
+/// `SendJpeg` periodically — ≤15 s intervals (in Application mode) is
+/// comfortably within the observed hold time. The C# UI's default
+/// `LCDControlSetting.VideoFPS = 24` is consistent with a continuous-
+/// frame architecture for streamed dynamic content; the observed
+/// timeout extension under Application mode is consistent with that
+/// hypothesis but is not direct proof of a 24 Hz refresh expectation.
 ///
 /// **Do not interleave cmd 14 (`SendJpeg`) and cmd 15 (`UploadJpeg`)
 /// writes on the same device handle.** If the firmware uses different
@@ -118,20 +144,44 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 ///
 /// # Caveats
 ///
-/// **The wire shape for cmd 15 is presumed**, not verified live —
-/// derived by analogy from cmd 20 (`SetLEDColors`) for the same
-/// reasons documented on [`build_send_jpeg_request`].
+/// **Cmd 15's wire shape is presumed**, derived by analogy from cmd 14
+/// (which IS live-verified). The codec writes the same chunked
+/// `BCommandPacket` form, only changing the cmd byte; the cross-check
+/// tests in `tests/galahad2_lcdv2_upload_jpeg.rs` pin the byte-level
+/// equivalence.
+///
+/// **Cmd 15's visible behaviour is currently unknown on FW 1.6.** Live
+/// runs (capture file
+/// `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`) show the
+/// device accepts 56-packet transfers and ACKs every 1024-byte write,
+/// but no visible LCD change occurs in either default mode or after
+/// `LCDControl{mode=Application}` preflight. Plausible (unverified)
+/// explanations:
+/// - Stored to non-volatile storage for boot / startup display; would
+///   only become visible after a device power-cycle.
+/// - Requires a separate trigger command outside the documented
+///   `Galahad2Vision/Commands.cs` enum.
+/// - Used by an internal display mode
+///   ([`super::lcd::LCDControlMode::LocalAVI`],
+///   [`super::lcd::LCDControlMode::LocalH264`]) we have not activated.
+///
+/// **Recommendation: do not use this codec in production daemon code
+/// until the activation path is empirically discovered.** Cmd 14 +
+/// [`super::lcd::LCDControlMode::Application`] + a daemon-level
+/// refresh loop is the established working path for static-image
+/// display.
 ///
 /// **The semantic difference between cmd 14 (`SendJpeg`) and cmd 15
-/// (`UploadJpeg`) is also presumed.** The enum naming in
+/// (`UploadJpeg`) remains partially unverified.** The enum naming in
 /// `Galahad2Vision/Commands.cs:11-12` suggests `Send*` is for transient
 /// single-frame display and `Upload*` is for persisted, paged, or
-/// otherwise differently-handled writes (this matches the broader pattern
-/// of `Send*` / `Upload*` pairs in the C# Commands enums — `SendH264Frame`
-/// vs `UploadH264`/`UploadH264Info`/`UploadAvi`/`UploadStartupAviMovie`).
-/// The exact persistence, paging, or handshake semantics differ between
-/// cmd 14 and cmd 15 are unverified — treat both as opaque byte-stream
-/// uploads until a live capture differentiates them.
+/// otherwise differently-handled writes (matching the broader
+/// `Send*` / `Upload*` pattern across the C# Commands enums —
+/// `SendH264Frame` vs
+/// `UploadH264`/`UploadH264Info`/`UploadAvi`/`UploadStartupAviMovie`).
+/// Cmd 14 is now empirically transient (auto-revert observed). Cmd
+/// 15's no-visible-effect live behaviour is *consistent with* — but
+/// not proof of — a "stored for later" persistence semantic.
 ///
 /// **Do not interleave cmd 14 and cmd 15 writes on the same device
 /// handle.** Same caveat as on [`build_send_jpeg_request`].
@@ -139,11 +189,13 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 /// **Partial-write recovery is undefined.** Same caveat as on
 /// [`build_send_jpeg_request`].
 ///
-/// **If cmd 15 writes to non-volatile storage** (consistent with the
-/// presumed semantic), avoid calling it in high-frequency loops. Flash
-/// write cycles are finite (~10K-100K typical for embedded controllers).
-/// For animation playback, use [`build_send_jpeg_request`] (cmd 14)
-/// instead — assumed to be transient and not flash-write-cycle bound.
+/// **If cmd 15 ultimately turns out to write to non-volatile storage**
+/// (consistent with the broader naming pattern; live data does not
+/// yet confirm or refute the NV-storage hypothesis), avoid calling it
+/// in high-frequency loops. Flash write cycles are finite (~10K-100K
+/// typical for embedded controllers). For animation playback, use
+/// [`build_send_jpeg_request`] (cmd 14) instead — empirically
+/// transient and not flash-write-cycle bound.
 ///
 /// **CLI consumers (e.g. `verify-galahad upload-jpeg` in Phase 0d Task 9)
 /// should require explicit user consent before calling this function**,
