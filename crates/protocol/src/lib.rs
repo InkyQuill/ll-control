@@ -90,6 +90,16 @@ pub enum Error {
         /// The codec-enforced maximum.
         max: usize,
     },
+
+    /// An H.264 frame byte stream was empty or exceeded the codec-enforced
+    /// maximum size.
+    #[error("invalid H.264 frame size: got {size} bytes (must be 1..={max})")]
+    InvalidH264FrameSize {
+        /// The caller-provided H.264 frame byte count.
+        size: usize,
+        /// The codec-enforced maximum.
+        max: usize,
+    },
 }
 
 /// Convenience alias for `Result<T, protocol::Error>`.
