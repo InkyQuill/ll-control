@@ -84,7 +84,10 @@ fn fan_lighting_setting_to_bytes_default() {
     assert_eq!(bytes[0], 1, "Mode");
     assert_eq!(bytes[1], 2, "Brightness");
     assert_eq!(bytes[2], 2, "Speed");
-    #[allow(clippy::needless_range_loop)]
+    #[expect(
+        clippy::needless_range_loop,
+        reason = "preserves `{i}` in the per-byte assertion message"
+    )]
     for i in 3..15 {
         assert_eq!(bytes[i], 0, "Color RGB byte at offset {i}");
     }
