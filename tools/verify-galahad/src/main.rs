@@ -60,6 +60,9 @@ enum Cmd {
     GetFanLighting,
     /// Send SetFanLighting (cmd 133). NOTE: physically changes fan LEDs.
     SetFanLighting(SetFanLightingArgs),
+    /// Send SetLEDColors (cmd 20). NOTE: physically changes LED colours
+    /// on either the screen / pump-cap ring or the fan ring.
+    SetLedColors(SetLedColorsArgs),
 }
 
 /// Flags for `set-pump-lighting`.
@@ -133,6 +136,68 @@ struct SetFanLightingArgs {
     /// bound its LED-ring write loop.
     #[arg(long, default_value_t = 24, value_parser = clap::value_parser!(u8).range(1..=60))]
     number_of_led: u8,
+}
+
+/// Flags for `set-led-colors`.
+///
+/// Drives `SetLEDColors` (cmd 20) directly: writes a uniform colour
+/// across `count` LEDs on either the screen / pump-cap ring or the fan
+/// ring.
+///
+/// `--count` is capped at 80 even though the codec accepts up to
+/// `MAX_SCREEN_LEDS=329` / `MAX_FAN_LEDS=337`. The physical Galahad II
+/// LCDV2 ring is small (~16-24 LEDs); the conservative cap prevents a
+/// typo from writing far more LEDs than hardware exists, where firmware
+/// behaviour for over-addressed indices is unverified.
+///
+/// The `--check-available` and `--set-application-mode` flags are
+/// optional preflights for the case where a bare `set-led-colors` run
+/// produces no visible change. As of Phase 0c, cmd 131 (`SetPumpLighting`)
+/// renders without `Application` mode, so cmd 20 may be the same — but
+/// the host-driven mode hasn't been live-verified for cmd 20 yet.
+#[derive(Args, Debug)]
+struct SetLedColorsArgs {
+    /// Primary colour as `#RRGGBB`.
+    #[arg(long, value_parser = parse_hex_color)]
+    color: lconnect_protocol::galahad2_lcdv2::Rgb,
+
+    /// Number of LEDs to address. Default 8. Capped at 80 (well below
+    /// `MAX_SCREEN_LEDS=329` / `MAX_FAN_LEDS=337`) to prevent typo-driven
+    /// over-writes on small hardware rings — Galahad II LCDV2 ships with
+    /// ~16-24 LEDs per ring.
+    #[arg(long, default_value_t = 8, value_parser = clap::value_parser!(u8).range(1..=80))]
+    count: u8,
+
+    /// Which LED ring to target.
+    #[arg(long, default_value = "screen")]
+    kind: LedKindArg,
+
+    /// Skip the "this will overwrite LCD content" prompt.
+    #[arg(long)]
+    yes: bool,
+
+    /// Send IsLCDAvailable first; abort if the device reports unavailable.
+    #[arg(long)]
+    check_available: bool,
+
+    /// Send LCDControl{mode=Application} before the write to put the
+    /// firmware into host-driven mode. Whether this is necessary on the
+    /// LCDV2 is currently unknown — the Phase 0c session showed cmd 131
+    /// renders without it; cmd 20 may be the same. Use this if a bare
+    /// set-led-colors run produces no visible LED change.
+    #[arg(long)]
+    set_application_mode: bool,
+}
+
+/// CLI-side rendering of the screen-vs-fan LED-ring choice.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum LedKindArg {
+    /// Screen / pump-cap ring (`build_set_screen_led_colors_request`,
+    /// `isFanLed=false` payload, 24-byte zero pad).
+    Screen,
+    /// Fan ring (`build_set_fan_led_colors_request`, `isFanLed=true`
+    /// payload).
+    Fan,
 }
 
 /// CLI-side rendering of `PumpPwmSource`.
@@ -364,6 +429,7 @@ fn main() -> Result<()> {
         Cmd::SetPumpLighting(args) => set_pump_lighting(args),
         Cmd::GetFanLighting => get_fan_lighting(),
         Cmd::SetFanLighting(args) => set_fan_lighting(args),
+        Cmd::SetLedColors(args) => set_led_colors(args),
     }
 }
 
@@ -822,5 +888,141 @@ fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
     );
     println!("note: command is fire-and-forget; LEDs may take ~50ms to update.");
     println!("verify by looking at the fan LEDs (the device does not echo the active setting).");
+    Ok(())
+}
+
+fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::bpacket::{INPUT_LEN, OUTPUT_LEN};
+    use lconnect_protocol::galahad2_lcdv2::lcd::{
+        build_is_lcd_available_request, build_lcd_control_request, parse_is_lcd_available_response,
+        Brightness, LCDControlMode, LCDControlSetting,
+    };
+    use lconnect_protocol::galahad2_lcdv2::set_led_colors::{
+        build_set_fan_led_colors_request, build_set_screen_led_colors_request,
+    };
+    use lconnect_protocol::galahad2_lcdv2::Rgb;
+    use std::io::Write as _;
+
+    let kind_str = match args.kind {
+        LedKindArg::Screen => "screen",
+        LedKindArg::Fan => "fan",
+    };
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device — see `verify-galahad list` and udev rules")?;
+
+    // Optional preflight: ask the device whether the LCD is available.
+    // The IsLCDAvailable response is a 512-byte BCommandPacket (not a
+    // 64-byte ACommandPacket), so we read INPUT_LEN bytes inline. The
+    // ACommandPacket-style drain loop in `read_until_command` exists to
+    // sidestep cmd-0x8e unsolicited A-class packets observed in Phase 0c;
+    // those are A-class only, so a single inline read is correct here.
+    if args.check_available {
+        let req = build_is_lcd_available_request();
+        let written = device
+            .write(&req)
+            .context("HID write failed (IsLCDAvailable)")?;
+        println!("wrote {written} bytes (IsLCDAvailable preflight)");
+
+        let mut buf = [0u8; INPUT_LEN];
+        let read = device
+            .read_timeout(&mut buf, 1000)
+            .context("HID read_timeout failed (IsLCDAvailable response)")?;
+        println!("read {read} bytes");
+        match parse_is_lcd_available_response(&buf) {
+            Ok(true) => println!("LCD available — proceeding."),
+            Ok(false) => {
+                return Err(anyhow!(
+                    "device reported LCD unavailable (IsLCDAvailable -> false). \
+                     Aborting before SetLEDColors. Re-run without --check-available \
+                     if you want to send the write anyway."
+                ));
+            }
+            Err(e) => {
+                return Err(anyhow!(
+                    "IsLCDAvailable response decode failed: {e}. \
+                     Aborting before SetLEDColors."
+                ));
+            }
+        }
+    }
+
+    // Optional preflight: put the firmware into host-driven (Application)
+    // mode. cmd 12 is fire-and-forget — no response is expected.
+    //
+    // `LCDControlSetting` is `#[non_exhaustive]`, so functional-update
+    // (`..Self::default()`) is forbidden from outside the protocol crate.
+    // Instead start from `Default` (gives Mode=LocalUI, Brightness=50,
+    // Rotation=0, EnableTest=false, TestColor=Black, VideoFPS=30) and
+    // override the mode in place.
+    if args.set_application_mode {
+        let mut setting = LCDControlSetting::default();
+        setting.mode = LCDControlMode::Application;
+        setting.brightness = Brightness::default();
+        let req = build_lcd_control_request(setting);
+        let written = device
+            .write(&req)
+            .context("HID write failed (LCDControl)")?;
+        println!("wrote {written} bytes (LCDControl, mode=Application, no response expected)");
+    }
+
+    // User-consent gate. The prompt MUST block on stdin and accept only
+    // "y"/"Y"; arbitrary truthy strings are rejected.
+    if !args.yes {
+        print!(
+            "WARNING: this will write {count} {kind} LEDs to #{r:02X}{g:02X}{b:02X} on the device.\n\
+             The pump-cap LCD ring may visibly change. Continue? [y/N] ",
+            count = args.count,
+            kind = kind_str,
+            r = args.color.r,
+            g = args.color.g,
+            b = args.color.b,
+        );
+        std::io::stdout().flush().ok();
+        let mut line = String::new();
+        std::io::stdin()
+            .read_line(&mut line)
+            .context("failed to read confirmation from stdin")?;
+        let trimmed = line.trim();
+        if !trimmed.eq_ignore_ascii_case("y") {
+            return Err(anyhow!(
+                "aborted by user (got {trimmed:?}, expected \"y\" or \"Y\"). \
+                 Re-run with --yes to skip this prompt."
+            ));
+        }
+    }
+
+    // Build the colour array and request packets. The codec returns
+    // `crate::Result<Vec<[u8; OUTPUT_LEN]>>`; `crate::Error` impls
+    // `std::error::Error` (thiserror), so `?` lifts it into anyhow.
+    let colors: Vec<Rgb> = vec![args.color; args.count as usize];
+    let packets: Vec<[u8; OUTPUT_LEN]> = match args.kind {
+        LedKindArg::Screen => build_set_screen_led_colors_request(&colors)
+            .context("build_set_screen_led_colors_request failed")?,
+        LedKindArg::Fan => build_set_fan_led_colors_request(&colors)
+            .context("build_set_fan_led_colors_request failed")?,
+    };
+
+    let total = packets.len();
+    for (i, packet) in packets.iter().enumerate() {
+        let written = device
+            .write(packet)
+            .context("HID write failed (SetLEDColors)")?;
+        println!(
+            "wrote {written} bytes (SetLEDColors packet {i_one}/{total}, kind={kind}, count={count}, color=#{r:02X}{g:02X}{b:02X})",
+            i_one = i + 1,
+            kind = kind_str,
+            count = args.count,
+            r = args.color.r,
+            g = args.color.g,
+            b = args.color.b,
+        );
+    }
+    println!(
+        "note: command is fire-and-forget; LEDs may take ~50ms to update. \
+         Verify by looking at the {kind_str} ring."
+    );
     Ok(())
 }
