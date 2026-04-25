@@ -220,3 +220,33 @@ fn chunk_packet_number_increments_for_large_payload() {
         assert_eq!(pn as usize, i, "PacketNumber = packet index");
     }
 }
+
+#[test]
+fn chunk_exact_multiple_of_payload_max_emits_no_phantom_packet() {
+    // 2 * PAYLOAD_MAX bytes → exactly 2 packets, never 3.
+    // Catches a regression where an "off-by-one phantom empty tail"
+    // could slip in.
+    let payload = vec![0xBB_u8; PAYLOAD_MAX * 2];
+    let pkts: Vec<_> = BCommandPacket::build_packets_for_write(0x0E, &payload).collect();
+    assert_eq!(
+        pkts.len(),
+        2,
+        "no phantom 3rd packet at the multiple boundary"
+    );
+
+    let p0 = pkts[0].as_bytes();
+    assert_eq!(&p0[6..9], &[0, 0, 0], "PN = 0");
+    assert_eq!(
+        &p0[9..11],
+        &(PAYLOAD_MAX as u16).to_be_bytes(),
+        "Length = PAYLOAD_MAX"
+    );
+
+    let p1 = pkts[1].as_bytes();
+    assert_eq!(&p1[6..9], &[0, 0, 1], "PN = 1");
+    assert_eq!(
+        &p1[9..11],
+        &(PAYLOAD_MAX as u16).to_be_bytes(),
+        "Length = PAYLOAD_MAX"
+    );
+}

@@ -36,8 +36,8 @@ impl BCommandPacket {
     /// Silent truncation: if `payload.len() > PAYLOAD_MAX` (1013), the excess
     /// is dropped without warning. This mirrors C# `Math.Min` semantics in
     /// `BCommandPacket.cs:53,129,162`. For payloads larger than 1013 bytes,
-    /// use the [multi-packet chunker][build_packets_for_write] (Phase 0d
-    /// Task 2) — it splits and yields one packet per 1013-byte chunk.
+    /// use the [multi-packet chunker][BCommandPacket::build_packets_for_write]
+    /// (Phase 0d Task 2) — it splits and yields one packet per 1013-byte chunk.
     #[must_use = "returns the packet bytes; dropping without writing has no effect"]
     pub fn new_request(command: u8, packet_number: u32, payload: &[u8], data_size: u32) -> Self {
         let mut bytes = [0u8; OUTPUT_LEN];
@@ -174,6 +174,8 @@ impl BCommandPacket {
 /// Yields one independently owned [`BCommandPacket`] per 1013-byte chunk
 /// of the source payload (or a single zero-data packet when the payload
 /// is empty).
+#[derive(Debug)]
+#[must_use = "iterator is lazy; dropping without consuming sends no packets"]
 pub struct BPacketChunks<'a> {
     command: u8,
     payload: &'a [u8],
@@ -198,7 +200,7 @@ impl Iterator for BPacketChunks<'_> {
         }
         #[expect(
             clippy::cast_possible_truncation,
-            reason = "payload sizes are KB-scale; the device can't store >4GiB"
+            reason = "packet index fits u32: payload ≤ 4 GiB and PAYLOAD_MAX = 1013, so max pn ≈ 4M << u32::MAX"
         )]
         let pn = (self.cursor / PAYLOAD_MAX) as u32;
         let end = (self.cursor + PAYLOAD_MAX).min(self.payload.len());
@@ -210,5 +212,16 @@ impl Iterator for BPacketChunks<'_> {
             chunk,
             self.data_size,
         ))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        if self.payload.is_empty() {
+            let n = if self.emitted_empty { 0 } else { 1 };
+            return (n, Some(n));
+        }
+        let total = self.payload.len().div_ceil(PAYLOAD_MAX);
+        let yielded = self.cursor / PAYLOAD_MAX;
+        let remaining = total - yielded;
+        (remaining, Some(remaining))
     }
 }
