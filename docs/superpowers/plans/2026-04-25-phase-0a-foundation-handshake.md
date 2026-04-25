@@ -1905,3 +1905,21 @@ cargo build --workspace --release 2>&1 | tail -5
 …to confirm the release build also succeeds, then move on to writing the
 **Phase 0b** plan, which covers all remaining commands plus the crypto
 investigation.
+
+---
+
+## Post-execution notes
+
+- **Final test count: 15** (plan baseline was 14). Commit `fd20ab4`
+  (`test(protocol): cover ACommandPacket::parse_response truncated-data
+  branch`) added one defensive test for the post-length-field bounds-check
+  branch caught by the Task 7 code-quality review. The branch was correct
+  but unexercised under the original suite.
+- **Three doc artefacts shipped instead of two**: the planned
+  `decompiled-source-map.md` and `galahad2-lcdv2.md`, plus
+  `captures/2026-04-25-handshake-live.txt` (the live handshake byte-by-
+  byte cross-check captured against the user's actual hardware on
+  CachyOS 7.0.1, hidapi 2.5).
+- **Workspace `bytes` dependency was dropped** post-completion as unused
+  (commit landing alongside this note). Re-introduce when B-packet or
+  zero-copy frame buffers need it in Phase 0b.

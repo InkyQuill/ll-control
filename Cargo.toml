@@ -15,7 +15,6 @@ authors      = ["L-Connect Linux contributors"]
 
 [workspace.dependencies]
 # Used by `protocol`
-bytes      = "1"
 thiserror  = "1"
 
 # Used by `verify-galahad`
