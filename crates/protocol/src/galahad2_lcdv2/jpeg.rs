@@ -17,6 +17,20 @@
 //!
 //! Source: `Galahad2Vision/Commands.cs:11,12` (`SendJpeg = 14`,
 //! `UploadJpeg = 15`).
+//!
+//! ## Future refactor notes
+//!
+//! - `build_send_jpeg_request` and `build_upload_jpeg_request` differ
+//!   only by their cmd byte today. They are kept as two separate
+//!   functions (rather than collapsed to a private helper) until a live
+//!   capture confirms whether the wire shapes are truly identical or
+//!   one of them gains a divergent field. The cross-check tests in
+//!   `tests/galahad2_lcdv2_upload_jpeg.rs` enforce equivalence at the
+//!   byte level for both single-packet and multi-packet payloads.
+//! - The return type `Vec<[u8; OUTPUT_LEN]>` may migrate to
+//!   `impl Iterator<Item = [u8; OUTPUT_LEN]>` in a future symmetry pass
+//!   that also touches `set_led_colors::build_set_*_colors_request`.
+//!   Deferred to keep the shape change in a single sweep.
 
 use crate::galahad2_lcdv2::bpacket::{BCommandPacket, OUTPUT_LEN};
 use crate::galahad2_lcdv2::commands::Command;
@@ -62,7 +76,7 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 /// # Errors
 ///
 /// Returns [`crate::Error::InvalidJpegSize`] when `jpeg_bytes.is_empty()`
-/// or `jpeg_bytes.len() > MAX_JPEG_BYTES`.
+/// or `jpeg_bytes.len()` exceeds [`MAX_JPEG_BYTES`].
 ///
 /// # Examples
 ///
@@ -110,14 +124,14 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 ///
 /// **The semantic difference between cmd 14 (`SendJpeg`) and cmd 15
 /// (`UploadJpeg`) is also presumed.** The enum naming in
-/// `Galahad2Vision/Commands.cs:11-12` suggests:
-///
-/// - `SendJpeg` (cmd 14) — transient frame, displayed and discarded.
-/// - `UploadJpeg` (cmd 15) — stored on-device for later display.
-///
-/// Neither command has a located C# call site, so this distinction
-/// is unverified. Treat both as opaque byte-stream uploads until a
-/// live capture differentiates them.
+/// `Galahad2Vision/Commands.cs:11-12` suggests `Send*` is for transient
+/// single-frame display and `Upload*` is for persisted, paged, or
+/// otherwise differently-handled writes (this matches the broader pattern
+/// of `Send*` / `Upload*` pairs in the C# Commands enums — `SendH264Frame`
+/// vs `UploadH264`/`UploadH264Info`/`UploadAvi`/`UploadStartupAviMovie`).
+/// The exact persistence, paging, or handshake semantics differ between
+/// cmd 14 and cmd 15 are unverified — treat both as opaque byte-stream
+/// uploads until a live capture differentiates them.
 ///
 /// **Do not interleave cmd 14 and cmd 15 writes on the same device
 /// handle.** Same caveat as on [`build_send_jpeg_request`].
@@ -125,10 +139,23 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 /// **Partial-write recovery is undefined.** Same caveat as on
 /// [`build_send_jpeg_request`].
 ///
+/// **If cmd 15 writes to non-volatile storage** (consistent with the
+/// presumed semantic), avoid calling it in high-frequency loops. Flash
+/// write cycles are finite (~10K-100K typical for embedded controllers).
+/// For animation playback, use [`build_send_jpeg_request`] (cmd 14)
+/// instead — assumed to be transient and not flash-write-cycle bound.
+///
+/// **CLI consumers (e.g. `verify-galahad upload-jpeg` in Phase 0d Task 9)
+/// should require explicit user consent before calling this function**,
+/// in the spirit of the `--yes-i-really-want-to-reset` gate on
+/// [`build_reset_request`](super::reset::build_request). Cmd 15 may have
+/// irreversible effects on device state (e.g. overwriting a saved boot
+/// image); treat it as a destructive operation at the CLI surface.
+///
 /// # Errors
 ///
 /// Returns [`crate::Error::InvalidJpegSize`] when `jpeg_bytes.is_empty()`
-/// or `jpeg_bytes.len() > MAX_JPEG_BYTES`.
+/// or `jpeg_bytes.len()` exceeds [`MAX_JPEG_BYTES`].
 ///
 /// # Examples
 ///

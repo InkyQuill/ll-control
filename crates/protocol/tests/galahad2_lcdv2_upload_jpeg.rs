@@ -22,7 +22,7 @@ fn build_upload_jpeg_short_payload_fits_in_one_packet() {
     let pkts = build_upload_jpeg_request(&payload).expect("valid size");
     assert_eq!(pkts.len(), 1);
     let bytes = pkts[0];
-    assert_eq!(bytes[1], 15);
+    assert_eq!(bytes[1], 15, "Command = UploadJpeg");
     assert_eq!(&bytes[2..6], &[0, 0, 0, 4], "DataSize = 4");
     assert_eq!(&bytes[9..11], &[0, 4], "Length = 4");
     assert_eq!(&bytes[11..15], &payload);
@@ -39,6 +39,12 @@ fn build_upload_jpeg_at_payload_max_boundary() {
     let bytes = pkts[0];
     assert_eq!(&bytes[2..6], &[0, 0, 0x03, 0xF5], "DataSize = 1013");
     assert_eq!(&bytes[9..11], &[0x03, 0xF5], "Length = 1013");
+    // At PAYLOAD_MAX, the entire 1013-byte payload occupies bytes [11..1024]
+    // of the wire packet. Catches an off-by-one in the chunker's slice logic.
+    assert!(
+        bytes[11..].iter().all(|&b| b == 0xAA),
+        "full 1013-byte payload embedded; no zero pad expected at exact boundary"
+    );
 }
 
 #[test]
@@ -130,5 +136,27 @@ fn upload_jpeg_and_send_jpeg_differ_only_by_cmd_byte() {
         assert_eq!(s[1], 14, "send_jpeg cmd = 14");
         assert_eq!(u[1], 15, "upload_jpeg cmd = 15");
         assert_eq!(&s[2..], &u[2..], "all post-cmd bytes match");
+    }
+}
+
+#[test]
+fn upload_jpeg_and_send_jpeg_differ_only_by_cmd_byte_across_chunks() {
+    use lconnect_protocol::galahad2_lcdv2::jpeg::{
+        build_send_jpeg_request, build_upload_jpeg_request,
+    };
+    // 1018 bytes → 2 packets via the chunker. Catches a future divergence
+    // that only manifests on multi-packet payloads (e.g., an off-by-one
+    // in the PacketNumber field for some edge case).
+    let mut payload = vec![0xAA_u8; 1013];
+    payload.extend_from_slice(&[1, 2, 3, 4, 5]);
+    let send = build_send_jpeg_request(&payload).expect("valid");
+    let upload = build_upload_jpeg_request(&payload).expect("valid");
+    assert_eq!(send.len(), 2, "2 packets");
+    assert_eq!(upload.len(), 2);
+    for (i, (s, u)) in send.iter().zip(upload.iter()).enumerate() {
+        assert_eq!(s[0], u[0], "packet {i}: ReportID matches");
+        assert_eq!(s[1], 14, "packet {i}: send cmd = 14");
+        assert_eq!(u[1], 15, "packet {i}: upload cmd = 15");
+        assert_eq!(&s[2..], &u[2..], "packet {i}: all post-cmd bytes match");
     }
 }
