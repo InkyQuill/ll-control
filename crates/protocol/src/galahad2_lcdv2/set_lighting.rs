@@ -14,7 +14,7 @@ use crate::galahad2_lcdv2::packets::{ACommandPacket, PACKET_LEN};
 /// Source: `Galahad2VisionDevice.cs:269` — wraps a `FanLightingSetting.ToBytes()`
 /// payload in an `ACommandPacket`. No response.
 #[must_use = "the request bytes must be written to hid_device.write(&buf)"]
-pub fn build_set_fan_lighting_request(setting: &FanLightingSetting) -> [u8; PACKET_LEN] {
+pub fn build_set_fan_lighting_request(setting: FanLightingSetting) -> [u8; PACKET_LEN] {
     let payload = setting.to_bytes();
     *ACommandPacket::new_request(Command::SetFanLighting as u8, &payload).as_bytes()
 }
@@ -24,7 +24,7 @@ pub fn build_set_fan_lighting_request(setting: &FanLightingSetting) -> [u8; PACK
 /// Source: `Galahad2VisionDevice.cs:310` — wraps a `PumpLightingSetting.ToBytes()`
 /// payload in an `ACommandPacket`. No response.
 #[must_use = "the request bytes must be written to hid_device.write(&buf)"]
-pub fn build_set_pump_lighting_request(setting: &PumpLightingSetting) -> [u8; PACKET_LEN] {
+pub fn build_set_pump_lighting_request(setting: PumpLightingSetting) -> [u8; PACKET_LEN] {
     let payload = setting.to_bytes();
     *ACommandPacket::new_request(Command::SetPumpLighting as u8, &payload).as_bytes()
 }
