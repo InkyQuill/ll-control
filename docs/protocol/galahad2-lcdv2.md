@@ -4,8 +4,9 @@
 **USB ID:** `0x0416:0x7395` (Winbond / Lian Li, GA_II-LCD)
 **Verified firmware:** `1.6`
 **Decompiled-source map:** [decompiled-source-map.md](./decompiled-source-map.md)
-**Status legend:** `verified` (live capture exists), `inferred` (only static
-analysis), `unknown` (TBD).
+**Status legend:** `verified` (live capture exists), `codec-verified`
+(byte-level codec covered by tests; no live device run yet), `inferred`
+(only static analysis), `unknown` (TBD).
 
 This document supersedes `PROTOCOL_DOCUMENTATION_RU.md` for any command
 listed below. The Russian doc remains as a legacy reference for commands
@@ -212,11 +213,11 @@ warning, ensuring no accidental resets during testing.
 
 ## `GetPumpLightingInfo` — Command 130 (`0x82`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-pump-lighting-live.txt once the user runs verify-galahad against real hardware.
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:122-135`.
-- Response parser: `PumpLightingInfo.cs:21-67` (escape-byte protocol).
+- Response parser: `PumpLightingInfo.cs:30-84` (escape-byte protocol).
 
 ### Request
 
@@ -246,11 +247,11 @@ escape-byte protocol:
 
 ## `SetPumpLighting` — Command 131 (`0x83`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-pump-lighting-live.txt once the user runs verify-galahad against real hardware.
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:310-313`.
-- Payload encoder: `PumpLightingSetting.cs:107-141` (19 bytes).
+- Payload encoder: `PumpLightingSetting.cs:101-136` (19 bytes).
 
 ### Request
 
@@ -282,18 +283,24 @@ No response. Visually verify by looking at the pump cap LEDs.
 
 ## `GetFanLightingInfo` — Command 132 (`0x84`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-fan-lighting-live.txt once the user runs verify-galahad against real hardware.
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:73-86`.
-- Response parser: `FanLightingInfo.cs:21-67` (same escape-byte
+- Response parser: `FanLightingInfo.cs:30-84` (same escape-byte
   protocol as pump-lighting-info; only the mode enum differs).
 
-### Request / response
+### Request
 
-Same shape as `GetPumpLightingInfo` except `Command = 132` and modes
-are `FanLightingMode` (7 variants) instead of `PumpLightingMode` (17).
-Implementation reuses the same generic `LightingInfo<M>` parser.
+A bare `ACommandPacket` with `Command = 132`, no data.
+
+### Response
+
+Same shape as the `GetPumpLightingInfo` response except modes are
+`FanLightingMode` (7 variants) instead of `PumpLightingMode` (17).
+Implementation reuses the same generic `LightingInfo<M>` parser
+(escape-byte rules, A5/5A terminator, two trailer bytes for
+`MaxSpeed` / `MaxBrightness`).
 
 ### Implementation
 
@@ -305,11 +312,11 @@ Implementation reuses the same generic `LightingInfo<M>` parser.
 
 ## `SetFanLighting` — Command 133 (`0x85`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-fan-lighting-live.txt once the user runs verify-galahad against real hardware.
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:269-272`.
-- Payload encoder: `FanLightingSetting.cs:117-150` (20 bytes).
+- Payload encoder: `FanLightingSetting.cs:109-145` (20 bytes).
 
 ### Request
 
