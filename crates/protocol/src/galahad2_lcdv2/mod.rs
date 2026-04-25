@@ -38,4 +38,6 @@ pub mod bpacket;
 
 pub mod lcd;
 
+pub mod set_led_colors;
+
 pub use lighting::Rgb;
