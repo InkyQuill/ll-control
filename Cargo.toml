@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/protocol",
+    "tools/verify-galahad",
+]
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+rust-version = "1.82"
+license      = "GPL-3.0-or-later"
+repository   = "https://github.com/inky/lconnect-linux"
+authors      = ["L-Connect Linux contributors"]
+
+[workspace.dependencies]
+# Used by `protocol`
+bytes      = "1"
+thiserror  = "1"
+
+# Used by `verify-galahad`
+hidapi     = "2.5"
+anyhow     = "1"
+clap       = { version = "4", features = ["derive"] }
+
+[profile.release]
+opt-level     = 3
+lto           = true
+strip         = true
+codegen-units = 1
