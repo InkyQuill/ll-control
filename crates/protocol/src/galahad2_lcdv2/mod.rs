@@ -15,3 +15,5 @@ pub mod packets;
 pub mod commands;
 
 pub mod handshake;
+
+pub mod firmware;
