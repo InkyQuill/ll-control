@@ -59,9 +59,25 @@ fn pump_lighting_setting_to_bytes_static_blue_outer_at_max() {
     assert_eq!(bytes[0], 1, "Scope = Outer");
     assert_eq!(bytes[1], 3, "Mode = StaticColor");
     assert_eq!(bytes[2], 100, "Brightness");
+    assert_eq!(bytes[3], 0, "Speed = 0 (overridden from default 2)");
     assert_eq!(bytes[4], 0, "Color1.R");
     assert_eq!(bytes[5], 0, "Color1.G");
     assert_eq!(bytes[6], 0xFF, "Color1.B");
+}
+
+#[test]
+fn pump_lighting_setting_to_bytes_disabled_and_left_direction() {
+    // Covers the two adjacent boolean/byte fields at offsets 16 and 17
+    // that all the other test cases leave at zero. Catches a field-swap
+    // between `direction` and `disabled` and a wrong `bool -> u8` cast.
+    let s = PumpLightingSetting {
+        disabled: true,
+        direction: LightingDirection::LeftOrCounterClockwise,
+        ..PumpLightingSetting::default()
+    };
+    let bytes = s.to_bytes();
+    assert_eq!(bytes[16], 1, "Direction = LeftOrCounterClockwise -> 1");
+    assert_eq!(bytes[17], 1, "Disabled = true -> 1");
 }
 
 #[test]
