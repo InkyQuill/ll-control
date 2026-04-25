@@ -154,3 +154,69 @@ fn new_request_payload_over_max_truncates_silently() {
     // Last byte of the wire buffer is the last in-range payload byte.
     assert_eq!(bytes[OUTPUT_LEN - 1], 0xCD);
 }
+
+#[test]
+fn chunk_empty_payload_emits_single_zero_packet() {
+    let pkts: Vec<_> = BCommandPacket::build_packets_for_write(0x0E, &[]).collect();
+    assert_eq!(pkts.len(), 1);
+    let bytes = pkts[0].as_bytes();
+    assert_eq!(bytes[1], 0x0E);
+    assert_eq!(&bytes[2..6], &[0, 0, 0, 0], "DataSize = 0");
+    assert_eq!(&bytes[9..11], &[0, 0], "Length = 0");
+}
+
+#[test]
+fn chunk_single_packet_when_payload_fits_in_one() {
+    let payload = [0xAB; 1013];
+    let pkts: Vec<_> = BCommandPacket::build_packets_for_write(0x0E, &payload).collect();
+    assert_eq!(pkts.len(), 1);
+    let bytes = pkts[0].as_bytes();
+    assert_eq!(&bytes[2..6], &[0, 0, 0x03, 0xF5], "DataSize = 1013");
+    assert_eq!(&bytes[6..9], &[0, 0, 0], "PacketNumber = 0");
+    assert_eq!(&bytes[9..11], &[0x03, 0xF5], "Length = 1013");
+}
+
+#[test]
+fn chunk_two_packets_for_payload_just_over_one_chunk() {
+    // 1013 + 5 = 1018 bytes → 2 packets.
+    let mut payload = vec![0xAA; 1013];
+    payload.extend_from_slice(&[1, 2, 3, 4, 5]);
+    let pkts: Vec<_> = BCommandPacket::build_packets_for_write(0x0F, &payload).collect();
+    assert_eq!(pkts.len(), 2);
+
+    // Packet 0: full payload, PN=0
+    let p0 = pkts[0].as_bytes();
+    assert_eq!(
+        &p0[2..6],
+        &[0, 0, 0x03, 0xFA],
+        "DataSize = 1018 (replicated)"
+    );
+    assert_eq!(&p0[6..9], &[0, 0, 0], "PN = 0");
+    assert_eq!(&p0[9..11], &[0x03, 0xF5], "Length = 1013");
+
+    // Packet 1: 5 bytes, PN=1
+    let p1 = pkts[1].as_bytes();
+    assert_eq!(
+        &p1[2..6],
+        &[0, 0, 0x03, 0xFA],
+        "DataSize replicated on packet 1"
+    );
+    assert_eq!(&p1[6..9], &[0, 0, 1], "PN = 1");
+    assert_eq!(&p1[9..11], &[0, 5], "Length = 5");
+    assert_eq!(&p1[11..16], &[1, 2, 3, 4, 5]);
+    // Bytes after the 5-byte payload must be zeroed (matches the C# Array.Clear).
+    assert!(p1[16..].iter().all(|&b| b == 0));
+}
+
+#[test]
+fn chunk_packet_number_increments_for_large_payload() {
+    // 4 full chunks + 1 partial = 5 packets total.
+    let payload = vec![0xCC; 1013 * 4 + 17];
+    let pkts: Vec<_> = BCommandPacket::build_packets_for_write(0x14, &payload).collect();
+    assert_eq!(pkts.len(), 5);
+    for (i, pkt) in pkts.iter().enumerate() {
+        let bytes = pkt.as_bytes();
+        let pn = u32::from_be_bytes([0, bytes[6], bytes[7], bytes[8]]);
+        assert_eq!(pn as usize, i, "PacketNumber = packet index");
+    }
+}

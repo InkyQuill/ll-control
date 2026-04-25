@@ -141,3 +141,74 @@ impl<'a> BResponse<'a> {
         self.data
     }
 }
+
+impl BCommandPacket {
+    /// Iterator over B-packets to write to the device for a payload of
+    /// arbitrary size. Empty payload → single packet with `DataSize=0`.
+    /// Otherwise, payload is split into 1013-byte chunks; every packet
+    /// replicates `command` and `data_size = payload.len()`, and
+    /// `packet_number` increments from 0.
+    ///
+    /// Each yielded `BCommandPacket` owns its own 1024-byte buffer, so
+    /// callers can safely `.collect()` chunks for batched submission
+    /// without aliasing — unlike the C# original which reuses a single
+    /// buffer (`BCommandPacket.cs:145-175`).
+    #[must_use = "returns the chunk iterator; dropping without iterating sends no packets"]
+    pub fn build_packets_for_write(command: u8, payload: &[u8]) -> BPacketChunks<'_> {
+        BPacketChunks {
+            command,
+            payload,
+            #[expect(
+                clippy::cast_possible_truncation,
+                reason = "payload sizes are KB-scale; the device can't store >4GiB"
+            )]
+            data_size: payload.len() as u32,
+            cursor: 0,
+            emitted_empty: false,
+        }
+    }
+}
+
+/// Iterator returned by [`BCommandPacket::build_packets_for_write`].
+///
+/// Yields one independently owned [`BCommandPacket`] per 1013-byte chunk
+/// of the source payload (or a single zero-data packet when the payload
+/// is empty).
+pub struct BPacketChunks<'a> {
+    command: u8,
+    payload: &'a [u8],
+    data_size: u32,
+    cursor: usize,
+    emitted_empty: bool,
+}
+
+impl Iterator for BPacketChunks<'_> {
+    type Item = BCommandPacket;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.payload.is_empty() {
+            if self.emitted_empty {
+                return None;
+            }
+            self.emitted_empty = true;
+            return Some(BCommandPacket::new_request(self.command, 0, &[], 0));
+        }
+        if self.cursor >= self.payload.len() {
+            return None;
+        }
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "payload sizes are KB-scale; the device can't store >4GiB"
+        )]
+        let pn = (self.cursor / PAYLOAD_MAX) as u32;
+        let end = (self.cursor + PAYLOAD_MAX).min(self.payload.len());
+        let chunk = &self.payload[self.cursor..end];
+        self.cursor = end;
+        Some(BCommandPacket::new_request(
+            self.command,
+            pn,
+            chunk,
+            self.data_size,
+        ))
+    }
+}
