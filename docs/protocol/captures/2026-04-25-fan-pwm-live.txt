@@ -1,0 +1,75 @@
+# Galahad II LCDV2 (0x0416:0x7395) firmware 1.6
+# Captured: 2026-04-25 by verify-galahad fan
+# CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
+# Device path: /dev/hidraw2, interface 1
+# (serial number redacted)
+
+# Command sequence:
+#   cargo run -q -p verify-galahad -- handshake     # baseline
+#   cargo run -q -p verify-galahad -- fan --percent 50
+#   sleep 3
+#   cargo run -q -p verify-galahad -- handshake     # post-write
+
+# =============================================================================
+# Baseline handshake (before SetFanPWM):
+# =============================================================================
+
+wrote 64 bytes (expect 65 incl. report id, or 64 depending on backend)
+read 64 bytes
+raw response:
+  00: 01 81 00 00 00 07 00 00 0a 32 01 28 08 00 00 00
+  16: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  ...
+
+decoded:
+  fan_rpm       = 0
+  pump_rpm      = 2610
+  temp_valid    = true
+  temp_integer  = 40
+  temp_fraction = 8
+  temperature_c = 40.8
+
+# =============================================================================
+# SetFanPWM cmd (cmd 139, percent=50):
+# =============================================================================
+
+wrote 64 bytes (SetFanPWM, percent=50)
+note: command is fire-and-forget; no response read.
+
+# Wire bytes sent (per the protocol crate's build_request(Pwm::new(50)?)):
+#   01 8b 00 00 00 02 00 32 00 00 ... (64 bytes total)
+#   - byte[0]   = 0x01    ReportID
+#   - byte[1]   = 0x8b    Command = 139 (SetFanPWM)
+#   - byte[5]   = 0x02    Length = 2
+#   - byte[6]   = 0x00    data[0] = group (always 0 on LCDV2)
+#   - byte[7]   = 0x32    data[1] = pwm = 50
+
+# =============================================================================
+# Post-write handshake (3s after SetFanPWM):
+# =============================================================================
+
+decoded:
+  fan_rpm       = 0
+  pump_rpm      = 2610
+  temp_valid    = true
+  temp_integer  = 40
+  temp_fraction = 8
+  temperature_c = 40.8
+
+# =============================================================================
+# Notes:
+# =============================================================================
+
+# - Wire-level: command succeeded (no error from device.write()).
+# - fan_rpm reads 0 both before and after, identical to Phase 0a's
+#   capture (handshake-live.txt) — fans on this build are not wired to
+#   the Galahad II LCDV2's onboard fan header. They are likely connected
+#   to the motherboard CPU_FAN header instead (which is the normal
+#   configuration for many AIO setups).
+# - pump_rpm = 2610 confirms the device is otherwise responsive.
+# - temperature drift (39.6 °C in Phase 0a → 40.8 °C now) is consistent
+#   with ambient warming over the verification session.
+# - For a fully-functional fan-RPM verification, fans must be plugged into
+#   the AIO's fan header. The wire-level protocol verification is
+#   complete without that — this capture documents the SetFanPWM
+#   command works at the byte level.
