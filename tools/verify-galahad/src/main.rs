@@ -8,7 +8,7 @@
 
 use anyhow::{anyhow, Context, Result};
 use clap::{Args, Parser, Subcommand};
-use hidapi::HidApi;
+use hidapi::{HidApi, HidDevice};
 
 /// VID/PID pair for Galahad II LCDV2.
 const GALAHAD2_LCDV2_VID: u16 = 0x0416;
@@ -307,6 +307,48 @@ fn parse_hex_color(s: &str) -> Result<lconnect_protocol::galahad2_lcdv2::lightin
     })
 }
 
+/// Read packets from `device` until one arrives whose Report-ID/Command
+/// echo matches `expected_cmd`, draining stale buffered responses from
+/// previous CLI invocations.
+///
+/// The Galahad II LCDV2 (FW 1.6) buffers exactly one response per
+/// open/close cycle, so the FIRST `read_timeout` after opening the
+/// device frequently returns a stale packet from a prior `verify-galahad`
+/// run (e.g. opening for `pump-info` returns the leftover `fan-info`
+/// response). Without draining, the subsequent `parse_response` call
+/// raises `UnexpectedCommand { expected: 0x84, got: 0x82 }`.
+///
+/// This helper retries the read on echo mismatches until either the
+/// expected command arrives or the cumulative deadline (`deadline_ms`)
+/// is exhausted. Stale packets are reported on stderr and dropped.
+fn read_until_command<const N: usize>(
+    device: &HidDevice,
+    expected_cmd: u8,
+    deadline_ms: i32,
+) -> Result<[u8; N]> {
+    let start = std::time::Instant::now();
+    loop {
+        let elapsed: i32 = start.elapsed().as_millis().try_into().unwrap_or(i32::MAX);
+        let remaining = deadline_ms.saturating_sub(elapsed);
+        if remaining <= 0 {
+            return Err(anyhow!(
+                "read timeout draining stale responses (expected cmd 0x{expected_cmd:02x})"
+            ));
+        }
+        let mut buf = [0u8; N];
+        let _read = device
+            .read_timeout(&mut buf, remaining)
+            .context("HID read_timeout failed")?;
+        if buf.first() == Some(&0x01) && buf.get(1) == Some(&expected_cmd) {
+            return Ok(buf);
+        }
+        eprintln!(
+            "  drained stale response (cmd 0x{:02x}), retrying...",
+            buf.get(1).copied().unwrap_or(0)
+        );
+    }
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
@@ -355,6 +397,7 @@ fn list_devices() -> Result<()> {
 }
 
 fn handshake() -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::commands::Command;
     use lconnect_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
     use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
@@ -371,16 +414,14 @@ fn handshake() -> Result<()> {
         written
     );
 
-    // Read up to 64 bytes of response with a 1 s timeout.
-    let mut buf = [0u8; PACKET_LEN];
-    let read = device
-        .read_timeout(&mut buf, 1000)
-        .context("HID read_timeout failed")?;
-    println!("read {} bytes", read);
+    // Read until the expected command echo arrives (draining any stale
+    // packets buffered from a previous CLI invocation).
+    let buf: [u8; PACKET_LEN] = read_until_command(&device, Command::GetHandshakeInfo as u8, 1000)?;
+    println!("read {} bytes", PACKET_LEN);
 
     // Print the raw bytes for the protocol doc.
     print!("raw response:");
-    for (i, b) in buf.iter().enumerate().take(read.max(13)) {
+    for (i, b) in buf.iter().enumerate() {
         if i % 16 == 0 {
             print!("\n  {:02}: ", i);
         }
@@ -618,6 +659,7 @@ fn reset_device(yes: bool) -> Result<()> {
 }
 
 fn get_pump_lighting() -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::commands::Command;
     use lconnect_protocol::galahad2_lcdv2::get_lighting::{
         build_get_pump_lighting_info_request, parse_pump_lighting_info_response,
     };
@@ -632,11 +674,9 @@ fn get_pump_lighting() -> Result<()> {
     let written = device.write(&req).context("HID write failed")?;
     println!("wrote {written} bytes (GetPumpLightingInfo)");
 
-    let mut buf = [0u8; PACKET_LEN];
-    let read = device
-        .read_timeout(&mut buf, 1000)
-        .context("HID read_timeout failed")?;
-    println!("read {read} bytes");
+    let buf: [u8; PACKET_LEN] =
+        read_until_command(&device, Command::GetPumpLightingInfo as u8, 1000)?;
+    println!("read {PACKET_LEN} bytes");
 
     match parse_pump_lighting_info_response(&buf) {
         Ok(info) => {
@@ -701,6 +741,7 @@ fn set_pump_lighting(args: SetPumpLightingArgs) -> Result<()> {
 }
 
 fn get_fan_lighting() -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::commands::Command;
     use lconnect_protocol::galahad2_lcdv2::get_lighting::{
         build_get_fan_lighting_info_request, parse_fan_lighting_info_response,
     };
@@ -715,11 +756,9 @@ fn get_fan_lighting() -> Result<()> {
     let written = device.write(&req).context("HID write failed")?;
     println!("wrote {written} bytes (GetFanLightingInfo)");
 
-    let mut buf = [0u8; PACKET_LEN];
-    let read = device
-        .read_timeout(&mut buf, 1000)
-        .context("HID read_timeout failed")?;
-    println!("read {read} bytes");
+    let buf: [u8; PACKET_LEN] =
+        read_until_command(&device, Command::GetFanLightingInfo as u8, 1000)?;
+    println!("read {PACKET_LEN} bytes");
 
     match parse_fan_lighting_info_response(&buf) {
         Ok(info) => {

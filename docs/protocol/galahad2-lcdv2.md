@@ -213,7 +213,13 @@ warning, ensuring no accidental resets during testing.
 
 ## `GetPumpLightingInfo` — Command 130 (`0x82`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
+**Status:** `verified` (live-captured 2026-04-25 against firmware 1.6, see
+[captures/2026-04-25-lighting-live.txt](./captures/2026-04-25-lighting-live.txt)).
+- 16 pump modes returned: Rainbow, RainbowMorph, StaticColor, Breathing,
+  Runway, Meteor, TickerTape, Fluctuation, Transmit, ColorfulStarryNight,
+  StaticStarryNight, Voice, BigBang, Burst, ColorsMorph, Bounce.
+- `max_speed = 4`, `max_brightness = 4` (matches the C# UI's percent / 25
+  mapping: `0..=100` percent → `0..=4` wire byte).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:122-135`.
@@ -247,7 +253,19 @@ escape-byte protocol:
 
 ## `SetPumpLighting` — Command 131 (`0x83`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
+**Status:** `codec-verified`; live writes are accepted by the device but
+have **no visible effect** on the LCDV2 SKU (see caveat below).
+
+> **LCDV2 caveat:** the Vision controller never calls cmd 131 in the C# UI;
+> the LED ring around the LCD is driven by `SetLEDColors` (cmd 20,
+> `BCommandPacket` framing — Phase 0d). Cmd 131 is implemented in firmware
+> (codec tested faithful, 64-byte writes acknowledged) but appears
+> vestigial for this SKU and likely targets non-LCD Galahad2 variants
+> (e.g. Trinity). The corresponding `SetFanLighting` (cmd 133) IS used by
+> the Vision controller but only takes visible effect when fans are wired
+> to the AIO fan header. See `Galahad2VisionController.cs:1381-1414` for
+> the actual LED-control flow (`SendScreenLEDLightingSettingRequest` →
+> cmd 20).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:310-313`.
@@ -283,7 +301,12 @@ No response. Visually verify by looking at the pump cap LEDs.
 
 ## `GetFanLightingInfo` — Command 132 (`0x84`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
+**Status:** `verified` (live-captured 2026-04-25 against firmware 1.6, see
+[captures/2026-04-25-lighting-live.txt](./captures/2026-04-25-lighting-live.txt)).
+- 6 fan modes returned: Rainbow, RainbowMorph, StaticColor, Breathing,
+  Runway, Meteor.
+- `max_speed = 4`, `max_brightness = 4` (matches the C# UI's percent / 25
+  mapping: `0..=100` percent → `0..=4` wire byte).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:73-86`.
@@ -312,7 +335,16 @@ Implementation reuses the same generic `LightingInfo<M>` parser
 
 ## `SetFanLighting` — Command 133 (`0x85`)
 
-**Status:** codec-verified (commits up to 7be106c), live-capture pending. A live capture will be linked under `captures/` once a verify-galahad run against real hardware lands (filename TBD).
+**Status:** `codec-verified`; live writes are accepted by the device.
+Visible effect on the LCDV2 is conditional — see caveat below.
+
+> **LCDV2 caveat:** unlike `SetPumpLighting` (cmd 131), `SetFanLighting`
+> IS invoked by the Vision controller's UI. However, its output is only
+> visible when fans are physically wired to the AIO's fan header; on
+> systems where fans plug directly into motherboard headers, the writes
+> succeed but produce no LED change. The pump's own LED ring on the
+> LCDV2 is **not** controlled by this command — that path is
+> `SetLEDColors` (cmd 20, `BCommandPacket` — Phase 0d).
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:269-272`.
@@ -354,8 +386,10 @@ The full enum lives in
 [`commands.rs`](../../crates/protocol/src/galahad2_lcdv2/commands.rs).
 Coverage in subsequent phases:
 
-- **Phase 0c:** ✅ codec-verified — see the four `Get/Set {Fan,Pump} Lighting`
-  sections above. Live-device verification pending.
+- **Phase 0c:** ✅ landed — `Get{Pump,Fan}LightingInfo` (cmd 130/132)
+  live-verified 2026-04-25; `Set{Pump,Fan}Lighting` (cmd 131/133) accept
+  64-byte writes but their visible effect on the LCDV2 SKU is conditional
+  (see the per-section LCDV2 caveats above).
 - **Phase 0d:** `LCDControl` (12), `IsLCDAvailable` (23), `SendJpeg` (14),
   `UploadJpeg` (15), `SendH264Frame` (13), `UploadFirmware` (11),
   `ActiveFirmware` (10). Introduces `BCommandPacket` (512-byte) framing

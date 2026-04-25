@@ -1,0 +1,98 @@
+# Galahad II LCDV2 — Phase 0c lighting live captures
+# Date: 2026-04-25
+# Firmware: 1.6
+# USB: 0416:7395
+# CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
+#
+# NOTE: SetPumpLighting (cmd 131) and SetFanLighting (cmd 133) attempts
+# wrote 64 bytes successfully but produced no visible LED change on this
+# SKU. The Vision controller's LED ring is driven by SetLEDColors
+# (cmd 20, BCommandPacket — Phase 0d) instead; cmd 131 appears vestigial
+# for the LCDV2 (likely targets non-LCD Galahad2 variants such as
+# Trinity), and cmd 133 only takes visible effect when fans are wired to
+# the AIO fan header. See the LCDV2 caveats in
+# docs/protocol/galahad2-lcdv2.md.
+
+## get-pump-lighting
+
+# Command:
+#   cargo run -q -p verify-galahad -- get-pump-lighting
+
+# Output:
+wrote 64 bytes (GetPumpLightingInfo)
+read 64 bytes
+
+decoded:
+  max_speed      = 4
+  max_brightness = 4
+  modes (16):
+    - Rainbow (0x01)
+    - RainbowMorph (0x02)
+    - StaticColor (0x03)
+    - Breathing (0x04)
+    - Runway (0x05)
+    - Meteor (0x06)
+    - TickerTape (0x07)
+    - Fluctuation (0x08)
+    - Transmit (0x09)
+    - ColorfulStarryNight (0x0a)
+    - StaticStarryNight (0x0b)
+    - Voice (0x0c)
+    - BigBang (0x0d)
+    - Burst (0x0e)
+    - ColorsMorph (0x0f)
+    - Bounce (0x10)
+
+## get-fan-lighting
+
+# Command:
+#   cargo run -q -p verify-galahad -- get-fan-lighting
+
+# Output:
+wrote 64 bytes (GetFanLightingInfo)
+read 64 bytes
+
+decoded:
+  max_speed      = 4
+  max_brightness = 4
+  modes (6):
+    - Rainbow (0x01)
+    - RainbowMorph (0x02)
+    - StaticColor (0x03)
+    - Breathing (0x04)
+    - Runway (0x05)
+    - Meteor (0x06)
+
+## set-pump-lighting / set-fan-lighting
+
+Wrote 64 bytes successfully on cmd 131 (SetPumpLighting) and cmd 133
+(SetFanLighting) for several mode/colour combinations:
+- mode=StaticColor color=#FF0000
+- mode=StaticColor color=#00FF00
+- mode=Rainbow speed=50
+- (fan side) mode=StaticColor color=#0000FF
+
+The device acknowledged each write but no visible LED change was observed.
+This matches the C# source-of-truth: SetPumpLighting (cmd 131) is defined
+in Galahad2VisionDevice.cs:310-313 but never invoked by the Vision
+controller — the visible LED ring is driven by SetLEDColors (cmd 20,
+BCommandPacket framing, Phase 0d) via
+Galahad2VisionController.cs:1381-1414
+(SendScreenLEDLightingSettingRequest). The cmd 133 SetFanLighting path
+IS used by the C# controller but only produces visible output when fans
+are wired to the AIO fan header.
+
+## Notes
+
+- Both Get* responses round-tripped on the first try once the
+  verify-galahad CLI was updated to drain stale buffered responses
+  (read_until_command helper); prior to the fix, the FIRST
+  read_timeout after opening the device returned a stale response
+  from a prior CLI invocation roughly half the time, surfacing
+  errors like `expected 0x82, got 0x81`,
+  `expected 0x84, got 0x82`, and `expected 0x82, got 0x84`.
+- max_speed = max_brightness = 4 confirms the C# UI's percent / 25
+  wire-mapping (0..=100 percent → 0..=4 wire byte).
+- The 16-mode pump list and 6-mode fan list match the
+  PumpLightingMode / FanLightingMode enum coverage in
+  crates/protocol/src/galahad2_lcdv2/lighting_enums.rs.
