@@ -46,6 +46,12 @@ enum Cmd {
         #[arg(long, default_value = "mcu")]
         source: PumpSourceArg,
     },
+    /// Send ResetDevice (cmd 142). DANGEROUS — drops pump for 1–3s.
+    Reset {
+        /// Required to actually run; without it, the command refuses.
+        #[arg(long)]
+        yes_i_really_want_to_reset: bool,
+    },
 }
 
 /// CLI-side rendering of `PumpPwmSource`.
@@ -73,6 +79,9 @@ fn main() -> Result<()> {
         Cmd::Firmware => firmware(),
         Cmd::Fan { percent } => fan(percent),
         Cmd::Pump { percent, source } => pump(percent, source.into()),
+        Cmd::Reset { yes_i_really_want_to_reset } => {
+            reset_device(yes_i_really_want_to_reset)
+        }
     }
 }
 
@@ -339,5 +348,36 @@ fn pump(
     println!("wrote {written} bytes (SetPumpPWM, source={source:?}, percent={percent})");
     println!("note: command is fire-and-forget; no response read.");
     println!("verify by running `verify-galahad handshake` to read pump_rpm.");
+    Ok(())
+}
+
+fn reset_device(yes: bool) -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+    use lconnect_protocol::galahad2_lcdv2::reset::{build_request, parse_response};
+
+    if !yes {
+        return Err(anyhow!(
+            "ResetDevice (cmd 142) drops the AIO from USB for 1-3 seconds, \
+             which stops the pump and can spike coolant temperature.\n\
+             To run anyway, pass --yes-i-really-want-to-reset."
+        ));
+    }
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device")?;
+
+    println!("sending ResetDevice...");
+    let req = build_request();
+    device.write(&req).context("HID write failed")?;
+
+    let mut buf = [0u8; PACKET_LEN];
+    let read = device
+        .read_timeout(&mut buf, 2000)
+        .context("HID read_timeout failed (device may have already dropped from USB)")?;
+    println!("read {read} bytes");
+    parse_response(&buf).context("reset response decode failed")?;
+    println!("reset acknowledged. The device will now drop from USB; replug or wait.");
     Ok(())
 }
