@@ -11,5 +11,4 @@ description = "Pure protocol types and codecs for Lian Li L-Connect devices."
 name = "lconnect_protocol"
 
 [dependencies]
-bytes     = { workspace = true }
 thiserror = { workspace = true }
