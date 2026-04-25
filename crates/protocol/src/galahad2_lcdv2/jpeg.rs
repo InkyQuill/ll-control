@@ -32,13 +32,18 @@
 //!
 //! ## Future refactor notes
 //!
-//! - `build_send_jpeg_request` and `build_upload_jpeg_request` differ
-//!   only by their cmd byte today. They are kept as two separate
-//!   functions (rather than collapsed to a private helper) until a live
-//!   capture confirms whether the wire shapes are truly identical or
-//!   one of them gains a divergent field. The cross-check tests in
-//!   `tests/galahad2_lcdv2_upload_jpeg.rs` enforce equivalence at the
-//!   byte level for both single-packet and multi-packet payloads.
+//! - `build_send_jpeg_request`, `build_upload_jpeg_request`, AND
+//!   `super::h264::build_send_h264_frame_request` differ only by their
+//!   cmd byte and the error variant they return. With three near-clone
+//!   sites the DRY threshold has effectively been crossed, but the
+//!   extraction is deliberately deferred: live captures may still
+//!   surface a divergent field on cmd 14, 15, or 13 (we have C# call-
+//!   site evidence only for cmd 13). The cross-check tests in
+//!   `tests/galahad2_lcdv2_upload_jpeg.rs` and
+//!   `tests/galahad2_lcdv2_send_h264_frame.rs` enforce byte-level
+//!   equivalence for now. If a fourth B-class write codec is added
+//!   before the live captures land, extract a private helper at that
+//!   point unconditionally.
 //! - The return type `Vec<[u8; OUTPUT_LEN]>` may migrate to
 //!   `impl Iterator<Item = [u8; OUTPUT_LEN]>` in a future symmetry pass
 //!   that also touches `set_led_colors::build_set_*_colors_request`.
