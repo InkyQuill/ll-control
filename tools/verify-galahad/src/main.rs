@@ -70,7 +70,53 @@ fn list_devices() -> Result<()> {
 }
 
 fn handshake() -> Result<()> {
-    // Implemented in Task 11. For now, return an explanatory error so the
-    // build still succeeds.
-    Err(anyhow!("handshake subcommand: implemented in next task"))
+    use lconnect_protocol::galahad2_lcdv2::handshake::{
+        build_request, HandshakeInfo,
+    };
+    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device — see `verify-galahad list` and udev rules")?;
+
+    // Send the 64-byte request.
+    let req = build_request();
+    let written = device
+        .write(&req)
+        .context("HID write failed")?;
+    println!("wrote {} bytes (expect 65 incl. report id, or 64 depending on backend)", written);
+
+    // Read up to 64 bytes of response with a 1 s timeout.
+    let mut buf = [0u8; PACKET_LEN];
+    let read = device
+        .read_timeout(&mut buf, 1000)
+        .context("HID read_timeout failed")?;
+    println!("read {} bytes", read);
+
+    // Print the raw bytes for the protocol doc.
+    print!("raw response:");
+    for (i, b) in buf.iter().enumerate().take(read.max(13)) {
+        if i % 16 == 0 {
+            print!("\n  {:02}: ", i);
+        }
+        print!("{:02x} ", b);
+    }
+    println!();
+
+    // Decode using the protocol crate.
+    match HandshakeInfo::from_response(&buf) {
+        Ok(info) => {
+            println!();
+            println!("decoded:");
+            println!("  fan_rpm       = {}", info.fan_rpm);
+            println!("  pump_rpm      = {}", info.pump_rpm);
+            println!("  temp_valid    = {}", info.temp_valid);
+            println!("  temp_integer  = {}", info.temp_integer);
+            println!("  temp_fraction = {}", info.temp_fraction);
+            println!("  temperature_c = {:.1}", info.temperature_c());
+            Ok(())
+        }
+        Err(e) => Err(anyhow!("decode failed: {e}\nraw bytes printed above")),
+    }
 }
