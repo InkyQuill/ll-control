@@ -41,3 +41,81 @@ impl ACommandPacket {
         &self.bytes
     }
 }
+
+impl ACommandPacket {
+    /// Parse and validate an inbound 64-byte HID buffer as an
+    /// `ACommandPacket` reply to a request that used `expected_command`.
+    ///
+    /// Validates: minimum length, ReportID, command echo, and that the
+    /// `Length` field fits in `MAX_PAYLOAD`.
+    pub fn parse_response(
+        buf: &[u8],
+        expected_command: u8,
+    ) -> crate::Result<ParsedResponse<'_>> {
+        if buf.len() < HEADER_LEN {
+            return Err(crate::Error::BufferTooShort {
+                need: HEADER_LEN,
+                got: buf.len(),
+            });
+        }
+        if buf[0] != REPORT_ID {
+            return Err(crate::Error::UnexpectedReportId {
+                expected: REPORT_ID,
+                got: buf[0],
+            });
+        }
+        if buf[1] != expected_command {
+            return Err(crate::Error::UnexpectedCommand {
+                expected: expected_command,
+                got: buf[1],
+            });
+        }
+        let length = buf[5] as usize;
+        if length > MAX_PAYLOAD {
+            return Err(crate::Error::InvalidLength {
+                length,
+                max: MAX_PAYLOAD,
+            });
+        }
+        // The buffer may be exactly 64 bytes (the typical hidraw read size)
+        // or longer; we never look past `HEADER_LEN + length`.
+        if buf.len() < HEADER_LEN + length {
+            return Err(crate::Error::BufferTooShort {
+                need: HEADER_LEN + length,
+                got: buf.len(),
+            });
+        }
+
+        Ok(ParsedResponse {
+            command: buf[1],
+            length,
+            data: &buf[HEADER_LEN..HEADER_LEN + length],
+        })
+    }
+}
+
+/// A view into a successfully-parsed `ACommandPacket` response.
+///
+/// Returned by [`ACommandPacket::parse_response`]. Borrows from the input
+/// buffer; lifetime is the buffer's.
+#[derive(Debug, Clone, Copy)]
+pub struct ParsedResponse<'a> {
+    command: u8,
+    length: usize,
+    data: &'a [u8],
+}
+
+impl<'a> ParsedResponse<'a> {
+    /// The command echo byte from the response.
+    pub fn command(&self) -> u8 {
+        self.command
+    }
+    /// The advertised data length.
+    pub fn length(&self) -> usize {
+        self.length
+    }
+    /// The data slice, exactly `length` bytes.
+    pub fn data(&self) -> &'a [u8] {
+        self.data
+    }
+}
