@@ -50,8 +50,10 @@ fn parse_fan_response_full_round_trip() {
 
 #[test]
 fn parse_pump_response_full_round_trip() {
-    // Synth response: cmd 130 echo, length 5, payload =
+    // Synth response: cmd 130 echo, length 6, payload =
     //   [Rainbow=1, Bounce=16, A5, 5A, MaxSpeed=5, MaxBri=100]
+    // (ACommandPacket layout: [0]=ReportID, [1]=Cmd, [2]=reserved,
+    //  [3..5]=PacketNumber BE, [5]=Length, [6..]=Data.)
     let mut buf = [0u8; PACKET_LEN];
     buf[0] = 0x01;
     buf[1] = 130;
@@ -71,7 +73,7 @@ fn parse_pump_response_full_round_trip() {
 fn parse_fan_response_with_wrong_command_echo_rejected() {
     let mut buf = [0u8; PACKET_LEN];
     buf[0] = 0x01;
-    buf[1] = 0x86; // 134 — not 132
+    buf[1] = 0x86; // 134 — not 132 (this is GetFirmwareVersion's cmd byte)
     buf[5] = 0;
     let err = parse_fan_lighting_info_response(&buf).unwrap_err();
     assert!(matches!(
@@ -80,5 +82,42 @@ fn parse_fan_response_with_wrong_command_echo_rejected() {
             expected: 132,
             got: 0x86
         }
+    ));
+}
+
+#[test]
+fn parse_pump_response_with_wrong_command_echo_rejected() {
+    let mut buf = [0u8; PACKET_LEN];
+    buf[0] = 0x01;
+    buf[1] = 0x84; // 132 — not 130 (this is GetFanLightingInfo's cmd byte)
+    buf[5] = 0;
+    let err = parse_pump_lighting_info_response(&buf).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::UnexpectedCommand {
+            expected: 130,
+            got: 0x84
+        }
+    ));
+}
+
+#[test]
+fn parse_fan_response_too_short_rejected() {
+    // Buffer shorter than the ACommandPacket header (HEADER_LEN = 6).
+    let buf = [0u8; 3];
+    let err = parse_fan_lighting_info_response(&buf).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::BufferTooShort { .. }
+    ));
+}
+
+#[test]
+fn parse_pump_response_too_short_rejected() {
+    let buf = [0u8; 3];
+    let err = parse_pump_lighting_info_response(&buf).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::BufferTooShort { .. }
     ));
 }
