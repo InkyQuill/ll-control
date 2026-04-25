@@ -60,8 +60,7 @@ fn parse_response_extracts_header_and_data_slice() {
     buf[11] = 0x2A;
     buf[12] = 0x07;
 
-    let parsed = ACommandPacket::parse_response(&buf, 0x81)
-        .expect("valid response should parse");
+    let parsed = ACommandPacket::parse_response(&buf, 0x81).expect("valid response should parse");
     assert_eq!(parsed.command(), 0x81);
     assert_eq!(parsed.length(), 7);
     assert_eq!(parsed.data(), &[0x04, 0xD2, 0x0B, 0xA4, 0x01, 0x2A, 0x07]);
@@ -70,12 +69,15 @@ fn parse_response_extracts_header_and_data_slice() {
 #[test]
 fn parse_response_rejects_wrong_report_id() {
     let mut buf = [0u8; 64];
-    buf[0] = 0xFF;   // wrong
+    buf[0] = 0xFF; // wrong
     buf[1] = 0x81;
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedReportId { expected: 0x01, got: 0xFF }
+        lconnect_protocol::Error::UnexpectedReportId {
+            expected: 0x01,
+            got: 0xFF
+        }
     ));
 }
 
@@ -88,7 +90,10 @@ fn parse_response_rejects_wrong_command_echo() {
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand { expected: 0x81, got: 0x86 }
+        lconnect_protocol::Error::UnexpectedCommand {
+            expected: 0x81,
+            got: 0x86
+        }
     ));
 }
 
@@ -96,7 +101,10 @@ fn parse_response_rejects_wrong_command_echo() {
 fn parse_response_rejects_short_buffer() {
     let buf = [0u8; 5];
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
-    assert!(matches!(err, lconnect_protocol::Error::BufferTooShort { .. }));
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::BufferTooShort { .. }
+    ));
 }
 
 #[test]
@@ -108,7 +116,10 @@ fn parse_response_rejects_oversize_length_field() {
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLength { length: 0xFF, max: 58 }
+        lconnect_protocol::Error::InvalidLength {
+            length: 0xFF,
+            max: 58
+        }
     ));
 }
 

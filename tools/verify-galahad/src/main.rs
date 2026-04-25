@@ -79,9 +79,9 @@ fn main() -> Result<()> {
         Cmd::Firmware => firmware(),
         Cmd::Fan { percent } => fan(percent),
         Cmd::Pump { percent, source } => pump(percent, source.into()),
-        Cmd::Reset { yes_i_really_want_to_reset } => {
-            reset_device(yes_i_really_want_to_reset)
-        }
+        Cmd::Reset {
+            yes_i_really_want_to_reset,
+        } => reset_device(yes_i_really_want_to_reset),
     }
 }
 
@@ -89,9 +89,7 @@ fn list_devices() -> Result<()> {
     let api = HidApi::new().context("HidApi::new failed")?;
     let mut found = 0usize;
     for info in api.device_list() {
-        if info.vendor_id() == GALAHAD2_LCDV2_VID
-            && info.product_id() == GALAHAD2_LCDV2_PID
-        {
+        if info.vendor_id() == GALAHAD2_LCDV2_VID && info.product_id() == GALAHAD2_LCDV2_PID {
             found += 1;
             println!(
                 "vid=0x{:04x} pid=0x{:04x}  path={:?}  manufacturer={:?}  product={:?}  serial={:?}  interface={}",
@@ -117,9 +115,7 @@ fn list_devices() -> Result<()> {
 }
 
 fn handshake() -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::handshake::{
-        build_request, HandshakeInfo,
-    };
+    use lconnect_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
     use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
     let api = HidApi::new().context("HidApi::new failed")?;
@@ -129,10 +125,11 @@ fn handshake() -> Result<()> {
 
     // Send the 64-byte request.
     let req = build_request();
-    let written = device
-        .write(&req)
-        .context("HID write failed")?;
-    println!("wrote {} bytes (expect 65 incl. report id, or 64 depending on backend)", written);
+    let written = device.write(&req).context("HID write failed")?;
+    println!(
+        "wrote {} bytes (expect 65 incl. report id, or 64 depending on backend)",
+        written
+    );
 
     // Read up to 64 bytes of response with a 1 s timeout.
     let mut buf = [0u8; PACKET_LEN];
@@ -169,8 +166,8 @@ fn handshake() -> Result<()> {
 }
 
 fn firmware() -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::firmware::FirmwareVersion;
     use lconnect_protocol::galahad2_lcdv2::commands::Command;
+    use lconnect_protocol::galahad2_lcdv2::firmware::FirmwareVersion;
     use lconnect_protocol::galahad2_lcdv2::packets::{ACommandPacket, PACKET_LEN};
 
     let api = HidApi::new().context("HidApi::new failed")?;
@@ -305,8 +302,7 @@ fn fan(percent: u8) -> Result<()> {
     use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request;
     use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
 
-    let pwm = Pwm::new(percent)
-        .map_err(|e| anyhow!("invalid percent: {e}"))?;
+    let pwm = Pwm::new(percent).map_err(|e| anyhow!("invalid percent: {e}"))?;
 
     let api = HidApi::new().context("HidApi::new failed")?;
     let device = api
@@ -328,8 +324,7 @@ fn pump(
     use lconnect_protocol::galahad2_lcdv2::pump_pwm::build_request;
     use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
 
-    let pwm = Pwm::new(percent)
-        .map_err(|e| anyhow!("invalid percent: {e}"))?;
+    let pwm = Pwm::new(percent).map_err(|e| anyhow!("invalid percent: {e}"))?;
 
     if percent < 30 {
         eprintln!(

@@ -12,8 +12,7 @@ use crate::galahad2_lcdv2::packets::{ACommandPacket, PACKET_LEN};
 ///
 /// Returns the raw bytes ready for `hid_device.write(&buf)`.
 pub fn build_request() -> [u8; PACKET_LEN] {
-    *ACommandPacket::new_request(Command::GetHandshakeInfo as u8, &[])
-        .as_bytes()
+    *ACommandPacket::new_request(Command::GetHandshakeInfo as u8, &[]).as_bytes()
 }
 
 /// Decoded GetHandshakeInfo response.
@@ -44,10 +43,7 @@ impl HandshakeInfo {
     /// Length) before decoding. Returns
     /// [`crate::Error::BufferTooShort`] if `Length < 7`.
     pub fn from_response(buf: &[u8]) -> crate::Result<Self> {
-        let parsed = ACommandPacket::parse_response(
-            buf,
-            Command::GetHandshakeInfo as u8,
-        )?;
+        let parsed = ACommandPacket::parse_response(buf, Command::GetHandshakeInfo as u8)?;
         let data = parsed.data();
         if data.len() < 7 {
             return Err(crate::Error::BufferTooShort {
@@ -56,10 +52,10 @@ impl HandshakeInfo {
             });
         }
         Ok(HandshakeInfo {
-            fan_rpm:       u16::from_be_bytes([data[0], data[1]]),
-            pump_rpm:      u16::from_be_bytes([data[2], data[3]]),
-            temp_valid:    data[4] != 0,
-            temp_integer:  data[5],
+            fan_rpm: u16::from_be_bytes([data[0], data[1]]),
+            pump_rpm: u16::from_be_bytes([data[2], data[3]]),
+            temp_valid: data[4] != 0,
+            temp_integer: data[5],
             temp_fraction: data[6],
         })
     }
