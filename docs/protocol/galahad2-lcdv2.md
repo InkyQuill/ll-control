@@ -38,6 +38,48 @@ Constants:
 
 ---
 
+## Packet framing — `BCommandPacket` (1024 out / 512 in)
+
+**Source:** `LConnectCore/Products/Galahad2Vision/BCommandPacket.cs:1-189`.
+**Status:** `verified` (live runs 2026-04-25 against cmd 20 SetLEDColors and
+cmd 14 SendJpeg confirmed multi-packet writes at 21, 46, and 56 chunks).
+
+```
+offset  size  field          description
+------  ----  -----          ---------------------------------------------
+  0      1   ReportID        always 0x02
+  1      1   Command         e.g. 0x14 = 20 = SetLEDColors
+  2      4   DataSize        big-endian u32; total payload across ALL
+                              packets in a multi-packet write; replicated
+                              on every packet.
+  6      3   PacketNumber    big-endian u24; 0-based; increments per chunk.
+  9      2   Length          big-endian u16; payload bytes IN THIS packet.
+ 11    1013   Data            up to 1013 bytes of payload, zero-padded to
+                              1024 on the wire. Smaller payloads zero-pad
+                              the trailing region.
+```
+
+Constants:
+
+- `OUTPUT_LEN = 1024` (host → device)
+- `INPUT_LEN = 512` (device → host)
+- `HEADER_LEN = 11`
+- `PAYLOAD_MAX = 1013`
+
+Multi-packet writes split a payload into 1013-byte chunks. The chunker
+([`BCommandPacket::build_packets_for_write`]) replicates `Command` and
+`DataSize` on every chunk and increments `PacketNumber` from 0. The
+Linux port produces independent owned `[u8; 1024]` buffers per chunk
+(unlike the C# implementation which reuses a single buffer and yields
+it through an iterator — that pattern is unsafe in Rust).
+
+The C# also has a `CCommandPacket` (third framing class: ReportID=3,
+512/512 lengths, 501-byte chunks) used by `SendH264Frame512`. CCommandPacket
+is **not implemented** in this crate yet; it would be needed to support
+the higher-bandwidth H.264 streaming path on certain device variants.
+
+---
+
 ## `GetHandshakeInfo` — Command 129 (`0x81`)
 
 **Status:** `verified` (live-captured 2026-04-25, see
@@ -440,6 +482,59 @@ No response expected.
 
 ---
 
+## `SendH264Frame` — Command 13 (`0x0D`)
+
+**Status:** `codec-verified` (wire shape confirmed against the C# call
+site at `Galahad2VisionDevice.cs:255-258`; **not** yet live-verified
+on FW 1.6).
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:255-260` — `writeBCommand(13,
+  frameBytes)` followed by `readCommand(out numArray, 512, 20)` (the
+  C# discards the buffer; our codec exposes a typed parser).
+- Sibling deferred: `Galahad2VisionDevice.cs:262-267` (`SendH264Frame512`,
+  CCommandPacket framing — out of scope for Phase 0d).
+
+### Request
+
+`BCommandPacket` chunks with `Command = 13` and the full H.264 frame as
+payload. No flag byte, no zero pad, no per-frame header — the codec is
+a faithful pass-through. Multi-packet writes use the standard chunker;
+DataSize replicates across packets and PacketNumber increments from 0.
+
+### Response
+
+The C# does a 512-byte BCommandPacket read after each cmd 13 write
+with a 20ms timeout. Response semantics are unverified — the C# discards
+the buffer. The Linux port exposes `parse_send_h264_frame_response` as
+a typed entry point so future callers can validate the cmd echo at
+minimum, and so the response is actively consumed (skipping the read
+leaves the response in the device's USB buffer where it will pollute
+the next unrelated read).
+
+### Caveats
+
+- Cmd 13 is **codec-verified** (C# source confirms the wire shape) but
+  **not live-verified**. Hold time, decoder readiness, and auto-revert
+  semantics are unmeasured.
+- `MAX_H264_FRAME_BYTES = 256 KiB` (matches `MAX_JPEG_BYTES`) is a
+  conservative cap; should be revisited once a live capture surfaces
+  the firmware's actual buffer limit.
+- Both `SendH264Frame` (this codec, B-class) and `SendH264Frame512`
+  (deferred, C-class) write cmd byte 13. Discrimination is presumably
+  via ReportID (B = 0x02, C = 0x03) at the HID layer, but device-variant
+  or firmware-revision sensitivity is unverified. Confirm BCommandPacket
+  support on a given firmware via the handshake or firmware-version
+  response before relying on this codec.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/h264.rs` (`MAX_H264_FRAME_BYTES`,
+  `build_send_h264_frame_request`, `parse_send_h264_frame_response`).
+- `crates/protocol/tests/galahad2_lcdv2_send_h264_frame.rs`.
+
+---
+
 ## `SendJpeg` — Command 14 (`0x0E`)
 
 **Status:** `verified` (live-confirmed 2026-04-25 against firmware 1.6,
@@ -704,30 +799,37 @@ Coverage in subsequent phases:
   doesn't expose); `SetFanLighting` (cmd 133) drives fans wired to the
   AIO's fan header. Rapid back-to-back writes can transiently buffer
   with only the latest rendering — see the per-section status lines.
-- **Phase 0d:** ⏳ mostly landed.
-  - ✅ `LCDControl` (12) — codec-verified (see section above).
-  - ✅ `SetLEDColors` (20) — live-verified 2026-04-25, screen-path
-    rendered red/green/yellow on the pump cap; fan-path rendered 2 of 3
-    fans (configuration-specific, see section's Caveats).
-  - ✅ `IsLCDAvailable` (23) — live-verified 2026-04-25, round-trips
-    `0x00` (available) on a healthy device.
-  - ✅ `SendJpeg` (14) — live-verified 2026-04-25 against FW 1.6, see
-    section above. Empirically a transient single-frame command:
-    user-observed ~20 s hold, mode-independent (multiple test runs
-    confirm `--set-application-mode` preflight produces no observable
-    change). Daemon-level static-image display will need a refresh
-    loop.
-  - ✅ `UploadJpeg` (15) — codec-verified; live 56-packet write ACK'd in
-    full but no visible LCD activation on FW 1.6 in either default or
-    Application-mode preflight. Activation path unknown (stored-for-boot
-    / undocumented trigger / unactivated internal mode are the three
-    plausible hypotheses); see section above. Not recommended for
-    production daemon use until activation is empirically discovered.
-  - ⏳ `SendH264Frame` (13) — stretch goal, not landed in Phase 0d.
-  - ⏳ `UploadFirmware` (11), `ActiveFirmware` (10) — deferred to a later
-    sub-phase (firmware-touching, higher risk).
-- **Phase 1+:** `GetSerialNumber` (136), `SetSerialNumber` (137),
-  `UploadAvi` (18), `UploadH264` (19), `UploadH264Info` (21),
+- **Phase 0d:** ✅ landed and live-verified 2026-04-25.
+  - **Framing**: `BCommandPacket` (1024 out / 512 in) verified across
+    21-, 46-, and 56-packet writes.
+  - **LCD lifecycle**: `IsLCDAvailable` (cmd 23) round-trips `Ok(true)`
+    on a healthy device; `LCDControl` (cmd 12) codec-verified
+    (`Brightness` newtype + `LCDControlMode`, `ScreenRotation`).
+  - **LED control**: `SetLEDColors` (cmd 20) drives the LCDV2 LED ring
+    via per-pixel RGB. Live-verified: pump cap rendered red, green, and
+    yellow on three sequential writes; fan path painted 2 of 3 fans
+    blue (multi-fan setups need `--count 16 * fan_count`).
+  - **JPEG upload**: `SendJpeg` (cmd 14) live-verified — pump-cap LCD
+    displays the image for ~20 seconds (mode-independent), then
+    auto-reverts to the firmware's LocalUI default. Sustained display
+    needs a refresh loop at ≤15 seconds. `UploadJpeg` (cmd 15)
+    codec-verified; live runs ACK'd 56-packet writes but produced no
+    visible LCD change in either default or Application-mode preflight,
+    activation path unknown.
+  - **H.264 frame upload**: `SendH264Frame` (cmd 13) codec-verified
+    (wire shape confirmed against the C# call site). Not live-verified.
+    Sibling `SendH264Frame512` (CCommandPacket framing) deferred.
+  - **Image conversion**: the `lconnect-image` workspace crate provides
+    arbitrary-input → 480×480 JPEG conversion (PNG/JPEG/WebP/BMP/GIF in,
+    JPEG out). The verify-galahad `upload-jpeg` subcommand demonstrates
+    the end-to-end pipeline: any image → 480×480 JPEG → BCommandPacket
+    chunks → device.
+- **Phase 1+:** `UploadFirmware` (11), `ActiveFirmware` (10) —
+  firmware-touching, higher risk; deferred. `SendH264Frame512`
+  (CCommandPacket framing — third framing class, ReportID=3, 512/512
+  lengths) for the higher-bandwidth H.264 streaming path on device
+  variants that support it. `GetSerialNumber` (136), `SetSerialNumber`
+  (137), `UploadAvi` (18), `UploadH264` (19), `UploadH264Info` (21),
   `UploadStartupAviMovie` (22). These are either rarely used or risky
   (writing serial numbers); they get implemented on demand.
 
