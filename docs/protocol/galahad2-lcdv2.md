@@ -210,15 +210,145 @@ warning, ensuring no accidental resets during testing.
 
 ---
 
+## `GetPumpLightingInfo` — Command 130 (`0x82`)
+
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-pump-lighting-live.txt once the user runs verify-galahad against real hardware.
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:122-135`.
+- Response parser: `PumpLightingInfo.cs:21-67` (escape-byte protocol).
+
+### Request
+
+A bare `ACommandPacket` with `Command = 130`, no data.
+
+### Response
+
+`ACommandPacket` echoing cmd 130 with a data slice that uses the
+escape-byte protocol:
+
+- Bytes are `PumpLightingMode` discriminants (mapped to `Unknown` for
+  unknown values) until the literal sequence `0xA5 0x5A` terminates the
+  list.
+- After termination, two trailer bytes: `MaxSpeed`, `MaxBrightness`.
+- Bug-compat: an `0xA5 X` sequence where `X != 0x5A` silently drops X
+  without pushing a mode (mirrors the C# behaviour).
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/get_lighting.rs`
+- `crates/protocol/src/galahad2_lcdv2/lighting.rs`
+  (`parse_pump_lighting_info`, `LightingInfo<M>`, type aliases)
+- `crates/protocol/tests/galahad2_lcdv2_get_lighting.rs`,
+  `crates/protocol/tests/galahad2_lcdv2_lighting_info.rs`
+
+---
+
+## `SetPumpLighting` — Command 131 (`0x83`)
+
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-pump-lighting-live.txt once the user runs verify-galahad against real hardware.
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:310-313`.
+- Payload encoder: `PumpLightingSetting.cs:107-141` (19 bytes).
+
+### Request
+
+`ACommandPacket` with `Command = 131` and `Length = 19`. Data:
+
+| offset | size | field        | type                    |
+|--------|------|--------------|-------------------------|
+| 0      | 1    | `scope`      | `PumpLightingScope`     |
+| 1      | 1    | `mode`       | `PumpLightingMode`      |
+| 2      | 1    | `brightness` | u8                      |
+| 3      | 1    | `speed`      | u8                      |
+| 4–6    | 3    | `color1`     | RGB                     |
+| 7–9    | 3    | `color2`     | RGB                     |
+| 10–12  | 3    | `color3`     | RGB                     |
+| 13–15  | 3    | `color4`     | RGB                     |
+| 16     | 1    | `direction`  | `LightingDirection`     |
+| 17     | 1    | `disabled`   | bool (0/1)              |
+| 18     | 1    | `source`     | `ArgbSignalSource`      |
+
+No response. Visually verify by looking at the pump cap LEDs.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/set_lighting.rs`
+- `crates/protocol/src/galahad2_lcdv2/lighting.rs` (`PumpLightingSetting`,
+  `to_bytes`)
+
+---
+
+## `GetFanLightingInfo` — Command 132 (`0x84`)
+
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-fan-lighting-live.txt once the user runs verify-galahad against real hardware.
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:73-86`.
+- Response parser: `FanLightingInfo.cs:21-67` (same escape-byte
+  protocol as pump-lighting-info; only the mode enum differs).
+
+### Request / response
+
+Same shape as `GetPumpLightingInfo` except `Command = 132` and modes
+are `FanLightingMode` (7 variants) instead of `PumpLightingMode` (17).
+Implementation reuses the same generic `LightingInfo<M>` parser.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/get_lighting.rs`
+- `crates/protocol/src/galahad2_lcdv2/lighting.rs`
+  (`parse_fan_lighting_info`)
+
+---
+
+## `SetFanLighting` — Command 133 (`0x85`)
+
+**Status:** codec-verified (commits up to 7be106c), live-capture pending. Will link to captures/2026-MM-DD-fan-lighting-live.txt once the user runs verify-galahad against real hardware.
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:269-272`.
+- Payload encoder: `FanLightingSetting.cs:117-150` (20 bytes).
+
+### Request
+
+`ACommandPacket` with `Command = 133` and `Length = 20`. Data:
+
+| offset | size | field           | type                    |
+|--------|------|-----------------|-------------------------|
+| 0      | 1    | `mode`          | `FanLightingMode`       |
+| 1      | 1    | `brightness`    | u8                      |
+| 2      | 1    | `speed`         | u8                      |
+| 3–5    | 3    | `color1`        | RGB                     |
+| 6–8    | 3    | `color2`        | RGB                     |
+| 9–11   | 3    | `color3`        | RGB                     |
+| 12–14  | 3    | `color4`        | RGB                     |
+| 15     | 1    | `direction`     | `LightingDirection`     |
+| 16     | 1    | `disabled`      | bool (0/1)              |
+| 17     | 1    | `source`        | `ArgbSignalSource`      |
+| 18     | 1    | `sync_to_pump`  | bool (0/1)              |
+| 19     | 1    | `number_of_led` | u8 (24 default; varies) |
+
+No response. Visually verify by looking at fan-ring LEDs (if fans are
+wired to the AIO's fan header).
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/set_lighting.rs`
+- `crates/protocol/src/galahad2_lcdv2/lighting.rs` (`FanLightingSetting`,
+  `to_bytes`)
+
+---
+
 ## Commands not yet documented
 
 The full enum lives in
 [`commands.rs`](../../crates/protocol/src/galahad2_lcdv2/commands.rs).
 Coverage in subsequent phases:
 
-- **Phase 0c:** `GetPumpLightingInfo` (130), `SetPumpLighting` (131),
-  `GetFanLightingInfo` (132), `SetFanLighting` (133). Adds the lighting
-  configuration types (modes, speeds, directions, brightness, ARGB sources).
+- **Phase 0c:** ✅ codec-verified — see the four `Get/Set {Fan,Pump} Lighting`
+  sections above. Live-device verification pending.
 - **Phase 0d:** `LCDControl` (12), `IsLCDAvailable` (23), `SendJpeg` (14),
   `UploadJpeg` (15), `SendH264Frame` (13), `UploadFirmware` (11),
   `ActiveFirmware` (10). Introduces `BCommandPacket` (512-byte) framing
