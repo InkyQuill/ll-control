@@ -48,10 +48,7 @@ impl ACommandPacket {
     ///
     /// Validates: minimum length, ReportID, command echo, and that the
     /// `Length` field fits in `MAX_PAYLOAD`.
-    pub fn parse_response(
-        buf: &[u8],
-        expected_command: u8,
-    ) -> crate::Result<ParsedResponse<'_>> {
+    pub fn parse_response(buf: &[u8], expected_command: u8) -> crate::Result<ParsedResponse<'_>> {
         if buf.len() < HEADER_LEN {
             return Err(crate::Error::BufferTooShort {
                 need: HEADER_LEN,

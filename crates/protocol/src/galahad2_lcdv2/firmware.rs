@@ -18,8 +18,7 @@ use crate::galahad2_lcdv2::packets::{ACommandPacket, PACKET_LEN};
 /// replies with **two** `ACommandPacket`s — see
 /// [`FirmwareVersion::from_two_responses`].
 pub fn build_request() -> [u8; PACKET_LEN] {
-    *ACommandPacket::new_request(Command::GetFirmwareVersion as u8, &[])
-        .as_bytes()
+    *ACommandPacket::new_request(Command::GetFirmwareVersion as u8, &[]).as_bytes()
 }
 
 /// A parsed firmware-version response.
@@ -57,33 +56,33 @@ impl FirmwareVersion {
     /// Inputs are trimmed of whitespace **and** trailing NUL bytes (mirrors
     /// the C# `.Trim().Trim('\0')` behaviour — HID payloads are usually
     /// zero-padded).
-    pub fn parse(version_str: &str, datetime_str: &str)
-        -> crate::Result<Self>
-    {
+    pub fn parse(version_str: &str, datetime_str: &str) -> crate::Result<Self> {
         // C# does `.Trim().Trim('\0')`, but for inputs like `"…1.6 \0"`
         // that leaves a stray trailing space. We trim whitespace, NULs,
         // then whitespace again to handle either ordering.
-        let version_str =
-            version_str.trim().trim_matches('\0').trim();
-        let datetime_str =
-            datetime_str.trim().trim_matches('\0').trim();
+        let version_str = version_str.trim().trim_matches('\0').trim();
+        let datetime_str = datetime_str.trim().trim_matches('\0').trim();
 
         let fields: Vec<&str> = version_str.split(',').collect();
         if fields.len() < 7 || version_str.is_empty() {
             return Err(crate::Error::MalformedFirmwareVersion {
-                got_fields: if version_str.is_empty() { 0 } else { fields.len() },
+                got_fields: if version_str.is_empty() {
+                    0
+                } else {
+                    fields.len()
+                },
             });
         }
 
         Ok(FirmwareVersion {
-            chip_code:        fields[0].to_owned(),
-            boot_code:        fields[1].to_owned(),
-            kind:             fields[2].to_owned(),
-            model_a:          fields[3].to_owned(),
-            model_b:          fields[4].to_owned(),
+            chip_code: fields[0].to_owned(),
+            boot_code: fields[1].to_owned(),
+            kind: fields[2].to_owned(),
+            model_a: fields[3].to_owned(),
+            model_b: fields[4].to_owned(),
             software_version: fields[5].to_owned(),
-            user_version:     fields[6].to_owned(),
-            raw_datetime:     datetime_str.to_owned(),
+            user_version: fields[6].to_owned(),
+            raw_datetime: datetime_str.to_owned(),
         })
     }
 

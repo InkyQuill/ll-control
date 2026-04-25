@@ -4,9 +4,7 @@
 //! - Wire flow: Galahad2VisionDevice.cs:88-105 (two ACommandPacket reads).
 //! - Version-string parser: FirmwareVersion.cs (comma-split into 7 fields).
 
-use lconnect_protocol::galahad2_lcdv2::firmware::{
-    build_request, FirmwareVersion,
-};
+use lconnect_protocol::galahad2_lcdv2::firmware::{build_request, FirmwareVersion};
 use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
 #[test]
@@ -44,8 +42,7 @@ fn parse_strips_whitespace_and_nul_bytes_around_inputs() {
 
 #[test]
 fn parse_rejects_too_few_fields() {
-    let err = FirmwareVersion::parse("N9,01,HS", "Apr 12 2024 14:33:21")
-        .unwrap_err();
+    let err = FirmwareVersion::parse("N9,01,HS", "Apr 12 2024 14:33:21").unwrap_err();
     assert!(matches!(
         err,
         lconnect_protocol::Error::MalformedFirmwareVersion { got_fields: 3 }
@@ -85,8 +82,7 @@ fn from_two_responses_decodes_full_round_trip() {
     let buf1 = mk(b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6");
     let buf2 = mk(b"Apr 12 2024 14:33:21");
 
-    let v = FirmwareVersion::from_two_responses(&buf1, &buf2)
-        .expect("valid pair");
+    let v = FirmwareVersion::from_two_responses(&buf1, &buf2).expect("valid pair");
     assert_eq!(v.user_version, "1.6");
     assert_eq!(v.software_version, "V2.01.041");
     assert_eq!(v.raw_datetime, "Apr 12 2024 14:33:21");
@@ -107,6 +103,9 @@ fn from_two_responses_rejects_wrong_command_echo_on_first_packet() {
     let err = FirmwareVersion::from_two_responses(&buf1, &buf2).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand { expected: 134, got: 0x81 }
+        lconnect_protocol::Error::UnexpectedCommand {
+            expected: 134,
+            got: 0x81
+        }
     ));
 }

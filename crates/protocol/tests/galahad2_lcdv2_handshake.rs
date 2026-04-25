@@ -2,7 +2,7 @@
 //!
 //! Source: Products/Galahad2Vision/HandshakeInfo.cs:58-76.
 
-use lconnect_protocol::galahad2_lcdv2::handshake::{HandshakeInfo, build_request};
+use lconnect_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
 use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
 #[test]
@@ -21,13 +21,13 @@ fn parse_known_response_yields_expected_values() {
     // temp_valid=1, temp_int=42, temp_frac=7.  Expect 42.7°C.
     let mut buf = [0u8; PACKET_LEN];
     buf[0] = 0x01; // ReportID
-    buf[1] = 129;  // command echo
-    buf[5] = 7;    // length
+    buf[1] = 129; // command echo
+    buf[5] = 7; // length
     buf[6] = 0x04;
     buf[7] = 0xD2; // 1234
     buf[8] = 0x0B;
     buf[9] = 0xA4; // 2980
-    buf[10] = 1;   // temp valid
+    buf[10] = 1; // temp valid
     buf[11] = 42;
     buf[12] = 7;
 
@@ -51,7 +51,7 @@ fn parse_response_with_invalid_temp_flag_still_decodes_rpms() {
     buf[7] = 0x32; // fan = 50
     buf[8] = 0x00;
     buf[9] = 0xC8; // pump = 200
-    buf[10] = 0;   // temp NOT valid
+    buf[10] = 0; // temp NOT valid
     buf[11] = 99;
     buf[12] = 99;
 

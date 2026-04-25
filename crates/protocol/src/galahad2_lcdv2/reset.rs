@@ -20,10 +20,7 @@ pub fn build_request() -> [u8; PACKET_LEN] {
 /// Parse a `ResetDevice` response. Success requires `Length == 1` and
 /// `Data[0] == 0x01`; everything else is an error.
 pub fn parse_response(buf: &[u8]) -> crate::Result<()> {
-    let parsed = ACommandPacket::parse_response(
-        buf,
-        Command::ResetDevice as u8,
-    )?;
+    let parsed = ACommandPacket::parse_response(buf, Command::ResetDevice as u8)?;
     if parsed.length() != 1 {
         return Err(crate::Error::InvalidLength {
             length: parsed.length(),
