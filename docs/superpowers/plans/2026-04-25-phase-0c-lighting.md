@@ -1871,14 +1871,16 @@ following each `feat:`.
 - Unsolicited cmd 0x8e status packets occasionally appear in the read
   queue (already documented in `galahad2-lcdv2.md` for `GetFirmwareVersion`).
   The new `read_until_command` helper drains them.
-- `SetFanLighting --color '#0000FF'` reliably drove fans blue.
-- `SetPumpLighting` reliably writes 64 bytes but does NOT reliably render
-  on the LCDV2; only the first write of the session produced a visible
-  magenta and that was almost certainly a coincidence (residual screen-LED
-  state from a prior Windows session). The C# service pairs cmd 131 with
-  surrounding screen-LED commands at every call site — on this SKU the
-  firmware's pump-cap LED render is bound to active screen-LED state
-  (cmd 20 / BCommandPacket / Phase 0d).
+- `SetPumpLighting --color X --scope outer` reliably drove the LCDV2
+  pump-cap LED ring across multiple colour and `--disable` writes
+  (immediate render in every case observed in calm-cadence testing).
+  `--scope inner` is a no-op on this SKU (no visible LED region).
+  One transient session of ~6-7 rapid back-to-back writes appeared to
+  buffer with only the latest setting rendering after some idle time —
+  cause unknown; the C# service's continuous re-issue timer on cmd 131
+  (`Galahad2VisionController.cs:2443`) is likely the same workaround.
+- `SetFanLighting --color X` reliably drove fans (blue then red were
+  both rendered).
 
 **Next:** Phase 0d (LCD subsystem + `BCommandPacket`). Includes
 `SetLEDColors` (cmd 20) — the actual pump-cap LED driver — plus
