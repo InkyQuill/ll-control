@@ -27,3 +27,5 @@ pub mod pump_pwm;
 pub mod reset;
 
 pub mod lighting_enums;
+
+pub mod lighting;
