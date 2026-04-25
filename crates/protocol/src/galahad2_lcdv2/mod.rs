@@ -9,3 +9,5 @@
 //! - Firmware:   `1.6` (only verified revision in Phase 0a)
 //!
 //! Submodules are added incrementally as commands are verified.
+
+pub mod packets;
