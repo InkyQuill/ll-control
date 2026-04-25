@@ -1,0 +1,4 @@
+# Lian Li GALAHAD II LCD - udev rule
+# Allows non-root users to access the HID device
+
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0416", ATTRS{idProduct}=="7395", MODE="0666", TAG+="uaccess"

@@ -1,0 +1,50 @@
+[package]
+name = "lconnect_linux"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Linux client for Lian Li GALAHAD II LCD control"
+
+[dependencies]
+# GUI
+eframe = "0.27"
+egui = "0.27"
+
+# HID device communication
+hidapi = "2.5"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Utils
+bytes = "1.5"
+
+[[bin]]
+name = "test_hid"
+path = "test_hid.rs"
+
+[[bin]]
+name = "test_hid_advanced"
+path = "test_hid_advanced.rs"
+
+[[bin]]
+name = "parse_test"
+path = "parse_test.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+codegen-units = 1
