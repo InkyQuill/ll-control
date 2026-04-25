@@ -29,3 +29,5 @@ pub mod reset;
 pub mod lighting_enums;
 
 pub mod lighting;
+
+pub mod get_lighting;
