@@ -1891,3 +1891,58 @@ notes (test count, captures shipped, idiomatic Rust additions)."
 - [ ] `git log --oneline` shows ≥10 new commits since Phase 0a's tail.
 
 When all of these are checked, write **Phase 0c (lighting)** or **Phase 0d (LCD)** plan as the next sub-project.
+
+---
+
+## Post-execution notes
+
+- **Final test count:** 36 (Phase 0a: 15, +21 in this phase). Breakdown:
+  firmware 7, pwm 4, fan_pwm 3, pump_pwm 3, reset 4.
+- **Live captures shipped:** 3 — firmware, fan-pwm, pump-pwm. ResetDevice
+  was deliberately not exercised live (pump-drop risk); the CLI gate
+  (`--yes-i-really-want-to-reset`) is verified by negative test only.
+- **Crypto investigation outcome:** `CryptoHelper` is irrelevant to wire
+  format; see `docs/protocol/crypto-usage.md`. Single caller is in
+  `L-Connect-Service/.../TLFanController.cs:571` (telemetry export, not
+  transport). Bonus finding: `CryptoHelper.Decrypt` does not exist —
+  only `Encrypt` is implemented.
+- **Real-hardware quirks observed on FW 1.6** (documented in capture
+  files and `docs/protocol/galahad2-lcdv2.md`):
+  - Unsolicited cmd-0x8e status packets in the read queue between
+    commands. Verify-galahad drains stale packets before each request.
+  - GetFirmwareVersion's datetime packet (PacketNumber=1) is unreliable
+    — observed only once per USB-attach lifecycle.
+  - PacketNumber MUST be used to demux multi-packet responses; the
+    decompiled C# reads sequentially without filtering.
+  - SetPumpPWM in `source=Mcu` mode treats `percent` as a cap, not a
+    setpoint; firmware retains autonomy via internal temperature curve.
+  - SetFanPWM accepted at wire level but `fan_rpm` stayed 0 on this
+    build — fans are wired to the motherboard, not the AIO header.
+- **Idiomatic Rust additions:**
+  - `Pwm(u8)` newtype encodes the firmware's `pwm > 100 ⇒ clamp`
+    invariant into the type system.
+  - `PumpPwmSource` enum carries the `[Mcu | Motherboard]` discriminant.
+  - `FirmwareVersion` parses 7 comma-separated fields into named string
+    fields (rather than dragging raw strings through the rest of the code).
+  - `parse` was made strictly more lenient than the C# trim semantics
+    (`.trim().trim_matches('\0').trim()`) to handle whitespace-NUL-
+    whitespace inputs the C# silently mishandles.
+- **Plan deviations** (all defensible, documented in commit messages
+  and capture files):
+  - P0b-3: added a third `.trim()` in `FirmwareVersion::parse` to handle
+    `"…X \0"` inputs; strictly more lenient than C#.
+  - P0b-4 (interactive): rewrote `firmware()` in verify-galahad to drain
+    stale packets and filter by PacketNumber; the planned simple
+    `read_timeout × 2 + from_two_responses` doesn't survive real
+    hardware quirks.
+  - P0b-8: added one `assert_eq!(bytes.len(), PACKET_LEN)` to a test
+    to consume the imported `PACKET_LEN` and silence unused-import
+    warnings under `-D warnings`.
+- **Commits:** 14 in this phase (one more than the planned 13 due to a
+  separate commit for the FW-1.6 quirks fix-up in P0b-4). All
+  conventional-commit-prefixed.
+- **Next:** Phase 0c (lighting) or Phase 0d (LCD/BCommandPacket).
+  Phase 0c is the natural next step since lighting commands use the
+  same `ACommandPacket` framing already verified, while Phase 0d
+  introduces the entirely new `BCommandPacket` (512-byte) framing
+  which is a bigger lift.
