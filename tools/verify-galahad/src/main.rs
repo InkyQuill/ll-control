@@ -232,7 +232,10 @@ struct UploadJpegArgs {
     #[arg(long, default_value = "crop")]
     fit: FitModeArg,
 
-    /// JPEG quality, 1..=100.
+    /// JPEG quality, 1..=100. Default 90 (matches lconnect-image's default).
+    /// Higher quality (95+) bloats packet count without much visible improvement
+    /// on the 480×480 LCD; lower quality (≤70) loses fine detail in natural
+    /// imagery. 90 is a sane mid-default.
     #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
     quality: u8,
 
@@ -266,6 +269,18 @@ enum JpegModeArg {
     Upload,
 }
 
+impl JpegModeArg {
+    /// User-facing lowercase form, matching what the user typed on the
+    /// command line. Use this in log/error output instead of `{:?}` so
+    /// messages echo "send"/"upload" rather than "Send"/"Upload".
+    fn as_str(self) -> &'static str {
+        match self {
+            JpegModeArg::Send => "send",
+            JpegModeArg::Upload => "upload",
+        }
+    }
+}
+
 /// CLI-side rendering of the resize/fit policy.
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 enum FitModeArg {
@@ -275,6 +290,39 @@ enum FitModeArg {
     Letterbox,
     /// Stretch to 480×480 (may distort aspect ratio).
     Stretch,
+}
+
+impl FitModeArg {
+    /// User-facing lowercase form. See `JpegModeArg::as_str` for rationale.
+    fn as_str(self) -> &'static str {
+        match self {
+            FitModeArg::Crop => "crop",
+            FitModeArg::Letterbox => "letterbox",
+            FitModeArg::Stretch => "stretch",
+        }
+    }
+}
+
+/// Convert the CLI fit-mode arg + parsed letterbox background into the
+/// `lconnect-image::FitMode` the codec expects. The background colour is
+/// only meaningful for `Letterbox`, but it's parsed unconditionally so we
+/// pair them at the conversion boundary.
+///
+/// This is a free function rather than a `From` impl because the orphan
+/// rule blocks `impl From<(LocalArg, ForeignRgb)> for ForeignFitMode` —
+/// the tuple's foreignness wins over the local `FitModeArg` element, so
+/// neither the trait nor the `Self` type is local.
+fn fit_mode_from_args(
+    arg: FitModeArg,
+    bg: lconnect_protocol::galahad2_lcdv2::Rgb,
+) -> lconnect_image::FitMode {
+    match arg {
+        FitModeArg::Crop => lconnect_image::FitMode::Crop,
+        FitModeArg::Letterbox => lconnect_image::FitMode::Letterbox {
+            bg: [bg.r, bg.g, bg.b],
+        },
+        FitModeArg::Stretch => lconnect_image::FitMode::Stretch,
+    }
 }
 
 /// CLI-side rendering of the screen-vs-fan LED-ring choice.
@@ -1161,30 +1209,39 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
     };
     use std::io::Write as _;
 
+    // Refuse pathological inputs (e.g., uncompressed TIFF, decompression-bomb
+    // PNG) before `image::open` decodes them into RAM. 50 MiB is several
+    // orders of magnitude above any sane 480×480 source; well above this
+    // and we're protecting the user from an OOM rather than serving a
+    // legitimate use case.
+    const MAX_INPUT_FILE_BYTES: u64 = 50 * 1024 * 1024; // 50 MiB
+
+    let meta =
+        std::fs::metadata(&args.path).with_context(|| format!("stat {}", args.path.display()))?;
+    if meta.len() > MAX_INPUT_FILE_BYTES {
+        return Err(anyhow!(
+            "input file {} is {} bytes; refusing to load (max {} bytes / 50 MiB). \
+             For larger images, downscale first with an external tool.",
+            args.path.display(),
+            meta.len(),
+            MAX_INPUT_FILE_BYTES,
+        ));
+    }
+
     // 1. Convert input image. lconnect-image errors propagate via anyhow's
     //    `Context` (its `Error` impls `std::error::Error` via thiserror).
-    let fit = match args.fit {
-        FitModeArg::Crop => FitMode::Crop,
-        FitModeArg::Letterbox => FitMode::Letterbox {
-            bg: [
-                args.letterbox_bg.r,
-                args.letterbox_bg.g,
-                args.letterbox_bg.b,
-            ],
-        },
-        FitModeArg::Stretch => FitMode::Stretch,
-    };
+    let fit: FitMode = fit_mode_from_args(args.fit, args.letterbox_bg);
     let quality = Quality::new(args.quality)
         .with_context(|| format!("invalid --quality {}", args.quality))?;
     let prepared = prepare_jpeg_from_path(&args.path, fit, quality)
-        .with_context(|| format!("preparing JPEG from {}", args.path.display()))?;
+        .with_context(|| format!("reading or decoding input image {}", args.path.display()))?;
     println!(
-        "prepared {} bytes of {}x{} JPEG (mode={:?}, fit={:?}, quality={})",
+        "prepared {} bytes of {}x{} JPEG (mode={}, fit={}, quality={})",
         prepared.bytes.len(),
         prepared.width,
         prepared.height,
-        args.mode,
-        args.fit,
+        args.mode.as_str(),
+        args.fit.as_str(),
         args.quality,
     );
 
@@ -1226,20 +1283,57 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
         }
     }
 
-    // 4. User-consent gate (skippable with --yes). Blocks on stdin and
+    // 4. Build packets via the chosen codec. This is pure (no I/O, no
+    //    device side effects) so we do it BEFORE the consent prompt — that
+    //    way the prompt can quote the actual packet count and the JPEG
+    //    payload size, giving the user authoritative numbers to consent
+    //    to. Both codecs produce 1024-byte BCommandPacket frames; only
+    //    the cmd byte differs.
+    let packets: Vec<[u8; OUTPUT_LEN]> = match args.mode {
+        JpegModeArg::Send => {
+            build_send_jpeg_request(&prepared.bytes).context("building SendJpeg request")?
+        }
+        JpegModeArg::Upload => {
+            build_upload_jpeg_request(&prepared.bytes).context("building UploadJpeg request")?
+        }
+    };
+    let total = packets.len();
+
+    // 5. User-consent gate (skippable with --yes). Blocks on stdin and
     //    accepts only "y"/"Y" (case-insensitive); arbitrary truthy
-    //    strings are rejected.
+    //    strings are rejected. The prompt body differentiates by mode:
+    //    cmd 14 (Send) is the standard "this will change the LCD"
+    //    warning; cmd 15 (Upload) prepends a flash-wear warning because
+    //    UploadJpeg is presumed to write to non-volatile storage.
     if !args.yes {
-        let cmd_label = match args.mode {
-            JpegModeArg::Send => "cmd 14 (SendJpeg)",
-            JpegModeArg::Upload => "cmd 15 (UploadJpeg)",
+        let plural = if total == 1 { "" } else { "s" };
+        let warning = match args.mode {
+            JpegModeArg::Send => format!(
+                "WARNING: this will write {total} packet{plural} ({jpeg_size}-byte JPEG \
+                 via cmd 14, SendJpeg) to the LCD on device {vid:04x}:{pid:04x}. The \
+                 pump-cap LCD content will visibly change. Continue? [y/N] ",
+                total = total,
+                plural = plural,
+                jpeg_size = prepared.bytes.len(),
+                vid = GALAHAD2_LCDV2_VID,
+                pid = GALAHAD2_LCDV2_PID,
+            ),
+            JpegModeArg::Upload => format!(
+                "WARNING: cmd 15 (UploadJpeg) may write to non-volatile flash storage. \
+                 Flash cells have a finite write-cycle life (~10K-100K). Do not run in \
+                 loops. This will write {total} packet{plural} ({jpeg_size}-byte JPEG) \
+                 to the LCD on device {vid:04x}:{pid:04x}. Continue? [y/N] ",
+                total = total,
+                plural = plural,
+                jpeg_size = prepared.bytes.len(),
+                vid = GALAHAD2_LCDV2_VID,
+                pid = GALAHAD2_LCDV2_PID,
+            ),
         };
-        print!(
-            "WARNING: this will overwrite the current LCD content with the prepared {} -byte \
-             JPEG via {cmd_label}. The pump-cap LCD will visibly change. Continue? [y/N] ",
-            prepared.bytes.len(),
-        );
-        std::io::stdout().flush().ok();
+        print!("{}", warning);
+        std::io::stdout()
+            .flush()
+            .context("failed to flush stdout before consent prompt")?;
         let mut line = String::new();
         std::io::stdin()
             .read_line(&mut line)
@@ -1253,7 +1347,7 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
         }
     }
 
-    // 5. Optional LCDControl{mode=Application} preflight. cmd 12 is
+    // 6. Optional LCDControl{mode=Application} preflight. cmd 12 is
     //    fire-and-forget. This is a state-changing write, so it runs
     //    AFTER the consent prompt — same rule as set-led-colors. Use
     //    let-mut + field assign because `LCDControlSetting` is
@@ -1270,45 +1364,38 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
         println!("wrote {written} bytes (LCDControl, mode=Application, no response expected)");
     }
 
-    // 6. Build packets via the chosen codec. Both codecs produce 1024-
-    //    byte BCommandPacket frames; only the cmd byte differs.
-    let packets: Vec<[u8; OUTPUT_LEN]> = match args.mode {
-        JpegModeArg::Send => {
-            build_send_jpeg_request(&prepared.bytes).context("building SendJpeg request")?
-        }
-        JpegModeArg::Upload => {
-            build_upload_jpeg_request(&prepared.bytes).context("building UploadJpeg request")?
-        }
-    };
-    let total = packets.len();
-
     // 7. Per-packet write loop with short-write detection and per-failure
     //    context. Suppresses progress lines when total == 1.
     for (i, packet) in packets.iter().enumerate() {
+        let mode_str = args.mode.as_str();
         let written = device.write(packet).with_context(|| {
             format!(
-                "HID write failed on packet {} of {} ({:?})",
+                "HID write failed on packet {} of {} ({}). \
+                 If retrying does not recover the LCD, run: \
+                 verify-galahad reset --yes-i-really-want-to-reset",
                 i + 1,
                 total,
-                args.mode,
+                mode_str,
             )
         })?;
         if written != OUTPUT_LEN {
             return Err(anyhow!(
-                "short HID write on packet {} of {}: sent {} of {} bytes ({:?}). \
-                 Device state may be partially updated; rerun the same command to retry.",
+                "short HID write on packet {} of {}: sent {} of {} bytes ({}). \
+                 Device state may be partially updated; rerun the same command to retry. \
+                 If retrying does not recover the LCD, run: \
+                 verify-galahad reset --yes-i-really-want-to-reset",
                 i + 1,
                 total,
                 written,
                 OUTPUT_LEN,
-                args.mode,
+                mode_str,
             ));
         }
         if total > 1 {
             println!(
-                "wrote {} bytes ({:?} packet {}/{})",
+                "wrote {} bytes ({} packet {}/{})",
                 written,
-                args.mode,
+                mode_str,
                 i + 1,
                 total,
             );
@@ -1322,5 +1409,12 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
          with --set-application-mode (host-driven LCD mode may be required for \
          cmd 14/15 on some firmware revisions; this is empirically unverified)."
     );
+    if args.set_application_mode {
+        println!(
+            "note: --set-application-mode leaves the LCD in host-driven Application mode. \
+             The device stays in this mode until replugged, reset (cmd 142), or sent another \
+             LCDControl with mode=LocalUI."
+        );
+    }
     Ok(())
 }
