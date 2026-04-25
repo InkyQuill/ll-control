@@ -4,8 +4,7 @@
 //! LightingDirection.cs, ARGBSignalSource.cs, PumpLightingScope.cs.
 
 use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
-    ArgbSignalSource, FanLightingMode, LightingDirection,
-    PumpLightingMode, PumpLightingScope,
+    ArgbSignalSource, FanLightingMode, LightingDirection, PumpLightingMode, PumpLightingScope,
 };
 
 #[test]
