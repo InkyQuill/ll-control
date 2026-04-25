@@ -68,6 +68,18 @@ pub enum Error {
     /// A brightness percent value was outside the supported 0..=100 range.
     #[error("invalid brightness percent: {0} (must be 0..=100)")]
     InvalidBrightness(u8),
+
+    /// An LED color array was empty or exceeded the single-packet maximum
+    /// for its target path.
+    #[error("invalid LED count for {kind}: got {count} (must be 1..={max})")]
+    InvalidLedCount {
+        /// `"fan"` or `"screen"` to disambiguate which LED path was targeted.
+        kind: &'static str,
+        /// The caller-provided LED count.
+        count: usize,
+        /// The single-packet maximum for this LED path.
+        max: usize,
+    },
 }
 
 /// Convenience alias for `Result<T, protocol::Error>`.
