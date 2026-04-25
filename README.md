@@ -1,7 +1,7 @@
 # L-Connect Linux
 
-Linux-native client for Lian Li L-Connect 3 hardware. Currently in
-**Phase 0a** — protocol verification only. No daemon, no GUI yet.
+Linux-native client for Lian Li L-Connect 3 hardware. Currently nearing the
+end of **Phase 0c** — protocol verification only. No daemon, no GUI yet.
 
 ## Status
 
@@ -12,7 +12,9 @@ Linux-native client for Lian Li L-Connect 3 hardware. Currently in
   and soft-reset codec (`ResetDevice`) — all verified against real hardware
   (or codec-tested with safety gate, in the case of reset)
 - ✅ Crypto-not-used-at-transport confirmed (`docs/protocol/crypto-usage.md`)
-- 🚧 Lighting commands — Phase 0c
+- 🌗 Lighting subsystem (`Get/Set {Fan,Pump}Lighting`) — codecs and
+  CLI complete and integration-tested (77 tests across the protocol
+  crate); live-device verification pending
 - 🚧 LCD config + frame upload — Phase 0d
 - 🚧 Daemon, GUI, theme engine — Phases 1–6
 
@@ -47,6 +49,10 @@ cargo run -p verify-galahad -- firmware
 cargo run -p verify-galahad -- fan --percent 50
 cargo run -p verify-galahad -- pump --percent 75 --source mcu
 # cargo run -p verify-galahad -- reset --yes-i-really-want-to-reset  # dangerous
+cargo run -p verify-galahad -- get-pump-lighting       # read modes & limits
+cargo run -p verify-galahad -- set-pump-lighting       # static red on pump cap (default flags)
+cargo run -p verify-galahad -- get-fan-lighting
+cargo run -p verify-galahad -- set-fan-lighting --color '#0000FF'
 ```
 
 ## udev permissions
