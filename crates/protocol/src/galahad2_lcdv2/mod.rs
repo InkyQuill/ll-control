@@ -19,3 +19,5 @@ pub mod handshake;
 pub mod firmware;
 
 pub mod pwm;
+
+pub mod fan_pwm;
