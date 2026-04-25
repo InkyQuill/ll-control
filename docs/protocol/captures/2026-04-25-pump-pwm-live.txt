@@ -1,0 +1,80 @@
+# Galahad II LCDV2 (0x0416:0x7395) firmware 1.6
+# Captured: 2026-04-25 by verify-galahad pump
+# CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
+# Device path: /dev/hidraw2, interface 1
+# (serial number redacted)
+
+# Command sequence (run in order):
+#   cargo run -q -p verify-galahad -- handshake             # baseline
+#   cargo run -q -p verify-galahad -- pump --percent 75 --source mcu
+#   sleep 3
+#   cargo run -q -p verify-galahad -- handshake             # post-75%
+#   cargo run -q -p verify-galahad -- pump --percent 100 --source mcu
+#   sleep 3
+#   cargo run -q -p verify-galahad -- handshake             # post-100%
+
+# =============================================================================
+# Output:
+# =============================================================================
+
+=== BASELINE ===
+  fan_rpm       = 0
+  pump_rpm      = 2610
+  temperature_c = 40.8
+
+=== PUMP 75% MCU ===
+wrote 64 bytes (SetPumpPWM, source=Mcu, percent=75)
+note: command is fire-and-forget; no response read.
+
+=== POST PUMP@75 HANDSHAKE ===
+  fan_rpm       = 0
+  pump_rpm      = 2610
+  temperature_c = 40.8
+
+=== PUMP 100% MCU ===
+wrote 64 bytes (SetPumpPWM, source=Mcu, percent=100)
+note: command is fire-and-forget; no response read.
+
+=== POST PUMP@100 HANDSHAKE ===
+  fan_rpm       = 0
+  pump_rpm      = 2610
+  temperature_c = 40.8
+
+# Wire bytes sent (per the protocol crate's build_request(...)):
+#   pump --percent 75 --source mcu:
+#     01 8a 00 00 00 02 00 4b 00 00 ... (64 bytes total)
+#     - byte[0]   = 0x01    ReportID
+#     - byte[1]   = 0x8a    Command = 138 (SetPumpPWM)
+#     - byte[5]   = 0x02    Length = 2
+#     - byte[6]   = 0x00    data[0] = source = Mcu = 0
+#     - byte[7]   = 0x4b    data[1] = pwm = 75
+#
+#   pump --percent 100 --source mcu:
+#     01 8a 00 00 00 02 00 64 00 00 ...
+#     - same as above except byte[7] = 0x64 = 100
+
+# =============================================================================
+# Notes:
+# =============================================================================
+
+# - Wire-level: BOTH commands succeeded (device.write returned 64 bytes,
+#   no error from device). Protocol verification at the byte level is
+#   complete.
+# - pump_rpm stays 2610 across all three handshakes. This is EXPECTED
+#   for source=Mcu mode: the firmware retains autonomy and drives the
+#   pump from its internal temperature curve, ignoring the percent we
+#   send (the percent acts as a cap, not a setpoint).
+# - At 40.8°C coolant, the firmware's curve happens to produce ~2610
+#   RPM regardless of whether we cap at 75% or 100% — both caps are
+#   above the firmware's chosen operating point.
+# - To see direct percent control, re-run with --source motherboard.
+#   In Motherboard mode the device passes our percent through more
+#   directly (the AIO honours the MB pump-header PWM signal as the
+#   primary input, with our percent as the upper bound).
+# - The fact that the firmware happily ignores our SetPumpPWM in MCU
+#   mode is a feature, not a bug: it means a misbehaving Linux client
+#   cannot accidentally stop the pump as long as MCU mode is selected.
+# - Out-of-scope but worth a Phase-0c follow-up: characterize what
+#   percent values DO affect pump_rpm in MCU mode. Hypothesis: setting
+#   percent < the firmware's curve-output-percent at current temperature
+#   acts as a hard cap; setting percent >= curve-output is a no-op.

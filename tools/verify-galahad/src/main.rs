@@ -36,6 +36,33 @@ enum Cmd {
         #[arg(long)]
         percent: u8,
     },
+    /// Send SetPumpPWM (cmd 138). NOTE: physically changes pump speed —
+    /// running the pump too low can cause the AIO to overheat.
+    Pump {
+        /// Percent duty cycle, 0..=100. Setting < 30 is risky on most builds.
+        #[arg(long)]
+        percent: u8,
+        /// Who controls the pump: `mcu` (firmware curve) or `motherboard` (MB PWM signal).
+        #[arg(long, default_value = "mcu")]
+        source: PumpSourceArg,
+    },
+}
+
+/// CLI-side rendering of `PumpPwmSource`.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum PumpSourceArg {
+    Mcu,
+    Motherboard,
+}
+
+impl From<PumpSourceArg> for lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource {
+    fn from(v: PumpSourceArg) -> Self {
+        use lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource as P;
+        match v {
+            PumpSourceArg::Mcu => P::Mcu,
+            PumpSourceArg::Motherboard => P::Motherboard,
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -45,6 +72,7 @@ fn main() -> Result<()> {
         Cmd::Handshake => handshake(),
         Cmd::Firmware => firmware(),
         Cmd::Fan { percent } => fan(percent),
+        Cmd::Pump { percent, source } => pump(percent, source.into()),
     }
 }
 
@@ -281,5 +309,35 @@ fn fan(percent: u8) -> Result<()> {
     println!("wrote {written} bytes (SetFanPWM, percent={percent})");
     println!("note: command is fire-and-forget; no response read.");
     println!("verify by running `verify-galahad handshake` to read fan_rpm.");
+    Ok(())
+}
+
+fn pump(
+    percent: u8,
+    source: lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource,
+) -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::pump_pwm::build_request;
+    use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+
+    let pwm = Pwm::new(percent)
+        .map_err(|e| anyhow!("invalid percent: {e}"))?;
+
+    if percent < 30 {
+        eprintln!(
+            "WARNING: pump percent < 30 can cause the AIO to overheat. \
+             Re-run with --percent >=30 unless you know what you're doing."
+        );
+    }
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device")?;
+
+    let req = build_request(source, pwm);
+    let written = device.write(&req).context("HID write failed")?;
+    println!("wrote {written} bytes (SetPumpPWM, source={source:?}, percent={percent})");
+    println!("note: command is fire-and-forget; no response read.");
+    println!("verify by running `verify-galahad handshake` to read pump_rpm.");
     Ok(())
 }
