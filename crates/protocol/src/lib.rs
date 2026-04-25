@@ -52,6 +52,18 @@ pub enum Error {
     /// A response indicated its data was not valid (device-side flag).
     #[error("device reported response data invalid")]
     DataNotValid,
+
+    /// A firmware version string did not have the expected 7
+    /// comma-separated fields.
+    #[error("malformed firmware version string: {got_fields} fields, need 7")]
+    MalformedFirmwareVersion {
+        /// Number of comma-separated fields actually present.
+        got_fields: usize,
+    },
+
+    /// A PWM percent value was outside the supported 0..=100 range.
+    #[error("invalid PWM percent: {0} (must be 0..=100)")]
+    InvalidPwmPercent(u8),
 }
 
 /// Convenience alias for `Result<T, protocol::Error>`.
