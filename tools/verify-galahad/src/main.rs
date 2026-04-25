@@ -7,7 +7,7 @@
 //! Once Phase 1 stands up the real daemon, this tool is retired.
 
 use anyhow::{anyhow, Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use hidapi::HidApi;
 
 /// VID/PID pair for Galahad II LCDV2.
@@ -52,6 +52,75 @@ enum Cmd {
         #[arg(long)]
         yes_i_really_want_to_reset: bool,
     },
+    /// Send GetPumpLightingInfo (cmd 130) and decode the response.
+    GetPumpLighting,
+    /// Send SetPumpLighting (cmd 131). NOTE: physically changes pump LEDs.
+    SetPumpLighting(SetPumpLightingArgs),
+    /// Send GetFanLightingInfo (cmd 132) and decode the response.
+    GetFanLighting,
+    /// Send SetFanLighting (cmd 133). NOTE: physically changes fan LEDs.
+    SetFanLighting(SetFanLightingArgs),
+}
+
+/// Flags for `set-pump-lighting`.
+#[derive(Args, Debug)]
+struct SetPumpLightingArgs {
+    /// Lighting mode (effect). Defaults to a solid colour.
+    #[arg(long, default_value = "static-color")]
+    mode: PumpModeArg,
+    /// Primary colour as `#RRGGBB` (six hex digits, optional leading `#`).
+    #[arg(long, default_value = "#FF0000")]
+    color: String,
+    /// Brightness, 0..=100.
+    #[arg(long, default_value_t = 50)]
+    brightness: u8,
+    /// Animation speed, 0..=100. Use 0 for non-animated modes.
+    #[arg(long, default_value_t = 0)]
+    speed: u8,
+    /// Which LED ring to target.
+    #[arg(long, default_value = "inner")]
+    scope: PumpScopeArg,
+    /// Where the ARGB signal comes from.
+    #[arg(long, default_value = "mcu")]
+    source: ArgbSourceArg,
+    /// Direction of motion-based effects.
+    #[arg(long, default_value = "right")]
+    direction: DirectionArg,
+    /// Switch the pump LEDs off entirely.
+    #[arg(long)]
+    disable: bool,
+}
+
+/// Flags for `set-fan-lighting`.
+#[derive(Args, Debug)]
+struct SetFanLightingArgs {
+    /// Lighting mode (effect). Defaults to a solid colour.
+    #[arg(long, default_value = "static-color")]
+    mode: FanModeArg,
+    /// Primary colour as `#RRGGBB` (six hex digits, optional leading `#`).
+    #[arg(long, default_value = "#FF0000")]
+    color: String,
+    /// Brightness, 0..=100.
+    #[arg(long, default_value_t = 50)]
+    brightness: u8,
+    /// Animation speed, 0..=100. Use 0 for non-animated modes.
+    #[arg(long, default_value_t = 0)]
+    speed: u8,
+    /// Where the ARGB signal comes from.
+    #[arg(long, default_value = "mcu")]
+    source: ArgbSourceArg,
+    /// Direction of motion-based effects.
+    #[arg(long, default_value = "right")]
+    direction: DirectionArg,
+    /// Switch the fan LEDs off entirely.
+    #[arg(long)]
+    disable: bool,
+    /// Mirror pump lighting onto the fans.
+    #[arg(long)]
+    sync_to_pump: bool,
+    /// Number of LEDs in the fan ring (varies by SKU).
+    #[arg(long, default_value_t = 24)]
+    number_of_led: u8,
 }
 
 /// CLI-side rendering of `PumpPwmSource`.
@@ -71,6 +140,161 @@ impl From<PumpSourceArg> for lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPw
     }
 }
 
+/// CLI-side rendering of `PumpLightingMode`. `Unknown` is intentionally
+/// not exposed (it would never round-trip through the device).
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum PumpModeArg {
+    Rainbow,
+    RainbowMorph,
+    StaticColor,
+    Breathing,
+    Runway,
+    Meteor,
+    TickerTape,
+    Fluctuation,
+    Transmit,
+    ColorfulStarryNight,
+    StaticStarryNight,
+    Voice,
+    BigBang,
+    Burst,
+    ColorsMorph,
+    Bounce,
+}
+
+impl From<PumpModeArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingMode {
+    fn from(v: PumpModeArg) -> Self {
+        use lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingMode as P;
+        match v {
+            PumpModeArg::Rainbow => P::Rainbow,
+            PumpModeArg::RainbowMorph => P::RainbowMorph,
+            PumpModeArg::StaticColor => P::StaticColor,
+            PumpModeArg::Breathing => P::Breathing,
+            PumpModeArg::Runway => P::Runway,
+            PumpModeArg::Meteor => P::Meteor,
+            PumpModeArg::TickerTape => P::TickerTape,
+            PumpModeArg::Fluctuation => P::Fluctuation,
+            PumpModeArg::Transmit => P::Transmit,
+            PumpModeArg::ColorfulStarryNight => P::ColorfulStarryNight,
+            PumpModeArg::StaticStarryNight => P::StaticStarryNight,
+            PumpModeArg::Voice => P::Voice,
+            PumpModeArg::BigBang => P::BigBang,
+            PumpModeArg::Burst => P::Burst,
+            PumpModeArg::ColorsMorph => P::ColorsMorph,
+            PumpModeArg::Bounce => P::Bounce,
+        }
+    }
+}
+
+/// CLI-side rendering of `FanLightingMode`. `Unknown` is intentionally
+/// not exposed.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum FanModeArg {
+    Rainbow,
+    RainbowMorph,
+    StaticColor,
+    Breathing,
+    Runway,
+    Meteor,
+}
+
+impl From<FanModeArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::FanLightingMode {
+    fn from(v: FanModeArg) -> Self {
+        use lconnect_protocol::galahad2_lcdv2::lighting_enums::FanLightingMode as F;
+        match v {
+            FanModeArg::Rainbow => F::Rainbow,
+            FanModeArg::RainbowMorph => F::RainbowMorph,
+            FanModeArg::StaticColor => F::StaticColor,
+            FanModeArg::Breathing => F::Breathing,
+            FanModeArg::Runway => F::Runway,
+            FanModeArg::Meteor => F::Meteor,
+        }
+    }
+}
+
+/// CLI-side rendering of `PumpLightingScope`.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum PumpScopeArg {
+    Inner,
+    Outer,
+    All,
+}
+
+impl From<PumpScopeArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingScope {
+    fn from(v: PumpScopeArg) -> Self {
+        use lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingScope as S;
+        match v {
+            PumpScopeArg::Inner => S::Inner,
+            PumpScopeArg::Outer => S::Outer,
+            PumpScopeArg::All => S::All,
+        }
+    }
+}
+
+/// CLI-side rendering of `ArgbSignalSource`.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum ArgbSourceArg {
+    Mcu,
+    Motherboard,
+    Application,
+}
+
+impl From<ArgbSourceArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource {
+    fn from(v: ArgbSourceArg) -> Self {
+        use lconnect_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource as A;
+        match v {
+            ArgbSourceArg::Mcu => A::Mcu,
+            ArgbSourceArg::Motherboard => A::Motherboard,
+            ArgbSourceArg::Application => A::Application,
+        }
+    }
+}
+
+/// CLI-side rendering of `LightingDirection`. The protocol enum has two
+/// composite names (`RightOrClockwise`, `LeftOrCounterClockwise`); the CLI
+/// exposes them as plain `right`/`left` to match the other axis names.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum DirectionArg {
+    Right,
+    Left,
+    Up,
+    Down,
+    Spread,
+    Gather,
+}
+
+impl From<DirectionArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::LightingDirection {
+    fn from(v: DirectionArg) -> Self {
+        use lconnect_protocol::galahad2_lcdv2::lighting_enums::LightingDirection as D;
+        match v {
+            DirectionArg::Right => D::RightOrClockwise,
+            DirectionArg::Left => D::LeftOrCounterClockwise,
+            DirectionArg::Up => D::Up,
+            DirectionArg::Down => D::Down,
+            DirectionArg::Spread => D::Spreaded,
+            DirectionArg::Gather => D::Gathered,
+        }
+    }
+}
+
+/// Parse a `#RRGGBB` (or bare `RRGGBB`) string into an `Rgb`.
+fn parse_hex_color(s: &str) -> Result<lconnect_protocol::galahad2_lcdv2::lighting::Rgb> {
+    let hex = s.strip_prefix('#').unwrap_or(s);
+    if hex.len() != 6 {
+        return Err(anyhow!(
+            "invalid --color {s:?}: expected 6 hex digits (e.g. #FF0000), got {} digits",
+            hex.len(),
+        ));
+    }
+    let n = u32::from_str_radix(hex, 16)
+        .map_err(|e| anyhow!("invalid --color {s:?}: not valid hex: {e}"))?;
+    Ok(lconnect_protocol::galahad2_lcdv2::lighting::Rgb {
+        r: ((n >> 16) & 0xFF) as u8,
+        g: ((n >> 8) & 0xFF) as u8,
+        b: (n & 0xFF) as u8,
+    })
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
@@ -82,6 +306,10 @@ fn main() -> Result<()> {
         Cmd::Reset {
             yes_i_really_want_to_reset,
         } => reset_device(yes_i_really_want_to_reset),
+        Cmd::GetPumpLighting => get_pump_lighting(),
+        Cmd::SetPumpLighting(args) => set_pump_lighting(args),
+        Cmd::GetFanLighting => get_fan_lighting(),
+        Cmd::SetFanLighting(args) => set_fan_lighting(args),
     }
 }
 
@@ -374,5 +602,168 @@ fn reset_device(yes: bool) -> Result<()> {
     println!("read {read} bytes");
     parse_response(&buf).context("reset response decode failed")?;
     println!("reset acknowledged. The device will now drop from USB; replug or wait.");
+    Ok(())
+}
+
+fn get_pump_lighting() -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::get_lighting::{
+        build_get_pump_lighting_info_request, parse_pump_lighting_info_response,
+    };
+    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device — see `verify-galahad list` and udev rules")?;
+
+    let req = build_get_pump_lighting_info_request();
+    let written = device.write(&req).context("HID write failed")?;
+    println!("wrote {written} bytes (GetPumpLightingInfo)");
+
+    let mut buf = [0u8; PACKET_LEN];
+    let read = device
+        .read_timeout(&mut buf, 1000)
+        .context("HID read_timeout failed")?;
+    println!("read {read} bytes");
+
+    match parse_pump_lighting_info_response(&buf) {
+        Ok(info) => {
+            println!();
+            println!("decoded:");
+            println!("  max_speed      = {}", info.max_speed);
+            println!("  max_brightness = {}", info.max_brightness);
+            println!("  modes ({}):", info.modes.len());
+            for m in &info.modes {
+                println!("    - {m:?}");
+            }
+            Ok(())
+        }
+        Err(e) => Err(anyhow!("decode failed: {e}")),
+    }
+}
+
+fn set_pump_lighting(args: SetPumpLightingArgs) -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::lighting::PumpLightingSetting;
+    use lconnect_protocol::galahad2_lcdv2::set_lighting::build_set_pump_lighting_request;
+
+    let color = parse_hex_color(&args.color)?;
+    let setting = PumpLightingSetting {
+        scope: args.scope.into(),
+        mode: args.mode.into(),
+        brightness: args.brightness,
+        speed: args.speed,
+        color1: color,
+        direction: args.direction.into(),
+        disabled: args.disable,
+        source: args.source.into(),
+        ..PumpLightingSetting::default()
+    };
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device")?;
+
+    let req = build_set_pump_lighting_request(setting);
+    let written = device.write(&req).context("HID write failed")?;
+    println!(
+        "wrote {written} bytes (SetPumpLighting, mode={mode:?}, color=#{r:02X}{g:02X}{b:02X}, \
+         brightness={br}, speed={sp}, scope={sc:?}, source={src:?}, direction={dir:?}, disabled={dis})",
+        mode = setting.mode,
+        r = color.r,
+        g = color.g,
+        b = color.b,
+        br = setting.brightness,
+        sp = setting.speed,
+        sc = setting.scope,
+        src = setting.source,
+        dir = setting.direction,
+        dis = setting.disabled,
+    );
+    println!("note: command is fire-and-forget; LEDs may take ~50ms to update.");
+    println!("verify by looking at the pump LEDs, or run `verify-galahad get-pump-lighting` to read modes back.");
+    Ok(())
+}
+
+fn get_fan_lighting() -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::get_lighting::{
+        build_get_fan_lighting_info_request, parse_fan_lighting_info_response,
+    };
+    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device — see `verify-galahad list` and udev rules")?;
+
+    let req = build_get_fan_lighting_info_request();
+    let written = device.write(&req).context("HID write failed")?;
+    println!("wrote {written} bytes (GetFanLightingInfo)");
+
+    let mut buf = [0u8; PACKET_LEN];
+    let read = device
+        .read_timeout(&mut buf, 1000)
+        .context("HID read_timeout failed")?;
+    println!("read {read} bytes");
+
+    match parse_fan_lighting_info_response(&buf) {
+        Ok(info) => {
+            println!();
+            println!("decoded:");
+            println!("  max_speed      = {}", info.max_speed);
+            println!("  max_brightness = {}", info.max_brightness);
+            println!("  modes ({}):", info.modes.len());
+            for m in &info.modes {
+                println!("    - {m:?}");
+            }
+            Ok(())
+        }
+        Err(e) => Err(anyhow!("decode failed: {e}")),
+    }
+}
+
+fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::lighting::FanLightingSetting;
+    use lconnect_protocol::galahad2_lcdv2::set_lighting::build_set_fan_lighting_request;
+
+    let color = parse_hex_color(&args.color)?;
+    let setting = FanLightingSetting {
+        mode: args.mode.into(),
+        brightness: args.brightness,
+        speed: args.speed,
+        color1: color,
+        direction: args.direction.into(),
+        disabled: args.disable,
+        source: args.source.into(),
+        sync_to_pump: args.sync_to_pump,
+        number_of_led: args.number_of_led,
+        ..FanLightingSetting::default()
+    };
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device")?;
+
+    let req = build_set_fan_lighting_request(setting);
+    let written = device.write(&req).context("HID write failed")?;
+    println!(
+        "wrote {written} bytes (SetFanLighting, mode={mode:?}, color=#{r:02X}{g:02X}{b:02X}, \
+         brightness={br}, speed={sp}, source={src:?}, direction={dir:?}, disabled={dis}, \
+         sync_to_pump={stp}, number_of_led={nled})",
+        mode = setting.mode,
+        r = color.r,
+        g = color.g,
+        b = color.b,
+        br = setting.brightness,
+        sp = setting.speed,
+        src = setting.source,
+        dir = setting.direction,
+        dis = setting.disabled,
+        stp = setting.sync_to_pump,
+        nled = setting.number_of_led,
+    );
+    println!("note: command is fire-and-forget; LEDs may take ~50ms to update.");
+    println!("verify by looking at the fan LEDs, or run `verify-galahad get-fan-lighting` to read modes back.");
     Ok(())
 }
