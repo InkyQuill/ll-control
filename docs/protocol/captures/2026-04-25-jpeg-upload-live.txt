@@ -4,6 +4,11 @@
 # USB: 0416:7395
 # CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
 #
+# CORRECTION (post-publication): an earlier draft claimed cmd 14's
+# hold time was 2s without mode change and 20s with --set-application-mode.
+# Subsequent multi-run testing showed the hold is ~20s regardless of
+# mode. The text below reflects the corrected understanding.
+#
 # OUTCOME: Phase 0d's headline demo. The end-to-end pipeline
 # (lconnect-image converter -> 480x480 JPEG -> BCommandPacket chunks
 # -> device) drives the LCD via cmd 14. Cmd 14 is empirically
@@ -23,7 +28,7 @@ Output (relevant lines):
   note: command is fire-and-forget; LCD frame may take ~50-200ms to update.
 
 Visual outcome (user-observed): pump-cap LCD displayed the radial
-gradient. After ~2 seconds the LCD reverted to its default LocalUI
+gradient. After ~20 seconds the LCD reverted to its default LocalUI
 content (Lian Li logo). The 21-packet multi-chunk transfer was
 tear-free.
 
@@ -53,17 +58,18 @@ Command:
 
 Visual outcome (user-observed): pump-cap LCD displayed the strawberry
 photograph. After ~20 seconds the LCD reverted to its default LocalUI
-content. This is roughly a 10x extension over Run 1's ~2-second hold.
+content.
 
 ## Architecture inferred
 
 - Cmd 14 (SendJpeg) is a transient single-frame command. The firmware
   decodes and displays the JPEG within ~50ms of the last packet but
-  holds it for only a bounded time before auto-reverting to the
-  LocalUI default. The hold time depends on LCDControlMode (numbers
-  are user-observed approximations, not firmware-documented timeouts):
-    - LocalUI (default boot mode) -> ~2 second hold.
-    - Application -> ~20 second hold (~10x).
+  holds it for only ~20 seconds before auto-reverting to the LocalUI
+  default. Multiple test runs confirm the hold time is independent
+  of LCDControlMode — `--set-application-mode` preflight produces no
+  observable change in cmd 14's auto-revert behaviour. (Application
+  mode may have other effects we have not characterized; the
+  timeout-extender hypothesis was wrong.)
   The C# default LCDControlSetting.VideoFPS = 24 and the service's
   brightness-path VideoFPS = 24 are consistent with a continuous-frame
   architecture: the host is presumably expected to stream frames at

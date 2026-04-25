@@ -477,24 +477,17 @@ No response expected.
 
 ### Caveats
 
-- **Cmd 14 is a transient single-frame command, not a persistent
-  display.** The firmware decodes and displays the JPEG within
-  ~50 ms of the last packet but auto-reverts to LocalUI default
-  after a bounded hold time. User-observed approximations on FW 1.6:
-    - Default LocalUI mode: ~2 second hold.
-    - `LCDControlMode::Application` (cmd 12 preflight): ~20 second
-      hold (~10x extension).
-  These numbers are empirical, observed by the user across the runs
-  in the capture file; they are not firmware-documented timeouts.
-- **For sustained static-image display, the host must refresh
-  periodically.** A daemon-level refresh loop at ≤15 s intervals (in
-  Application mode) keeps the image up indefinitely. The C# UI's
-  default `LCDControlSetting.VideoFPS = 24` and the service's
-  brightness-path `VideoFPS = 24` are consistent with a
-  continuous-frame architecture for streamed dynamic content; we
-  haven't proven that the firmware actually polls at 24 Hz, but the
-  observed timeout extension under Application mode is consistent
-  with that hypothesis.
+- **Cmd 14 is a transient single-frame command, NOT a persistent
+  display.** The firmware decodes and displays the JPEG within ~50ms
+  of the last packet but auto-reverts to LocalUI default after
+  **~20 seconds** (mode-independent — multiple test runs confirm
+  `--set-application-mode` preflight produces no observable change
+  in the hold time). For sustained static-image display, the daemon
+  must send a fresh SendJpeg every ≤15 seconds. The C# UI's
+  `LCDControlSetting.VideoFPS = 24` is consistent with a
+  continuous-frame architecture (24 fps × ~20 s ≈ a 480-frame
+  buffer), though we have no direct evidence on the firmware's
+  internal mechanism.
 - **Do not interleave cmd 14 (`SendJpeg`) and cmd 15 (`UploadJpeg`)
   writes on the same device handle.** If the firmware uses
   different buffering or apply semantics for the two commands,
@@ -720,9 +713,10 @@ Coverage in subsequent phases:
     `0x00` (available) on a healthy device.
   - ✅ `SendJpeg` (14) — live-verified 2026-04-25 against FW 1.6, see
     section above. Empirically a transient single-frame command:
-    user-observed ~2 s hold in default LocalUI mode, ~20 s hold after
-    `LCDControl{mode=Application}` preflight. Daemon-level static-image
-    display will need a refresh loop.
+    user-observed ~20 s hold, mode-independent (multiple test runs
+    confirm `--set-application-mode` preflight produces no observable
+    change). Daemon-level static-image display will need a refresh
+    loop.
   - ✅ `UploadJpeg` (15) — codec-verified; live 56-packet write ACK'd in
     full but no visible LCD activation on FW 1.6 in either default or
     Application-mode preflight. Activation path unknown (stored-for-boot

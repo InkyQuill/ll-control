@@ -72,21 +72,16 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 ///
 /// **Cmd 14 is a transient single-frame command, NOT a persistent
 /// display.** The firmware decodes and displays the JPEG within
-/// ~50 ms of the last packet but auto-reverts to LocalUI default
-/// after a bounded hold time. User-observed approximations (not
-/// firmware-documented timeouts):
-/// - Default LocalUI mode: ~2 second hold.
-/// - [`super::lcd::LCDControlMode::Application`] (set via
-///   [`super::lcd::build_lcd_control_request`]): ~20 second hold
-///   (~10x extension).
-///
-/// For sustained static-image display, the daemon must send a fresh
-/// `SendJpeg` periodically — ≤15 s intervals (in Application mode) is
-/// comfortably within the observed hold time. The C# UI's default
-/// `LCDControlSetting.VideoFPS = 24` is consistent with a continuous-
-/// frame architecture for streamed dynamic content; the observed
-/// timeout extension under Application mode is consistent with that
-/// hypothesis but is not direct proof of a 24 Hz refresh expectation.
+/// ~50ms of the last packet but auto-reverts to LocalUI default
+/// after ~20 seconds (mode-independent — multiple test runs confirm
+/// [`LCDControlMode::Application`](super::lcd::LCDControlMode::Application)
+/// preflight produces no observable change in the hold time). For
+/// sustained static-image display, the daemon must send a fresh
+/// SendJpeg every ≤15 seconds. The C# UI's
+/// `LCDControlSetting.VideoFPS = 24` is consistent with a
+/// continuous-frame architecture (24 fps × ~20 s ≈ a 480-frame
+/// buffer), though we have no direct evidence on the firmware's
+/// internal mechanism.
 ///
 /// **Do not interleave cmd 14 (`SendJpeg`) and cmd 15 (`UploadJpeg`)
 /// writes on the same device handle.** If the firmware uses different
