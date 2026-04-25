@@ -213,3 +213,91 @@ impl PumpLightingSetting {
         b
     }
 }
+
+/// Parsed `Get*LightingInfo` response.
+///
+/// Generic over the mode enum so the same shape serves both fan and
+/// pump info responses. Use the [`FanLightingInfo`] / [`PumpLightingInfo`]
+/// type aliases.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LightingInfo<M> {
+    /// Modes the device advertises as supported.
+    pub modes: Vec<M>,
+    /// Maximum value the device accepts for `Speed` in a setting.
+    pub max_speed: u8,
+    /// Maximum value the device accepts for `Brightness` in a setting.
+    pub max_brightness: u8,
+}
+
+/// `Get*LightingInfo` parsed for fan settings.
+pub type FanLightingInfo = LightingInfo<FanLightingMode>;
+/// `Get*LightingInfo` parsed for pump settings.
+pub type PumpLightingInfo = LightingInfo<PumpLightingMode>;
+
+/// The escape-byte marker (`0xA5`).
+const ESCAPE: u8 = 0xA5;
+/// The mode-list terminator that follows the escape byte (`0x5A`).
+const TERMINATOR: u8 = 0x5A;
+
+/// Parse a `Get*LightingInfo` response data slice.
+///
+/// Generic so it serves both fan and pump cases. `from_byte` maps a
+/// byte to a mode enum (handling unknowns).
+fn parse_lighting_info<M>(data: &[u8], from_byte: fn(u8) -> M) -> crate::Result<LightingInfo<M>> {
+    if data.is_empty() {
+        return Err(crate::Error::BufferTooShort { need: 1, got: 0 });
+    }
+
+    let mut modes: Vec<M> = Vec::new();
+    let mut escape = false;
+    let mut idx = 0usize;
+    let mut found_terminator = false;
+    while idx < data.len() {
+        let b = data[idx];
+        idx += 1;
+        if escape {
+            // C# bug-compat: terminator ends the loop; anything else is
+            // silently dropped (escape clears, no mode pushed).
+            escape = false;
+            if b == TERMINATOR {
+                found_terminator = true;
+                break;
+            }
+        } else if b == ESCAPE {
+            escape = true;
+        } else {
+            modes.push(from_byte(b));
+        }
+    }
+
+    if !found_terminator {
+        // We reached end-of-buffer without seeing the A5/5A pair. The C#
+        // doesn't distinguish this case from "no trailer bytes" — both
+        // surface as `length - num < 2`. We surface as BufferTooShort.
+        return Err(crate::Error::BufferTooShort { need: 2, got: 0 });
+    }
+
+    let trailer_remaining = data.len().saturating_sub(idx);
+    if trailer_remaining < 2 {
+        return Err(crate::Error::BufferTooShort {
+            need: 2,
+            got: trailer_remaining,
+        });
+    }
+
+    Ok(LightingInfo {
+        modes,
+        max_speed: data[idx],
+        max_brightness: data[idx + 1],
+    })
+}
+
+/// Parse a `GetFanLightingInfo` (cmd 132) response data slice.
+pub fn parse_fan_lighting_info(data: &[u8]) -> crate::Result<FanLightingInfo> {
+    parse_lighting_info(data, FanLightingMode::from_u8)
+}
+
+/// Parse a `GetPumpLightingInfo` (cmd 130) response data slice.
+pub fn parse_pump_lighting_info(data: &[u8]) -> crate::Result<PumpLightingInfo> {
+    parse_lighting_info(data, PumpLightingMode::from_u8)
+}
