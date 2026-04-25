@@ -3,7 +3,7 @@
 use lconnect_protocol::galahad2_lcdv2::lighting::Rgb;
 use lconnect_protocol::galahad2_lcdv2::set_led_colors::{
     build_set_fan_led_colors_request, build_set_screen_led_colors_request, fan_led_payload,
-    screen_led_payload,
+    screen_led_payload, MAX_FAN_LEDS, MAX_SCREEN_LEDS,
 };
 
 #[test]
@@ -49,7 +49,7 @@ fn screen_payload_uniform_white_8_leds_size_is_correct() {
 #[test]
 fn build_set_screen_led_request_emits_cmd_20_chunked_correctly() {
     let colors = vec![Rgb::RED; 16]; // 16 LEDs, screen path
-    let pkts = build_set_screen_led_colors_request(&colors);
+    let pkts = build_set_screen_led_colors_request(&colors).expect("valid LED count");
     let expected_len = (16 + 8) * 3 + 1; // 73 bytes — one packet
     assert_eq!(pkts.len(), 1);
     let bytes = pkts[0];
@@ -70,7 +70,7 @@ fn build_set_screen_led_request_emits_cmd_20_chunked_correctly() {
 #[test]
 fn build_set_fan_led_request_emits_cmd_20_packets() {
     let colors = vec![Rgb::GREEN; 24];
-    let pkts = build_set_fan_led_colors_request(&colors);
+    let pkts = build_set_fan_led_colors_request(&colors).expect("valid LED count");
     let expected_len = 24 * 3 + 1; // 73 bytes
     assert_eq!(pkts.len(), 1);
     let bytes = pkts[0];
@@ -85,4 +85,88 @@ fn build_set_fan_led_request_emits_cmd_20_packets() {
     );
     assert_eq!(bytes[11], 0x01, "isFanLed=true");
     assert_eq!(&bytes[12..15], &[0x00, 0xFF, 0x00]);
+}
+
+#[test]
+fn fan_payload_empty_slice_yields_just_flag_byte() {
+    // Low-level helper does NOT validate; use build_set_*_request for the safe path.
+    let payload = fan_led_payload(&[]);
+    assert_eq!(payload, vec![0x01]);
+}
+
+#[test]
+fn screen_payload_empty_slice_yields_flag_plus_pad() {
+    let payload = screen_led_payload(&[]);
+    assert_eq!(payload.len(), 25);
+    assert_eq!(payload[0], 0x00, "isFanLed flag");
+    assert!(payload[1..25].iter().all(|&b| b == 0), "24-byte pad");
+}
+
+#[test]
+fn screen_payload_two_distinct_colors_at_correct_offsets() {
+    // Confirms idx += 3 advances correctly between LEDs on the screen path.
+    let payload = screen_led_payload(&[Rgb::RED, Rgb::BLUE]);
+    assert_eq!(payload.len(), (2 + 8) * 3 + 1);
+    assert_eq!(&payload[25..28], &[0xFF, 0x00, 0x00], "LED 0 = red");
+    assert_eq!(&payload[28..31], &[0x00, 0x00, 0xFF], "LED 1 = blue");
+}
+
+#[test]
+fn build_set_fan_led_request_rejects_empty() {
+    let err = build_set_fan_led_colors_request(&[]).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::InvalidLedCount {
+            kind: "fan",
+            count: 0,
+            max: MAX_FAN_LEDS,
+        }
+    ));
+}
+
+#[test]
+fn build_set_screen_led_request_rejects_empty() {
+    let err = build_set_screen_led_colors_request(&[]).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::InvalidLedCount {
+            kind: "screen",
+            count: 0,
+            max: MAX_SCREEN_LEDS,
+        }
+    ));
+}
+
+#[test]
+fn build_set_fan_led_request_rejects_over_max() {
+    let too_many = vec![Rgb::RED; MAX_FAN_LEDS + 1];
+    let err = build_set_fan_led_colors_request(&too_many).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::InvalidLedCount { kind: "fan", .. }
+    ));
+}
+
+#[test]
+fn build_set_screen_led_request_rejects_over_max() {
+    let too_many = vec![Rgb::RED; MAX_SCREEN_LEDS + 1];
+    let err = build_set_screen_led_colors_request(&too_many).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::InvalidLedCount { kind: "screen", .. }
+    ));
+}
+
+#[test]
+fn build_set_fan_led_request_accepts_at_max() {
+    let colors = vec![Rgb::RED; MAX_FAN_LEDS];
+    let pkts = build_set_fan_led_colors_request(&colors).expect("at-max is valid");
+    assert_eq!(pkts.len(), 1, "fits in one packet at the cap");
+}
+
+#[test]
+fn build_set_screen_led_request_accepts_at_max() {
+    let colors = vec![Rgb::RED; MAX_SCREEN_LEDS];
+    let pkts = build_set_screen_led_colors_request(&colors).expect("at-max is valid");
+    assert_eq!(pkts.len(), 1, "fits in one packet at the cap");
 }
