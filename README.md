@@ -5,8 +5,7 @@ end of **Phase 0c** — protocol verification only. No daemon, no GUI yet.
 
 ## Status
 
-(Legend: ✅ live-verified against real hardware; 🌗 codec-tested only,
-live verification pending; 🚧 not started.)
+(Legend: ✅ live-verified against real hardware; 🚧 not started.)
 
 - ✅ Cargo workspace set up
 - ✅ `lconnect-protocol` crate, with verified `ACommandPacket` framing
@@ -15,9 +14,9 @@ live verification pending; 🚧 not started.)
   and soft-reset codec (`ResetDevice`) — all verified against real hardware
   (or codec-tested with safety gate, in the case of reset)
 - ✅ Crypto-not-used-at-transport confirmed (`docs/protocol/crypto-usage.md`)
-- 🌗 Lighting subsystem (`Get/Set {Fan,Pump}Lighting`) — codecs and
-  CLI complete and integration-tested (77 tests across the protocol
-  crate); live-device verification pending
+- ✅ Lighting subsystem (`Get/Set {Fan,Pump}Lighting`) live-verified
+  on the LCDV2: pump cap drove visible RGB under `--scope outer` and
+  fans drove visible RGB. 77 tests across the protocol crate.
 - 🚧 LCD config + frame upload — Phase 0d
 - 🚧 Daemon, GUI, theme engine — Phases 1–6
 
