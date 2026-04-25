@@ -40,4 +40,6 @@ pub mod lcd;
 
 pub mod set_led_colors;
 
+pub mod jpeg;
+
 pub use lighting::Rgb;
