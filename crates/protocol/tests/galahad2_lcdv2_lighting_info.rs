@@ -100,9 +100,51 @@ fn parse_fan_info_no_terminator_rejected() {
     let data = [0x01, 0x02, 0x03, 0x04];
     let err = parse_fan_lighting_info(&data).unwrap_err();
     // Reaches end of buffer with no terminator — surfaces as too-short
-    // because we never enter the "read trailer" stage.
+    // because we never enter the "read trailer" stage. `got` must equal
+    // the actual buffer length so the diagnostic isn't misleading.
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::BufferTooShort { need: 2, got: 4 }
+    ));
+}
+
+#[test]
+fn parse_fan_info_terminator_only_yields_zero_modes() {
+    // Edge case: the device advertises zero supported modes by sending
+    // the terminator immediately, followed by a valid trailer. This is a
+    // legitimate parse — the empty-modes Vec is the correct answer.
+    let data = [0xA5, 0x5A, 7, 50];
+    let info = parse_fan_lighting_info(&data).expect("should parse");
+    assert!(info.modes.is_empty());
+    assert_eq!(info.max_speed, 7);
+    assert_eq!(info.max_brightness, 50);
+}
+
+#[test]
+fn parse_fan_info_a5_then_a5_drops_second_escape() {
+    // Escape-of-escape: `0xA5 0xA5` is the bug-compat path applied to the
+    // escape byte itself. The first 0xA5 sets escape; the second is "X != 0x5A"
+    // and so the escape state clears with no mode pushed. Parsing then needs
+    // a *new* 0xA5 0x5A to terminate. Without one the response is malformed.
+    //
+    // Verify the no-double-terminator case rejects:
+    let data = [0x01, 0xA5, 0xA5, 0x5A, 5, 5];
+    //          ^Rainbow ^esc1 ^esc-of-esc dropped, then 0x5A is treated as a
+    //          mode discriminant (not a terminator) → never terminates.
+    let err = parse_fan_lighting_info(&data).unwrap_err();
     assert!(matches!(
         err,
         lconnect_protocol::Error::BufferTooShort { .. }
     ));
+
+    // And verify that a proper terminator after the escape-of-escape works:
+    let data = [0x01, 0xA5, 0xA5, 0x03, 0xA5, 0x5A, 5, 5];
+    //          ^R    ^esc1 ^drop  ^Static ^esc2 ^term
+    let info = parse_fan_lighting_info(&data).expect("should parse");
+    assert_eq!(
+        info.modes,
+        vec![FanLightingMode::Rainbow, FanLightingMode::StaticColor]
+    );
+    assert_eq!(info.max_speed, 5);
+    assert_eq!(info.max_brightness, 5);
 }
