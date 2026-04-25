@@ -63,6 +63,9 @@ enum Cmd {
     /// Send SetLEDColors (cmd 20). NOTE: physically changes LED colours
     /// on either the screen / pump-cap ring or the fan ring.
     SetLedColors(SetLedColorsArgs),
+    /// Send a JPEG to the pump-cap LCD via cmd 14 (SendJpeg) or cmd 15
+    /// (UploadJpeg). NOTE: physically changes the LCD content.
+    UploadJpeg(UploadJpegArgs),
 }
 
 /// Flags for `set-pump-lighting`.
@@ -188,6 +191,90 @@ struct SetLedColorsArgs {
     /// set-led-colors run produces no visible LED change.
     #[arg(long)]
     set_application_mode: bool,
+}
+
+/// Flags for `upload-jpeg`.
+///
+/// Drives `SendJpeg` (cmd 14) or `UploadJpeg` (cmd 15) end-to-end:
+/// `lconnect-image::prepare_jpeg_from_path` decodes any input format
+/// the `image` crate supports (PNG, JPEG, WebP, BMP, GIF), fits it to
+/// 480×480 per `--fit`, re-encodes as JPEG at `--quality`, and the
+/// chosen codec packetises the bytes for the device.
+///
+/// `--mode send` is the default because the C# enum naming suggests
+/// `SendJpeg` is the transient-display path (lower flash-cycle risk)
+/// and `UploadJpeg` is the persisted-storage path. The wire shapes are
+/// presumed identical except for the cmd byte; `--mode` is the live-
+/// test knob to discover the firmware's behavioural difference.
+///
+/// The `--check-available` and `--set-application-mode` flags mirror
+/// `set-led-colors`: they're optional preflights for the case where a
+/// bare `upload-jpeg` run produces no visible LCD change. As of
+/// Phase 0c, cmd 20 renders without `Application` mode; whether
+/// cmd 14/15 also do is empirically unverified.
+#[derive(Args, Debug)]
+struct UploadJpegArgs {
+    /// Input image (any format the `image` crate decodes: PNG, JPEG,
+    /// WebP, BMP, GIF). The image is resized/cropped to 480×480 and
+    /// re-encoded as JPEG before transmission.
+    #[arg(long)]
+    path: std::path::PathBuf,
+
+    /// Which JPEG codec to invoke on the wire. `send` (cmd 14) is the
+    /// presumed transient-display path; `upload` (cmd 15) is the
+    /// presumed persisted-storage path. The wire shapes are identical
+    /// except for the cmd byte; the live test discovers the firmware's
+    /// behavioural difference.
+    #[arg(long, default_value = "send")]
+    mode: JpegModeArg,
+
+    /// How to fit a non-480×480 source image into the LCD frame.
+    #[arg(long, default_value = "crop")]
+    fit: FitModeArg,
+
+    /// JPEG quality, 1..=100.
+    #[arg(long, default_value_t = 90, value_parser = clap::value_parser!(u8).range(1..=100))]
+    quality: u8,
+
+    /// Background colour as `#RRGGBB`, used only when `--fit letterbox`.
+    #[arg(long, default_value = "#000000", value_parser = parse_hex_color)]
+    letterbox_bg: lconnect_protocol::galahad2_lcdv2::Rgb,
+
+    /// FOR TESTING ONLY — skip the user-consent prompt. Do not use in
+    /// scripts that run unattended against production hardware.
+    #[arg(long)]
+    yes: bool,
+
+    /// Send IsLCDAvailable first; abort if the device reports unavailable.
+    #[arg(long)]
+    check_available: bool,
+
+    /// Send LCDControl{mode=Application} before the upload, in case the
+    /// firmware needs host-driven mode active. Whether this is needed
+    /// for cmd 14/15 is currently unknown — the Phase 0c set-led-colors
+    /// session showed cmd 20 renders without it; cmd 14/15 may differ.
+    #[arg(long)]
+    set_application_mode: bool,
+}
+
+/// CLI-side rendering of the cmd 14 vs cmd 15 codec choice.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum JpegModeArg {
+    /// `SendJpeg` (cmd 14) — presumed transient frame display.
+    Send,
+    /// `UploadJpeg` (cmd 15) — presumed persisted-storage path.
+    Upload,
+}
+
+/// CLI-side rendering of the resize/fit policy.
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum FitModeArg {
+    /// Scale uniformly to cover, then centre-crop the excess.
+    Crop,
+    /// Scale uniformly to fit, fill remainder with `--letterbox-bg`.
+    Letterbox,
+    /// Stretch to 480×480 (may distort aspect ratio).
+    Stretch,
 }
 
 /// CLI-side rendering of the screen-vs-fan LED-ring choice.
@@ -446,6 +533,7 @@ fn main() -> Result<()> {
         Cmd::GetFanLighting => get_fan_lighting(),
         Cmd::SetFanLighting(args) => set_fan_lighting(args),
         Cmd::SetLedColors(args) => set_led_colors(args),
+        Cmd::UploadJpeg(args) => upload_jpeg(args),
     }
 }
 
@@ -1057,6 +1145,182 @@ fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
         "verify by looking at the {kind_str} ring. If no visible change occurs, \
          retry with --set-application-mode (host-driven LCD mode may be required \
          for cmd 20 on some firmware revisions; this is empirically unverified)."
+    );
+    Ok(())
+}
+
+fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
+    use lconnect_image::{prepare_jpeg_from_path, FitMode, Quality};
+    use lconnect_protocol::galahad2_lcdv2::bpacket::{INPUT_LEN, OUTPUT_LEN};
+    use lconnect_protocol::galahad2_lcdv2::jpeg::{
+        build_send_jpeg_request, build_upload_jpeg_request,
+    };
+    use lconnect_protocol::galahad2_lcdv2::lcd::{
+        build_is_lcd_available_request, build_lcd_control_request, parse_is_lcd_available_response,
+        Brightness, LCDControlMode, LCDControlSetting,
+    };
+    use std::io::Write as _;
+
+    // 1. Convert input image. lconnect-image errors propagate via anyhow's
+    //    `Context` (its `Error` impls `std::error::Error` via thiserror).
+    let fit = match args.fit {
+        FitModeArg::Crop => FitMode::Crop,
+        FitModeArg::Letterbox => FitMode::Letterbox {
+            bg: [
+                args.letterbox_bg.r,
+                args.letterbox_bg.g,
+                args.letterbox_bg.b,
+            ],
+        },
+        FitModeArg::Stretch => FitMode::Stretch,
+    };
+    let quality = Quality::new(args.quality)
+        .with_context(|| format!("invalid --quality {}", args.quality))?;
+    let prepared = prepare_jpeg_from_path(&args.path, fit, quality)
+        .with_context(|| format!("preparing JPEG from {}", args.path.display()))?;
+    println!(
+        "prepared {} bytes of {}x{} JPEG (mode={:?}, fit={:?}, quality={})",
+        prepared.bytes.len(),
+        prepared.width,
+        prepared.height,
+        args.mode,
+        args.fit,
+        args.quality,
+    );
+
+    // 2. Open device.
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device — see `verify-galahad list` and udev rules")?;
+
+    // 3. Optional IsLCDAvailable preflight (read-only; runs BEFORE consent).
+    //    The IsLCDAvailable response is a 512-byte BCommandPacket, so
+    //    `read_b_packet` is the right helper here (B-class reads don't
+    //    need the cmd-0x8e drain loop that A-class reads use).
+    if args.check_available {
+        let req = build_is_lcd_available_request();
+        let written = device
+            .write(&req)
+            .context("HID write failed (IsLCDAvailable)")?;
+        println!("wrote {written} bytes (IsLCDAvailable preflight)");
+
+        let buf = read_b_packet(&device, 1000)?;
+        println!("read {INPUT_LEN} bytes");
+        match parse_is_lcd_available_response(&buf) {
+            Ok(true) => println!("LCD available — proceeding."),
+            Ok(false) => {
+                return Err(anyhow!(
+                    "device reported LCD unavailable (IsLCDAvailable -> false). Try replugging \
+                     the device or waiting a few seconds for the LCD to initialise, then re-run. \
+                     If you want to bypass the check, omit --check-available — but a `false` \
+                     report typically means the LCD is mid-init and a JPEG upload may not render."
+                ));
+            }
+            Err(e) => {
+                return Err(anyhow!(
+                    "IsLCDAvailable response decode failed: {e}. \
+                     Aborting before JPEG upload."
+                ));
+            }
+        }
+    }
+
+    // 4. User-consent gate (skippable with --yes). Blocks on stdin and
+    //    accepts only "y"/"Y" (case-insensitive); arbitrary truthy
+    //    strings are rejected.
+    if !args.yes {
+        let cmd_label = match args.mode {
+            JpegModeArg::Send => "cmd 14 (SendJpeg)",
+            JpegModeArg::Upload => "cmd 15 (UploadJpeg)",
+        };
+        print!(
+            "WARNING: this will overwrite the current LCD content with the prepared {} -byte \
+             JPEG via {cmd_label}. The pump-cap LCD will visibly change. Continue? [y/N] ",
+            prepared.bytes.len(),
+        );
+        std::io::stdout().flush().ok();
+        let mut line = String::new();
+        std::io::stdin()
+            .read_line(&mut line)
+            .context("failed to read confirmation from stdin")?;
+        let trimmed = line.trim();
+        if !trimmed.eq_ignore_ascii_case("y") {
+            return Err(anyhow!(
+                "aborted by user (got {trimmed:?}, expected \"y\" or \"Y\"). \
+                 Re-run with --yes to skip this prompt."
+            ));
+        }
+    }
+
+    // 5. Optional LCDControl{mode=Application} preflight. cmd 12 is
+    //    fire-and-forget. This is a state-changing write, so it runs
+    //    AFTER the consent prompt — same rule as set-led-colors. Use
+    //    let-mut + field assign because `LCDControlSetting` is
+    //    `#[non_exhaustive]` from outside the protocol crate, which
+    //    forbids functional-update syntax.
+    if args.set_application_mode {
+        let mut setting = LCDControlSetting::default();
+        setting.mode = LCDControlMode::Application;
+        setting.brightness = Brightness::default();
+        let req = build_lcd_control_request(setting);
+        let written = device
+            .write(&req)
+            .context("HID write failed (LCDControl preflight — JPEG upload was NOT sent)")?;
+        println!("wrote {written} bytes (LCDControl, mode=Application, no response expected)");
+    }
+
+    // 6. Build packets via the chosen codec. Both codecs produce 1024-
+    //    byte BCommandPacket frames; only the cmd byte differs.
+    let packets: Vec<[u8; OUTPUT_LEN]> = match args.mode {
+        JpegModeArg::Send => {
+            build_send_jpeg_request(&prepared.bytes).context("building SendJpeg request")?
+        }
+        JpegModeArg::Upload => {
+            build_upload_jpeg_request(&prepared.bytes).context("building UploadJpeg request")?
+        }
+    };
+    let total = packets.len();
+
+    // 7. Per-packet write loop with short-write detection and per-failure
+    //    context. Suppresses progress lines when total == 1.
+    for (i, packet) in packets.iter().enumerate() {
+        let written = device.write(packet).with_context(|| {
+            format!(
+                "HID write failed on packet {} of {} ({:?})",
+                i + 1,
+                total,
+                args.mode,
+            )
+        })?;
+        if written != OUTPUT_LEN {
+            return Err(anyhow!(
+                "short HID write on packet {} of {}: sent {} of {} bytes ({:?}). \
+                 Device state may be partially updated; rerun the same command to retry.",
+                i + 1,
+                total,
+                written,
+                OUTPUT_LEN,
+                args.mode,
+            ));
+        }
+        if total > 1 {
+            println!(
+                "wrote {} bytes ({:?} packet {}/{})",
+                written,
+                args.mode,
+                i + 1,
+                total,
+            );
+        }
+    }
+
+    // 8. Success message.
+    println!("note: command is fire-and-forget; LCD frame may take ~50-200ms to update.");
+    println!(
+        "verify by looking at the pump-cap LCD. If no visible change occurs, retry \
+         with --set-application-mode (host-driven LCD mode may be required for \
+         cmd 14/15 on some firmware revisions; this is empirically unverified)."
     );
     Ok(())
 }
