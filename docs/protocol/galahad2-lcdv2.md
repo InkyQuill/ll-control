@@ -387,6 +387,178 @@ wired to the AIO's fan header).
 
 ---
 
+## `LCDControl` — Command 12 (`0x0C`)
+
+**Status:** `codec-verified` (8-byte payload tested byte-by-byte; live
+write not yet exercised).
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:188-193`.
+- Payload encoder: `LCDControlSetting.cs:7-73` (`ToBytes` returns 8 bytes).
+- Modes enum: `LCDControlMode.cs:5-13`.
+- Rotation enum: `ScreenRotation.cs:5-11` (wire bytes `0/1/2/3` corresponding to angles `0°/90°/180°/270°` — NOT literal angle values).
+- Service controller's brightness-update profile: `Galahad2VisionController.cs:1483-1487`
+  (`Mode=LCDSetting (4)`, `VideoFPS=24`).
+
+### Request
+
+`BCommandPacket` with `Command = 12` and `Length = 8`. Data:
+
+| offset | size | field          | type                |
+|--------|------|----------------|---------------------|
+| 0      | 1    | `mode`         | `LCDControlMode`    |
+| 1      | 1    | `brightness`   | u8 (0..=100; clamp via `Brightness::new`) |
+| 2      | 1    | `rotation`     | `ScreenRotation` (wire 0/1/2/3) |
+| 3      | 1    | `enable_test`  | bool (0/1)          |
+| 4-6    | 3    | `test_color`   | RGB                 |
+| 7      | 1    | `video_fps`    | u8 (known: 24, 30)  |
+
+`LCDControlMode` discriminants: `LocalUI=0`, `Application=1`, `LocalH264=2`,
+`LocalAVI=3`, `LCDSetting=4`, `LCDTest=5`.
+
+No response expected.
+
+### Caveats
+
+- `LCDControlMode::LCDTest` puts the LCD into a solid-colour test pattern
+  using `test_color`. Once entered, the only way out is another
+  `LCDControl` write.
+- `LCDControlMode::Application` may or may not be required as a preflight
+  for `SetLEDColors` (cmd 20) on some firmware revisions; on FW 1.6 it is
+  NOT required (live captures show cmd 20 renders without it).
+- The `Brightness` newtype enforces 0..=100 at construction time.
+- `video_fps` is a u8 with no codec-level clamp; known-safe values are 24
+  (service brightness updates) and 30 (C# default constructor). Effects of
+  other values are undocumented.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/lcd.rs` (`Brightness`,
+  `LCDControlMode`, `ScreenRotation`, `LCDControlSetting`,
+  `build_lcd_control_request`).
+- `crates/protocol/tests/galahad2_lcdv2_lcd_control.rs`.
+
+---
+
+## `SetLEDColors` — Command 20 (`0x14`)
+
+**Status:** `verified` (live-confirmed 2026-04-25 against firmware 1.6 —
+see [captures/2026-04-25-set-led-colors-live.txt](./captures/2026-04-25-set-led-colors-live.txt)).
+Pump-cap screen ring rendered red, green, and yellow on three sequential
+screen-path writes; fan-path write painted 2 of 3 fans (configuration-
+specific, see Caveats).
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:283-308` (chunked via `writeBCommand`,
+  multi-packet for large LED arrays).
+
+### Request
+
+`BCommandPacket` with `Command = 20`. The first byte of the payload is
+the `isFanLed` flag (`0x01` for fan ring, `0x00` for screen / pump-cap).
+The rest of the payload is per-LED RGB. Multi-packet writes chunk
+automatically via `BCommandPacket::build_packets_for_write`.
+
+**Fan path** (`isFanLed = 0x01`):
+
+| offset    | size  | content                                   |
+|-----------|-------|-------------------------------------------|
+| 0         | 1     | `isFanLed` flag (= `0x01`)                |
+| 1..       | 3*n   | RGB triples `R0,G0,B0,...,Rn-1,Gn-1,Bn-1` |
+
+Total length = `colors.len() * 3 + 1`.
+
+**Screen path** (`isFanLed = 0x00`):
+
+| offset    | size  | content                                   |
+|-----------|-------|-------------------------------------------|
+| 0         | 1     | `isFanLed` flag (= `0x00`)                |
+| 1..25     | 24    | zero pad (8 padding Color slots × 3)      |
+| 25..      | 3*n   | RGB triples `R0,G0,B0,...,Rn-1,Gn-1,Bn-1` |
+
+Total length = `(colors.len() + 8) * 3 + 1`.
+
+No response expected.
+
+### Single-packet LED count limits
+
+- Fan: `MAX_FAN_LEDS = 337` LEDs fit in one B-packet (`(1013 - 1) / 3`).
+- Screen: `MAX_SCREEN_LEDS = 329` LEDs fit in one B-packet (`(1013 - 25) / 3`).
+
+Larger arrays chunk transparently. The codec rejects empty arrays and
+arrays exceeding these caps with `Error::InvalidLedCount`.
+
+### Caveats
+
+- **Fan ring is an aggregate of multiple fans' LEDs in series.** Each fan
+  contributes ~16 LEDs sequentially. With `--count 16` only the first
+  fan in the chain is painted; subsequent fans retain their previous
+  state (whether from a prior cmd 20 or a cmd 133 preset). To paint an
+  N-fan configuration uniformly, set `--count` to `16 * N`.
+- **Cmd 20 supersedes cmd 131 in the LED render pipeline.** A pump cap
+  held at a colour by cmd 131 (`SetPumpLighting`) will be overridden by
+  the next cmd 20 write. Both commands are independently functional;
+  the C# UI uses cmd 20 for dynamic / animated effects and cmd 131 for
+  preset modes.
+- **`Application` mode is NOT a prerequisite on FW 1.6.** The
+  `--set-application-mode` flag in the verify-galahad CLI is a defensive
+  escape hatch; live captures show cmd 20 renders without it.
+- The screen-path 24-byte zero pad is a load-bearing wire-format
+  invariant — see `Galahad2VisionDevice.cs:288-291` for the C# size
+  calculation `(colors.Length + 8) * 3 + 1` and the `num = 25` start
+  index. Don't refactor `screen_led_payload` to a non-zero-init
+  allocation strategy.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/set_led_colors.rs` (`fan_led_payload`,
+  `screen_led_payload`, `build_set_fan_led_colors_request`,
+  `build_set_screen_led_colors_request`, `MAX_FAN_LEDS`, `MAX_SCREEN_LEDS`).
+- `crates/protocol/tests/galahad2_lcdv2_set_led_colors.rs`.
+
+---
+
+## `IsLCDAvailable` — Command 23 (`0x17`)
+
+**Status:** `verified` (live-confirmed 2026-04-25 against firmware 1.6,
+see [captures/2026-04-25-set-led-colors-live.txt](./captures/2026-04-25-set-led-colors-live.txt)).
+
+**Sources:**
+- Wire flow: `Galahad2VisionDevice.cs:175-186`.
+- Service controller's polling timer (which carries a latent stale-local bug not to replicate): `Galahad2VisionController.cs:2410-2411`.
+
+### Request
+
+`BCommandPacket` with `Command = 23`, no payload. Length = 0, DataSize = 0,
+PacketNumber = 0.
+
+### Response
+
+`BCommandPacket` with `Command = 23` echo, `Length = 1`. The single data
+byte is the availability sentinel:
+
+| `Data[0]` | Meaning |
+|---|---|
+| `0x00` | LCD available (counterintuitive: zero means yes) |
+| anything else (or Length != 1) | LCD unavailable |
+
+### Caveats
+
+- The C# service controller has a latent stale-local bug where it stores
+  the result into `this.isAvailable` but the early-return check inspects
+  a different `nullable` local. Linux callers should branch directly on
+  the `Result<bool>` returned by `parse_is_lcd_available_response`.
+- The polling cadence in the C# service is roughly 1 Hz; we don't yet
+  know whether a tighter loop changes firmware behaviour.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/lcd.rs` (`build_is_lcd_available_request`,
+  `parse_is_lcd_available_response`).
+- `crates/protocol/tests/galahad2_lcdv2_lcd_available.rs`.
+
+---
+
 ## Commands not yet documented
 
 The full enum lives in
@@ -400,15 +572,22 @@ Coverage in subsequent phases:
   doesn't expose); `SetFanLighting` (cmd 133) drives fans wired to the
   AIO's fan header. Rapid back-to-back writes can transiently buffer
   with only the latest rendering — see the per-section status lines.
-- **Phase 0d:** `LCDControl` (12), `IsLCDAvailable` (23), `SendJpeg` (14),
-  `UploadJpeg` (15), `SendH264Frame` (13), `UploadFirmware` (11),
-  `ActiveFirmware` (10). Introduces `BCommandPacket` (512-byte) framing
-  for bulk transfers.
+- **Phase 0d:** ⏳ partially landed.
+  - ✅ `LCDControl` (12) — codec-verified (see section above).
+  - ✅ `SetLEDColors` (20) — live-verified 2026-04-25, screen-path
+    rendered red/green/yellow on the pump cap; fan-path rendered 2 of 3
+    fans (configuration-specific, see section's Caveats).
+  - ✅ `IsLCDAvailable` (23) — live-verified 2026-04-25, round-trips
+    `0x00` (available) on a healthy device.
+  - ⏳ `SendJpeg` (14), `UploadJpeg` (15), `SendH264Frame` (13) — pending
+    (Tasks 7–10). Introduces JPEG / H.264 frame upload via the existing
+    `BCommandPacket` (512-byte) framing.
+  - ⏳ `UploadFirmware` (11), `ActiveFirmware` (10) — deferred to a later
+    sub-phase (firmware-touching, higher risk).
 - **Phase 1+:** `GetSerialNumber` (136), `SetSerialNumber` (137),
-  `SetLEDColors` (20), `UploadAvi` (18), `UploadH264` (19),
-  `UploadH264Info` (21), `UploadStartupAviMovie` (22). These are either
-  rarely used or risky (writing serial numbers); they get implemented
-  on demand.
+  `UploadAvi` (18), `UploadH264` (19), `UploadH264Info` (21),
+  `UploadStartupAviMovie` (22). These are either rarely used or risky
+  (writing serial numbers); they get implemented on demand.
 
 ## Crypto status
 

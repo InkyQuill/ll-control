@@ -1,0 +1,69 @@
+# Galahad II LCDV2 — Phase 0d cmd 20 (SetLEDColors) + cmd 23 (IsLCDAvailable) live captures
+# Date: 2026-04-25
+# Firmware: 1.6
+# USB: 0416:7395
+# CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
+#
+# OUTCOME: Phase 0d's centerpiece moment. Cmd 20 (SetLEDColors) renders
+# per-pixel RGB on the LCDV2 LED ring reliably and immediately:
+# pump cap went red → green → yellow on three sequential screen-path
+# writes. The fan-path write painted 2 of 3 fans (the last fan retained
+# its earlier cmd-133 red state). Cmd 23 (IsLCDAvailable) round-trips
+# correctly, returning 0x00 (available) for a healthy device.
+
+## Consent gate verification
+
+cargo run -p verify-galahad -- set-led-colors --color '#FF0000'
+WARNING: this will write 16 screen LEDs to #FF0000 on the device.
+The pump-cap LCD ring may visibly change. Continue? [y/N]
+Error: aborted by user (got "", expected "y" or "Y"). Re-run with --yes to skip this prompt.
+
+→ Aborted cleanly with no device write. The consent gate works.
+
+## set-led-colors --color '#FF0000' --yes  (screen path, default 16 LEDs)
+
+[output omitted]
+→ Pump cap LED ring rendered red. Override of the Phase 0c magenta state
+  was clean and immediate.
+
+## set-led-colors --color '#00FF00' --yes
+
+→ Pump cap LED ring rendered green.
+
+## set-led-colors --color '#0000FF' --kind fan --yes
+
+→ Partial render: 2 of 3 fans rendered blue. The last fan retained its
+  previous cmd-133 (SetFanLighting) red state from a Phase 0c test. The
+  fan ring on this build is an aggregate of N × 16 LEDs in series; with
+  --count 16 we wrote only the first 16 (= the first 1.0 fans), leaving
+  the remaining ~32 LEDs at their last-set state. To paint a 3-fan
+  configuration uniformly, --count 48 would be required. The codec is
+  faithful; this is a configuration-discovery moment.
+
+## set-led-colors --color '#FFFF00' --check-available --yes
+
+wrote 1024 bytes (IsLCDAvailable preflight)
+read 512 bytes
+LCD available — proceeding.
+[success message]
+
+→ Pump cap LED ring rendered yellow. The IsLCDAvailable preflight
+  round-trips correctly (1024-byte BCommandPacket request, 512-byte
+  BCommandPacket response with Length=1 / Data[0]=0x00).
+
+## Notes
+
+- Cmd 20 renders are immediate at the cadence tested; no buffering or
+  rate-limiting issue observed on the screen path.
+- Cmd 20 supersedes cmd 131 in the LED render pipeline. The pump cap
+  was held at magenta from a prior cmd 131 (SetPumpLighting) write;
+  the first cmd 20 write to red overrode that state cleanly.
+- The default --count of 16 matches the LCDV2 pump-cap screen ring's
+  physical LED count exactly.
+- The fan ring is an aggregate of multiple fans' LEDs in series. The
+  per-fan count appears to be 16 (consistent with the SKU); the user's
+  setup appears to have 3 fans (~48 LEDs total in the aggregate).
+- The --set-application-mode flag was NOT exercised in this session;
+  all cmd 20 writes rendered without it. The flag remains a "try this
+  if no visible change occurs" escape hatch but is not required on
+  firmware 1.6.
