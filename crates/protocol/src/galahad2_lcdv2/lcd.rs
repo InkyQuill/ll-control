@@ -19,7 +19,7 @@ use crate::galahad2_lcdv2::bpacket::{BCommandPacket, OUTPUT_LEN};
 use crate::galahad2_lcdv2::commands::Command;
 
 /// Build the 1024-byte HID request for `IsLCDAvailable` (cmd 23).
-#[must_use = "the request bytes must be written to hid_device.write(&buf)"]
+#[must_use = "returns the request packet bytes; dropping without writing has no effect"]
 pub fn build_is_lcd_available_request() -> [u8; OUTPUT_LEN] {
     *BCommandPacket::new_request(Command::IsLCDAvailable as u8, 0, &[], 0).as_bytes()
 }
@@ -29,17 +29,21 @@ pub fn build_is_lcd_available_request() -> [u8; OUTPUT_LEN] {
 /// else — non-zero byte, missing payload, mismatched length — means
 /// not available.
 ///
-/// Callers MUST branch on the returned `bool` directly. The C# service
-/// at `Galahad2VisionController.cs:2410-2411` has a latent stale-local
-/// bug where it checks `nullable.HasValue` against a value that is no
-/// longer in sync with `this.isAvailable`; the Linux port deliberately
-/// surfaces only the `bool` to make that anti-pattern unrepresentable.
+/// # Caveats
+///
+/// The C# service controller has a latent stale-local bug at
+/// `Galahad2VisionController.cs:2410-2411`: it checks
+/// `nullable.HasValue` against a value that is no longer in sync with
+/// `this.isAvailable`. Callers MUST branch on the returned `bool`
+/// directly; the Linux port deliberately surfaces only the `bool` to
+/// make that anti-pattern unrepresentable.
 ///
 /// # Errors
 ///
 /// Returns:
 /// - [`crate::Error::BufferTooShort`] if `buf` is shorter than the
-///   B-packet header (11 bytes).
+///   B-packet header (11 bytes), OR if the parsed `Length` field
+///   announces more payload bytes than `buf` contains.
 /// - [`crate::Error::UnexpectedReportId`] if `buf[0]` is not `0x02`.
 /// - [`crate::Error::UnexpectedCommand`] if `buf[1]` is not `23`.
 /// - [`crate::Error::InvalidLength`] if the header's `Length` field
