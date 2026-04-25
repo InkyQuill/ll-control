@@ -7,8 +7,13 @@ Linux-native client for Lian Li L-Connect 3 hardware. Currently in
 
 - ✅ Cargo workspace set up
 - ✅ `lconnect-protocol` crate, with verified `ACommandPacket` framing
-- ✅ Galahad II LCDV2 `GetHandshakeInfo` (cmd 129) verified on real hardware
-- 🚧 All other commands — Phase 0b
+- ✅ Galahad II LCDV2 sensors (`GetHandshakeInfo`), firmware identity
+  (`GetFirmwareVersion`), fan/pump PWM control (`SetFanPWM`, `SetPumpPWM`),
+  and soft-reset codec (`ResetDevice`) — all verified against real hardware
+  (or codec-tested with safety gate, in the case of reset)
+- ✅ Crypto-not-used-at-transport confirmed (`docs/protocol/crypto-usage.md`)
+- 🚧 Lighting commands — Phase 0c
+- 🚧 LCD config + frame upload — Phase 0d
 - 🚧 Daemon, GUI, theme engine — Phases 1–6
 
 See [`docs/superpowers/specs/2026-04-25-lconnect-linux-design.md`](docs/superpowers/specs/2026-04-25-lconnect-linux-design.md)
@@ -38,6 +43,10 @@ cargo test -p lconnect-protocol
 # Phase-0 verification harness against a live device
 cargo run -p verify-galahad -- list
 cargo run -p verify-galahad -- handshake
+cargo run -p verify-galahad -- firmware
+cargo run -p verify-galahad -- fan --percent 50
+cargo run -p verify-galahad -- pump --percent 75 --source mcu
+# cargo run -p verify-galahad -- reset --yes-i-really-want-to-reset  # dangerous
 ```
 
 ## udev permissions
