@@ -34,7 +34,7 @@ fn parse_response_nonzero_byte_means_unavailable() {
     buf[10] = 1;
     buf[11] = 0x01;
     let avail = parse_is_lcd_available_response(&buf).expect("parses");
-    assert!(!avail);
+    assert!(!avail, "0x01 means LCD is not available");
 }
 
 #[test]
@@ -42,12 +42,23 @@ fn parse_response_zero_length_means_unavailable() {
     let mut buf = [0u8; 512];
     buf[0] = 0x02;
     buf[1] = 23;
-    // Length = 0, no data byte
+    buf[10] = 0; // Length = 0 — explicit (no data byte will be read)
     let avail = parse_is_lcd_available_response(&buf).expect("parses");
     assert!(
         !avail,
         "missing data byte → treat as unavailable (matches C#)"
     );
+}
+
+#[test]
+fn parse_response_too_short_rejected() {
+    // Buffer shorter than HEADER_LEN (11) — must reject before any field decode.
+    let buf = [0x02_u8, 23];
+    let err = parse_is_lcd_available_response(&buf).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::BufferTooShort { .. }
+    ));
 }
 
 #[test]
