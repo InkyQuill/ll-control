@@ -1,0 +1,105 @@
+# Galahad II LCDV2 (0x0416:0x7395) firmware 1.6
+# Captured: 2026-04-25 by verify-galahad firmware
+# CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
+# Device path: /dev/hidraw2, interface 1
+# (serial number redacted)
+
+# Command:
+#   cargo run -q -p verify-galahad -- firmware
+
+# =============================================================================
+# Final stable output (after multiple runs, no stale state):
+# =============================================================================
+
+wrote 64 bytes
+read packet 1 (64 bytes, cmd=0x86, packet_num=0)
+packet 1 raw:
+
+  00: 01 86 00 00 00 32 4e 39 2c 30 31 2c 48 53 2c 53
+  16: 51 2c 43 41 5f 49 49 2d 56 69 73 69 6f 6e 2c 56
+  32: 32 2e 30 31 2e 30 34 31 2c 31 2e 36 00 00 00 00
+  48: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+(no PacketNumber=1 datetime packet observed — unreliable on FW 1.6)
+
+decoded:
+  chip_code        = N9
+  boot_code        = 01
+  kind             = HS
+  model_a          = SQ
+  model_b          = CA_II-Vision
+  software_version = V2.01.041
+  user_version     = 1.6
+  raw_datetime     = (empty — datetime packet not observed)
+
+# =============================================================================
+# Byte-level interpretation of the version packet (cmd 0x86, PacketNumber=0):
+# =============================================================================
+
+#   buf[0]    = 0x01           ReportID                                         OK
+#   buf[1]    = 0x86 (=134)    Command echo (GetFirmwareVersion)                OK
+#   buf[2]    = 0x00           reserved                                         OK
+#   buf[3-4]  = 0x00 0x00      PacketNumber (BE u16) = 0                        OK (version)
+#   buf[5]    = 0x32 (=50)     Length                                           OK
+#   buf[6..56] = ASCII          "N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6\0...\0"
+#   buf[56..64] = 0x00          padding
+
+# 7 comma-separated version fields, exactly as decompiled from FirmwareVersion.cs:
+#   [0] chip_code        = "N9"             (Winbond N9 series MCU)
+#   [1] boot_code        = "01"             (boot loader rev)
+#   [2] kind             = "HS"             ("HydroShift" cooler family)
+#   [3] model_a          = "SQ"             (square pump cap variant)
+#   [4] model_b          = "CA_II-Vision"   (full model name; matches USB descriptor)
+#   [5] software_version = "V2.01.041"      (firmware build identifier)
+#   [6] user_version     = "1.6"            (matches LianLi-GA_II-LCD_v1.6 in lsusb)
+
+# =============================================================================
+# Notable findings during verification (different from decompiled C# expectations):
+# =============================================================================
+
+# Finding 1 — Unsolicited cmd-0x8e (=142, ResetDevice's code) status packet.
+#   On the very first firmware command after device idle, an extra packet
+#   `01 8e 00 00 00 01 02 00 ...` appears in the read queue. Length=1,
+#   Data=[0x02]. The command byte (0x8e) is the ResetDevice opcode, but
+#   we never sent a reset. Hypothesis: this is a queued unsolicited
+#   notification (boot ack? thermal status? unknown). Subsequent runs do
+#   NOT see this packet. The verify-galahad harness drains stale packets
+#   before sending the firmware request to avoid confusion.
+#
+# Finding 2 — Datetime packet (PacketNumber=1) is unreliable on FW 1.6.
+#   The decompiled `Galahad2VisionDevice.cs:88-105` reads two ACommandPackets
+#   back-to-back, expecting the first to be the version string and the second
+#   to be a build-datetime string. Real-hardware observation shows:
+#     * The version packet (PacketNumber=0) arrives reliably within ~10ms.
+#     * The datetime packet (PacketNumber=1) arrived ONCE during the entire
+#       verification session — as an async leftover between runs, with content
+#       "Oct 30 2025,17:01:18". Subsequent same-session firmware requests do
+#       not produce a fresh datetime packet within a 1s read window.
+#   Working theory: the device sends the datetime packet at most once per
+#   USB-attach (boot/enumerate ack) or some similar lifecycle trigger.
+#   Worth re-investigating after a power cycle (Phase 0c task).
+#
+# Finding 3 — PacketNumber field MUST be used to distinguish multi-packet
+#   responses. The decompiled C# reads sequentially without checking
+#   PacketNumber, which is fragile against unsolicited interleaved packets.
+#   The Rust harness filters by both `cmd echo == 134` AND `PacketNumber`,
+#   which is more robust.
+
+# =============================================================================
+# Implication for the protocol crate:
+# =============================================================================
+
+# `FirmwareVersion::from_two_responses(buf1, buf2)` in
+# `crates/protocol/src/galahad2_lcdv2/firmware.rs` is functionally correct for
+# the C# protocol model but assumes both packets arrive cleanly and in order.
+# It is NOT used by the verify-galahad harness for live operation; the harness
+# implements its own drain + PacketNumber filter loop.
+#
+# Phase 0c may want to either:
+#   (a) Make `from_two_responses` more lenient (accept missing datetime),
+#   (b) Provide an additional `from_version_only` that accepts just one
+#       packet and stores empty datetime, OR
+#   (c) Move the response-collection loop into the protocol crate's
+#       eventual hid wrapper (not yet built; Phase 1 daemon work).
+# Decision deferred — for now, the harness handles it ad-hoc and tests
+# stay against the strict C#-mirror semantics.
