@@ -63,19 +63,27 @@ enum Cmd {
 }
 
 /// Flags for `set-pump-lighting`.
+///
+/// `--brightness` and `--speed` are user-facing 0..=100 percentages; the
+/// firmware wire range is 0..=4. The CLI maps percent -> wire by integer
+/// division by 25, matching `Galahad2VisionController.cs:1290-1291`. Only
+/// color1 is exposed; color2..4 default to black (Breathing-style modes
+/// will appear single-colour as a result).
 #[derive(Args, Debug)]
 struct SetPumpLightingArgs {
     /// Lighting mode (effect). Defaults to a solid colour.
     #[arg(long, default_value = "static-color")]
     mode: PumpModeArg,
     /// Primary colour as `#RRGGBB` (six hex digits, optional leading `#`).
-    #[arg(long, default_value = "#FF0000")]
-    color: String,
-    /// Brightness, 0..=100.
-    #[arg(long, default_value_t = 50)]
+    #[arg(long, default_value = "#FF0000", value_parser = parse_hex_color)]
+    color: lconnect_protocol::galahad2_lcdv2::lighting::Rgb,
+    /// Brightness percent, 0..=100. Mapped to wire bytes 0..=4 (percent / 25).
+    #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
     brightness: u8,
-    /// Animation speed, 0..=100. Use 0 for non-animated modes.
-    #[arg(long, default_value_t = 0)]
+    /// Animation speed percent, 0..=100. Mapped to wire bytes 0..=4 (percent / 25).
+    /// Use 0 for non-animated modes; animated modes (Breathing, Runway, Meteor,
+    /// Ticker-Tape, Bounce, ...) need a non-zero speed to appear in motion.
+    #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=100))]
     speed: u8,
     /// Which LED ring to target.
     #[arg(long, default_value = "inner")]
@@ -91,20 +99,22 @@ struct SetPumpLightingArgs {
     disable: bool,
 }
 
-/// Flags for `set-fan-lighting`.
+/// Flags for `set-fan-lighting`. See `SetPumpLightingArgs` doc for the
+/// brightness/speed wire-mapping rationale.
 #[derive(Args, Debug)]
 struct SetFanLightingArgs {
     /// Lighting mode (effect). Defaults to a solid colour.
     #[arg(long, default_value = "static-color")]
     mode: FanModeArg,
     /// Primary colour as `#RRGGBB` (six hex digits, optional leading `#`).
-    #[arg(long, default_value = "#FF0000")]
-    color: String,
-    /// Brightness, 0..=100.
-    #[arg(long, default_value_t = 50)]
+    #[arg(long, default_value = "#FF0000", value_parser = parse_hex_color)]
+    color: lconnect_protocol::galahad2_lcdv2::lighting::Rgb,
+    /// Brightness percent, 0..=100. Mapped to wire bytes 0..=4 (percent / 25).
+    #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
     brightness: u8,
-    /// Animation speed, 0..=100. Use 0 for non-animated modes.
-    #[arg(long, default_value_t = 0)]
+    /// Animation speed percent, 0..=100. Mapped to wire bytes 0..=4 (percent / 25).
+    /// Use 0 for non-animated modes.
+    #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=100))]
     speed: u8,
     /// Where the ARGB signal comes from.
     #[arg(long, default_value = "mcu")]
@@ -118,8 +128,10 @@ struct SetFanLightingArgs {
     /// Mirror pump lighting onto the fans.
     #[arg(long)]
     sync_to_pump: bool,
-    /// Number of LEDs in the fan ring (varies by SKU).
-    #[arg(long, default_value_t = 24)]
+    /// Number of LEDs in the fan ring. Known shipping values are 16 and 24;
+    /// out-of-range values are rejected because the firmware uses this to
+    /// bound its LED-ring write loop.
+    #[arg(long, default_value_t = 24, value_parser = clap::value_parser!(u8).range(1..=60))]
     number_of_led: u8,
 }
 
@@ -634,7 +646,7 @@ fn get_pump_lighting() -> Result<()> {
             println!("  max_brightness = {}", info.max_brightness);
             println!("  modes ({}):", info.modes.len());
             for m in &info.modes {
-                println!("    - {m:?}");
+                println!("    - {m:?} (0x{:02x})", *m as u8);
             }
             Ok(())
         }
@@ -646,13 +658,14 @@ fn set_pump_lighting(args: SetPumpLightingArgs) -> Result<()> {
     use lconnect_protocol::galahad2_lcdv2::lighting::PumpLightingSetting;
     use lconnect_protocol::galahad2_lcdv2::set_lighting::build_set_pump_lighting_request;
 
-    let color = parse_hex_color(&args.color)?;
+    let brightness_wire = args.brightness / 25;
+    let speed_wire = args.speed / 25;
     let setting = PumpLightingSetting {
         scope: args.scope.into(),
         mode: args.mode.into(),
-        brightness: args.brightness,
-        speed: args.speed,
-        color1: color,
+        brightness: brightness_wire,
+        speed: speed_wire,
+        color1: args.color,
         direction: args.direction.into(),
         disabled: args.disable,
         source: args.source.into(),
@@ -668,20 +681,22 @@ fn set_pump_lighting(args: SetPumpLightingArgs) -> Result<()> {
     let written = device.write(&req).context("HID write failed")?;
     println!(
         "wrote {written} bytes (SetPumpLighting, mode={mode:?}, color=#{r:02X}{g:02X}{b:02X}, \
-         brightness={br}, speed={sp}, scope={sc:?}, source={src:?}, direction={dir:?}, disabled={dis})",
+         brightness={brp}%->{brw} speed={spp}%->{spw} scope={sc:?}, source={src:?}, direction={dir:?}, disabled={dis})",
         mode = setting.mode,
-        r = color.r,
-        g = color.g,
-        b = color.b,
-        br = setting.brightness,
-        sp = setting.speed,
+        r = args.color.r,
+        g = args.color.g,
+        b = args.color.b,
+        brp = args.brightness,
+        brw = brightness_wire,
+        spp = args.speed,
+        spw = speed_wire,
         sc = setting.scope,
         src = setting.source,
         dir = setting.direction,
         dis = setting.disabled,
     );
     println!("note: command is fire-and-forget; LEDs may take ~50ms to update.");
-    println!("verify by looking at the pump LEDs, or run `verify-galahad get-pump-lighting` to read modes back.");
+    println!("verify by looking at the pump LEDs (the device does not echo the active setting).");
     Ok(())
 }
 
@@ -714,7 +729,7 @@ fn get_fan_lighting() -> Result<()> {
             println!("  max_brightness = {}", info.max_brightness);
             println!("  modes ({}):", info.modes.len());
             for m in &info.modes {
-                println!("    - {m:?}");
+                println!("    - {m:?} (0x{:02x})", *m as u8);
             }
             Ok(())
         }
@@ -726,12 +741,13 @@ fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
     use lconnect_protocol::galahad2_lcdv2::lighting::FanLightingSetting;
     use lconnect_protocol::galahad2_lcdv2::set_lighting::build_set_fan_lighting_request;
 
-    let color = parse_hex_color(&args.color)?;
+    let brightness_wire = args.brightness / 25;
+    let speed_wire = args.speed / 25;
     let setting = FanLightingSetting {
         mode: args.mode.into(),
-        brightness: args.brightness,
-        speed: args.speed,
-        color1: color,
+        brightness: brightness_wire,
+        speed: speed_wire,
+        color1: args.color,
         direction: args.direction.into(),
         disabled: args.disable,
         source: args.source.into(),
@@ -749,14 +765,16 @@ fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
     let written = device.write(&req).context("HID write failed")?;
     println!(
         "wrote {written} bytes (SetFanLighting, mode={mode:?}, color=#{r:02X}{g:02X}{b:02X}, \
-         brightness={br}, speed={sp}, source={src:?}, direction={dir:?}, disabled={dis}, \
-         sync_to_pump={stp}, number_of_led={nled})",
+         brightness={brp}%->{brw} speed={spp}%->{spw} source={src:?}, direction={dir:?}, \
+         disabled={dis}, sync_to_pump={stp}, number_of_led={nled})",
         mode = setting.mode,
-        r = color.r,
-        g = color.g,
-        b = color.b,
-        br = setting.brightness,
-        sp = setting.speed,
+        r = args.color.r,
+        g = args.color.g,
+        b = args.color.b,
+        brp = args.brightness,
+        brw = brightness_wire,
+        spp = args.speed,
+        spw = speed_wire,
         src = setting.source,
         dir = setting.direction,
         dis = setting.disabled,
@@ -764,6 +782,6 @@ fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
         nled = setting.number_of_led,
     );
     println!("note: command is fire-and-forget; LEDs may take ~50ms to update.");
-    println!("verify by looking at the fan LEDs, or run `verify-galahad get-fan-lighting` to read modes back.");
+    println!("verify by looking at the fan LEDs (the device does not echo the active setting).");
     Ok(())
 }
