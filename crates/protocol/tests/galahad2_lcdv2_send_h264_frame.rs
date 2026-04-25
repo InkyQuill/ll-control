@@ -127,6 +127,11 @@ fn build_send_h264_frame_accepts_at_max() {
 fn send_h264_frame_and_send_jpeg_differ_only_by_cmd_byte() {
     use lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
     // 4-byte H.264 NAL unit start code.
+    // Use &payload[..] (explicit slice borrow) rather than &payload —
+    // both forms work due to deref coercion, but the slice form makes
+    // the borrow type identical to what build_*_request takes, removing
+    // any ambiguity for future readers about whether the test exercises
+    // a deref path that the codecs also exercise.
     let payload = [0x00, 0x00, 0x00, 0x01];
     let h264 = build_send_h264_frame_request(&payload[..]).expect("valid");
     let jpeg = build_send_jpeg_request(&payload[..]).expect("valid");
@@ -138,4 +143,43 @@ fn send_h264_frame_and_send_jpeg_differ_only_by_cmd_byte() {
         assert_eq!(j[1], 14, "send_jpeg cmd = 14");
         assert_eq!(&h[2..], &j[2..], "all post-cmd bytes match");
     }
+}
+
+#[test]
+fn parse_send_h264_frame_response_accepts_minimal_512_byte_input() {
+    let mut buf = [0u8; 512];
+    buf[0] = 0x02;
+    buf[1] = 13;
+    let parsed = lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf)
+        .expect("valid empty response");
+    assert_eq!(parsed.command(), 13);
+    assert_eq!(parsed.length(), 0);
+    assert_eq!(parsed.data_size(), 0);
+}
+
+#[test]
+fn parse_send_h264_frame_response_rejects_wrong_command_echo() {
+    let mut buf = [0u8; 512];
+    buf[0] = 0x02;
+    buf[1] = 99; // not 13
+    let err =
+        lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::UnexpectedCommand {
+            expected: 13,
+            got: 99
+        }
+    ));
+}
+
+#[test]
+fn parse_send_h264_frame_response_rejects_too_short() {
+    let buf = [0x02_u8, 13];
+    let err =
+        lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf).unwrap_err();
+    assert!(matches!(
+        err,
+        lconnect_protocol::Error::BufferTooShort { .. }
+    ));
 }
