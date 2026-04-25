@@ -21,6 +21,51 @@
 
 use crate::galahad2_lcdv2::bpacket::{BCommandPacket, OUTPUT_LEN};
 use crate::galahad2_lcdv2::commands::Command;
+use crate::galahad2_lcdv2::lighting::Rgb;
+
+/// LCD brightness percent in the range `0..=100`.
+///
+/// The C# UI clamps user input to `0..=100` via `IntExtensions.Constrain`
+/// before sending. The firmware's behaviour for values > 100 is
+/// undocumented; this newtype encodes the invariant into the type system
+/// so callers cannot construct a `Brightness` holding `101+`. Mirrors
+/// the established `Pwm(u8)` newtype precedent.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Brightness(u8);
+
+impl Brightness {
+    /// Construct a `Brightness` from a percent. Returns
+    /// [`crate::Error::InvalidBrightness`] for values `> 100`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::Error::InvalidBrightness`] when `percent > 100`.
+    pub fn new(percent: u8) -> crate::Result<Self> {
+        if percent > 100 {
+            return Err(crate::Error::InvalidBrightness(percent));
+        }
+        Ok(Self(percent))
+    }
+
+    /// The maximum-valid brightness (100%).
+    #[must_use]
+    pub fn max() -> Self {
+        Self(100)
+    }
+
+    /// The contained percent value, guaranteed `0..=100`.
+    #[must_use]
+    pub fn percent(self) -> u8 {
+        self.0
+    }
+}
+
+impl Default for Brightness {
+    fn default() -> Self {
+        // Matches LCDControlSetting.cs:51-59 default of 50.
+        Self(50)
+    }
+}
 
 /// Build the 1024-byte HID request for `IsLCDAvailable` (cmd 23).
 #[must_use = "returns the request packet bytes; dropping without writing has no effect"]
@@ -63,13 +108,6 @@ pub fn parse_is_lcd_available_response(buf: &[u8]) -> crate::Result<bool> {
 ///
 /// `LCDControlMode.cs:5-13` — C# `enum LCDControlMode : byte`. The
 /// Linux port preserves the implicit byte discriminants (0..=5).
-///
-/// # Caveats
-///
-/// [`LCDControlMode::LCDTest`] is a foot-gun: the device renders the
-/// configured `test_color` as a solid full-screen pattern and keeps
-/// rendering it until another `LCDControl` command (or a power cycle)
-/// changes the mode. Treat it as a diagnostic, not a runtime mode.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
@@ -85,7 +123,14 @@ pub enum LCDControlMode {
     /// Brightness / rotation settings update path used by the C#
     /// service controller (see [`LCDControlSetting::for_brightness_change`]).
     LCDSetting = 4,
-    /// Solid-colour test pattern (uses `test_color`). See caveat above.
+    /// Solid-colour test pattern (uses `test_color`).
+    ///
+    /// # Foot-gun
+    ///
+    /// This mode is a foot-gun: the device renders the configured
+    /// `test_color` as a solid full-screen pattern and keeps rendering
+    /// it until another `LCDControl` command (or a power cycle) changes
+    /// the mode. Treat it as a diagnostic, not a runtime mode.
     LCDTest = 5,
 }
 
@@ -122,27 +167,30 @@ pub enum ScreenRotation {
 ///
 /// # Caveats
 ///
-/// - **`brightness` is unclamped** at the codec layer. The C# UI
-///   constrains it to `0..=100` via `IntExtensions.Constrain` before
-///   calling the device path; the Linux port preserves the wire format
-///   verbatim and leaves clamping to the caller. Sending values above
-///   100 has undefined visual behaviour on the panel.
 /// - **`mode = LCDTest`** locks the panel to a solid `test_color` until
-///   another `LCDControl` is sent. See [`LCDControlMode::LCDTest`].
+///   another `LCDControl` is sent. See the foot-gun note on
+///   [`LCDControlMode::LCDTest`].
+#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LCDControlSetting {
     /// LCD operating mode — see [`LCDControlMode`].
     pub mode: LCDControlMode,
-    /// Backlight brightness. C# UI clamps to `0..=100`; this codec does not.
-    pub brightness: u8,
+    /// Backlight brightness, range-checked at construction. See
+    /// [`Brightness`].
+    pub brightness: Brightness,
     /// Screen rotation — see [`ScreenRotation`].
     pub rotation: ScreenRotation,
     /// `true` enables the `LCDTest` solid-colour pattern; effective only
     /// when `mode == LCDControlMode::LCDTest`.
     pub enable_test: bool,
     /// Solid-colour value used when `enable_test` is set.
-    pub test_color: crate::galahad2_lcdv2::lighting::Rgb,
+    pub test_color: Rgb,
     /// Frame rate hint for `LocalH264` / `LocalAVI` playback paths.
+    ///
+    /// Known values: 24 (used by the L-Connect-Service brightness-update
+    /// path) and 30 (the C# default constructor). The effect of values
+    /// outside this range is undocumented; verified safe range pending a
+    /// live test.
     pub video_fps: u8,
 }
 
@@ -154,10 +202,10 @@ impl Default for LCDControlSetting {
     fn default() -> Self {
         Self {
             mode: LCDControlMode::LocalUI,
-            brightness: 50,
+            brightness: Brightness::default(),
             rotation: ScreenRotation::Rotate0,
             enable_test: false,
-            test_color: crate::galahad2_lcdv2::lighting::Rgb::BLACK,
+            test_color: Rgb::BLACK,
             video_fps: 30,
         }
     }
@@ -168,11 +216,16 @@ impl LCDControlSetting {
     /// (`Mode=LCDSetting`, `VideoFPS=24`); other fields take
     /// [`Default`] values.
     ///
+    /// Calling this constructor repeatedly with the same [`Brightness`]
+    /// is idempotent at the protocol layer — every call produces the
+    /// same wire bytes. The C# service treats brightness updates as
+    /// cheap re-applies of `Mode=LCDSetting`.
+    ///
     /// # Source
     ///
     /// `Galahad2VisionController.cs:1483-1487`.
     #[must_use]
-    pub fn for_brightness_change(brightness: u8) -> Self {
+    pub fn for_brightness_change(brightness: Brightness) -> Self {
         Self {
             mode: LCDControlMode::LCDSetting,
             brightness,
@@ -189,7 +242,7 @@ impl LCDControlSetting {
     pub fn to_bytes(&self) -> [u8; 8] {
         [
             self.mode as u8,
-            self.brightness,
+            self.brightness.percent(),
             self.rotation as u8,
             u8::from(self.enable_test),
             self.test_color.r,
@@ -203,8 +256,8 @@ impl LCDControlSetting {
 /// Build the 1024-byte HID request for `LCDControl` (cmd 12).
 ///
 /// The 8-byte payload is laid down at offset 11 with `DataSize=8` and
-/// `Length=8`. See [`LCDControlSetting`] for caveats around
-/// brightness clamping and the `LCDTest` mode.
+/// `Length=8`. See [`LCDControlSetting`] and [`LCDControlMode::LCDTest`]
+/// for the foot-gun caveat around test-pattern mode.
 #[must_use = "returns the request packet bytes; dropping without writing has no effect"]
 pub fn build_lcd_control_request(setting: LCDControlSetting) -> [u8; OUTPUT_LEN] {
     let payload = setting.to_bytes();

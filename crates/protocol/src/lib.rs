@@ -64,6 +64,10 @@ pub enum Error {
     /// A PWM percent value was outside the supported 0..=100 range.
     #[error("invalid PWM percent: {0} (must be 0..=100)")]
     InvalidPwmPercent(u8),
+
+    /// A brightness percent value was outside the supported 0..=100 range.
+    #[error("invalid brightness percent: {0} (must be 0..=100)")]
+    InvalidBrightness(u8),
 }
 
 /// Convenience alias for `Result<T, protocol::Error>`.
