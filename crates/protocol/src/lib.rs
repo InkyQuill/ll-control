@@ -80,6 +80,16 @@ pub enum Error {
         /// The single-packet maximum for this LED path.
         max: usize,
     },
+
+    /// A JPEG byte stream was empty or exceeded the codec-enforced
+    /// maximum size.
+    #[error("invalid JPEG size: got {size} bytes (must be 1..={max})")]
+    InvalidJpegSize {
+        /// The caller-provided JPEG byte count.
+        size: usize,
+        /// The codec-enforced maximum.
+        max: usize,
+    },
 }
 
 /// Convenience alias for `Result<T, protocol::Error>`.
