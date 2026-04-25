@@ -2,8 +2,8 @@
 //!
 //! `to_bytes()` produces the wire-format payload for `SetFanLighting` /
 //! `SetPumpLighting` commands. Sources:
-//! - `Products/Galahad2Vision/FanLightingSetting.cs:117-150` (20 bytes)
-//! - `Products/Galahad2Vision/PumpLightingSetting.cs:107-141` (19 bytes)
+//! - `Products/Galahad2Vision/FanLightingSetting.cs:109-145` (20 bytes)
+//! - `Products/Galahad2Vision/PumpLightingSetting.cs:101-136` (19 bytes)
 
 use crate::galahad2_lcdv2::lighting_enums::{
     ArgbSignalSource, FanLightingMode, LightingDirection, PumpLightingMode, PumpLightingScope,
@@ -105,7 +105,7 @@ impl Default for FanLightingSetting {
 impl FanLightingSetting {
     /// Encode the setting as a 20-byte wire payload.
     ///
-    /// Byte layout (mirrors `FanLightingSetting.cs:117-150`):
+    /// Byte layout (mirrors `FanLightingSetting.cs:109-145`):
     /// `[Mode, Brightness, Speed, Color1×3, Color2×3, Color3×3, Color4×3,
     ///  Direction, Disabled, Source, SyncToPump, NumberOfLED]`.
     pub fn to_bytes(&self) -> [u8; 20] {
@@ -186,7 +186,7 @@ impl Default for PumpLightingSetting {
 impl PumpLightingSetting {
     /// Encode the setting as a 19-byte wire payload.
     ///
-    /// Byte layout (mirrors `PumpLightingSetting.cs:107-141`):
+    /// Byte layout (mirrors `PumpLightingSetting.cs:101-136`):
     /// `[Scope, Mode, Brightness, Speed, Color1×3, Color2×3, Color3×3,
     ///  Color4×3, Direction, Disabled, Source]`.
     pub fn to_bytes(&self) -> [u8; 19] {

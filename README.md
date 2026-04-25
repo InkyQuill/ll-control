@@ -5,6 +5,9 @@ end of **Phase 0c** — protocol verification only. No daemon, no GUI yet.
 
 ## Status
 
+(Legend: ✅ live-verified against real hardware; 🌗 codec-tested only,
+live verification pending; 🚧 not started.)
+
 - ✅ Cargo workspace set up
 - ✅ `lconnect-protocol` crate, with verified `ACommandPacket` framing
 - ✅ Galahad II LCDV2 sensors (`GetHandshakeInfo`), firmware identity
@@ -49,9 +52,9 @@ cargo run -p verify-galahad -- firmware
 cargo run -p verify-galahad -- fan --percent 50
 cargo run -p verify-galahad -- pump --percent 75 --source mcu
 # cargo run -p verify-galahad -- reset --yes-i-really-want-to-reset  # dangerous
-cargo run -p verify-galahad -- get-pump-lighting       # read modes & limits
-cargo run -p verify-galahad -- set-pump-lighting       # static red on pump cap (default flags)
-cargo run -p verify-galahad -- get-fan-lighting
+cargo run -p verify-galahad -- get-pump-lighting       # read pump modes & wire-limits
+cargo run -p verify-galahad -- set-pump-lighting       # static red on pump cap (defaults; add --color/--brightness/--mode to override)
+cargo run -p verify-galahad -- get-fan-lighting        # read fan modes & wire-limits
 cargo run -p verify-galahad -- set-fan-lighting --color '#0000FF'
 ```
 
