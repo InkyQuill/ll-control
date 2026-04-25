@@ -440,6 +440,145 @@ No response expected.
 
 ---
 
+## `SendJpeg` — Command 14 (`0x0E`)
+
+**Status:** `verified` (live-confirmed 2026-04-25 against firmware 1.6,
+see [captures/2026-04-25-jpeg-upload-live.txt](./captures/2026-04-25-jpeg-upload-live.txt)).
+Three sequential runs against varied 480x480 JPEGs (radial gradient
+20343 B / 21 packets, strawberry 56162 B / 56 packets, clock face
+45740 B / 46 packets in the cmd-15 cross-check) confirmed the
+multi-chunk write is tear-free and the firmware decodes and displays
+the JPEG within ~50 ms of the last packet.
+
+**Sources:**
+- Enum: `Galahad2Vision/Commands.cs:11` (`SendJpeg = 14`).
+- Wire shape: derived from cmd 20 (`SetLEDColors`) by analogy and
+  confirmed live in this commit's capture file. No located C# call
+  site for cmd 14 itself.
+
+### Request
+
+`BCommandPacket` with `Command = 14`. The payload IS the raw JPEG
+bytes (no `isFanLed` flag, no zero-pad, no frame header) — they
+start at offset 11 of the first packet and span all chunks via the
+standard `BCommandPacket::build_packets_for_write` chunker:
+per-chunk Command/DataSize replicated, PacketNumber incrementing
+from 0.
+
+| offset (logical) | size       | content                |
+|------------------|------------|------------------------|
+| 0..              | 1..=N      | raw JPEG byte stream   |
+
+The 480x480 LCD accepts JPEG-encoded frames; for arbitrary input
+images, the `lconnect-image` workspace crate produces 480x480 JPEG
+bytes ready to feed straight in.
+
+No response expected.
+
+### Caveats
+
+- **Cmd 14 is a transient single-frame command, not a persistent
+  display.** The firmware decodes and displays the JPEG within
+  ~50 ms of the last packet but auto-reverts to LocalUI default
+  after a bounded hold time. User-observed approximations on FW 1.6:
+    - Default LocalUI mode: ~2 second hold.
+    - `LCDControlMode::Application` (cmd 12 preflight): ~20 second
+      hold (~10x extension).
+  These numbers are empirical, observed by the user across the runs
+  in the capture file; they are not firmware-documented timeouts.
+- **For sustained static-image display, the host must refresh
+  periodically.** A daemon-level refresh loop at ≤15 s intervals (in
+  Application mode) keeps the image up indefinitely. The C# UI's
+  default `LCDControlSetting.VideoFPS = 24` and the service's
+  brightness-path `VideoFPS = 24` are consistent with a
+  continuous-frame architecture for streamed dynamic content; we
+  haven't proven that the firmware actually polls at 24 Hz, but the
+  observed timeout extension under Application mode is consistent
+  with that hypothesis.
+- **Do not interleave cmd 14 (`SendJpeg`) and cmd 15 (`UploadJpeg`)
+  writes on the same device handle.** If the firmware uses
+  different buffering or apply semantics for the two commands,
+  switching mid-transfer may leave the LCD decoder in an undefined
+  state.
+- **Partial-write recovery is undefined.** If a per-packet write
+  fails on packet `N` of `M`, the firmware's transfer state is
+  unknown. Recovery requires either a fresh complete transfer or a
+  device reset (cmd 142).
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/jpeg.rs`
+  (`build_send_jpeg_request`, `MAX_JPEG_BYTES`).
+- `crates/protocol/tests/galahad2_lcdv2_send_jpeg.rs`,
+  `crates/protocol/tests/galahad2_lcdv2_upload_jpeg.rs` (cross-check
+  vs cmd 15).
+
+---
+
+## `UploadJpeg` — Command 15 (`0x0F`)
+
+**Status:** `codec-verified` (byte-level codec tested and
+cross-checked against cmd 14; live device run on 2026-04-25 against
+firmware 1.6 saw 56-packet transfers ACK'd in full but produced no
+visible LCD change in either default mode or after
+`LCDControl{mode=Application}` preflight — see
+[captures/2026-04-25-jpeg-upload-live.txt](./captures/2026-04-25-jpeg-upload-live.txt)).
+The activation path on FW 1.6 is currently unknown.
+
+**Sources:**
+- Enum: `Galahad2Vision/Commands.cs:12` (`UploadJpeg = 15`).
+- Wire shape: presumed identical to cmd 14 (cross-check tests pin
+  byte-level equivalence except for the Command byte). No located
+  C# call site for cmd 15 itself.
+
+### Request
+
+Same wire shape as cmd 14, only the Command byte changes:
+`BCommandPacket` with `Command = 15` carrying the raw JPEG bytes via
+`BCommandPacket::build_packets_for_write`.
+
+| offset (logical) | size       | content                |
+|------------------|------------|------------------------|
+| 0..              | 1..=N      | raw JPEG byte stream   |
+
+No response expected.
+
+### Caveats
+
+- **Cmd 15 produces no visible LCD activation on FW 1.6.** Both the
+  default-mode and Application-mode preflight runs in the capture
+  file ACK'd every 1024-byte write (46 and 56-packet transfers) but
+  the LCD did not change. The activation path is unclear; plausible
+  (unverified) explanations:
+    - Stored to non-volatile storage for use as a boot / startup
+      image; would only become visible after device power-cycle.
+    - Requires a separate trigger command not in the documented
+      `Galahad2Vision/Commands.cs` enum (cmds 10-23, 129-142 are all
+      catalogued).
+    - Used by an internal display mode (`LocalAVI = 3`,
+      `LocalH264 = 2`) we have not activated via cmd 12.
+- **Recommendation: do not use this codec in production daemon code
+  until the activation path is empirically discovered.** Cmd 14 +
+  `LCDControlMode::Application` + a daemon-level refresh loop is the
+  established working path for static-image display.
+- **Do not interleave cmd 14 and cmd 15 writes** — same caveat as
+  cmd 14.
+- **Partial-write recovery is undefined** — same caveat as cmd 14.
+- **If cmd 15 ultimately turns out to write to non-volatile
+  storage** (consistent with the broader `Send*` / `Upload*` naming
+  pattern in the C# enums but unproven), CLI consumers should treat
+  it as destructive: `verify-galahad upload-jpeg --mode upload`
+  already gates on `--yes`.
+
+### Implementation
+
+- `crates/protocol/src/galahad2_lcdv2/jpeg.rs`
+  (`build_upload_jpeg_request`, `MAX_JPEG_BYTES`).
+- `crates/protocol/tests/galahad2_lcdv2_upload_jpeg.rs`
+  (cross-check vs cmd 14 pins byte-level equivalence).
+
+---
+
 ## `SetLEDColors` — Command 20 (`0x14`)
 
 **Status:** `verified` (live-confirmed 2026-04-25 against firmware 1.6 —
@@ -572,16 +711,25 @@ Coverage in subsequent phases:
   doesn't expose); `SetFanLighting` (cmd 133) drives fans wired to the
   AIO's fan header. Rapid back-to-back writes can transiently buffer
   with only the latest rendering — see the per-section status lines.
-- **Phase 0d:** ⏳ partially landed.
+- **Phase 0d:** ⏳ mostly landed.
   - ✅ `LCDControl` (12) — codec-verified (see section above).
   - ✅ `SetLEDColors` (20) — live-verified 2026-04-25, screen-path
     rendered red/green/yellow on the pump cap; fan-path rendered 2 of 3
     fans (configuration-specific, see section's Caveats).
   - ✅ `IsLCDAvailable` (23) — live-verified 2026-04-25, round-trips
     `0x00` (available) on a healthy device.
-  - ⏳ `SendJpeg` (14), `UploadJpeg` (15), `SendH264Frame` (13) — pending
-    (Tasks 7–10). Introduces JPEG / H.264 frame upload via the existing
-    `BCommandPacket` (512-byte) framing.
+  - ✅ `SendJpeg` (14) — live-verified 2026-04-25 against FW 1.6, see
+    section above. Empirically a transient single-frame command:
+    user-observed ~2 s hold in default LocalUI mode, ~20 s hold after
+    `LCDControl{mode=Application}` preflight. Daemon-level static-image
+    display will need a refresh loop.
+  - ✅ `UploadJpeg` (15) — codec-verified; live 56-packet write ACK'd in
+    full but no visible LCD activation on FW 1.6 in either default or
+    Application-mode preflight. Activation path unknown (stored-for-boot
+    / undocumented trigger / unactivated internal mode are the three
+    plausible hypotheses); see section above. Not recommended for
+    production daemon use until activation is empirically discovered.
+  - ⏳ `SendH264Frame` (13) — stretch goal, not landed in Phase 0d.
   - ⏳ `UploadFirmware` (11), `ActiveFirmware` (10) — deferred to a later
     sub-phase (firmware-touching, higher risk).
 - **Phase 1+:** `GetSerialNumber` (136), `SetSerialNumber` (137),

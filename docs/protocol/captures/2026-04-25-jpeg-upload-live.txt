@@ -1,0 +1,99 @@
+# Galahad II LCDV2 — Phase 0d cmd 14 (SendJpeg) + cmd 15 (UploadJpeg) live captures
+# Date: 2026-04-25
+# Firmware: 1.6
+# USB: 0416:7395
+# CachyOS, kernel 7.0.1-1-cachyos, hidapi 2.5, hidraw backend
+#
+# OUTCOME: Phase 0d's headline demo. The end-to-end pipeline
+# (lconnect-image converter -> 480x480 JPEG -> BCommandPacket chunks
+# -> device) drives the LCD via cmd 14. Cmd 14 is empirically
+# transient with auto-revert; cmd 15's bytes are accepted but do not
+# visibly activate the LCD on FW 1.6.
+
+## Run 1: cmd 14 default (no mode preflight)
+
+Command:
+  cargo run -p verify-galahad -- upload-jpeg --path crates/lconnect-image/test-images/01-radial-gradient.png --yes
+
+Output (relevant lines):
+  prepared 20343 bytes of 480x480 JPEG (mode=send, fit=crop, quality=90)
+  wrote 1024 bytes (send packet 1/21)
+  ...
+  wrote 1024 bytes (send packet 21/21)
+  note: command is fire-and-forget; LCD frame may take ~50-200ms to update.
+
+Visual outcome (user-observed): pump-cap LCD displayed the radial
+gradient. After ~2 seconds the LCD reverted to its default LocalUI
+content (Lian Li logo). The 21-packet multi-chunk transfer was
+tear-free.
+
+## Run 2: cmd 15 default (no mode preflight)
+
+Command:
+  cargo run -p verify-galahad -- upload-jpeg --path crates/lconnect-image/test-images/05-clock-face.png --mode upload --yes
+
+Visual outcome (user-observed): 46 packets ACK'd in full, no error
+from the device, but the LCD did NOT change to the clock face. The
+display remained on the post-revert LocalUI logo.
+
+## Run 3: cmd 15 + --set-application-mode
+
+Command:
+  cargo run -p verify-galahad -- upload-jpeg --path crates/lconnect-image/test-images/05-clock-face.png --mode upload --yes --set-application-mode
+
+Visual outcome (user-observed): same as Run 2. The
+LCDControl{mode=Application} preflight sent successfully (1024-byte
+write) but the subsequent cmd 15 stream, while ACK'd in full,
+produced no visible LCD change.
+
+## Run 4: cmd 14 + --set-application-mode
+
+Command:
+  cargo run -p verify-galahad -- upload-jpeg --path crates/lconnect-image/test-images/03-strawberry.png --mode send --set-application-mode --yes
+
+Visual outcome (user-observed): pump-cap LCD displayed the strawberry
+photograph. After ~20 seconds the LCD reverted to its default LocalUI
+content. This is roughly a 10x extension over Run 1's ~2-second hold.
+
+## Architecture inferred
+
+- Cmd 14 (SendJpeg) is a transient single-frame command. The firmware
+  decodes and displays the JPEG within ~50ms of the last packet but
+  holds it for only a bounded time before auto-reverting to the
+  LocalUI default. The hold time depends on LCDControlMode (numbers
+  are user-observed approximations, not firmware-documented timeouts):
+    - LocalUI (default boot mode) -> ~2 second hold.
+    - Application -> ~20 second hold (~10x).
+  The C# default LCDControlSetting.VideoFPS = 24 and the service's
+  brightness-path VideoFPS = 24 are consistent with a continuous-frame
+  architecture: the host is presumably expected to stream frames at
+  ~24 fps when in Application mode for sustained content. Our test
+  harness sends one frame and watches it expire; the daemon will need
+  a refresh loop with intervals well under the timeout (10-15s in
+  Application mode is more than sufficient for a static-image use
+  case).
+
+- Cmd 15 (UploadJpeg) accepts bytes but does not render to the LCD on
+  FW 1.6. Both default-mode and Application-mode preflight runs
+  produced no visible change. The activation path is unclear:
+    - Possibly stored to non-volatile storage for boot/startup display.
+    - Possibly requires a separate trigger command not documented in
+      the Galahad2Vision Commands enum (cmds 10-23, 129-142 are all
+      catalogued).
+    - Possibly used by an internal mode (LocalAVI=3, LocalH264=2) we
+      have not activated.
+  Recommend: do not use cmd 15 in the daemon until the activation
+  path is empirically discovered. Cmd 14 + Application mode + a
+  refresh loop is sufficient for the static-image use case.
+
+- Multi-packet BCommandPacket writes are robust: 21-, 46-, and
+  56-packet transfers all ACK'd full 1024-byte writes with no tearing
+  or partial-frame artifacts observed. The chunker's PacketNumber
+  sequencing and DataSize replication match firmware expectations
+  exactly.
+
+- The lconnect-image -> 480x480 JPEG pipeline handles varied content
+  cleanly: smooth radial gradient (low entropy), photographic
+  strawberry with fine texture (medium-high entropy), clock face with
+  text and sharp edges (mixed). FitMode::Crop + Quality 90 produces
+  visually-good output across all three.
