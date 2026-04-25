@@ -161,18 +161,19 @@ struct SetLedColorsArgs {
     #[arg(long, value_parser = parse_hex_color)]
     color: lconnect_protocol::galahad2_lcdv2::Rgb,
 
-    /// Number of LEDs to address. Default 8. Capped at 80 (well below
-    /// `MAX_SCREEN_LEDS=329` / `MAX_FAN_LEDS=337`) to prevent typo-driven
-    /// over-writes on small hardware rings — Galahad II LCDV2 ships with
-    /// ~16-24 LEDs per ring.
-    #[arg(long, default_value_t = 8, value_parser = clap::value_parser!(u8).range(1..=80))]
+    /// Number of LEDs to address. Default 16 (matches the LCDV2 pump-cap
+    /// ring). Capped at 80 (well below `MAX_SCREEN_LEDS=329` /
+    /// `MAX_FAN_LEDS=337`) to prevent typo-driven over-writes on small
+    /// hardware rings — Galahad II LCDV2 ships with ~16-24 LEDs per ring.
+    #[arg(long, default_value_t = 16, value_parser = clap::value_parser!(u8).range(1..=80))]
     count: u8,
 
     /// Which LED ring to target.
     #[arg(long, default_value = "screen")]
     kind: LedKindArg,
 
-    /// Skip the "this will overwrite LCD content" prompt.
+    /// FOR TESTING ONLY — skip the user-consent prompt. Do not use in
+    /// scripts that run unattended against production hardware.
     #[arg(long)]
     yes: bool,
 
@@ -412,6 +413,21 @@ fn read_until_command<const N: usize>(
             buf.get(1).copied().unwrap_or(0)
         );
     }
+}
+
+/// One-shot 512-byte BCommandPacket read. B-class responses don't have
+/// the cmd-0x8e unsolicited-packet quirk that motivates `read_until_command`
+/// for A-class reads, so a single `read_timeout` call is sufficient.
+fn read_b_packet(
+    device: &HidDevice,
+    timeout_ms: i32,
+) -> Result<[u8; lconnect_protocol::galahad2_lcdv2::bpacket::INPUT_LEN]> {
+    use lconnect_protocol::galahad2_lcdv2::bpacket::INPUT_LEN;
+    let mut buf = [0u8; INPUT_LEN];
+    let _read = device
+        .read_timeout(&mut buf, timeout_ms)
+        .context("HID read_timeout failed")?;
+    Ok(buf)
 }
 
 fn main() -> Result<()> {
@@ -926,18 +942,17 @@ fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
             .context("HID write failed (IsLCDAvailable)")?;
         println!("wrote {written} bytes (IsLCDAvailable preflight)");
 
-        let mut buf = [0u8; INPUT_LEN];
-        let read = device
-            .read_timeout(&mut buf, 1000)
-            .context("HID read_timeout failed (IsLCDAvailable response)")?;
-        println!("read {read} bytes");
+        let buf = read_b_packet(&device, 1000)?;
+        println!("read {INPUT_LEN} bytes");
         match parse_is_lcd_available_response(&buf) {
             Ok(true) => println!("LCD available — proceeding."),
             Ok(false) => {
                 return Err(anyhow!(
-                    "device reported LCD unavailable (IsLCDAvailable -> false). \
-                     Aborting before SetLEDColors. Re-run without --check-available \
-                     if you want to send the write anyway."
+                    "device reported LCD unavailable (IsLCDAvailable -> false). Try replugging \
+                     the device or waiting a few seconds for the LCD to initialise, then re-run. \
+                     If you want to bypass the check, omit --check-available — but a `false` \
+                     report typically means the LCD is mid-init and a SetLEDColors write may not \
+                     render."
                 ));
             }
             Err(e) => {
@@ -947,25 +962,6 @@ fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
                 ));
             }
         }
-    }
-
-    // Optional preflight: put the firmware into host-driven (Application)
-    // mode. cmd 12 is fire-and-forget — no response is expected.
-    //
-    // `LCDControlSetting` is `#[non_exhaustive]`, so functional-update
-    // (`..Self::default()`) is forbidden from outside the protocol crate.
-    // Instead start from `Default` (gives Mode=LocalUI, Brightness=50,
-    // Rotation=0, EnableTest=false, TestColor=Black, VideoFPS=30) and
-    // override the mode in place.
-    if args.set_application_mode {
-        let mut setting = LCDControlSetting::default();
-        setting.mode = LCDControlMode::Application;
-        setting.brightness = Brightness::default();
-        let req = build_lcd_control_request(setting);
-        let written = device
-            .write(&req)
-            .context("HID write failed (LCDControl)")?;
-        println!("wrote {written} bytes (LCDControl, mode=Application, no response expected)");
     }
 
     // User-consent gate. The prompt MUST block on stdin and accept only
@@ -994,6 +990,29 @@ fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
         }
     }
 
+    // Optional preflight: put the firmware into host-driven (Application)
+    // mode. cmd 12 is fire-and-forget — no response is expected. This is
+    // a state-changing write, so it MUST be gated behind the consent
+    // prompt above — otherwise a user who types "N" at the prompt has
+    // already had the device flipped to Application mode (LocalUI logo
+    // gone dark) before the abort.
+    //
+    // `LCDControlSetting` is `#[non_exhaustive]`, so functional-update
+    // (`..Self::default()`) is forbidden from outside the protocol crate.
+    // Instead start from `Default` (gives Mode=LocalUI, Brightness=50,
+    // Rotation=0, EnableTest=false, TestColor=Black, VideoFPS=30) and
+    // override the mode in place.
+    if args.set_application_mode {
+        let mut setting = LCDControlSetting::default();
+        setting.mode = LCDControlMode::Application;
+        setting.brightness = Brightness::default();
+        let req = build_lcd_control_request(setting);
+        let written = device
+            .write(&req)
+            .context("HID write failed (LCDControl preflight — SetLEDColors was NOT sent)")?;
+        println!("wrote {written} bytes (LCDControl, mode=Application, no response expected)");
+    }
+
     // Build the colour array and request packets. The codec returns
     // `crate::Result<Vec<[u8; OUTPUT_LEN]>>`; `crate::Error` impls
     // `std::error::Error` (thiserror), so `?` lifts it into anyhow.
@@ -1007,22 +1026,37 @@ fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
 
     let total = packets.len();
     for (i, packet) in packets.iter().enumerate() {
-        let written = device
-            .write(packet)
-            .context("HID write failed (SetLEDColors)")?;
-        println!(
-            "wrote {written} bytes (SetLEDColors packet {i_one}/{total}, kind={kind}, count={count}, color=#{r:02X}{g:02X}{b:02X})",
-            i_one = i + 1,
-            kind = kind_str,
-            count = args.count,
-            r = args.color.r,
-            g = args.color.g,
-            b = args.color.b,
-        );
+        let written = device.write(packet).with_context(|| {
+            format!(
+                "HID write failed on packet {} of {} (SetLEDColors)",
+                i + 1,
+                total
+            )
+        })?;
+        if written != OUTPUT_LEN {
+            return Err(anyhow!(
+                "short HID write on packet {} of {}: sent {} of {} bytes (SetLEDColors). \
+                 Device state may be partially updated; rerun the same command to retry.",
+                i + 1,
+                total,
+                written,
+                OUTPUT_LEN
+            ));
+        }
+        if total > 1 {
+            println!(
+                "wrote {} bytes (SetLEDColors packet {}/{})",
+                written,
+                i + 1,
+                total
+            );
+        }
     }
+    println!("note: command is fire-and-forget; LEDs may take ~50ms to update.");
     println!(
-        "note: command is fire-and-forget; LEDs may take ~50ms to update. \
-         Verify by looking at the {kind_str} ring."
+        "verify by looking at the {kind_str} ring. If no visible change occurs, \
+         retry with --set-application-mode (host-driven LCD mode may be required \
+         for cmd 20 on some firmware revisions; this is empirically unverified)."
     );
     Ok(())
 }
