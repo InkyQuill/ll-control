@@ -30,6 +30,12 @@ enum Cmd {
     Handshake,
     /// Send GetFirmwareVersion (cmd 134) and decode the two-packet response.
     Firmware,
+    /// Send SetFanPWM (cmd 139). NOTE: physically changes fan speed.
+    Fan {
+        /// Percent duty cycle, 0..=100. Values outside this range are rejected.
+        #[arg(long)]
+        percent: u8,
+    },
 }
 
 fn main() -> Result<()> {
@@ -38,6 +44,7 @@ fn main() -> Result<()> {
         Cmd::List => list_devices(),
         Cmd::Handshake => handshake(),
         Cmd::Firmware => firmware(),
+        Cmd::Fan { percent } => fan(percent),
     }
 }
 
@@ -255,4 +262,24 @@ fn firmware() -> Result<()> {
         }
         Err(e) => Err(anyhow!("decode failed: {e}\nraw bytes printed above")),
     }
+}
+
+fn fan(percent: u8) -> Result<()> {
+    use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request;
+    use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+
+    let pwm = Pwm::new(percent)
+        .map_err(|e| anyhow!("invalid percent: {e}"))?;
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device")?;
+
+    let req = build_request(pwm);
+    let written = device.write(&req).context("HID write failed")?;
+    println!("wrote {written} bytes (SetFanPWM, percent={percent})");
+    println!("note: command is fire-and-forget; no response read.");
+    println!("verify by running `verify-galahad handshake` to read fan_rpm.");
+    Ok(())
 }
