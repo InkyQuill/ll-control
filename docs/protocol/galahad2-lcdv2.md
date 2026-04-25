@@ -253,24 +253,27 @@ escape-byte protocol:
 
 ## `SetPumpLighting` — Command 131 (`0x83`)
 
-**Status:** `verified` (live-confirmed 2026-04-25: pump cap went magenta
-under `--scope outer` with `color = #FF00FF` and `mode = StaticColor`,
-see [captures/2026-04-25-lighting-live.txt](./captures/2026-04-25-lighting-live.txt)).
+**Status:** `codec-verified` (wire bytes match the C# format, payload
+acknowledged by firmware). Visible LED render is **not reliably
+reproducible** on the LCDV2 in isolation (see caveat below).
 
-> **LCDV2 scope quirk:** only `scope = Outer` (or `All`) drives the
-> visible LED ring on this SKU. `scope = Inner` (the `PumpLightingScope`
-> default) writes successfully but produces no visible change — it
-> appears to target a region the LCDV2 doesn't expose. Earlier
-> hypotheses that cmd 131 was vestigial for the LCDV2 were wrong; the
-> command is functional, just with non-default scope semantics on this
-> SKU.
+> **LCDV2 dependency on screen-LED state:** the firmware's pump-cap LED
+> render is bound to active screen-LED state (`SetLEDColors` cmd 20,
+> `BCommandPacket` framing — Phase 0d). Cmd 131 alone updates an
+> internal buffer but does NOT trigger a re-render. Empirically: a
+> single colour write rendered once on 2026-04-25 (magenta, scope=Outer)
+> while the device still held residual screen-LED state from a prior
+> Windows session, but every subsequent cmd 131 write — across all
+> scopes, modes, sources, and the `--disable` flag — was silently
+> buffered with no visible change.
 >
-> Note that the C# Vision controller's `SendScreenLEDLightingSettingRequest`
-> (`Galahad2VisionController.cs:1381-1414`) routes through cmd 20
-> (`SetLEDColors`, `BCommandPacket` — Phase 0d) instead of cmd 131. Cmd
-> 20 gives per-pixel RGB control for dynamic effects; cmd 131 selects
-> from the firmware's built-in preset modes. Both reach the same
-> outer-ring hardware on the LCDV2.
+> The C# service (`L-Connect-Service/.../Galahad2VisionController.cs`)
+> always pairs cmd 131 with screen-LED commands: at settings-load
+> (lines 453-455 send brightness → fan-lighting → cmd 131 in strict
+> order), and on every screen-LED setting change (line 1584
+> immediately re-issues cmd 131). Reliable pump-cap LED control on
+> this SKU therefore needs Phase 0d's `SetLEDColors` (cmd 20)
+> implemented first.
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:310-313`.
@@ -391,13 +394,16 @@ The full enum lives in
 [`commands.rs`](../../crates/protocol/src/galahad2_lcdv2/commands.rs).
 Coverage in subsequent phases:
 
-- **Phase 0c:** ✅ landed and live-verified 2026-04-25 —
-  `Get{Pump,Fan}LightingInfo` (cmd 130/132) round-trip with the
-  expected mode lists; `SetPumpLighting` (cmd 131) drives the visible
-  LED ring on the LCDV2 with `scope = Outer`/`All` (the `Inner` default
-  hits a region this SKU doesn't expose); `SetFanLighting` (cmd 133)
-  drives fans wired to the AIO's fan header. See per-section status
-  lines for the captured details.
+- **Phase 0c:** ✅ landed 2026-04-25.
+  `Get{Pump,Fan}LightingInfo` (cmd 130/132) live-verified —
+  round-trip the expected mode lists. `SetFanLighting` (cmd 133)
+  live-verified — drives fans wired to the AIO's fan header.
+  `SetPumpLighting` (cmd 131) is codec-verified (wire bytes match
+  the C# spec; firmware ACKs each 64-byte write) but does not
+  reliably render on the LCDV2 in isolation — the pump-cap LED
+  ring's render is bound to active screen-LED state (cmd 20 /
+  BCommandPacket / Phase 0d). See the `SetPumpLighting` section
+  for the empirical detail.
 - **Phase 0d:** `LCDControl` (12), `IsLCDAvailable` (23), `SendJpeg` (14),
   `UploadJpeg` (15), `SendH264Frame` (13), `UploadFirmware` (11),
   `ActiveFirmware` (10). Introduces `BCommandPacket` (512-byte) framing

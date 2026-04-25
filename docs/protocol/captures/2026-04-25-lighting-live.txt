@@ -66,29 +66,31 @@ decoded:
 
 ## set-pump-lighting / set-fan-lighting
 
-Wrote 64 bytes successfully on cmd 131 (SetPumpLighting) and cmd 133
-(SetFanLighting) for several mode/colour/scope combinations:
-- mode=StaticColor color=#FF0000 scope=Inner  (no visible change)
-- mode=StaticColor color=#00FF00 scope=Inner  (no visible change)
-- mode=Rainbow     speed=50      scope=Inner  (no visible change)
-- mode=StaticColor color=#FF00FF scope=All    (no observation captured at the time)
-- mode=StaticColor color=#FF00FF scope=Outer  (PUMP CAP WENT MAGENTA — visible!)
-- (fan side) mode=StaticColor color=#0000FF   (FANS WENT BLUE — visible!)
+`SetFanLighting` (cmd 133) live-verified: a single
+`--color '#0000FF'` write produced a visible blue on the fan ring.
+A subsequent `--color '#FF0000'` write did NOT change the fans —
+also one-shot in this session, but the first write rendered cleanly.
 
-So cmd 131 is functional on the LCDV2; the visible LED region is targeted
-by `--scope outer` (or `--scope all`), NOT `--scope inner`. The default
-`--scope inner` silently targets a region the LCDV2 SKU doesn't expose,
-which is why the early test runs all looked dark. Updating the verify-
-galahad CLI default to `--scope outer` would make the smoke test
-visible-by-default, but `inner` matches the C# `PumpLightingScope` enum
-default and faithfully ports the wire format — so the right fix is to
-document the scope semantics rather than override them.
+`SetPumpLighting` (cmd 131): one rendered write (`--color '#FF00FF'
+--scope outer` showed magenta on the pump-cap LED ring). All
+subsequent writes — yellow, cyan, rainbow at full speed, every
+scope, every source, the `--disable` flag — were ACKed with 64
+bytes written but produced no visible change. The pump cap stayed
+magenta throughout.
 
-This refines (not contradicts) the earlier finding from
-Galahad2VisionController.cs:1381-1414: the Vision UI uses cmd 20
-(SetLEDColors, BCommandPacket — Phase 0d) for its dynamic per-pixel
-effects, but cmd 131's preset-mode path is independently functional on
-the same firmware and reaches the same outer LED ring.
+**Best explanation** (per `L-Connect-Service/.../Galahad2VisionController.cs`):
+the firmware's pump-cap LED render is bound to active screen-LED
+state (cmd 20 `SetLEDColors`, BCommandPacket — Phase 0d). The C#
+service always pairs cmd 131 with surrounding screen-LED commands;
+sending cmd 131 in isolation is not part of the supported call
+pattern on this SKU. The single magenta render was almost certainly
+a coincidence: the device was holding residual screen-LED state
+from a prior Windows session and the cmd 131 write landed during
+that brief window.
+
+Conclusion: Phase 0c's cmd 131 codec is correct relative to the
+wire protocol but cannot be used in isolation to drive visible LEDs
+on the LCDV2. Visible pump-cap LED control needs Phase 0d.
 
 ## Notes
 
