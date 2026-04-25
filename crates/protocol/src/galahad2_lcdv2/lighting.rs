@@ -243,12 +243,16 @@ const TERMINATOR: u8 = 0x5A;
 ///
 /// Generic so it serves both fan and pump cases. `from_byte` maps a
 /// byte to a mode enum (handling unknowns).
-fn parse_lighting_info<M>(data: &[u8], from_byte: fn(u8) -> M) -> crate::Result<LightingInfo<M>> {
+fn parse_lighting_info<M>(
+    data: &[u8],
+    from_byte: impl Fn(u8) -> M,
+) -> crate::Result<LightingInfo<M>> {
     if data.is_empty() {
         return Err(crate::Error::BufferTooShort { need: 1, got: 0 });
     }
 
-    let mut modes: Vec<M> = Vec::new();
+    // Mode list is bounded above by `data.len()`; pre-size to avoid reallocations.
+    let mut modes: Vec<M> = Vec::with_capacity(data.len());
     let mut escape = false;
     let mut idx = 0usize;
     let mut found_terminator = false;
@@ -271,10 +275,15 @@ fn parse_lighting_info<M>(data: &[u8], from_byte: fn(u8) -> M) -> crate::Result<
     }
 
     if !found_terminator {
-        // We reached end-of-buffer without seeing the A5/5A pair. The C#
-        // doesn't distinguish this case from "no trailer bytes" — both
-        // surface as `length - num < 2`. We surface as BufferTooShort.
-        return Err(crate::Error::BufferTooShort { need: 2, got: 0 });
+        // Reached end-of-buffer without seeing the A5/5A pair. The C# code
+        // does not distinguish this from a too-short trailer — both surface
+        // as `length - num < 2`. We re-use BufferTooShort and report the
+        // actual remaining length so callers see "had N bytes, never found
+        // a terminator" rather than a synthetic 0.
+        return Err(crate::Error::BufferTooShort {
+            need: 2,
+            got: data.len(),
+        });
     }
 
     let trailer_remaining = data.len().saturating_sub(idx);
