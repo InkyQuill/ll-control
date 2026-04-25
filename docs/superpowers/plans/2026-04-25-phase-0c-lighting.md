@@ -1823,3 +1823,65 @@ findings, plan deviations)."
 
 When all pass, write **Phase 0d (LCD)** plan as the next sub-project.
 This is the centerpiece of the user's motivation.
+
+---
+
+## Post-execution notes (2026-04-25)
+
+**Final test count:** 77 across the lconnect-protocol crate (Phase 0b
+exit was 36, +41 in this phase — well over the 33-test target). Breakdown:
+- lighting_enums: 7
+- fan_lighting (Rgb + setting + to_bytes): 6
+- pump_lighting (to_bytes): 5
+- lighting_info parser: 9
+- get_lighting (codec + tests): 8
+- set_lighting (codec + tests): 6
+
+**Commits:** 19 commits since Phase 0b's tail. All conventional-commit-
+prefixed; review polish landed as separate `fix:` / `style:` commits
+following each `feat:`.
+
+**Idiomatic Rust additions:**
+- `Rgb` value type with const helpers (`BLACK`/`WHITE`/`RED`/`GREEN`/`BLUE`).
+- `LightingInfo<M>` generic over the mode enum, with type aliases
+  `FanLightingInfo`/`PumpLightingInfo`. One escape-byte parser serves both.
+- `from_u8` helpers on the mode enums for "fall back to Unknown".
+- `#[expect(reason = "...")]` over `#[allow]` for lint suppressions.
+- `read_until_command` helper in verify-galahad to drain stale HID
+  responses (fix for an echo-mismatch race observed during live runs).
+
+**Plan deviations:**
+- Plan target was 69 tests; actual is 77 because each task's reviewer
+  round added coverage tests beyond the prescribed minimum (e.g.,
+  `disabled=true` on FanLightingSetting, `scope=All` on PumpLightingSetting,
+  escape-of-escape on the lighting parser, `parse_too_short` for the get
+  codec, symmetric pump-side wrong-echo).
+- Live capture is a single combined file (`2026-04-25-lighting-live.txt`)
+  rather than separate fan/pump files — the runs share too much narrative
+  context to split.
+- Brightness/speed wire range turned out to be `0..=4` (not `0..=100`);
+  the C# UI does `value / 25` before serialising. Caught by the
+  hid-safety reviewer; CLI now clamps via `value_parser` and applies the
+  same divide-by-25 mapping inside the handler.
+
+**Real-hardware findings on FW 1.6:**
+- `GetPumpLightingInfo` advertises 16 modes (Rainbow=1 through Bounce=16).
+- `GetFanLightingInfo` advertises 6 modes (Rainbow=1 through Meteor=6).
+- `max_speed = max_brightness = 4` on both.
+- Unsolicited cmd 0x8e status packets occasionally appear in the read
+  queue (already documented in `galahad2-lcdv2.md` for `GetFirmwareVersion`).
+  The new `read_until_command` helper drains them.
+- `SetFanLighting --color '#0000FF'` reliably drove fans blue.
+- `SetPumpLighting` reliably writes 64 bytes but does NOT reliably render
+  on the LCDV2; only the first write of the session produced a visible
+  magenta and that was almost certainly a coincidence (residual screen-LED
+  state from a prior Windows session). The C# service pairs cmd 131 with
+  surrounding screen-LED commands at every call site — on this SKU the
+  firmware's pump-cap LED render is bound to active screen-LED state
+  (cmd 20 / BCommandPacket / Phase 0d).
+
+**Next:** Phase 0d (LCD subsystem + `BCommandPacket`). Includes
+`SetLEDColors` (cmd 20) — the actual pump-cap LED driver — plus
+`LCDControl`, `IsLCDAvailable`, JPEG/H264 frame upload, firmware
+upload. The 512-byte BCommandPacket framing is shared by all of them.
+This is the centerpiece of the user's motivation for this project.

@@ -5,7 +5,8 @@ end of **Phase 0c** — protocol verification only. No daemon, no GUI yet.
 
 ## Status
 
-(Legend: ✅ live-verified against real hardware; 🚧 not started.)
+(Legend: ✅ live-verified against real hardware; 🌗 partially verified
+— wire codec works but live behaviour has caveats; 🚧 not started.)
 
 - ✅ Cargo workspace set up
 - ✅ `lconnect-protocol` crate, with verified `ACommandPacket` framing
@@ -14,9 +15,14 @@ end of **Phase 0c** — protocol verification only. No daemon, no GUI yet.
   and soft-reset codec (`ResetDevice`) — all verified against real hardware
   (or codec-tested with safety gate, in the case of reset)
 - ✅ Crypto-not-used-at-transport confirmed (`docs/protocol/crypto-usage.md`)
-- ✅ Lighting subsystem (`Get/Set {Fan,Pump}Lighting`) live-verified
-  on the LCDV2: pump cap drove visible RGB under `--scope outer` and
-  fans drove visible RGB. 77 tests across the protocol crate.
+- 🌗 Lighting subsystem (`Get/Set {Fan,Pump}Lighting`) — codecs
+  faithful to the C# wire format (77 tests). Live status: Get*
+  (cmd 130/132) and `SetFanLighting` (cmd 133) verified;
+  `SetPumpLighting` (cmd 131) is codec-verified but does not
+  reliably render on the LCDV2 in isolation — the firmware's
+  pump-cap LED render is bound to active screen-LED state
+  (cmd 20 `SetLEDColors`, BCommandPacket — Phase 0d). See
+  `docs/protocol/galahad2-lcdv2.md` for the empirical detail.
 - 🚧 LCD config + frame upload — Phase 0d
 - 🚧 Daemon, GUI, theme engine — Phases 1–6
 
