@@ -42,4 +42,6 @@ pub mod set_led_colors;
 
 pub mod jpeg;
 
+pub mod h264;
+
 pub use lighting::Rgb;
