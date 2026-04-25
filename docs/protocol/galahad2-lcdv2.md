@@ -253,19 +253,24 @@ escape-byte protocol:
 
 ## `SetPumpLighting` — Command 131 (`0x83`)
 
-**Status:** `codec-verified`; live writes are accepted by the device but
-have **no visible effect** on the LCDV2 SKU (see caveat below).
+**Status:** `verified` (live-confirmed 2026-04-25: pump cap went magenta
+under `--scope outer` with `color = #FF00FF` and `mode = StaticColor`,
+see [captures/2026-04-25-lighting-live.txt](./captures/2026-04-25-lighting-live.txt)).
 
-> **LCDV2 caveat:** the Vision controller never calls cmd 131 in the C# UI;
-> the LED ring around the LCD is driven by `SetLEDColors` (cmd 20,
-> `BCommandPacket` framing — Phase 0d). Cmd 131 is implemented in firmware
-> (codec tested faithful, 64-byte writes acknowledged) but appears
-> vestigial for this SKU and likely targets non-LCD Galahad2 variants
-> (e.g. Trinity). The corresponding `SetFanLighting` (cmd 133) IS used by
-> the Vision controller but only takes visible effect when fans are wired
-> to the AIO fan header. See `Galahad2VisionController.cs:1381-1414` for
-> the actual LED-control flow (`SendScreenLEDLightingSettingRequest` →
-> cmd 20).
+> **LCDV2 scope quirk:** only `scope = Outer` (or `All`) drives the
+> visible LED ring on this SKU. `scope = Inner` (the `PumpLightingScope`
+> default) writes successfully but produces no visible change — it
+> appears to target a region the LCDV2 doesn't expose. Earlier
+> hypotheses that cmd 131 was vestigial for the LCDV2 were wrong; the
+> command is functional, just with non-default scope semantics on this
+> SKU.
+>
+> Note that the C# Vision controller's `SendScreenLEDLightingSettingRequest`
+> (`Galahad2VisionController.cs:1381-1414`) routes through cmd 20
+> (`SetLEDColors`, `BCommandPacket` — Phase 0d) instead of cmd 131. Cmd
+> 20 gives per-pixel RGB control for dynamic effects; cmd 131 selects
+> from the firmware's built-in preset modes. Both reach the same
+> outer-ring hardware on the LCDV2.
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:310-313`.
@@ -335,16 +340,16 @@ Implementation reuses the same generic `LightingInfo<M>` parser
 
 ## `SetFanLighting` — Command 133 (`0x85`)
 
-**Status:** `codec-verified`; live writes are accepted by the device.
-Visible effect on the LCDV2 is conditional — see caveat below.
+**Status:** `verified` (live-confirmed 2026-04-25: fans went blue under
+`color = #0000FF` with `mode = StaticColor`, see
+[captures/2026-04-25-lighting-live.txt](./captures/2026-04-25-lighting-live.txt)).
 
-> **LCDV2 caveat:** unlike `SetPumpLighting` (cmd 131), `SetFanLighting`
-> IS invoked by the Vision controller's UI. However, its output is only
-> visible when fans are physically wired to the AIO's fan header; on
-> systems where fans plug directly into motherboard headers, the writes
-> succeed but produce no LED change. The pump's own LED ring on the
-> LCDV2 is **not** controlled by this command — that path is
-> `SetLEDColors` (cmd 20, `BCommandPacket` — Phase 0d).
+> **Conditional visibility:** the cmd 133 write succeeds regardless of
+> fan wiring, but the LED change is only visible when fans are
+> physically connected to the AIO's fan header. On systems where fans
+> plug directly into motherboard headers, the bytes are acknowledged
+> but no fan LEDs are reachable. The pump's own LED ring is targeted
+> separately by `SetPumpLighting` (cmd 131) with `scope = Outer`.
 
 **Sources:**
 - Wire flow: `Galahad2VisionDevice.cs:269-272`.
@@ -386,10 +391,13 @@ The full enum lives in
 [`commands.rs`](../../crates/protocol/src/galahad2_lcdv2/commands.rs).
 Coverage in subsequent phases:
 
-- **Phase 0c:** ✅ landed — `Get{Pump,Fan}LightingInfo` (cmd 130/132)
-  live-verified 2026-04-25; `Set{Pump,Fan}Lighting` (cmd 131/133) accept
-  64-byte writes but their visible effect on the LCDV2 SKU is conditional
-  (see the per-section LCDV2 caveats above).
+- **Phase 0c:** ✅ landed and live-verified 2026-04-25 —
+  `Get{Pump,Fan}LightingInfo` (cmd 130/132) round-trip with the
+  expected mode lists; `SetPumpLighting` (cmd 131) drives the visible
+  LED ring on the LCDV2 with `scope = Outer`/`All` (the `Inner` default
+  hits a region this SKU doesn't expose); `SetFanLighting` (cmd 133)
+  drives fans wired to the AIO's fan header. See per-section status
+  lines for the captured details.
 - **Phase 0d:** `LCDControl` (12), `IsLCDAvailable` (23), `SendJpeg` (14),
   `UploadJpeg` (15), `SendH264Frame` (13), `UploadFirmware` (11),
   `ActiveFirmware` (10). Introduces `BCommandPacket` (512-byte) framing
