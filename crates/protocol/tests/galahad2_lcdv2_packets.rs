@@ -111,3 +111,20 @@ fn parse_response_rejects_oversize_length_field() {
         lconnect_protocol::Error::InvalidLength { length: 0xFF, max: 58 }
     ));
 }
+
+#[test]
+fn parse_response_rejects_truncated_data_section() {
+    // Buffer is exactly HEADER_LEN bytes (6) but advertises length=5,
+    // so the data section [6..11] would be out-of-bounds.
+    // Validates the second BufferTooShort branch (the post-length-field
+    // bounds check).
+    let buf = [0x01u8, 0x81, 0x00, 0x00, 0x00, 0x05];
+    let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
+    assert!(
+        matches!(
+            err,
+            lconnect_protocol::Error::BufferTooShort { need: 11, got: 6 }
+        ),
+        "got {err:?}"
+    );
+}
