@@ -1,0 +1,19 @@
+[package]
+name         = "verify-galahad"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+authors.workspace      = true
+description = "Phase-0 test harness for Galahad II LCDV2 protocol verification. Not a product binary."
+publish     = false
+
+[[bin]]
+name = "verify-galahad"
+path = "src/main.rs"
+
+[dependencies]
+lconnect-protocol = { path = "../../crates/protocol" }
+hidapi            = { workspace = true }
+anyhow            = { workspace = true }
+clap              = { workspace = true }
