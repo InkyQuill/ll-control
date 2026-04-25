@@ -39,6 +39,12 @@ fn build_send_jpeg_at_payload_max_boundary() {
     let bytes = pkts[0];
     assert_eq!(&bytes[2..6], &[0, 0, 0x03, 0xF5], "DataSize = 1013");
     assert_eq!(&bytes[9..11], &[0x03, 0xF5], "Length = 1013");
+    // At PAYLOAD_MAX, the entire 1013-byte payload occupies bytes [11..1024]
+    // of the wire packet. Catches an off-by-one in the chunker's slice logic.
+    assert!(
+        bytes[11..].iter().all(|&b| b == 0xAA),
+        "full 1013-byte payload embedded; no zero pad expected at exact boundary"
+    );
 }
 
 #[test]
