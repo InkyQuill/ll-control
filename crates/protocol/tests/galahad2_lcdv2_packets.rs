@@ -128,3 +128,18 @@ fn parse_response_rejects_truncated_data_section() {
         "got {err:?}"
     );
 }
+
+#[test]
+fn command_codes_match_decompiled_enum() {
+    // From Products/Galahad2Vision/Commands.cs lines 7–29.
+    use lconnect_protocol::galahad2_lcdv2::commands::Command;
+    assert_eq!(Command::GetHandshakeInfo as u8, 129);
+    assert_eq!(Command::GetFirmwareVersion as u8, 134);
+    assert_eq!(Command::SetPumpPWM as u8, 138);
+    assert_eq!(Command::SetFanPWM as u8, 139);
+    assert_eq!(Command::ResetDevice as u8, 142);
+    assert_eq!(Command::LCDControl as u8, 12);
+    assert_eq!(Command::SendH264Frame as u8, 13);
+    assert_eq!(Command::SendJpeg as u8, 14);
+    assert_eq!(Command::IsLCDAvailable as u8, 23);
+}

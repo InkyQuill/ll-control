@@ -11,3 +11,5 @@
 //! Submodules are added incrementally as commands are verified.
 
 pub mod packets;
+
+pub mod commands;
