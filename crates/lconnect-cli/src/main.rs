@@ -96,20 +96,66 @@ enum Cmd {
 // them as `Option<String>` shaped today lets `main.rs` compile without
 // blocking the parallel tasks on a shared schema.
 
-/// Placeholder — populated in P1E-5.
+/// `lconnectctl lighting <set|clear|info> ...` — see [`LightingSubcommand`].
 #[derive(Args)]
 pub struct LightingArgs {
-    /// "fan" | "pump" — populated in P1E-5.
-    #[arg(long)]
-    pub kind: Option<String>,
+    #[command(subcommand)]
+    pub command: LightingSubcommand,
 }
 
-/// Placeholder — populated in P1E-5.
+#[derive(clap::Subcommand)]
+pub enum LightingSubcommand {
+    /// Set lighting parameters.
+    Set {
+        /// fan or pump.
+        kind: String,
+        #[arg(long)]
+        mode: String,
+        #[arg(long)]
+        color: Option<String>,
+        #[arg(long)]
+        speed: Option<u8>,
+        #[arg(long)]
+        brightness: Option<u8>,
+        #[arg(long)]
+        direction: Option<String>,
+        #[arg(long)]
+        scope: Option<String>,
+        #[arg(long)]
+        disable: bool,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Clear lighting state on a kind.
+    Clear {
+        kind: String,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Print supported modes/parameters for a kind.
+    Info {
+        kind: String,
+        #[arg(long)]
+        device: Option<String>,
+    },
+}
+
+/// `lconnectctl led-colors <fan|screen> [--color #RRGGBB --count N | --from-file PATH]`.
 #[derive(Args)]
 pub struct LedColorsArgs {
-    /// "fan" | "screen" — populated in P1E-5.
+    /// fan or screen.
+    pub target: String,
+    /// Single color (#RRGGBB or rrggbb) applied to all LEDs.
+    #[arg(long, conflicts_with = "from_file")]
+    pub color: Option<String>,
+    /// File with one #RRGGBB per line.
     #[arg(long)]
-    pub target: Option<String>,
+    pub from_file: Option<std::path::PathBuf>,
+    /// Override count when --color is set (defaults to family-specific).
+    #[arg(long)]
+    pub count: Option<usize>,
+    #[arg(long)]
+    pub device: Option<String>,
 }
 
 /// Placeholder — populated in P1E-6.
