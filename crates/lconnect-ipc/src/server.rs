@@ -39,8 +39,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::Path;
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::{UnixListener, UnixStream};
+use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
+use tokio::net::UnixListener;
 use tracing::{debug, error, info, warn};
 
 /// JSON-RPC server bound to a Unix socket.
@@ -103,11 +103,36 @@ impl<R: DaemonRpc> IpcServer<R> {
             }
         }
     }
+
+    /// Run the connection loop against a single duplex stream.
+    ///
+    /// This is the test-only seam used by the in-memory transport
+    /// ([`crate::transport_memory::mem_pair`]) and by the Phase 2 GUI's
+    /// mock-daemon harness. The body is identical to one iteration of
+    /// [`Self::serve`]'s accept loop, just without the listener.
+    ///
+    /// `S` is generic so callers can pass either a
+    /// [`tokio::io::DuplexStream`] or a real socket (handy for tests
+    /// that want to wrap the transport in a tracer or a fault-injector).
+    ///
+    /// # Errors
+    /// Bubbles up the first read or write error from the underlying
+    /// stream.
+    pub async fn serve_stream<S>(&self, stream: S) -> std::io::Result<()>
+    where
+        S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        handle_connection(stream, self.rpc.clone()).await
+    }
 }
 
 /// Wrap [`handle_connection`] so it returns `()` (suitable for stuffing
 /// into a [`FuturesUnordered`]) and logs any per-connection error.
-async fn spawn_connection<R: DaemonRpc>(stream: UnixStream, rpc: Arc<R>) {
+async fn spawn_connection<S, R>(stream: S, rpc: Arc<R>)
+where
+    S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    R: DaemonRpc,
+{
     if let Err(e) = handle_connection(stream, rpc).await {
         warn!("IPC connection ended with error: {e}");
     }
@@ -116,8 +141,19 @@ async fn spawn_connection<R: DaemonRpc>(stream: UnixStream, rpc: Arc<R>) {
 /// Drive a single accepted connection: send the `hello` notification,
 /// then loop reading line-delimited JSON-RPC requests and writing
 /// responses until EOF or a write error.
-async fn handle_connection<R: DaemonRpc>(stream: UnixStream, rpc: Arc<R>) -> std::io::Result<()> {
-    let (read_half, mut write_half) = stream.into_split();
+///
+/// Generic over any `AsyncRead + AsyncWrite + Unpin` stream so the same
+/// body powers both the path-based accept loop ([`UnixStream`]) and the
+/// in-memory transport ([`tokio::io::DuplexStream`]) used by tests and
+/// the Phase 2 GUI's mock-daemon harness. Uses [`tokio::io::split`]
+/// rather than the `UnixStream`-specific `into_split` so the function is
+/// transport-agnostic.
+async fn handle_connection<S, R>(stream: S, rpc: Arc<R>) -> std::io::Result<()>
+where
+    S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    R: DaemonRpc,
+{
+    let (read_half, mut write_half) = tokio::io::split(stream);
     let mut reader = BufReader::new(read_half);
 
     // Send hello notification on connect so clients can verify protocol

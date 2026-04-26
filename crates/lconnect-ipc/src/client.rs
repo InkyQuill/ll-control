@@ -35,7 +35,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
 use tokio::net::UnixStream;
 use tokio::sync::{mpsc, oneshot, Mutex};
 
@@ -73,7 +73,24 @@ impl IpcClient {
         let stream = UnixStream::connect(socket_path)
             .await
             .map_err(|e| IpcError::Transport(e.to_string()))?;
-        let (read_half, mut write_half) = stream.into_split();
+        Self::from_stream(stream).await
+    }
+
+    /// Build a client from any `AsyncRead + AsyncWrite` stream.
+    ///
+    /// This is the test-only seam used by the in-memory transport
+    /// ([`crate::transport_memory::mem_pair`]) and by the Phase 2 GUI's
+    /// mock-daemon harness. The body is the same multiplexer wiring
+    /// that [`Self::connect`] uses; only the transport changes.
+    ///
+    /// # Errors
+    /// Fails if the `hello` line can't be read or parsed as a
+    /// [`Notification`] — the stream itself is assumed already open.
+    pub async fn from_stream<S>(stream: S) -> Result<Self>
+    where
+        S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        let (read_half, mut write_half) = tokio::io::split(stream);
         let mut reader = BufReader::new(read_half);
 
         // Read the hello line synchronously before spawning the reader
