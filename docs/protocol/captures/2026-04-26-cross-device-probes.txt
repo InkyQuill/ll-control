@@ -1,8 +1,11 @@
 # Phase 0e cross-device probes against Galahad II LCDV2
 # Date: 2026-04-26
 # Hardware: 0x0416:0x7395 (Galahad II LCDV2), firmware 1.6
-# Status: candidate list drafted (P0e-19); pending hid-safety-reviewer
-#         classification + user go-ahead before any byte hits the device
+# Status: candidate list classified by hid-safety-reviewer (2026-04-26);
+#         3 APPROVED (probes 1, 3, 5) / 3 NEEDS-CLARIFICATION (probes 2, 4, 6).
+#         APPROVED candidates may proceed to P0e-20 after explicit user go-ahead.
+#         NEEDS-CLARIFICATION entries require user to resolve or drop before
+#         any byte from those probes hits the device.
 #
 # OUTCOME: (live results land here after P0e-20)
 
@@ -131,7 +134,8 @@ RPM min/max and PWM step info").
 timeout, (c) stale unsolicited cmd-129 / cmd-0x8E packets that the
 drain loop discards.
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x8C --framing a --yes-read-only`
-**hid-safety-reviewer classification:** PENDING
+**hid-safety-reviewer classification:** APPROVED
+**hid-safety rationale:** Galahad2Trinity/Commands.cs:18 declares GetFanPumpParams=140 (enum entry only; no caller in Galahad2TrinityDevice.cs — cmds 129/131/133/134/138/139 are the only ones dispatched). Galahad2Vision/Commands.cs has no cmd 140 entry. A-class framing correct: all Trinity 130s-block commands use single 64-byte A-class packets. Zero-filled payload offsets 2+ have no documented sub-command meaning on any sibling family. No write side effect possible.
 
 ### Probe 2: TLLCD GetHandshakeInfo - LCD playback state query (B-class)
 
@@ -173,7 +177,8 @@ acknowledges the byte but has no data to return), no response
 within the 500 ms read timeout, or stale-cmd-byte response discarded
 by the drain.
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x3C --framing b --yes-read-only`
-**hid-safety-reviewer classification:** PENDING
+**hid-safety-reviewer classification:** NEEDS-CLARIFICATION
+**hid-safety rationale:** TLLCD/TLLCDDevice.cs:121-134 confirms cmd 60 is a pure read. Framing concern: TLLCD LCDPacket.cs declares PacketLength_Output=512, not 64 as the probe doc states. The probe sends LCDV2 B-class (1024 bytes, ReportID 0x02) which is a different shape than TLLCD T-class (512 bytes). Cmd 60 not in LCDV2 enum. What is needed: confirm intent is to send LCDV2 B-class (1024 bytes) and observe LCDV2 response; correct the 64-byte documentation error; then re-classify APPROVED.
 
 ### Probe 3: HS I / LCDV2-declared GetSerialNumber (A-class)
 
@@ -209,7 +214,8 @@ sufficient signal for this drafting round.
 **Failure mode if hypothesis fails:** Empty echo, timeout, or stale
 cmd byte discarded by the drain.
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x88 --framing a --yes-read-only`
-**hid-safety-reviewer classification:** PENDING
+**hid-safety-reviewer classification:** APPROVED
+**hid-safety rationale:** Three independent same-MCU citations: HydroShiftLCD/Commands.cs:23 (GetSerialNumber=136, HS I), Galahad2Vision/Commands.cs:25 (GetSerialNumber=136, LCDV2 itself), Galahad2Trinity/Commands.cs:14 (ReadSerialNumber=136). All three Winbond/Nuvoton 0x0416 families agree. Paired write cmd 137 (SetSerialNumber/WriteSerialNumber) on all families. Cmd 136 declared in LCDV2 command enum (crates/protocol/src/galahad2_lcdv2/commands.rs:48) with no codec yet - not a Phase 0d duplicate. A-class framing correct.
 
 ### Probe 4: TLLCD GetProductInfo - alternate firmware-info path (B-class)
 
@@ -242,7 +248,8 @@ cmd byte. The B-class probe path uses `OUTPUT_LEN=1024` packets which
 costs more wire bandwidth than A-class but no state mutation is
 possible.
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x3D --framing b --yes-read-only`
-**hid-safety-reviewer classification:** PENDING
+**hid-safety-reviewer classification:** NEEDS-CLARIFICATION
+**hid-safety rationale:** TLLCD/TLLCDDevice.cs:100-119 confirms cmd 61 pure read (writeCommand(61,false) + 2 unconditional reads). Framing concern same as Probe 2: TLLCD LCDPacket.cs PacketLength_Output=512 bytes, but probe sends LCDV2 B-class=1024 bytes. Different shapes. Cmd 61 not in LCDV2 enum. What is needed: confirm intent is to send LCDV2 canonical B-class (1024 bytes) and observe LCDV2 firmware response; then re-classify APPROVED.
 
 ### Probe 5: TLLCD ReadSerialNumber - per-fan addressing read (B-class)
 
@@ -272,7 +279,8 @@ ASCII bytes in Data, possibly with port/index trailer bytes.
 **Failure mode if hypothesis fails:** Empty echo, timeout, or stale
 cmd byte discarded by the drain.
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x3E --framing b --yes-read-only`
-**hid-safety-reviewer classification:** PENDING
+**hid-safety-reviewer classification:** APPROVED
+**hid-safety rationale:** TLLCD/TLLCDDevice.cs:146-174. GetPortAndIndex() calls writeCommand(62,false) - bare read, no payload. Paired write is cmd 63 (TLLCDDevice.cs:282-289), not cmd 62. TLLCD host may call cmd 63 as recovery if port/index response invalid - this is host-side logic, not a cmd-62 side effect; the probe sends only cmd 62 once. Framing: TLLCD T-class=512 bytes out, probe sends LCDV2 B-class=1024 bytes - different shapes but cmd 62 not in LCDV2 enum so worst case is no response. Read*/Write* 62/63 mirrors LCDV2 Get*/Set* 136/137. APPROVED.
 
 ### Probe 6: Trinity GetFanPumpParams - B-framing fallback
 
@@ -301,4 +309,5 @@ cmd byte discarded by the drain. If both Probe 1 (A) and Probe 6 (B)
 return empty / timeout, we conclude cmd 140 is unimplemented on FW
 1.6 across both standard read framings.
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x8C --framing b --yes-read-only`
-**hid-safety-reviewer classification:** PENDING
+**hid-safety-reviewer classification:** NEEDS-CLARIFICATION
+**hid-safety rationale:** Source: Galahad2Trinity/Commands.cs:18. Cmd 140 read-only (no Trinity caller, Get prefix, no payload). Concern: no evidence places cmd 140 on B-class in any family; LCDV2 B-class handles only cmds 10-23 in all verified captures. Sending 1024-byte B-class with 0x8C is speculative. What is needed: user confirms intent is deliberate framing exploration with acknowledged speculation; then re-classify APPROVED. No write risk.
