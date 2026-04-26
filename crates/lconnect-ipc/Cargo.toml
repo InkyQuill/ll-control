@@ -1,0 +1,19 @@
+[package]
+name = "lconnect-ipc"
+description = "IPC types, JSON-RPC framing, and DaemonRpc trait for the lconnect-linux daemon."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror.workspace = true
+async-trait = "0.1"
+futures = "0.3"
+tokio = { workspace = true, features = ["sync", "io-util", "net"] }
+tracing.workspace = true
+bytes = "1"
