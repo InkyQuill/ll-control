@@ -46,11 +46,12 @@ async fn attach_spawns_actor_tree() {
     // Initially: no devices.
     assert!(handle.list().await.is_empty(), "manager starts empty");
 
-    // Attach one device. The poll loop is on a 50 ms tick, so giving
-    // ourselves 200 ms of slack covers tokio scheduling jitter on
-    // loaded CI runners.
+    // Attach one device. The poll loop is on a 50 ms tick and
+    // `replay_persisted_settings` adds ~50 ms of settle (no PWM/LCD
+    // replay because the on-disk settings are at default). 400 ms of
+    // slack covers tokio scheduling jitter on loaded CI runners.
     mock.add_device(lcdv2_info("SN-A", "/mock/hidraw0"));
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    tokio::time::sleep(Duration::from_millis(400)).await;
 
     let devs = handle.list().await;
     assert_eq!(devs.len(), 1, "exactly one device after attach");
@@ -75,8 +76,8 @@ async fn detach_drops_actor_tree() {
     let manager = DeviceManager::new(backend, store, fast_poll_config());
     let handle = manager.spawn().await;
 
-    // Wait for the attach to be observed.
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    // Wait for the attach to be observed (poll tick + replay settle).
+    tokio::time::sleep(Duration::from_millis(400)).await;
     assert_eq!(handle.list().await.len(), 1, "one device after attach");
 
     // Capture a clone of the hid_io_tx so we can prove the channel
@@ -134,8 +135,9 @@ async fn device_id_allocation_per_family() {
     let manager = DeviceManager::new(backend, store, fast_poll_config());
     let handle = manager.spawn().await;
 
-    // Wait for both attachments to reconcile.
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    // Wait for both attachments to reconcile (poll tick + replay
+    // settle for each device, attached sequentially in poll_once).
+    tokio::time::sleep(Duration::from_millis(500)).await;
 
     let mut devs = handle.list().await;
     devs.sort_by(|a, b| a.id.as_str().cmp(b.id.as_str()));
@@ -157,5 +159,83 @@ async fn device_id_allocation_per_family() {
         serials.contains(&Some("SN-A".to_string())) && serials.contains(&Some("SN-B".to_string())),
         "both serials present, got {:?}",
         serials
+    );
+}
+
+/// P1D-15: replay-on-spawn re-issues the persisted fan PWM as the
+/// first HID write after the actor tree comes up.
+///
+/// We pre-seed the persistence directory with a TOML for the device
+/// the manager is about to allocate as `galahad2-lcdv2:0001` (the
+/// first attached device of the family always gets `:0001` because
+/// the per-family counter starts at 0 and is bumped before formatting).
+/// On attach, `replay_persisted_settings` should issue exactly one
+/// `SetFanPWM` (cmd 139) write through the hid_io actor; the
+/// MockBackend records it in `write_history`.
+#[tokio::test]
+async fn replay_writes_fan_pwm_on_attach() {
+    use lconnect_protocol::galahad2_lcdv2::commands::Command;
+
+    let mock = MockBackend::new();
+    let backend: Arc<dyn HidBackend> = Arc::new(mock.clone());
+
+    let tmp = TempDir::new().expect("tempdir");
+
+    // Pre-seed the persistence root: the manager's allocate_id starts
+    // at counter 0 -> the first attached galahad2-lcdv2 device gets
+    // the key "galahad2-lcdv2:0001". File path is
+    // <root>/devices/<key>.toml. Hand-written TOML keeps the test
+    // independent of the PersistenceStore::write code path.
+    let devices_dir = tmp.path().join("devices");
+    std::fs::create_dir_all(&devices_dir).expect("create devices dir");
+    std::fs::write(
+        devices_dir.join("galahad2-lcdv2:0001.toml"),
+        "schema_version = 1\n[fan]\npwm_percent = 75\n",
+    )
+    .expect("seed persistence file");
+
+    let store = Arc::new(PersistenceStore::new_with_root(tmp.path().to_path_buf()));
+
+    let info = lcdv2_info("SN-A", "/mock/hidraw0");
+    mock.add_device(info.clone());
+
+    let manager = DeviceManager::new(backend, store, fast_poll_config());
+    let _handle = manager.spawn().await;
+
+    // 50 ms hot-plug poll + 50 ms replay settle + 50 ms post-fan-PWM
+    // gap. 400 ms gives ample slack for tokio scheduling.
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    let history = mock.write_history(&info);
+    assert!(
+        !history.is_empty(),
+        "expected at least one write to the device after replay"
+    );
+
+    let cmd_byte = Command::SetFanPWM as u8;
+    let fan_pwm_writes: Vec<&Vec<u8>> = history
+        .iter()
+        .filter(|w| w.len() >= 2 && w[1] == cmd_byte)
+        .collect();
+    assert!(
+        !fan_pwm_writes.is_empty(),
+        "expected a SetFanPWM (cmd {}) write in replay, got history: {:?}",
+        cmd_byte,
+        history
+            .iter()
+            .map(|w| w.get(1).copied())
+            .collect::<Vec<_>>()
+    );
+
+    // The fan PWM payload format is `[group=0, percent]` starting at
+    // offset 6 (after the 6-byte A-class header). Verify the percent
+    // round-trips so we can be sure we replayed THIS device's TOML
+    // and not some unrelated default value.
+    let pkt = fan_pwm_writes[0];
+    assert!(pkt.len() >= 8, "A-class packet must be >= 8 bytes");
+    assert_eq!(pkt[6], 0, "fan group byte at offset 6 should be 0");
+    assert_eq!(
+        pkt[7], 75,
+        "fan PWM percent byte at offset 7 should match persisted 75"
     );
 }
