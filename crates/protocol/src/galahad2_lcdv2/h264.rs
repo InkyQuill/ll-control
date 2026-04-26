@@ -9,32 +9,31 @@
 //!
 //! ## SendH264Frame vs SendH264Frame512
 //!
-//! The C# device class exposes two H.264 paths:
-//! - `SendH264Frame` (cmd 13, this codec) — uses BCommandPacket framing
-//!   (1024-byte output / 512-byte input, 1013-byte payload chunks).
-//! - `SendH264Frame512` (cmd 13, NOT implemented here) — uses
-//!   CCommandPacket framing, which is a third framing class with a
-//!   different packet length and header layout we have not yet
-//!   reverse-engineered. Out of scope for Phase 0d; deferred to a
-//!   future phase that needs CCommandPacket.
+//! The C# device class exposes two H.264 paths, both writing cmd byte 13:
+//! - [`build_send_h264_frame_request`] — BCommandPacket framing
+//!   (ReportID=0x02, 1024-byte output / 512-byte input, 1013-byte
+//!   payload chunks).
+//! - [`build_send_h264_frame_512_request`] — CCommandPacket framing
+//!   (ReportID=0x03, 512-byte output / 512-byte input, 501-byte
+//!   payload chunks).
 //!
-//! **Discrimination risk.** Both `SendH264Frame` (this codec, B-class)
-//! and `SendH264Frame512` (deferred, C-class) write cmd byte 13. The
-//! firmware presumably uses ReportID (B = 0x02, C = 0x03) to discriminate
-//! at the HID layer, but if a particular device variant or firmware
-//! revision only accepts one framing class for cmd 13, sending the
-//! other will be silently accepted at the HID layer and misparsed at
-//! the firmware level (different DataSize / PacketNumber / Length
-//! offsets). Before using `build_send_h264_frame_request` against an
-//! unfamiliar firmware revision, confirm via the handshake or firmware-
-//! version response that BCommandPacket-class cmd 13 is supported.
+//! **Discrimination risk.** Both write cmd byte 13. The firmware
+//! discriminates via the HID ReportID (B = 0x02, C = 0x03), but if a
+//! particular device variant or firmware revision only accepts one
+//! framing class for cmd 13, sending the other will be silently accepted
+//! at the HID layer and misparsed at the firmware level (different
+//! DataSize / PacketNumber / Length offsets). Before using either
+//! variant against an unfamiliar firmware revision, confirm via the
+//! handshake or firmware-version response which framing class cmd 13
+//! supports.
 //!
 //! Source: `Galahad2Vision/Galahad2VisionDevice.cs:255-258` (BCommandPacket
-//! variant, this codec) and `:262-267` (CCommandPacket variant, deferred).
+//! variant) and `:262, 353` (CCommandPacket variant).
 //! `Galahad2Vision/Commands.cs:10` for the cmd byte.
 
 use crate::galahad2_lcdv2::bpacket::{BCommandPacket, OUTPUT_LEN};
 use crate::galahad2_lcdv2::commands::Command;
+use crate::galahad2_lcdv2::cpacket::{CCommandPacket, OUTPUT_LEN as C_OUTPUT_LEN};
 
 /// Maximum H.264 frame size accepted by [`build_send_h264_frame_request`].
 ///
@@ -81,16 +80,6 @@ pub const MAX_H264_FRAME_BYTES: usize = 256 * 1024;
 /// read leaves the response in the device's USB buffer**, where it
 /// will pollute the next unrelated read on the same handle.
 ///
-/// # Sibling not implemented
-///
-/// `SendH264Frame512` (cmd 13, CCommandPacket framing) at
-/// `Galahad2VisionDevice.cs:262-267` uses a third framing class
-/// (CCommandPacket: ReportID=3, 512/512 lengths, 501-byte payload
-/// chunks) that this crate has not yet reverse-engineered. If a
-/// future phase implements CCommandPacket, the parallel
-/// `build_send_h264_frame512_request` belongs in this module
-/// alongside [`build_send_h264_frame_request`].
-///
 /// # Errors
 ///
 /// Returns [`crate::Error::InvalidH264FrameSize`] when `frame_bytes` is
@@ -110,8 +99,13 @@ pub const MAX_H264_FRAME_BYTES: usize = 256 * 1024;
 ///
 /// # See also
 ///
-/// - [`super::jpeg::build_send_jpeg_request`] — same plumbing with cmd
-///   14, for static images. Cmd 14 has been live-verified;
+/// - [`build_send_h264_frame_512_request`] — C-class sibling (same cmd
+///   byte, different framing). Both call sites in
+///   `Galahad2VisionDevice.cs:255-258` (this codec) and `:262, 353`
+///   (sibling) target the same firmware command; HID-layer
+///   discrimination is via ReportID.
+/// - [`super::jpeg::build_send_jpeg_request`] — same B-class plumbing
+///   with cmd 14, for static images. Cmd 14 has been live-verified;
 ///   cmd 13's behaviour is presumed similar but not measured.
 #[must_use = "returns the request packet bytes; dropping without writing has no effect"]
 pub fn build_send_h264_frame_request(frame_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTPUT_LEN]>> {
@@ -171,4 +165,76 @@ pub fn parse_send_h264_frame_response(
 ) -> crate::Result<crate::galahad2_lcdv2::bpacket::BResponse<'_>> {
     use crate::galahad2_lcdv2::bpacket::BCommandPacket;
     BCommandPacket::from_response(buf, Command::SendH264Frame as u8)
+}
+
+/// Build the CCommandPacket sequence for `SendH264Frame512` (cmd 13).
+///
+/// Sibling of [`build_send_h264_frame_request`]. Same cmd byte (`0x0D`)
+/// but C-class framing (ReportID=`0x03`, 512-byte output, 501-byte
+/// payload chunks); HID-layer discrimination via ReportID. Wraps
+/// `frame_bytes` in C-class chunks via
+/// [`CCommandPacket::build_packets_for_write`].
+///
+/// # Caveats
+///
+/// **Codec-only — not yet live-verified.** Wire shape is C#-source-
+/// verified against `Galahad2VisionDevice.cs:262, 353` per the Phase 0e
+/// static survey: `writeCCommand(13, frameBytes)` with no flag byte, no
+/// zero pad, and no per-frame header. Live verification is deferred
+/// until an H.264 frame pipeline exists (Phase 4+).
+///
+/// **Discrimination risk shared with the B-class sibling.** Both
+/// codecs target cmd byte 13. If a particular firmware revision only
+/// accepts one framing class, sending the other will be silently
+/// accepted at the HID layer and misparsed at the firmware level. See
+/// the module-level rustdoc.
+///
+/// **Partial-write recovery is undefined.** If a per-packet write
+/// fails on packet N of M, the firmware's transfer state is unknown.
+/// Recovery requires either a fresh complete transfer or a device
+/// reset (cmd 142).
+///
+/// `MAX_H264_FRAME_BYTES` is shared with the B-class variant; see its
+/// docs for the rationale and the Phase 1 follow-up to verify against
+/// firmware's internal buffer limit.
+///
+/// # Errors
+///
+/// Returns [`crate::Error::InvalidH264FrameSize`] when `frame_bytes` is
+/// empty or exceeds [`MAX_H264_FRAME_BYTES`].
+///
+/// # Examples
+///
+/// ```
+/// use lconnect_protocol::galahad2_lcdv2::h264::build_send_h264_frame_512_request;
+///
+/// let payload = [0x00, 0x00, 0x00, 0x01];
+/// let packets = build_send_h264_frame_512_request(&payload).expect("valid size");
+/// assert_eq!(packets.len(), 1);
+/// assert_eq!(packets[0][0], 0x03, "ReportID = C-class");
+/// assert_eq!(packets[0][1], 13, "Command = SendH264Frame");
+/// assert_eq!(packets[0].len(), 512, "C-class output is 512 bytes");
+/// ```
+///
+/// # See also
+///
+/// - [`build_send_h264_frame_request`] — B-class sibling (same cmd
+///   byte, 1024-byte framing).
+/// - [`crate::galahad2_lcdv2::cpacket`] — C-class framing struct.
+/// - `Galahad2VisionDevice.cs:262, 353` — C# call site.
+#[must_use = "returns the request packet bytes; dropping without writing has no effect"]
+pub fn build_send_h264_frame_512_request(
+    frame_bytes: &[u8],
+) -> crate::Result<Vec<[u8; C_OUTPUT_LEN]>> {
+    if frame_bytes.is_empty() || frame_bytes.len() > MAX_H264_FRAME_BYTES {
+        return Err(crate::Error::InvalidH264FrameSize {
+            size: frame_bytes.len(),
+            max: MAX_H264_FRAME_BYTES,
+        });
+    }
+    Ok(
+        CCommandPacket::build_packets_for_write(Command::SendH264Frame as u8, frame_bytes)
+            .map(|p| *p.as_bytes())
+            .collect(),
+    )
 }

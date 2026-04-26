@@ -183,3 +183,114 @@ fn parse_send_h264_frame_response_rejects_too_short() {
         lconnect_protocol::Error::BufferTooShort { .. }
     ));
 }
+
+// ---------------------------------------------------------------------------
+// SendH264Frame512 (cmd 13, C-class) — sibling of the B-class codec above.
+// Same cmd byte; HID-layer discrimination via ReportID (0x02 vs 0x03).
+// Wire shape verified against `Galahad2VisionDevice.cs:262, 353` per the
+// Phase 0e static survey. Codec-only — live verification deferred until an
+// H.264 frame pipeline exists (Phase 4+).
+// ---------------------------------------------------------------------------
+
+use lconnect_protocol::galahad2_lcdv2::h264::{
+    build_send_h264_frame_512_request, MAX_H264_FRAME_BYTES,
+};
+
+#[test]
+fn send_h264_frame_512_empty_rejects() {
+    let r = build_send_h264_frame_512_request(&[]);
+    assert!(r.is_err(), "empty frame must error: {r:?}");
+    assert!(matches!(
+        r.unwrap_err(),
+        lconnect_protocol::Error::InvalidH264FrameSize {
+            size: 0,
+            max: MAX_H264_FRAME_BYTES
+        }
+    ));
+}
+
+#[test]
+fn send_h264_frame_512_oversize_rejects() {
+    let huge = vec![0u8; MAX_H264_FRAME_BYTES + 1];
+    let r = build_send_h264_frame_512_request(&huge);
+    assert!(r.is_err(), "oversize frame must error: {r:?}");
+    assert!(matches!(
+        r.unwrap_err(),
+        lconnect_protocol::Error::InvalidH264FrameSize { .. }
+    ));
+}
+
+#[test]
+fn send_h264_frame_512_small_one_packet() {
+    let frame = vec![0xAB; 100];
+    let packets = build_send_h264_frame_512_request(&frame).unwrap();
+    assert_eq!(packets.len(), 1);
+    assert_eq!(packets[0][0], 0x03, "ReportID for C-class");
+    assert_eq!(packets[0][1], 0x0D, "cmd byte (same as B-class)");
+    assert_eq!(packets[0].len(), 512, "C-class output is 512 bytes");
+    // DataSize = 100, Length = 100, payload starts at offset 11.
+    assert_eq!(&packets[0][2..6], &[0, 0, 0, 100], "DataSize = 100");
+    assert_eq!(&packets[0][9..11], &[0, 100], "Length = 100");
+    assert!(
+        packets[0][11..111].iter().all(|&b| b == 0xAB),
+        "payload region populated"
+    );
+}
+
+#[test]
+fn send_h264_frame_512_at_payload_max_one_packet() {
+    use lconnect_protocol::galahad2_lcdv2::cpacket::PAYLOAD_MAX;
+    let frame = vec![0xAB; PAYLOAD_MAX]; // 501 bytes
+    let packets = build_send_h264_frame_512_request(&frame).unwrap();
+    assert_eq!(packets.len(), 1, "exactly PAYLOAD_MAX fits in one packet");
+    let bytes = packets[0];
+    assert_eq!(&bytes[2..6], &[0, 0, 0x01, 0xF5], "DataSize = 501");
+    assert_eq!(&bytes[9..11], &[0x01, 0xF5], "Length = 501");
+    // At PAYLOAD_MAX, the payload occupies bytes [11..512] of the wire packet.
+    assert!(
+        bytes[11..].iter().all(|&b| b == 0xAB),
+        "full 501-byte payload embedded; no zero pad expected at exact boundary"
+    );
+}
+
+#[test]
+fn send_h264_frame_512_multipacket() {
+    use lconnect_protocol::galahad2_lcdv2::cpacket::PAYLOAD_MAX;
+    let frame = vec![0xAB; PAYLOAD_MAX * 2 + 50];
+    let packets = build_send_h264_frame_512_request(&frame).unwrap();
+    assert_eq!(packets.len(), 3);
+    // PN increments across the chunks.
+    assert_eq!(&packets[0][6..9], &[0, 0, 0], "PN = 0");
+    assert_eq!(&packets[1][6..9], &[0, 0, 1], "PN = 1");
+    assert_eq!(&packets[2][6..9], &[0, 0, 2], "PN = 2");
+    // Tail length = 50.
+    assert_eq!(&packets[2][9..11], &[0, 50], "tail Length = 50");
+}
+
+#[test]
+fn send_h264_frame_b_and_c_class_diverge() {
+    use lconnect_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
+    // Same payload, different framing classes -> different ReportID + chunk
+    // sizes (B-class is 1024 bytes per packet, C-class is 512).
+    let frame = vec![0xAB; 100];
+    let b_packets = build_send_h264_frame_request(&frame).unwrap();
+    let c_packets = build_send_h264_frame_512_request(&frame).unwrap();
+    assert_ne!(
+        b_packets[0][0], c_packets[0][0],
+        "ReportID must differ between B-class (0x02) and C-class (0x03)"
+    );
+    assert_eq!(b_packets[0][0], 0x02);
+    assert_eq!(c_packets[0][0], 0x03);
+    // The cmd byte (0x0D) is identical.
+    assert_eq!(b_packets[0][1], c_packets[0][1]);
+    // Packet sizes differ.
+    assert_eq!(b_packets[0].len(), 1024);
+    assert_eq!(c_packets[0].len(), 512);
+}
+
+#[test]
+fn send_h264_frame_512_at_max_size() {
+    let frame = vec![0xAB; MAX_H264_FRAME_BYTES];
+    let r = build_send_h264_frame_512_request(&frame);
+    assert!(r.is_ok(), "at-max should succeed: {r:?}");
+}
