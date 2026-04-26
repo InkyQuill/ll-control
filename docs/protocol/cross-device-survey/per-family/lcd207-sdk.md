@@ -1,13 +1,31 @@
 ## Shared protocol layer: lcd207 SDK
 
 **Source:** decompiled `lcd207.dll` at `/home/inky/Development/lian-li/lcd207/lcd207/`
+**What it is:** the host-side proprietary **wired-LCD streaming protocol**
+library. lcd207 is **not** an RF / wireless transport - it is a fork of
+slv3's `WinUsb.cs` encryption + framing layer (same DES-CBC envelope, same
+key+IV `slv3tuzx`, same body-at-offset-512 layout) extended with AIO-control
+opcodes. The "lcd207" filename is a misnomer (Lancool 207 is one of four
+clients, not the headline one). When an HS II LCD operates in **USB
+Streaming** control mode (one of three operator-selectable modes - see
+`hydroshift-ii-lcd.md`), this is the SDK that drives it.
 **Status:** all citations are inferred-static (decompiled artefacts: anonymous-method names retained, `IL_xxxx` hints sprinkled where the WPF Color marshalling roundtripped through unverifiable IL — e.g. `WinUsbH2.cs:988-991`, `AioParams.cs:45-47` — but every wire-relevant code path is intact and unambiguous).
 **Used by these families (confirmed by L-Connect-Service `using lcd207;` directives):**
 
-- **HydroShift II LCD Circle** — `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2CSDK.cs:1-187` is a thin pass-through to `lcd207.H2Controller`. Selected by `HydroShiftIILCDController.cs:311` as the SDK for `DeviceType.Circle` (PID 0xA021 / 40993).
-- **HydroShift II LCD Square** — `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2SSDK.cs:1-187` is a thin pass-through to `lcd207.H2SController`. Selected by `HydroShiftIILCDController.cs:312` as the SDK for `DeviceType.Square` (PID 0xA034 / 41012).
-- **Lancool 207 Digital** — `L-Connect-Service/LConnectService/Products/Lancool207Digital/Lancool207DigitalController.cs:1-2` (`using lcd207;`); calls `lcd207.LCDController.{ApplyTemplate, GetTemplate, GetBitmapByTheme, IsAvailable, Ver, GetDeviceVer, GetModulars, UpdateModular, UpdateThemeInfo}` (lines 454, 507, 924, 1024-1025, 1094, 1108, 1137, 1168, 1225, 1427).
-- **UniversalScreen 8.8"** — `L-Connect-Service/LConnectService/Products/UniversalScreen8p8Inch/UniversalScreen8p8InchController.cs:1` (`using lcd207;`); the `sdkController` field at line 132 is typed `LEDController`, with calls to `LEDController.GetTemplate` (432), `LEDController.UpdateThemeInfo` (1105), and `bindSDKController(out LEDController, ...)` (547-549). **This confirms the open question raised in the per-family staging files** — UniversalScreen 8.8" is *also* a lcd207 client, on the LCD side (PID 0xA088 / 41096) plus an LED side (PID 0x8050 / 32848 VID 0x0416 / 1046) and a HID-side wireless-sensor companion (PID 0xAD21 / 44321 VID 0x1A86 / 6790).
+- **HydroShift II LCD Circle - USB Streaming control mode only.**
+  `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2CSDK.cs:1-187`
+  is a thin pass-through to `lcd207.H2Controller`. Selected by
+  `HydroShiftIILCDController.cs:311` as the SDK for `DeviceType.Circle`
+  (PID 0xA021 / 40993). HS II's other two control modes (Offline / Wireless)
+  do not go through lcd207; Wireless mode goes through slv3 (see
+  `slv3-sdk.md`).
+- **HydroShift II LCD Square - USB Streaming control mode only.**
+  `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2SSDK.cs:1-187`
+  is a thin pass-through to `lcd207.H2SController`. Selected by
+  `HydroShiftIILCDController.cs:312` as the SDK for `DeviceType.Square`
+  (PID 0xA034 / 41012). Same control-mode caveat as Circle.
+- **Lancool 207 Digital** (wired-only family) — `L-Connect-Service/LConnectService/Products/Lancool207Digital/Lancool207DigitalController.cs:1-2` (`using lcd207;`); calls `lcd207.LCDController.{ApplyTemplate, GetTemplate, GetBitmapByTheme, IsAvailable, Ver, GetDeviceVer, GetModulars, UpdateModular, UpdateThemeInfo}` (lines 454, 507, 924, 1024-1025, 1094, 1108, 1137, 1168, 1225, 1427).
+- **UniversalScreen 8.8" - panel side only.** `L-Connect-Service/LConnectService/Products/UniversalScreen8p8Inch/UniversalScreen8p8InchController.cs:1` (`using lcd207;`); the `sdkController` field at line 132 is typed `LEDController`, with calls to `LEDController.GetTemplate` (432), `LEDController.UpdateThemeInfo` (1105), and `bindSDKController(out LEDController, ...)` (547-549). **This confirms the open question raised in the per-family staging files** — UniversalScreen 8.8"'s LCD-panel side (PID 0xA088 / 41096) is a lcd207 client. The board's **lighting** side (PID 0x8050 / 32848 VID 0x0416 / 1046) is owned by **slv3** (`slv3-sdk.md`), not lcd207. The HID-side wireless-sensor companion (PID 0xAD21 / 44321 VID 0x1A86 / 6790) is independent of both.
 - **L-Connect-Service shared logger** — `L-Connect-Service/LConnectService/Products/LCD207DLLLoggerWrapper.cs` adapts the SDK's `Loger.cs` to Serilog. Not a wire consumer.
 
 The four product families plus the legacy-wrapper share **one** `CmdType` enum, **one** DES-CBC encryption envelope (key `slv3tuzx`, identical to the slv3 SDK — see "Notable findings" §3), and three fan-out transport classes: `WinUsb` (Lancool 207 LCD), `WinUsbH2` (HS II Circle), `WinUsbH2S` (HS II Square). `WinUsbLed` is a sub-class of `WinUsb` for the UniversalScreen 8.8" LED-side and adds an unencrypted 64-B raw-frame protocol on top of the same writer/reader. `HIDUsb` is a thin HidLibrary wrapper used for SN-discovery and `SetMonitorMode` / `SetDesktopMode` magic-byte signalling; it is independent of the encrypted CmdType protocol.

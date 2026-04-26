@@ -2,10 +2,11 @@
 
 ## Family
 
-SLV3LCD - the per-fan LCD screen module mounted on Lian-Li **SL-Wireless V3
-LCD** fans. The "SLV3" prefix is "Strimer / SL-fan family, version 3"; the
+SLV3LCD - the per-fan LCD screen module mounted on Lian-Li **SL Wireless
+LCD** fans. The "SLV3" prefix names the **SL Wireless** protocol family
+(the same family the `slv3.dll` SDK implements - see `slv3-sdk.md`); the
 "LCD" suffix distinguishes the LCD-screen-mounted SKU from the sibling
-RGB-only SLV3 fan (`L-Connect.Core/LConnectCore/Products/LWireless/SLV3/`).
+RGB-only SL Wireless fan (`L-Connect.Core/LConnectCore/Products/LWireless/SLV3/`).
 The product name is corroborated by the firmware-version regex
 `^slv3_\d{8}(\d{2})(?:_\d{2})?$`
 (`L-Connect.Core/LConnectCore/Products/LWireless/SLV3LCD/SLV3LCDFirmwareVersion.cs:46`).
@@ -69,8 +70,10 @@ LWireless pipeline):
 
 ## Marketed name
 
-**Lian-Li SL-Wireless V3 LCD fan** (the screen-equipped SKU in the
-SL-Wireless V3 family). The fan ships in 120 mm and 140 mm variants,
+**Lian-Li SL Wireless LCD fan** (the screen-equipped SKU in the
+SL Wireless fan family; "SLV3" = SL Wireless LCD, the SDK is `slv3.dll`
+which implements the SL Wireless protocol - not "SL Version 3"). The
+fan ships in 120 mm and 140 mm variants,
 with per-variant RPM ranges declared at
 `L-Connect.Core/LConnectCore/Products/LWireless/Constants.cs:35-41`:
 

@@ -2,14 +2,45 @@
 
 **Source:** decompiled `slv3.dll` at `/home/inky/Development/lian-li/slv3/slv3/`
         + `slv3.models.dll` at `/home/inky/Development/lian-li/slv3.models/slv3/models/`
+**What it is:** the host-side **SL Wireless** protocol library used by Lian
+Li's SL Wireless transmitter dongle and the wireless-capable subset of the
+device catalog. The DLL filename (`slv3.dll`) and the namespace (`slv3` /
+`slv3.models`) name the **SL Wireless** product family - not "SL Version 3"
+or "Strimer Light V3". Earlier writeups in this survey that speculated on
+the version-number reading have been corrected.
 **Status:** all citations are inferred-static (decompiled artifacts: anonymous-method names retained, some raw IL hints in `WinUsb.cs:151-161,304` etc., but the wire-relevant code is intact).
 **Used by these families:**
 
 - **SLV3LCD** — `L-Connect-Service/LConnectService/Products/SLV3LCD/SLV3LCDController.cs:190-846` (consumes `STRController.GetAllControlDevice`, `ShowAndSaveImg`, `RefreshSTRPosInfo`, `RestLcdHub`, `PlayVGroupMedia`).
 - **TLV2LCD** — `L-Connect-Service/LConnectService/Products/TLV2LCD/TLV2LCDController.cs:191-847` (same call surface as SLV3LCD; both LCD families pivot through `STRController` because they enumerate as VID 0x1CBE / PID 5 or 6).
-- **HydroShift II LCD** — only via `slv3.models` enums (`L-Connect.Core/.../HydroShiftIILCD/CLLightingEffectsSetting.cs:1`, `H2LightingEffectsSetting.cs:1`, `HydroShiftIILCDLightingSetting.cs:1`, `HydroShiftIILCDViewLightingEffectsSetting.cs:1`). The HID transport for HS II LCD itself is L-Connect.Core's, **not** slv3's; slv3 only supplies effect IDs and `LightEffectSet` DTO. Wireless HS II variants are routed through `RFController` (see LWireless below).
-- **UniversalScreen 8.8"** — *no* direct `STRController` usage in the controller layer (`LConnect3cs/Products/UniversalScreen8p8Inch/UniversalScreen8p8InchController.cs` does not import slv3). slv3 reaches this product only through `WinUsb.Get88inch_LED()` / `WinUsb.Led_Send` (the LED side of the 8.8" board, VID 1046 / PID 32848 = 0x0426 / 0x8050). The **panel** side (LCD frames) goes through L-Connect.Core's own WinUSB stack, not slv3.
-- **LWireless hub (RF / wireless variants)** — `L-Connect.Core/LConnectCore/Products/LWireless/LWirelessDevice.cs:48-196` (consumes `RFController.SetAioThemeIndex`, `Bind`, `GetAllGroup`, `Init`, `SetFansRPM`, `FgSync`, `SetAllFansRPMSyncMainBoard`, `SetAioParams`, `SetAioPumpSpeed`, `SetH2SAioPumpSpeed`, `SwitchAioLcdWirelessMode`).
+- **HydroShift II LCD** — slv3 is the SL Wireless transport for HS II's
+  **Wireless** control mode (one of three operator-selectable modes; see
+  `hydroshift-ii-lcd.md` "Control modes" sub-section). In Wireless mode,
+  image content is shipped via `RF_SendPic` chunks (chunked through
+  `MasterDevice.SendRfData`); other host writes go through the same RF
+  carrier. HS II's **USB Streaming** mode goes through `lcd207.dll`
+  instead (see `lcd207-sdk.md`). In addition to the wireless transport,
+  slv3 also supplies the *effect/style vocabulary* via `slv3.models` enums
+  (`L-Connect.Core/.../HydroShiftIILCD/CLLightingEffectsSetting.cs:1`,
+  `H2LightingEffectsSetting.cs:1`, `HydroShiftIILCDLightingSetting.cs:1`,
+  `HydroShiftIILCDViewLightingEffectsSetting.cs:1`) - those enum imports
+  are used in both Wireless and USB Streaming modes.
+- **UniversalScreen 8.8"** — slv3 owns the **lighting board** side only
+  (LED ring around the panel). *No* direct `STRController` usage in the
+  controller layer (`LConnect3cs/Products/UniversalScreen8p8Inch/UniversalScreen8p8InchController.cs`
+  does not import slv3). slv3 reaches this product through
+  `WinUsb.Get88inch_LED()` / `WinUsb.Led_Send` on VID 1046 / PID 32848
+  (0x0416 / 0x8050). The **panel** side (LCD frames) goes through
+  `lcd207.dll`, not slv3 (see `lcd207-sdk.md`). One physical board, two
+  SDKs - this matches the OpenRGB cross-validator finding that the
+  lighting board is also visible to OpenRGB at PID 0x8050.
+- **LWireless hub (RF transmitter dongle, plus all wireless device
+  variants)** — the SL Wireless transmitter dongle is the host-side
+  endpoint for every wireless write; slv3 owns the entire transport.
+  `L-Connect.Core/LConnectCore/Products/LWireless/LWirelessDevice.cs:48-196`
+  consumes `RFController.SetAioThemeIndex`, `Bind`, `GetAllGroup`, `Init`,
+  `SetFansRPM`, `FgSync`, `SetAllFansRPMSyncMainBoard`, `SetAioParams`,
+  `SetAioPumpSpeed`, `SetH2SAioPumpSpeed`, `SwitchAioLcdWirelessMode`.
 - **Lancool 207 Digital** — *not* a direct slv3 caller. `Lancool207DigitalController.cs` has no `STRController`/`RFController`/`MasterDevice` references. The "Lancool 207" path inside slv3 (`DevTypes.LC217 = 65`, `RF_217CloseWifi = 35`, `Close217Wifi(macStr)`) is the **wireless** Lancool 217 case fronted by the LWireless hub, not the wired 207. Lancool 207 Digital is owned by L-Connect.Core directly.
 
 ### Transports
