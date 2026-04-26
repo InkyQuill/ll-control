@@ -1,0 +1,13 @@
+[Unit]
+Description=L-Connect Linux daemon
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/lconnectd
+Restart=on-failure
+RestartSec=2
+Environment=RUST_LOG=lconnectd=info
+
+[Install]
+WantedBy=default.target
