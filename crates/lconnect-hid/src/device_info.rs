@@ -40,3 +40,41 @@ pub struct DeviceInfo {
     /// Linux hidraw path (`/dev/hidraw5`) or platform equivalent.
     pub path: PathBuf,
 }
+
+impl DeviceInfo {
+    /// Construct a `DeviceInfo`. Required because the struct is
+    /// `#[non_exhaustive]`, so external crates (notably integration
+    /// tests and the daemon) cannot use struct-literal syntax.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use lconnect_hid::{DeviceFamilyId, DeviceInfo};
+    /// use std::path::PathBuf;
+    ///
+    /// let info = DeviceInfo::new(
+    ///     DeviceFamilyId::new("galahad2-lcdv2"),
+    ///     0x0416,
+    ///     0x7395,
+    ///     None,
+    ///     PathBuf::from("/dev/hidraw0"),
+    /// );
+    /// assert_eq!(info.vid, 0x0416);
+    /// ```
+    #[must_use]
+    pub fn new(
+        family: DeviceFamilyId,
+        vid: u16,
+        pid: u16,
+        serial: Option<String>,
+        path: PathBuf,
+    ) -> Self {
+        Self {
+            family,
+            vid,
+            pid,
+            serial,
+            path,
+        }
+    }
+}

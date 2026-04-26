@@ -25,6 +25,7 @@ pub use backend::{matches_echo, HidBackend, OpenHandle};
 pub use device_info::{DeviceFamilyId, DeviceInfo};
 pub use framing::Framing;
 pub use hidapi_backend::HidApiBackend;
+pub use mock_backend::MockBackend;
 
 /// Errors returned by all `lconnect-hid` I/O and framing operations.
 ///
