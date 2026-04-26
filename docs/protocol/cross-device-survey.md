@@ -1,6 +1,6 @@
 # Lian Li L-Connect3 — Cross-Device Command Survey
 
-- **Status:** Phase 0e static survey complete - pending live probes (P0e-20) and post-execution wrap-up
+- **Status:** Phase 0e static survey complete - pending live probes (P0e-20) and post-execution wrap-up - findings ready for Phase 1 plan author
 - **Date:** 2026-04-26
 - **Scope:** all device families managed by LConnect3, plus an OpenRGB
   cross-validator pass
@@ -2150,4 +2150,286 @@ Conversely, LConnect3 ships entries for many devices OpenRGB does **not** target
 
 ## 6. Findings & actionable outputs
 
-(P0e-16 fills. Topics: framing-class extension points, cmd-15 hypotheses, reusable codec opportunities, risky-area flagging.)
+This section is the strategic layer on top of section 4's data. Section 4
+catalogues *what* the survey found across families; this section turns those
+facts into Phase-1-actionable recommendations. Section 6.5 is a clean recap
+intended to be lifted verbatim into the Phase 1 plan's "Phase 0e inputs"
+section by the plan author.
+
+### 6.1 Daemon framing-class extension points
+
+The current Rust workspace (`crates/protocol/`) carries codecs for class **A**
+(64-byte `ACommandPacket`) and class **B** (1024-out / 512-in
+`BCommandPacket`); class **C** (`CCommandPacket`, 512/512) is enum-listed in
+section 2 but its first caller is deferred to Phase 1. The cross-device
+survey shows that A/B/C alone do **not** cover the rest of the LConnect3
+device universe. At minimum **seven distinct framing classes** are needed
+for full multi-device support across Phase 3+ (see section 4.1's "Framing"
+column for the per-family mapping):
+
+| Framing class | First family that introduces it | Identifying traits |
+|---|---|---|
+| **A** (already in protocol crate) | Galahad2 Vision (LCDV2) | 64-byte HID, ReportID=1, 6-byte header, BE u16 fields |
+| **B** (already in protocol crate) | Galahad2 Vision (LCDV2) | 1024-out / 512-in HID, ReportID=2, 11-byte header |
+| **C** (deferred to Phase 1) | Galahad2 Vision (LCDV2 firmware path) | 512-out / 512-in HID, ReportID=3, 11-byte header |
+| **T** (TLLCD-class) | TLLCD | 512-out / **64-in** asymmetric HID, ReportID=2, BE u32 `DataSize`, BE u24 `PacketNumber` - looks B-shaped on the write side, A-shaped on the read side |
+| **HID-feature `0xE0`** | StrimerPlus, Ene6K77Fan | feature-report (no `Length`/`PacketNumber` framing); composite second byte `(op | port)`; R-B-G colour byte order |
+| **WinUSB+DES** (lcd207 / slv3) | HS II Circle/Square, Lancool 207 Digital, UniversalScreen panel, SLV3LCD, TLV2LCD | libusb / WinUSB EP1, 504-byte DES-CBC-encrypted command header at offset 0 (key/IV = `slv3tuzx`), raw body at offset 512; total frame buffer 102,400 bytes |
+| **WinUSB-RF** (slv3 wireless) | LWireless V1+V2 hubs, wireless waterblocks | 60-byte WinUSB chunks of `Usb_SendRf=16`, RF payload fragmented by `MasterDevice.SendRfData`; cmd-set distinct from wired (`RF_*` namespace) |
+| **bulk-EP1 lighting** (UniversalScreen LED side, separate from lcd207 panel path) | UniversalScreen 8.8" lighting board | bulk-EP1 chunks with `0x11` header byte, 20 LEDs per chunk, RGB byte order (not R-B-G) - OpenRGB-validated (section 5) |
+
+The lcd207 path is **not** functionally identical to slv3 - lcd207 is a
+fork that adds fan-control opcodes (`SyncPumpFan=0xFB`, `GetH2Params=0xFA`,
+`PushRgbData=0xFC`) and the raw-byte 247/248 MCU-firmware-write path on top
+of the slv3 envelope. From a framing perspective they share the same
+504+512 DES envelope, but each ships a distinct opcode table and a distinct
+set of safety-relevant commands.
+
+**Recommendation for the daemon HID layer (`lconnect-hid`):** the
+`Framing` enum must be extensible from day one. Don't constrain the type to
+A/B/C and then bolt on variants ad hoc; instead treat the eight classes
+above as the design target and build the abstraction such that adding the
+ninth (some new SKU's framing) is a contained change. Either:
+
+- model `Framing` as a trait with one impl per class, with the dispatcher
+  picking the impl by VID:PID match - this allows Phase 3+ to add a new
+  family by writing one impl and registering it, no enum churn; or
+- if the project prefers an enum, mark it `#[non_exhaustive]` and require
+  every codec to declare its framing class at construction so a missing
+  class surfaces at codec-write time rather than at runtime.
+
+Either way, **don't** burn A/B/C into a fixed taxonomy in `lconnect-hid`'s
+public API - the survey shows that's the wrong shape.
+
+The Phase-1 deliverable adds **C** alone (per the existing design spec); the
+extension surface above is what Phase 3+ slots into.
+
+### 6.2 Cmd-15 hypothesis - resolved at the cross-family level
+
+The cmd-15 (`UploadJpeg`) activation question that motivated the cross-device
+survey is now closed at the **strategy** level (section 4.2 closes it at the
+data level). Every LConnect3 family with both a transient and a stored image
+path uses a clean two-opcode pair:
+
+- **TLLCD** - transient `cmd 65 WriteJPG`; stored `cmd 72 WriteBootJPG`;
+  slot-keyed display via `cmd 64 LCDControl` with `Mode=ShowJPG, JPGIndex=N`
+- **HydroShift LCD (HS I)** - transient `cmd 14 / 15` (declared but
+  unsourced); stored `cmd 22 UploadStartupAviMovie` (explicit `Startup`)
+- **slv3-using families** (SLV3LCD, TLV2LCD, wireless wired-mode) -
+  transient `CmdType.PushJpg = 0x65`; stored `CmdType.UpdateFireWare = 0x28`
+  with filename `/usr/data/boot.jpg` (the FW-update opcode is repurposed for
+  generic filesystem-write)
+- **lcd207-using families** (HS II Circle/Square, Lancool 207, UniversalScreen
+  panel) - identical pattern to slv3 (lcd207 is a fork)
+
+**Likely conclusion for LCDV2 cmd 15:** the device almost certainly has both
+a transient path (cmd 14, verified-live) and a stored path (cmd 15, codec
+accepts it and the device ACKs but no visible activation on FW 1.6). The two
+most plausible activation mechanisms, drawn directly from the cross-family
+pattern:
+
+1. **Boot-time display** - cmd 15 writes to flash and is shown only at the
+   next power-cycle. This is the dominant pattern: it mirrors TLLCD's
+   `WriteBootJPG`, HS I's `UploadStartupAviMovie` (`Startup` qualifier), and
+   slv3/lcd207's `/usr/data/boot.jpg` filesystem-write.
+2. **Slot-keyed display via LCDControl** - TLLCD selects a stored JPG via
+   `LCDControlSetting.JPGIndex` + `LCDControlMode.ShowJPG = 1`. LCDV2's
+   current `LCDControlSetting` codec doesn't expose a JPGIndex field, but
+   the cross-family pattern says one may exist - the static survey didn't
+   exhaust every Galahad2VisionController call site for `LCDControl`
+   payload variants, and a re-pass is cheap.
+
+**Phase 0e probe-set candidates** (to be formalised in P0e-19's probe-set
+authoring task and exercised live in P0e-20):
+
+- USB-power-cycle the device after a successful cmd 15 upload and observe
+  the LCD state on next boot (tests hypothesis 1)
+- Re-read `Galahad2VisionController.cs` for any `LCDControlSetting` payload
+  shape that includes a slot-index byte; if found, exercise it after a
+  cmd-15 upload (tests hypothesis 2)
+- Try `LCDControl(mode = LocalAVI = 3)` and `LCDControl(mode = LocalH264 = 2)`
+  after a cmd-15 upload to see whether non-default modes activate it
+- Compare the cmd-14 vs cmd-15 ACK byte stream byte-for-byte: any divergence
+  in `Length` / `Data[0]` after the upload may hint at an internal-state
+  flag the daemon can read
+
+**Phase 1 caveat** (independent of probe outcome): even if Phase 0e probing
+doesn't activate cmd 15, the codec stays implemented and in-tree. Per the
+Phase 1 design spec, the daemon's IPC surface will not expose cmd 15 until
+its activation path is found - it stays codec-implemented but not
+ipc-exposed, so the day cmd-15 activation is discovered, the only remaining
+work is unsealing it on the IPC side.
+
+### 6.3 Reusable codec opportunities
+
+Commands that appear byte-identical (or near-identical with a single
+parametrisable difference) across three or more families - these are
+candidates for refactoring into a shared `crates/protocol/src/common/`
+module **before** Phase 3's second device family lands. Drawn from sections
+4.1, 4.4, and 4.5.
+
+| Command | Families that share it | Divergence | Refactor recommendation |
+|---|---|---|---|
+| Lighting `Set*Lighting` (cmd 131 / 133) | LCDV2 (verified-live), Galahad2 Trinity (inferred-static), HS I (cmd 133 only - no pump cmd 131) | mode-byte set differs (Trinity does `% 1000` mode folding, LCDV2 does not); field offsets identical | LCDV2's `lighting.rs` codec is the reference; Trinity slots in as a parametrised variant |
+| `SetLEDColors` (cmd 20) | LCDV2 (verified-live), HS I (inferred-static) | LCDV2 uses `isFanLed` flag-byte branch; HS I always writes flag = `0x01` and omits the zero-pad | one shared body-builder + a per-family flag-byte parameter |
+| `GetHandshakeInfo` (cmd 0x0A / cmd 129) | LCDV2 (7-byte response), Trinity (4-byte response, no temp), HS I (7-byte response identical to LCDV2), TLFan (cmd 161, Nx3-byte response) | response shapes differ enough that "share the request, parse per-family" is the right move | shared `build_request`, per-family `from_response` |
+| `GetFirmwareVersion` (cmd 0x86 / cmd 134) | LCDV2, Trinity, HS I, TLFan (cmd 166), TLLCD (cmd 61) | response demuxing differs (PacketNumber vs `Data[2]` vs sequential reads); ASCII payload format differs | document, **don't** refactor yet - too divergent for a clean shared API |
+| `ResetDevice` (cmd 0x0E / cmd 142) | LCDV2 (codec-only, gated), HS I (inferred-static, destructive) | identical wire shape | small enough that sharing isn't worth the abstraction yet |
+
+**Recommendation:** **defer the actual extraction to the Phase 3 first-task
+window** (when the second device family lands and the second consumer
+appears). Phase 1 ships the LCDV2-specific codec as-is in
+`crates/protocol/src/galahad2_lcdv2/`. To keep the candidates surfaced for
+the Phase 3 implementer:
+
+- add a `// TODO(phase-3-refactor): candidate for crates/protocol/src/common/ -
+  shared with <family list>` comment on each codec that's a refactor
+  candidate, citing the families that would consume it
+- list the candidates in this section (above) so the Phase 3 plan author
+  can lift them without re-doing the cross-family analysis
+
+The general principle: don't pre-extract for a single consumer. The
+abstractions are easiest to design correctly when there are at least two
+real consumers, which won't happen until Phase 3 begins.
+
+### 6.4 Risky-area flagging for `hid-safety-reviewer`
+
+Commands and patterns that future `hid-safety-reviewer` dispatches must
+treat with extra scrutiny. These are areas where a coding mistake risks
+device bricking, persistent-state corruption, or silently-wrong colour /
+data on the wire. Drawn from sections 4.5, 4.6, and 4.7 plus the OpenRGB
+cross-validation in section 5.
+
+**Firmware-update commands (Phase 1: deferred for all families)**
+
+Every family ships a firmware-update opcode pair: LCDV2's cmds 10/11
+(`ActiveFirmware`/`UploadFirmware`), HS I cmds 10/11, TLLCD cmds 58/59,
+TLFan cmds 11/12 + 171/172, slv3's `Usb_FwErase=32` / `Usb_FwUpload=33` /
+`Usb_FwReboot=35`, lcd207's `UpdateFireWare=0x28` (which doubles as a
+generic filesystem-write - see below). **Phase 1 explicitly defers all
+firmware paths.** The reviewer should reject any HID write to these cmd
+bytes unless a firmware flow is the explicit current task.
+
+**Reset-device commands**
+
+LCDV2 cmd 0x0E `ResetDevice`, lcd207's `Reboot=11` opcode, SLV3LCD dispatch
+cmd 16 `RestartLCD` (destructive across the whole LCD group). Reset drops
+the device off USB; an in-flight write at the moment of reset risks brick if
+the firmware doesn't checkpoint state. The Phase 0d
+`--yes-i-really-want-to-reset` CLI gate is the right pattern; future codecs
+that wrap reset-equivalent commands must require an analogous explicit
+opt-in at the IPC boundary.
+
+**DES-CBC-encrypted command headers (slv3 + lcd207)**
+
+The 504-byte DES-CBC envelope at offset 0 of the WinUSB EP1 frame uses a
+hardcoded `slv3tuzx` key+IV. A wrong key, wrong IV, or wrong padding
+produces malformed-but-decryptable commands - the firmware sees a parsable
+envelope with garbage opcodes and may go into undefined state. If the
+daemon ever reimplements this path (Phase 3+), the reviewer should require:
+exact-bytes test vectors covering at least one each of `PushJpg`, `Reboot`,
+and a `UpdateFireWare` filesystem-write before any live probe.
+
+**lcd207's `UpdateFireWare = 0x28` filesystem-write opcode**
+
+This opcode is repurposed at the lcd207 layer to mean "write a file at the
+filename embedded in the header at offset 16". The intended filename for
+the boot-image flow is `/usr/data/boot.jpg`. A wrong filename byte sequence
+in the header could overwrite firmware-binary slots
+(`/usr/data/update.app` is a known target for the actual FW path) instead.
+**The Phase 1+ daemon must hardcode the filename string on the trust
+boundary and never accept it from IPC** - this is a category-A
+brick-risk path.
+
+**lcd207 raw-byte opcodes 247/248**
+
+Undeclared MCU-firmware-write opcodes that ship with CRC-16-checksummed
+4096-byte chunks. Higher bricking risk than the application-firmware path
+because it touches the MCU rather than the user-space partition. Phase 1
+must not expose these. Phase 3+ must not expose these either, until/unless
+a separate "firmware-update mode" is built with its own gate.
+
+**StrimerPlus and Ene6K77Fan R-B-G byte order**
+
+OpenRGB cross-validation (section 5.3) confirms the LConnect3 source: per-LED
+colour bytes are written in **R-B-G** order on these families, not RGB. The
+Linux daemon must preserve R-B-G; getting the byte order wrong produces
+wrong colours but no brick risk - reversible by re-issuing the command.
+Document, don't gate.
+
+**LCDV2 cmd 131 buffering quirk**
+
+Phase 0c finding: rapid back-to-back writes can leave the LED stuck in an
+intermediate state. Section 4.7 documents the mitigation (`lighting_keeper`
+re-issues at 1.5 s). The reviewer should reject any LCDV2 lighting write
+that is not bracketed by the keeper loop, except for explicit one-shot
+debug paths (`verify-galahad`).
+
+**LCDV2 cmd 14 (`SendJpeg`) ~20 s auto-revert**
+
+Section 4.7: firmware auto-reverts the LCD content after ~20 s mode-
+independent. The `lcd_keeper` refresh cadence must be <= 15 s (5 s margin)
+for sustained content. The reviewer should flag any cmd-14 caller that
+isn't in the keeper loop.
+
+### 6.5 Phase 1 plan inputs
+
+A clean recap intended to be lifted into the Phase 1 plan author's
+"Phase 0e inputs" section. Each bullet is concrete enough to drive a
+specific Phase 1 decision; cross-references point back to the matrix that
+authorises it.
+
+- **Framing-enum extensibility (section 6.1):** `lconnect-hid::Framing` must
+  be designed extensible from day one - at least seven framing classes
+  exist across the LConnect3 device universe, and Phase 1's CCommandPacket
+  addition is just the first beyond A/B. Either model `Framing` as a trait
+  with per-class impls, or as a `#[non_exhaustive]` enum that requires
+  per-codec class declaration. Don't burn A/B/C in as a closed taxonomy.
+- **Cmd 15 stays codec-implemented but IPC-unexposed (section 6.2):** Phase
+  0e probe set (P0e-19, P0e-20) may close cmd-15 activation; if it doesn't,
+  the codec remains in-tree but the daemon's IPC surface does not expose
+  it. The day activation is discovered, the codec is ready and only the
+  IPC seal needs to be lifted.
+- **`lighting_keeper` cadence = 1.5 s (sections 4.7, 6.4):** mirrors the
+  C# service's continuous re-issue on cmd 131; consistent with sibling
+  families per the cadence matrix.
+- **`lcd_keeper` cadence <= 15 s for cmd 14 (sections 4.7, 6.4):** 5 s
+  margin under the firmware's ~20 s auto-revert. Sustained LCD content
+  requires the keeper loop.
+- **No firmware paths in Phase 1 (section 6.4):** `UploadFirmware`,
+  `ActiveFirmware`, lcd207's `UpdateFireWare` (both as FW-update and as
+  filesystem-write), slv3's `Fw*` opcodes, TLFan's cmds 171/172, TLLCD's
+  cmds 58/59 - all deferred. Codec-only is acceptable for cmds whose
+  activation has been verified (LCDV2 only), gated by IPC-side seal.
+- **No DES-CBC encryption needed in Phase 1 (sections 4.1, 6.4):** LCDV2
+  doesn't use it. The `slv3tuzx`-keyed envelope is only relevant to slv3
+  / lcd207 families, which are Phase 3+ work.
+- **Code organisation (section 6.3):** keep
+  `crates/protocol/src/galahad2_lcdv2/` as-is in Phase 1. The shared
+  extraction to `crates/protocol/src/common/` is deferred to Phase 3's
+  first task (when the second family lands and a second consumer exists);
+  add `// TODO(phase-3-refactor): ...` comments on the candidates listed
+  in 6.3.
+- **Daemon-architecture role (section 4.9):** the Linux daemon's role =
+  `L-Connect.Service + LConnect.Core + slv3 + lcd207` collapsed into one
+  Rust process. **For Phase 1, only the LCDV2-relevant subset (the
+  `LConnect.Core/Products/Galahad2Vision/` slice) ships;** slv3 and
+  lcd207 equivalents are Phase 3+ work.
+- **Phase 1 device scope:** LCDV2 only - no StrimerPlus, no Trinity, no
+  fan-only families, no HS I, no HS II, no TLFan / TLLCD, no SLV3LCD /
+  TLV2LCD, no Lancool 207, no UniversalScreen, no LWireless. Per the
+  Phase 1 design spec.
+- **udev VID coverage (section 4.6):** the Phase 1 udev rule only needs
+  VID `0x0416` for the LCDV2 PID `0x7395`. The five-VID multi-device rule
+  (`0x0416`, `0x0CF2`, `0x04FC`, `0x1CBE`, `0x1A86`) is Phase 3+ scope; the
+  cross-VID family clusters from section 4.6 drive Phase 3+
+  code-organisation boundaries (`winbond_*`, `ene_*`, `sunplus_tllcd`,
+  `lianli_lcd_*`, `wch_*`).
+- **Risky-area gating (section 6.4):** `hid-safety-reviewer` should treat
+  any HID write to the firmware-update opcodes, the reset opcodes, the
+  lcd207 `UpdateFireWare` filesystem-write, the lcd207 raw-byte 247/248
+  paths, or the slv3/lcd207 DES envelope as a category-A review even if
+  the diff looks innocuous. Phase 1 only touches LCDV2's firmware /
+  reset / serial-number opcodes (codec-only, IPC-sealed), so the live
+  surface is small - but the reviewer expectations carry forward to
+  every subsequent phase.
