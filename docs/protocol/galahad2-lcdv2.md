@@ -8,6 +8,13 @@
 (byte-level codec covered by tests; no live device run yet), `inferred`
 (only static analysis), `unknown` (TBD).
 
+> **Cross-device context:** for how this device's commands compare against
+> Lian Li's broader L-Connect3 catalog (TLFan, HydroShift, TLLCD, SLV3LCD,
+> Galahad II Trinity, etc.) and the slv3 / lcd207 shared SDKs, see
+> [`cross-device-survey.md`](cross-device-survey.md). Phase 0e's read-only
+> probes against this same LCDV2 hardware are documented in
+> [`captures/2026-04-26-cross-device-probes.txt`](captures/2026-04-26-cross-device-probes.txt).
+
 This document supersedes `PROTOCOL_DOCUMENTATION_RU.md` for any command
 listed below. The Russian doc remains as a legacy reference for commands
 not yet covered here.

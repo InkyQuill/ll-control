@@ -34,6 +34,14 @@ this stage — no daemon or GUI yet.
 - ✅ `lconnect-image` workspace crate (5 tests) — converts arbitrary
   input images (PNG/JPEG/WebP/BMP/GIF) to 480×480 JPEG ready for
   cmd 14/15.
+- ✅ Phase 0e: cross-device protocol survey
+  (`docs/protocol/cross-device-survey.md`) — 13 device families +
+  slv3 / lcd207 shared SDKs catalogued with cross-validation against
+  OpenRGB. 6 read-only probes against LCDV2
+  (`docs/protocol/captures/2026-04-26-cross-device-probes.txt`)
+  confirmed asymmetric per-framing parser behavior (A-class permissive
+  echo, B-class strict-on-unknown). New `verify-galahad probe`
+  subcommand for cross-device experimentation.
 - 🚧 Daemon, GUI, theme engine — Phases 1–6.
 - 🚧 `CCommandPacket` (third framing class) — needed for
   `SendH264Frame512`. Phase 1+.
@@ -74,6 +82,7 @@ cargo run -p verify-galahad -- set-pump-lighting --color '#FF0000' --scope outer
 cargo run -p verify-galahad -- get-fan-lighting
 cargo run -p verify-galahad -- set-led-colors --color '#FF0000'                    # cmd 20, per-pixel LED
 cargo run -p verify-galahad -- upload-jpeg --path my-image.png                      # cmd 14, JPEG to LCD (~20s display)
+cargo run -p verify-galahad -- probe 0x86 --framing a --yes-read-only               # cmd byte probe (read-only; safety boundary is the curated probe set)
 ```
 
 ## udev permissions

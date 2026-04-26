@@ -1,6 +1,6 @@
 # Lian Li L-Connect3 — Cross-Device Command Survey
 
-- **Status:** Phase 0e static survey complete - pending live probes (P0e-20) and post-execution wrap-up - findings ready for Phase 1 plan author
+- **Status:** Phase 0e complete - static survey + OpenRGB cross-validator + 6 live read-only probes against LCDV2 finished 2026-04-26. Findings ready for Phase 1 plan author.
 - **Date:** 2026-04-26
 - **Scope:** all device families managed by LConnect3, plus an OpenRGB
   cross-validator pass
