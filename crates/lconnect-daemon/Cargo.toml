@@ -1,0 +1,33 @@
+[package]
+name = "lconnect-daemon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "lconnectd"
+path = "src/main.rs"
+
+[dependencies]
+lconnect-protocol = { path = "../protocol" }
+lconnect-image    = { path = "../lconnect-image" }
+lconnect-hid      = { path = "../lconnect-hid" }
+lconnect-ipc      = { path = "../lconnect-ipc" }
+
+tokio = { workspace = true, features = ["full"] }
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-journald = "0.3"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+toml = "0.8"
+thiserror.workspace = true
+async-trait = "0.1"
+futures = "0.3"
+anyhow.workspace = true
+bytes = "1"
+xdg = "2"
+rand = "0.8"
