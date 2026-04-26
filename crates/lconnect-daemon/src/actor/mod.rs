@@ -50,6 +50,13 @@ pub enum HidCommand {
 }
 
 /// Per-device handles exposed to the IPC layer.
+///
+/// `Clone` is cheap (every field is itself an `Arc`-backed channel handle)
+/// and lets the IPC server lift a snapshot of the handles out of the
+/// `ManagerHandle::with_device` closure so subsequent `.await` calls on
+/// `mpsc::Sender::send` / `oneshot::Receiver` do not have to be performed
+/// while still holding the manager's `RwLock` read guard.
+#[derive(Clone)]
 pub struct DeviceHandles {
     pub hid_io_tx: mpsc::Sender<HidCommand>,
     pub snapshot_rx: watch::Receiver<SensorSnapshot>,

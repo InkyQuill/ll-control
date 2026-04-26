@@ -282,12 +282,12 @@ async fn call_method<R: DaemonRpc>(
         "set_fan_pwm" => {
             let p: SetFanPwmParams = from_value(params)?;
             rpc.set_fan_pwm(p.dev, p.percent).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
         "set_pump_pwm" => {
             let p: SetPumpPwmParams = from_value(params)?;
             rpc.set_pump_pwm(p.dev, p.percent, p.source).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
 
         // ---- Lighting ----
@@ -299,12 +299,12 @@ async fn call_method<R: DaemonRpc>(
         "set_lighting" => {
             let p: SetLightingParams = from_value(params)?;
             rpc.set_lighting(p.dev, p.kind, p.cfg).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
         "set_led_colors" => {
             let p: SetLedColorsParams = from_value(params)?;
             rpc.set_led_colors(p.dev, p.target, p.colors).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
 
         // ---- LCD ----
@@ -316,17 +316,17 @@ async fn call_method<R: DaemonRpc>(
         "set_lcd_config" => {
             let p: SetLcdConfigParams = from_value(params)?;
             rpc.set_lcd_config(p.dev, p.cfg).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
         "set_lcd_image" => {
             let p: SetLcdImageParams = from_value(params)?;
             rpc.set_lcd_image(p.dev, p.jpeg).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
         "clear_lcd" => {
             let p: DeviceParams = from_value(params)?;
             rpc.clear_lcd(p.dev).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
 
         // ---- Maintenance ----
@@ -338,7 +338,7 @@ async fn call_method<R: DaemonRpc>(
         "reset_device" => {
             let p: ResetDeviceParams = from_value(params)?;
             rpc.reset_device(p.dev, p.confirm).await?;
-            Ok(Value::Null)
+            Ok(unit_ok())
         }
         "raw_send" => {
             let p: RawSendParams = from_value(params)?;
@@ -357,6 +357,18 @@ async fn call_method<R: DaemonRpc>(
 }
 
 // --- helpers -----------------------------------------------------------
+
+/// Sentinel "unit result" payload for methods that return `()`.
+///
+/// We deliberately avoid `Value::Null`: `Some(Value::Null)` round-trips
+/// back to `None` on the client side because serde maps JSON `null` to
+/// `Option<Value>::None` by default, which the client interprets as
+/// "neither result nor error set" -- a transport error. An empty object
+/// is unambiguous: it survives the `Option<Value>` deserialiser as
+/// `Some(Value::Object(_))` and the dispatcher reaches the success arm.
+fn unit_ok() -> Value {
+    json!({})
+}
 
 /// JSON-encode a serialisable value, mapping any error to
 /// [`IpcError::Serialization`]. Used after a successful trait call.
