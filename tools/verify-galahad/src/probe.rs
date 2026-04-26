@@ -1,4 +1,4 @@
-//! `verify-galahad probe` codec layer — read-only cross-device experimentation.
+//! `verify-galahad probe` codec + I/O layer — read-only cross-device experimentation.
 //!
 //! Sends a single request to the device using one of the three known
 //! framing classes (A/B/C) and dumps the response as hex. Used by
@@ -6,8 +6,9 @@
 //! sourced from sibling device families surveyed in
 //! `docs/protocol/cross-device-survey.md`.
 //!
-//! This module owns the **codec layer only** — types, parsing, framing
-//! sizes. The CLI dispatch + actual HID round-trip is in `main.rs`.
+//! Owns the framing-class types, hex-payload parser, and HID round-trip
+//! helper [`run_probe`]. The CLI dispatch (clap argument struct, safety
+//! gate, hex-dump output) lives in `main.rs`.
 //!
 //! # Caveats
 //!
@@ -24,6 +25,7 @@
 //! - `docs/superpowers/plans/2026-04-26-phase-0e-cross-device-survey.md` — Phase 0e plan
 
 use anyhow::{anyhow, Context, Result};
+use hidapi::HidDevice;
 
 /// HID framing class for a `probe` request.
 ///
@@ -147,4 +149,125 @@ pub fn parse_hex_payload(s: &str) -> Result<Vec<u8>> {
         }
     }
     Ok(bytes)
+}
+
+/// Maximum stale responses to drain while waiting for the cmd echo.
+///
+/// Picked to mirror the existing A-class drain budget in
+/// `read_until_command` (which is time-bounded rather than count-bounded,
+/// but typically settles within 1-2 stale packets on FW 1.6). Four gives
+/// plenty of headroom without letting a totally silent device hang the
+/// caller indefinitely.
+const PROBE_DRAIN_LIMIT: usize = 4;
+
+/// Per-read timeout while waiting for the echo, in milliseconds.
+///
+/// Matches the 500 ms used by the cross-device-survey targeted probes;
+/// long enough that a slow B-class JPEG response can settle, short
+/// enough that `PROBE_DRAIN_LIMIT * READ_TIMEOUT_MS` (= 2 s worst case)
+/// stays well under a human's "did the CLI hang?" patience threshold.
+const READ_TIMEOUT_MS: i32 = 500;
+
+/// Perform one probe round-trip.
+///
+/// Constructs the output buffer for the chosen framing class with the
+/// command byte at offset 1 (offset 0 is the report ID per
+/// [`Framing::report_id`]) and the payload starting at offset 2; the
+/// rest is zero-filled. Writes once, then drains responses looking
+/// for one whose command-echo byte matches `args.cmd` until either a
+/// match arrives or the device produces `PROBE_DRAIN_LIMIT` stale
+/// responses in a row.
+///
+/// # Echo convention
+///
+/// Both A-class ([`crate::probe::Framing::A`]) and B-class
+/// ([`crate::probe::Framing::B`]) responses on Galahad II LCDV2 echo
+/// the **plain** request command byte at response offset 1, with the
+/// report ID at offset 0. This matches
+/// `crates/protocol/src/galahad2_lcdv2/packets.rs::ACommandPacket::parse_response`
+/// and `bpacket.rs::BCommandPacket::from_response`. C-class is
+/// extrapolated from the same C# pattern; live verification is part of
+/// the Phase 0e probe runs that consume this helper.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - the payload doesn't fit in the framing class's output buffer
+/// - the HID write fails
+/// - the HID write is short
+/// - no response with the expected echo arrives within
+///   `PROBE_DRAIN_LIMIT` read attempts (each capped at
+///   `READ_TIMEOUT_MS`).
+///
+/// # Safety
+///
+/// Sending an arbitrary cmd byte mutates device state if the cmd byte
+/// has any write semantics. The caller is responsible for choosing a
+/// hid-safety-reviewer-cleared read-only cmd byte; `run_probe` does
+/// not enforce this. The CLI dispatch in `main.rs` gates this with a
+/// `--yes-read-only` flag.
+///
+/// # See also
+///
+/// - `tools/verify-galahad/src/main.rs::Cmd::Probe` — CLI dispatch
+/// - `docs/protocol/captures/2026-04-26-cross-device-probes.txt` — curated probe set
+pub fn run_probe(device: &HidDevice, args: &ProbeArgs) -> Result<Vec<u8>> {
+    let out_len = args.framing.output_len();
+    let in_len = args.framing.input_len();
+    let report_id = args.framing.report_id();
+
+    // Build output buffer: [report_id, cmd, payload..., 0..]
+    // Payload room is `out_len - 2` (one byte each for report_id and cmd).
+    let payload_room = out_len.saturating_sub(2);
+    if args.payload.len() > payload_room {
+        return Err(anyhow!(
+            "payload ({} bytes) exceeds framing-{:?} room ({} bytes)",
+            args.payload.len(),
+            args.framing,
+            payload_room
+        ));
+    }
+    let mut out = vec![0u8; out_len];
+    out[0] = report_id;
+    out[1] = args.cmd;
+    out[2..2 + args.payload.len()].copy_from_slice(&args.payload);
+
+    let written = device
+        .write(&out)
+        .with_context(|| format!("HID write failed for cmd 0x{:02x}", args.cmd))?;
+    if written != out_len {
+        return Err(anyhow!(
+            "short write: {written}/{out_len} bytes for cmd 0x{:02x}",
+            args.cmd
+        ));
+    }
+
+    // Drain stale responses until the echo for our cmd arrives. Both
+    // A-class and B-class place the echo at response offset 1 (after
+    // the report ID); we mirror the existing `read_until_command`
+    // helper's convention.
+    let mut buf = vec![0u8; in_len];
+    for _attempt in 0..PROBE_DRAIN_LIMIT {
+        let n = device
+            .read_timeout(&mut buf, READ_TIMEOUT_MS)
+            .context("HID read_timeout failed")?;
+        if n == 0 {
+            return Err(anyhow!(
+                "read timeout waiting for echo of cmd 0x{:02x}",
+                args.cmd
+            ));
+        }
+        if n > 1 && buf[1] == args.cmd {
+            buf.truncate(n);
+            return Ok(buf);
+        }
+        eprintln!(
+            "  drained stale probe response (cmd 0x{:02x}), retrying...",
+            buf.get(1).copied().unwrap_or(0)
+        );
+    }
+    Err(anyhow!(
+        "drained {PROBE_DRAIN_LIMIT} stale responses without finding echo of cmd 0x{:02x}",
+        args.cmd
+    ))
 }
