@@ -88,7 +88,6 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{oneshot, Mutex};
 use tokio_stream::wrappers::WatchStream;
-use tokio_stream::StreamExt as _;
 use tracing::warn;
 
 /// Single-use reset-token expiry.
@@ -481,11 +480,11 @@ impl DaemonRpc for IpcServerImpl {
         self.stats.inc_ipc_request();
         let handles = self.handles(&dev).await?;
         // `WatchStream` yields the current value once on first poll,
-        // then every subsequent change. The full JSON-RPC notification
-        // streaming wiring lands in P1D-13 -- this method just exposes
-        // the typed stream the dispatcher will consume.
+        // then every subsequent change. The IPC server wraps the items
+        // we yield here into `"snapshot"` notifications on the same
+        // connection (see `lconnect_ipc::server::spawn_snapshot_pump`).
         let stream = WatchStream::new(handles.snapshot_rx);
-        Ok(Box::pin(stream.map(|s| s)))
+        Ok(Box::pin(stream))
     }
 
     // -------------------------------------------------------------------

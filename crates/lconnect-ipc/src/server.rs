@@ -24,9 +24,14 @@
 //!
 //! Returns a stream and therefore needs the writer half of the
 //! connection to be shared between the request-loop and a stream-pump
-//! task. The full streaming wiring lands in P1D-13 alongside the
-//! daemon-side `IpcServerImpl`. For now the dispatch arm short-circuits
-//! with [`IpcError::NotImplemented`].
+//! task. [`handle_connection`] wraps the write half in an
+//! `Arc<Mutex<...>>` so the request-response loop and any spawned
+//! notification pump can serialise their writes without interleaving
+//! partial JSON lines. The dispatcher's `subscribe_snapshots` arm
+//! returns immediately with `{"subscribed": true, ...}` and spawns a
+//! per-subscription task that consumes the [`BoxStream`] from
+//! `IpcServerImpl::subscribe_snapshots` and emits each item as a
+//! `"snapshot"` notification.
 
 use crate::{
     jsonrpc::{ErrorObj, Notification, Request, Response},
@@ -41,7 +46,15 @@ use std::path::Path;
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
 use tokio::net::UnixListener;
+use tokio::sync::Mutex;
 use tracing::{debug, error, info, warn};
+
+/// Shared writer half for a single connection.
+///
+/// Held behind `Arc<Mutex<...>>` so the request-response loop and any
+/// notification-pump tasks (one per active `subscribe_*` call) can all
+/// write to the same socket without interleaving partial JSON lines.
+type SharedWriter<W> = Arc<Mutex<W>>;
 
 /// JSON-RPC server bound to a Unix socket.
 pub struct IpcServer<R: DaemonRpc> {
@@ -153,8 +166,9 @@ where
     S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     R: DaemonRpc,
 {
-    let (read_half, mut write_half) = tokio::io::split(stream);
+    let (read_half, write_half) = tokio::io::split(stream);
     let mut reader = BufReader::new(read_half);
+    let writer: SharedWriter<_> = Arc::new(Mutex::new(write_half));
 
     // Send hello notification on connect so clients can verify protocol
     // and daemon versions before issuing any requests.
@@ -169,7 +183,10 @@ where
             ),
         }),
     );
-    write_line(&mut write_half, &hello).await?;
+    {
+        let mut w = writer.lock().await;
+        write_line(&mut *w, &hello).await?;
+    }
 
     let mut line = String::new();
     loop {
@@ -180,8 +197,9 @@ where
             return Ok(());
         }
 
-        let response = dispatch(&rpc, &line).await;
-        write_line(&mut write_half, &response).await?;
+        let response = dispatch(&rpc, &line, &writer).await;
+        let mut w = writer.lock().await;
+        write_line(&mut *w, &response).await?;
     }
 }
 
@@ -206,11 +224,67 @@ where
     Ok(())
 }
 
+/// Spawn a per-subscription task that consumes `stream` and emits each
+/// item as a `"snapshot"` [`Notification`] on the shared connection
+/// writer.
+///
+/// The task ends when the stream ends or when a write fails (peer closed
+/// the connection). It does **not** abort other in-flight notification
+/// pumps -- each subscription is independent. Holding the writer mutex
+/// only across the single `write_line` call guarantees the request loop
+/// can continue handing back responses between notifications without
+/// being starved by a long stream.
+fn spawn_snapshot_pump<W, S>(writer: SharedWriter<W>, device_id: DeviceId, stream: S)
+where
+    W: tokio::io::AsyncWrite + Unpin + Send + 'static,
+    S: futures::stream::Stream<Item = crate::SensorSnapshot> + Send + 'static,
+{
+    tokio::spawn(async move {
+        futures::pin_mut!(stream);
+        while let Some(snap) = stream.next().await {
+            let snapshot_value = match serde_json::to_value(snap) {
+                Ok(v) => v,
+                Err(e) => {
+                    warn!("snapshot serialise failed: {e}");
+                    continue;
+                }
+            };
+            let notif = Notification::new(
+                "snapshot",
+                json!({
+                    "device_id": &device_id,
+                    "snapshot": snapshot_value,
+                }),
+            );
+            let mut w = writer.lock().await;
+            if write_line(&mut *w, &notif).await.is_err() {
+                // Peer closed the connection; bail rather than spinning.
+                break;
+            }
+        }
+        debug!(
+            "snapshot pump for {} ended (stream closed)",
+            device_id.as_str()
+        );
+    });
+}
+
 /// Parse one line, dispatch to the trait, and build the response
 /// envelope. A parse failure produces a `-32700` error response with
 /// `id: null` because the id could not be recovered from the malformed
 /// frame.
-async fn dispatch<R: DaemonRpc>(rpc: &Arc<R>, line: &str) -> Response {
+///
+/// `writer` is the connection's shared write half. Most methods do not
+/// touch it -- the caller writes the returned `Response` after this
+/// function returns. Streaming methods (e.g. `subscribe_snapshots`)
+/// take a clone so they can spawn a notification-pump task that writes
+/// onto the same connection without racing the response or future
+/// requests.
+async fn dispatch<R, W>(rpc: &Arc<R>, line: &str, writer: &SharedWriter<W>) -> Response
+where
+    R: DaemonRpc,
+    W: tokio::io::AsyncWrite + Unpin + Send + 'static,
+{
     let req: Request = match serde_json::from_str(line) {
         Ok(r) => r,
         Err(e) => {
@@ -228,7 +302,7 @@ async fn dispatch<R: DaemonRpc>(rpc: &Arc<R>, line: &str) -> Response {
     let method = req.method.as_str();
     debug!("ipc rx method={method} id={:?}", req.id);
 
-    let result = call_method(rpc, method, req.params).await;
+    let result = call_method(rpc, method, req.params, writer).await;
 
     match result {
         Ok(value) => Response::ok(id, value),
@@ -248,11 +322,20 @@ async fn dispatch<R: DaemonRpc>(rpc: &Arc<R>, line: &str) -> Response {
 ///
 /// One arm per method on the trait. Each arm: deserialise params,
 /// invoke the trait method, and JSON-encode the success value.
-async fn call_method<R: DaemonRpc>(
+///
+/// `writer` is only consulted by streaming methods that need to spawn
+/// a per-subscription notification-pump task on the same connection;
+/// most arms ignore it.
+async fn call_method<R, W>(
     rpc: &Arc<R>,
     method: &str,
     params: Value,
-) -> crate::Result<Value> {
+    writer: &SharedWriter<W>,
+) -> crate::Result<Value>
+where
+    R: DaemonRpc,
+    W: tokio::io::AsyncWrite + Unpin + Send + 'static,
+{
     match method {
         // ---- Discovery ----
         "list_devices" => {
@@ -271,12 +354,22 @@ async fn call_method<R: DaemonRpc>(
             let v = rpc.get_snapshot(p.dev).await?;
             to_value(&v)
         }
-        // TODO(P1D-13): wire streaming subscription. Returning a stream
-        // requires sharing the connection's write half with a pump task,
-        // which is built out alongside the daemon's `IpcServerImpl`.
-        "subscribe_snapshots" => Err(IpcError::NotImplemented(
-            "subscribe_snapshots wired in P1D-13".into(),
-        )),
+        // Streaming subscription. The trait method returns a
+        // `BoxStream<SensorSnapshot>`; we spawn a per-subscription
+        // pump task that emits each item as a `"snapshot"` notification
+        // on the same connection. The call itself returns immediately
+        // with `{"subscribed": true, ...}` so the client's `call`
+        // future resolves without waiting for the first item.
+        "subscribe_snapshots" => {
+            let p: DeviceParams = from_value(params)?;
+            let device_id = p.dev.clone();
+            let stream = rpc.subscribe_snapshots(p.dev).await?;
+            spawn_snapshot_pump(writer.clone(), device_id.clone(), stream);
+            Ok(json!({
+                "subscribed": true,
+                "device_id": device_id,
+            }))
+        }
 
         // ---- PWM ----
         "set_fan_pwm" => {

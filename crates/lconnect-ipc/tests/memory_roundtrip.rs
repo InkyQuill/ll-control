@@ -21,6 +21,11 @@
 //!    valid if the server-side dispatcher successfully decodes the
 //!    `{ dev, percent }` shape. A `InvalidArgument` here would mean
 //!    the wire shape is wrong.
+//! 4. `subscribe_snapshots_emits_notifications` — streaming path:
+//!    `subscribe_snapshots` returns immediately with `subscribed: true`
+//!    while a server-side pump task emits each `SensorSnapshot` from
+//!    the trait method's `BoxStream` as a `"snapshot"` notification on
+//!    the same connection.
 
 use async_trait::async_trait;
 use futures::stream::BoxStream;
@@ -230,6 +235,178 @@ async fn set_fan_pwm_dispatch_shape() {
             );
         }
         other => panic!("expected NotImplemented, got: {other:?}"),
+    }
+
+    drop(client);
+    server_task.abort();
+    let _ = server_task.await;
+}
+
+/// Mock impl for the streaming-subscription test.
+///
+/// `subscribe_snapshots` returns a `BoxStream` that yields three canned
+/// `SensorSnapshot` values then ends (`futures::stream::iter` over a
+/// fixed array, boxed into a `BoxStream`). Every other method returns
+/// `NotImplemented`; only `subscribe_snapshots` matters for this test.
+struct StreamingMockRpc;
+
+impl StreamingMockRpc {
+    fn canned_snapshots() -> [SensorSnapshot; 3] {
+        // `SensorSnapshot` is `#[non_exhaustive]`; build via Serde so
+        // the test does not depend on its full field list.
+        let mk = |fan_rpm: u16| -> SensorSnapshot {
+            serde_json::from_value(json!({
+                "coolant_c_x10": 305_i16,
+                "fan_rpm": fan_rpm,
+                "pump_rpm": 2200_u16,
+                "temp_valid": true,
+                "last_seen_unix_ms": 1_700_000_000_000_u64,
+            }))
+            .expect("build mock SensorSnapshot")
+        };
+        [mk(800), mk(900), mk(1000)]
+    }
+}
+
+#[async_trait]
+impl DaemonRpc for StreamingMockRpc {
+    async fn list_devices(&self) -> Result<Vec<DeviceDescriptor>> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn get_firmware(&self, _dev: DeviceId) -> Result<FirmwareInfo> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn get_snapshot(&self, _dev: DeviceId) -> Result<SensorSnapshot> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn subscribe_snapshots(
+        &self,
+        _dev: DeviceId,
+    ) -> Result<BoxStream<'static, SensorSnapshot>> {
+        let items = Self::canned_snapshots();
+        let stream = futures::stream::iter(items);
+        Ok(Box::pin(stream))
+    }
+    async fn set_fan_pwm(&self, _dev: DeviceId, _percent: Pwm) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn set_pump_pwm(&self, _dev: DeviceId, _percent: Pwm, _source: PwmSource) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn get_lighting_info(&self, _dev: DeviceId, _kind: LightingKind) -> Result<LightingInfo> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn set_lighting(
+        &self,
+        _dev: DeviceId,
+        _kind: LightingKind,
+        _cfg: LightingConfig,
+    ) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn set_led_colors(
+        &self,
+        _dev: DeviceId,
+        _target: LedTarget,
+        _colors: Vec<Rgb>,
+    ) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn is_lcd_available(&self, _dev: DeviceId) -> Result<bool> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn set_lcd_config(&self, _dev: DeviceId, _cfg: LcdConfig) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn set_lcd_image(&self, _dev: DeviceId, _jpeg: Vec<u8>) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn clear_lcd(&self, _dev: DeviceId) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn request_reset_token(&self, _dev: DeviceId) -> Result<ResetToken> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn reset_device(&self, _dev: DeviceId, _confirm: ResetToken) -> Result<()> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn raw_send(
+        &self,
+        _dev: DeviceId,
+        _framing: FramingKind,
+        _bytes: Vec<u8>,
+    ) -> Result<Vec<u8>> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+    async fn daemon_stats(&self) -> Result<DaemonStats> {
+        Err(IpcError::NotImplemented("mock".into()))
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn subscribe_snapshots_emits_notifications() {
+    use std::time::Duration;
+
+    let (client_end, server_end) = mem_pair();
+    let server = IpcServer::new(Arc::new(StreamingMockRpc));
+    let server_task = tokio::spawn(async move {
+        let _ = server.serve_stream(server_end).await;
+    });
+    let client = IpcClient::from_stream(client_end)
+        .await
+        .expect("client from_stream");
+
+    // Register the listener BEFORE issuing the call so we don't race
+    // the server: the pump task spawns inside the dispatcher and may
+    // start writing notifications immediately.
+    let mut sub = client.subscribe("snapshot").await;
+
+    // The call returns immediately with `{"subscribed": true, ...}`;
+    // the actual snapshot stream rides as notifications afterwards.
+    let v = client
+        .call("subscribe_snapshots", json!({ "dev": "mock:0001" }))
+        .await
+        .expect("subscribe_snapshots call");
+    assert_eq!(v.get("subscribed").and_then(|b| b.as_bool()), Some(true));
+    assert_eq!(
+        v.get("device_id").and_then(|d| d.as_str()),
+        Some("mock:0001"),
+    );
+
+    // Read three notifications. Bound the wait so a regression that
+    // drops items hangs the test deterministically rather than
+    // wedging the suite.
+    let collect = async {
+        let mut got = Vec::new();
+        for _ in 0..3 {
+            let n = sub.recv().await.expect("notification stream open");
+            got.push(n);
+        }
+        got
+    };
+    let notifications = tokio::time::timeout(Duration::from_secs(2), collect)
+        .await
+        .expect("expected 3 notifications within 2s");
+
+    assert_eq!(notifications.len(), 3);
+    let canned = StreamingMockRpc::canned_snapshots();
+    for (i, notif) in notifications.iter().enumerate() {
+        assert_eq!(notif.method, "snapshot");
+        assert_eq!(
+            notif.params.get("device_id").and_then(|d| d.as_str()),
+            Some("mock:0001"),
+            "notification {i} device_id",
+        );
+        let snap_val = notif
+            .params
+            .get("snapshot")
+            .expect("notification has snapshot field");
+        let snap: SensorSnapshot =
+            serde_json::from_value(snap_val.clone()).expect("decode SensorSnapshot");
+        assert_eq!(snap.fan_rpm, canned[i].fan_rpm);
+        assert_eq!(snap.pump_rpm, canned[i].pump_rpm);
+        assert_eq!(snap.coolant_c_x10, canned[i].coolant_c_x10);
+        assert!(snap.temp_valid);
     }
 
     drop(client);

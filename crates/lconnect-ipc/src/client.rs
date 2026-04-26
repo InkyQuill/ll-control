@@ -133,29 +133,53 @@ impl IpcClient {
                     continue;
                 }
 
-                // Try to parse as a Response first (has `id`); fall back
-                // to Notification (no `id`). Both share `jsonrpc` /
-                // `method` / `params` shapes only partially, so attempt
-                // both rather than discriminating up front.
-                if let Ok(resp) = serde_json::from_str::<Response>(trimmed) {
-                    if let Some(id_val) = resp.id.as_ref().and_then(Value::as_u64) {
-                        if let Some(tx) = pending_r.lock().await.remove(&id_val) {
-                            let _ = tx.send(resp);
-                        }
+                // Discriminate by the presence of the `method` key:
+                // notifications carry one and responses do not. This is
+                // structural rather than try-Response-then-Notification,
+                // which avoided ambiguity for envelopes that happen to
+                // round-trip cleanly into both shapes (e.g. a response
+                // with neither `result` nor `error` set, which the
+                // try-Response path would have accepted as a malformed
+                // response and silently dropped).
+                let raw: Value = match serde_json::from_str(trimmed) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::debug!("ipc client parse failed: {e}");
                         continue;
                     }
-                    // Response with no parseable id: drop. Could log,
-                    // but the daemon shouldn't produce these.
-                }
-                if let Ok(notif) = serde_json::from_str::<Notification>(trimmed) {
-                    let sinks: Vec<mpsc::Sender<Notification>> = subs_r
-                        .lock()
-                        .await
-                        .get(&notif.method)
-                        .cloned()
-                        .unwrap_or_default();
-                    for s in sinks {
-                        let _ = s.send(notif.clone()).await;
+                };
+                if raw.get("method").is_some() {
+                    // Notification path.
+                    match serde_json::from_value::<Notification>(raw) {
+                        Ok(notif) => {
+                            let sinks: Vec<mpsc::Sender<Notification>> = subs_r
+                                .lock()
+                                .await
+                                .get(&notif.method)
+                                .cloned()
+                                .unwrap_or_default();
+                            for s in sinks {
+                                let _ = s.send(notif.clone()).await;
+                            }
+                        }
+                        Err(e) => {
+                            tracing::debug!("ipc client notification decode failed: {e}");
+                        }
+                    }
+                } else {
+                    // Response path.
+                    match serde_json::from_value::<Response>(raw) {
+                        Ok(resp) => {
+                            if let Some(id_val) = resp.id.as_ref().and_then(Value::as_u64) {
+                                if let Some(tx) = pending_r.lock().await.remove(&id_val) {
+                                    let _ = tx.send(resp);
+                                }
+                            }
+                            // Response with no parseable id: drop.
+                        }
+                        Err(e) => {
+                            tracing::debug!("ipc client response decode failed: {e}");
+                        }
                     }
                 }
             }
