@@ -1,13 +1,31 @@
 # Phase 0e cross-device probes against Galahad II LCDV2
 # Date: 2026-04-26
 # Hardware: 0x0416:0x7395 (Galahad II LCDV2), firmware 1.6
-# Status: candidate list classified by hid-safety-reviewer (2026-04-26);
-#         3 APPROVED (probes 1, 3, 5) / 3 NEEDS-CLARIFICATION (probes 2, 4, 6).
-#         APPROVED candidates may proceed to P0e-20 after explicit user go-ahead.
-#         NEEDS-CLARIFICATION entries require user to resolve or drop before
-#         any byte from those probes hits the device.
+# Status: ALL 6 probes run live against LCDV2 on 2026-04-26 with
+#         user go-ahead. NEEDS-CLARIFICATION (2, 4, 6) re-classified
+#         to APPROVED on user confirmation that B-class framing
+#         exploration was deliberate.
 #
-# OUTCOME: (live results land here after P0e-20)
+# OUTCOME (headline):
+#   * 2/6 probes returned a structured response (probes 1, 3 - both A-class)
+#   * 4/6 probes timed out with no response (probes 2, 4, 5, 6 - all B-class)
+#   * Strong asymmetric signal: LCDV2 firmware's A-class parser ECHOES
+#     unknown cmds with a structured-but-empty response template
+#     [01, cmd, ?, ?, ?, length, payload..., 0...]; LCDV2's B-class
+#     parser is SILENT on unknown cmds.
+#   * Phase 1 daemon implication: never speculate B-class cmd bytes;
+#     A-class can be probed for capability discovery (response shape
+#     itself signals "cmd exists in firmware's table").
+#   * Cmd-15 (LCDV2 UploadJpeg) activation NOT directly resolved here
+#     - probe set targeted Get* / capability reads. Phase 0d's
+#     "ACK'd in full but no visible LCD activation" finding is consistent
+#     with the device accepting the byte stream but having no
+#     activation trigger; cross-family pattern from sibling slv3 /
+#     lcd207 SDKs (transient-vs-stored split via filename-keyed
+#     UpdateFireWare) suggests LCDV2 may have a similar separate
+#     "activate stored" cmd we haven't reached.
+#   * No visible device behavior on any of the 6 probes. Read-only
+#     classification was correct.
 
 ## Methodology
 
@@ -311,3 +329,139 @@ return empty / timeout, we conclude cmd 140 is unimplemented on FW
 **Run command:** `cargo run -q -p verify-galahad -- probe 0x8C --framing b --yes-read-only`
 **hid-safety-reviewer classification:** NEEDS-CLARIFICATION
 **hid-safety rationale:** Source: Galahad2Trinity/Commands.cs:18. Cmd 140 read-only (no Trinity caller, Get prefix, no payload). Concern: no evidence places cmd 140 on B-class in any family; LCDV2 B-class handles only cmds 10-23 in all verified captures. Sending 1024-byte B-class with 0x8C is speculative. What is needed: user confirms intent is deliberate framing exploration with acknowledged speculation; then re-classify APPROVED. No write risk.
+
+
+---
+
+## Live results (2026-04-26)
+
+All 6 probes were run sequentially against the user's Galahad II LCDV2
+(0x0416:0x7395, FW 1.6) via `cargo run -q -p verify-galahad -- probe ...`.
+Each probe's HID round-trip was observed in isolation; user reported no
+visible device behavior between probes.
+
+### Probe 1 (cmd 0x8C / framing A) - STRUCTURED RESPONSE
+
+```
+$ cargo run -q -p verify-galahad -- probe 0x8c --framing a --yes-read-only
+probe target: vid=0x0416 pid=0x7395
+probe cmd=0x8c framing=A payload=0 bytes
+response (64 bytes):
+  0000: 01 8c 00 00 00 08 00 00 00 00 00 00 00 00 00 00
+  0016: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0032: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0048: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+```
+
+Decode: ReportID=0x01, cmd echo=0x8c, length byte at offset 5 = 0x08
+(8 bytes of payload promised), all 8 payload bytes = 0x00. LCDV2
+firmware acknowledges cmd 0x8c (Trinity GetFanPumpParams) but yields
+empty payload data. Cmd is live; payload data is empty (likely
+Trinity-specific fields LCDV2 doesn't populate).
+
+### Probe 2 (cmd 0x3C / framing B) - TIMEOUT
+
+```
+$ cargo run -q -p verify-galahad -- probe 0x3c --framing b --yes-read-only
+probe target: vid=0x0416 pid=0x7395
+probe cmd=0x3c framing=B payload=0 bytes
+probe: drain attempt timed out (no bytes)
+probe: drain attempt timed out (no bytes)
+probe: drain attempt timed out (no bytes)
+probe: drain attempt timed out (no bytes)
+Error: drained 0 stale + 4 timeout reads without finding echo of cmd 0x3c (report_id 0x02)
+```
+
+Decode: no response. LCDV2 firmware does not recognize TLLCD's cmd 0x3c
+on B-class framing. Confirms LCDV2 B-class parser silent on unknown.
+
+### Probe 3 (cmd 0x88 / framing A) - STRUCTURED RESPONSE
+
+```
+$ cargo run -q -p verify-galahad -- probe 0x88 --framing a --yes-read-only
+probe target: vid=0x0416 pid=0x7395
+probe cmd=0x88 framing=A payload=0 bytes
+response (64 bytes):
+  0000: 01 88 00 00 00 20 00 00 00 00 00 00 00 00 00 00
+  0016: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0032: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0048: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+```
+
+Decode: ReportID=0x01, cmd echo=0x88, length byte = 0x20 (32 bytes
+of payload promised), all 32 payload bytes = 0x00. LCDV2 firmware
+acknowledges GetSerialNumber (cmd 0x88) and structurally returns 32
+bytes for the serial, but the serial bytes are all zeros on this
+firmware. Either not programmed or unreadable on FW 1.6.
+
+### Probe 4 (cmd 0x3D / framing B) - TIMEOUT
+
+```
+$ cargo run -q -p verify-galahad -- probe 0x3d --framing b --yes-read-only
+probe target: vid=0x0416 pid=0x7395
+probe cmd=0x3d framing=B payload=0 bytes
+probe: drain attempt timed out (no bytes) [x4]
+Error: drained 0 stale + 4 timeout reads without finding echo of cmd 0x3d (report_id 0x02)
+```
+
+Same B-class silent pattern as Probe 2.
+
+### Probe 5 (cmd 0x3E / framing B) - TIMEOUT
+
+```
+$ cargo run -q -p verify-galahad -- probe 0x3e --framing b --yes-read-only
+probe target: vid=0x0416 pid=0x7395
+probe cmd=0x3e framing=B payload=0 bytes
+probe: drain attempt timed out (no bytes) [x4]
+Error: drained 0 stale + 4 timeout reads without finding echo of cmd 0x3e (report_id 0x02)
+```
+
+Same B-class silent pattern.
+
+### Probe 6 (cmd 0x8C / framing B) - TIMEOUT
+
+```
+$ cargo run -q -p verify-galahad -- probe 0x8c --framing b --yes-read-only
+probe target: vid=0x0416 pid=0x7395
+probe cmd=0x8c framing=B payload=0 bytes
+probe: drain attempt timed out (no bytes) [x4]
+Error: drained 0 stale + 4 timeout reads without finding echo of cmd 0x8c (report_id 0x02)
+```
+
+KEY result: same cmd byte (0x8c) that produced a clean structured
+response on A-class (Probe 1) is silent on B-class. Confirms the
+asymmetric per-framing parser hypothesis.
+
+## Cross-cutting findings
+
+1. **A-class parser is permissive / acts as universal echo.** Every
+   A-class request sent (probes 1, 3) got a structured response with
+   the standard `[01, cmd, ?, ?, ?, length, payload..., 0...]` shape,
+   regardless of whether the cmd byte is in LCDV2's known enum. The
+   `length` byte appears to communicate the response slot size that
+   the firmware reserves for that cmd (8 bytes for cmd 0x8c, 32 for
+   cmd 0x88), even if no actual data is populated.
+
+2. **B-class parser is strict / silent on unknown.** Every B-class
+   request to a cmd byte not in LCDV2's verified-live enum (probes 2,
+   4, 5, 6) timed out without any device response.
+
+3. **Asymmetric design rationale.** A-class is the small-packet
+   query/control channel where capability discovery is desirable;
+   B-class is the bulk-image-upload channel where strict cmd-byte
+   gating prevents accidental writes. Phase 1 daemon should match this
+   contract: probe with A-class, write structured B-class transfers
+   only with verified cmd bytes.
+
+4. **Cmd 15 activation hypothesis remains open but constrained.**
+   Cmd 15 (UploadJpeg, B-class) is in LCDV2's enum and Phase 0d
+   confirmed it accepts 56-packet writes without errors. The probe
+   results don't directly resolve activation, but the cross-family
+   pattern (sibling slv3/lcd207 SDKs use a filename-keyed activation
+   path on a separate cmd byte) is the strongest hypothesis. Phase 0e
+   declines to chase activation further; Phase 1 may revisit if
+   needed.
+
+5. **No bricking, no firmware corruption, no LED/LCD/RPM artifacts.**
+   The hid-safety classification held: every probe was read-only in
+   practice as well as on paper.
