@@ -1,0 +1,304 @@
+# Phase 0e cross-device probes against Galahad II LCDV2
+# Date: 2026-04-26
+# Hardware: 0x0416:0x7395 (Galahad II LCDV2), firmware 1.6
+# Status: candidate list drafted (P0e-19); pending hid-safety-reviewer
+#         classification + user go-ahead before any byte hits the device
+#
+# OUTCOME: (live results land here after P0e-20)
+
+## Methodology
+
+This is the cross-device probe set for Phase 0e. Each candidate
+targets a hypothesis sourced from a sibling device family's command
+table - most have a transient-vs-stored split visible in their C#
+source that LCDV2 may or may not also implement.
+
+The CLI gate at `verify-galahad probe ... --yes-read-only` makes
+every probe a deliberate, manually-confirmed action. Each entry below
+must be hid-safety-reviewer-cleared as **APPROVED** before any byte
+hits the device.
+
+Probe set size: at most 8 entries. The cap exists because a longer
+list incurs review fatigue and increases the chance one gets run by
+mistake. This drafted list contains 6 entries.
+
+### Selection rationale
+
+Candidates are drawn from three sibling families with the most
+applicable surfaces:
+
+1. **Galahad II Trinity** (`0x0416:0x73A3` / `0x73A4`) - same MCU
+   vendor as LCDV2 (Winbond/Nuvoton VID 0x0416) and the closest
+   sibling product line. A-class framing layout is byte-identical to
+   LCDV2 (`Galahad2Trinity/ACommandPacket.cs`). Any read-only opcode
+   declared on Trinity has the highest prior probability of eliciting
+   a real response on LCDV2 firmware.
+2. **HydroShift LCD (HS I)** (`0x0416:0x7398..0x739A`) - same MCU
+   vendor, same A/B/C trio of framing classes, byte-for-byte
+   identical layouts (`HydroShiftLCD/ACommandPacket.cs`,
+   `BCommandPacket.cs`, `CCommandPacket.cs`). HS I shares cmd 14
+   `SendJpeg` and cmd 15 `UploadJpeg` enum entries with LCDV2 but
+   adds cmd 22 `UploadStartupAviMovie` (write-side, excluded) - the
+   `Startup` qualifier closes the cmd-15-as-stored-image hypothesis at
+   the naming-convention level (see `cross-device-survey.md` section
+   6.2). HS I declares no LCD-state-query cmd LCDV2 lacks.
+3. **TLLCD** (`0x04FC:0x7393`) - different MCU vendor (Sunplus), so
+   priors are lower than for same-MCU siblings, but TLLCD is the only
+   sibling whose enumerated handshake-equivalent (`cmd 60
+   GetHandshakeInfo`) returns LCD playback state (`Mode` + `FrameIndex`)
+   rather than fan/pump telemetry. That makes it the highest-value
+   candidate for the cmd-15 activation question even though the cross
+   -MCU prior is low. Probing costs almost nothing if it doesn't
+   respond (the existing `probe` drain logic discards stale bytes).
+
+### Excluded candidates and why
+
+The following sibling commands were considered but excluded:
+
+- **HS I cmd 22 `UploadStartupAviMovie`** - direct cmd-15 sibling and
+  the strongest cross-device evidence of stored-image semantics, but
+  the `Upload*` prefix marks it a write to non-volatile storage. Out
+  of scope for the read-only probe set.
+- **Trinity cmd 135 `LEDTestMode`** - name is ambiguous (no
+  `Get*`/`Set*` prefix) and the only hint of semantics is the
+  `LEDTest` analogue in LCDV2's `LCDControlMode`, which is a *toggle*
+  on the LCD test pattern - i.e., write-side. Conservative read: it
+  mutates LED display state. Excluded.
+- **Trinity cmd 137 `WriteSerialNumber`** / **HS I cmd 137 / LCDV2
+  cmd 137 `SetSerialNumber`** - destructive on identity bytes. Hard
+  exclusion.
+- **HS I cmd 18 `UploadAvi` / cmd 19 `UploadH264` / cmd 21
+  `UploadH264Info`** - all `Upload*` writes to non-volatile or
+  decoder buffers. Excluded.
+- **TLLCD cmd 70 `WriteSYNCJPG` / cmd 71 `WriteBootAVI` / cmd 72
+  `WriteBootJPG`** - explicit `Write*` prefix, write-side. Excluded.
+- **HS I cmd 23 `IsLCDAvailable`** - already verified live on LCDV2
+  (see `docs/protocol/galahad2-lcdv2.md:748-785`); re-probing would
+  add no information. Excluded under priority rule 4.
+- **All slv3-SDK and lcd207-SDK opcodes** (`PushJpg=0x65`,
+  `UpdateFireWare=0x28`, `RF_*` family, etc.) - LCDV2 does not go
+  through those SDKs (per the Phase 0e plan); their wire framing is
+  DES-enveloped and does not match the A/B/C HID classes. Out of
+  scope.
+- **Speculative gap-byte probes (cmd 16, cmd 17, cmd 24..127, cmd
+  135, cmd 140, cmd 141, cmd 143..)** - mentioned in
+  `cross-device-survey/per-family/hydroshift-lcd.md:372-375` as
+  "unenumerated bytes the firmware could honour." Without a sibling
+  citation pinning specific bytes, blind enumeration is fishing
+  outside the IP boundary and outside this drafting task's scope.
+  Excluded; revisit only if every cited candidate fails to respond.
+
+## Candidate list
+
+(Each entry follows this format; classification (APPROVED / NEEDS-
+CLARIFICATION / REJECTED) is filled in by hid-safety-reviewer.)
+
+### Probe 1: Trinity GetFanPumpParams capability query (A-class)
+
+**Cmd byte:** 0x8C (decimal 140)
+**Framing class:** A
+**Source family / hypothesis:** Galahad II Trinity. Trinity's
+`Commands.cs` enum extends one byte past LCDV2's surface (LCDV2 stops
+at cmd 139 in the 130s block, then jumps to cmd 142 `ResetDevice`;
+Trinity has cmd 140 `GetFanPumpParams` filling that gap). Same MCU
+vendor (Winbond/Nuvoton) and same A-class framing. Likely returns
+firmware-side fan/pump RPM ranges and PWM bounds - which on LCDV2 are
+currently hardcoded host-side. If LCDV2 silently honours this opcode,
+the response would be a capability block we currently do not query.
+**Citation:** `L-Connect.Core/LConnectCore/Products/Galahad2Trinity/Commands.cs:18`
+(enum entry `GetFanPumpParams = 140`); cross-referenced in
+`docs/protocol/cross-device-survey/per-family/galahad2-trinity.md:45`
+("Defined; no caller in device class. Likely returns RPM ranges and
+PWM bounds").
+**Read/write classification:** read (`Get*` prefix; no caller exists,
+so the C# code never *writes* a value via this byte; sibling family
+classifies it host->device + device->host on the same A-class shape
+LCDV2's other read commands use)
+**Why we expect this to be safe:** A-class bare request (`Length=0`,
+empty Data) is the same shape LCDV2 already accepts for cmd 129
+`GetHandshakeInfo`, cmd 130 `GetPumpLightingInfo`, cmd 132
+`GetFanLightingInfo`, cmd 134 `GetFirmwareVersion`. Worst case the
+firmware ignores the byte and we get a timeout or stale bytes that
+the existing `run_probe` drain logic discards
+(`tools/verify-galahad/src/probe.rs:264-280`). No write payload is
+sent.
+**Expected response shape if hypothesis holds:** A-class echo with
+`Length>0` and a small Data block carrying RPM min/max + PWM bounds
+(per Trinity per-family staging line 86: "likely a structure carrying
+RPM min/max and PWM step info").
+**Failure mode if hypothesis fails:** Either (a) bare echo with
+`Length=0` and zero Data, (b) no response within the 500 ms read
+timeout, (c) stale unsolicited cmd-129 / cmd-0x8E packets that the
+drain loop discards.
+**Run command:** `cargo run -q -p verify-galahad -- probe 0x8C --framing a --yes-read-only`
+**hid-safety-reviewer classification:** PENDING
+
+### Probe 2: TLLCD GetHandshakeInfo - LCD playback state query (B-class)
+
+**Cmd byte:** 0x3C (decimal 60)
+**Framing class:** B
+**Source family / hypothesis:** TLLCD. TLLCD's `cmd 60
+GetHandshakeInfo` returns a 3-byte response carrying `Mode` (u8) and
+`FrameIndex` (BE u16) - i.e., the **current LCD playback mode and
+frame position**. This is the only sibling-family query that returns
+LCD-state telemetry rather than fan/pump telemetry, which makes it the
+single highest-value candidate for the cmd-15 activation question. If
+LCDV2 firmware honours this byte (or any byte returning equivalent
+state), we get a direct read of "what is the LCD currently
+displaying" - with which we could verify cmd-15 stored-slot activation
+without a power-cycle. TLLCD uses a different MCU vendor (Sunplus
+0x04FC vs LCDV2's Winbond 0x0416), so the cross-MCU prior is lower
+than for Trinity / HS I, but the upside justifies the probe.
+**Citation:** `L-Connect.Core/LConnectCore/Products/TLLCD/LCDCommands.cs:13`
+(enum `GetHandshakeInfo = 60`); response shape at
+`L-Connect.Core/LConnectCore/Products/TLLCD/HandshakeInfo.cs:29-44`;
+cross-referenced in
+`docs/protocol/cross-device-survey/per-family/tllcd.md:148, 198-211`.
+**Read/write classification:** read (TLLCD source: bare request with
+`Length=0`, response is structured 3-byte status block).
+**Why we expect this to be safe:** Bare request with empty payload.
+TLLCD probes via the same B-class ReportID (0x02) that LCDV2 uses for
+B-class. The TLLCD T-class reads only 64 bytes (vs LCDV2 B-class's
+512), but the request-side shape is identical: `[ReportID=0x02, Cmd,
+DataSize=0, PacketNumber=0, Length=0, zero-pad]`. If LCDV2 firmware
+doesn't recognise the byte, the worst case is no response or a stale
+echo with `bytes[1] != 0x3C` that the drain logic catches.
+**Expected response shape if hypothesis holds:** B-class echo with
+`Length>=3`, Data[0] = current LCDControlMode, Data[1..3] = BE u16
+frame-index or similar state counter. Even if the LCDV2 firmware
+returns a *different* shape, any non-empty response bytes hint at
+whether the byte means anything to LCDV2 firmware.
+**Failure mode if hypothesis fails:** Echo with `Length=0` (LCDV2
+acknowledges the byte but has no data to return), no response
+within the 500 ms read timeout, or stale-cmd-byte response discarded
+by the drain.
+**Run command:** `cargo run -q -p verify-galahad -- probe 0x3C --framing b --yes-read-only`
+**hid-safety-reviewer classification:** PENDING
+
+### Probe 3: HS I / LCDV2-declared GetSerialNumber (A-class)
+
+**Cmd byte:** 0x88 (decimal 136)
+**Framing class:** A
+**Source family / hypothesis:** HydroShift LCD (HS I) and LCDV2 both
+declare `GetSerialNumber = 136`. LCDV2 marks it deferred (no codec in
+the Phase 0d crate) and HS I has it enum-only with no call site. This
+makes it the cleanest read-only probe LCDV2 hasn't yet exercised: if
+the firmware returns a serial-like ASCII block, we close a Phase 1+
+identity-read item with one round trip. If it returns nothing, we
+learn that the byte is unimplemented on FW 1.6 - useful negative
+information for the Phase 1 codec-coverage scope.
+**Citation:** `L-Connect.Core/LConnectCore/Products/HydroShiftLCD/Commands.cs:23`
+(`GetSerialNumber = 136`);
+`L-Connect.Core/LConnectCore/Products/Galahad2Vision/Commands.cs:25`
+(`GetSerialNumber = 136`); cross-referenced in
+`docs/protocol/cross-device-survey/per-family/hydroshift-lcd.md:169`
+and `docs/protocol/cross-device-survey/per-family/galahad2-vision.md:45`.
+**Read/write classification:** read (`Get*` prefix; sibling pair
+137 is the corresponding `SetSerialNumber` write, confirming the 136/
+137 pair follows LCDV2's standard `Get*`/`Set*` pairing convention).
+**Why we expect this to be safe:** Bare A-class request (`Length=0`,
+empty Data). Even if the firmware does not implement the byte, no
+state mutation is possible - no write payload is sent.
+**Expected response shape if hypothesis holds:** A-class echo with
+ASCII serial bytes in Data, terminated either by length or by a
+sentinel. If the HS I pattern transfers, the response may span two
+A-packets (mirroring `GetFirmwareVersion`'s two-packet ASCII
+demuxing), so the probe may need a follow-up read - the current
+`run_probe` returns only the first packet, which we accept as
+sufficient signal for this drafting round.
+**Failure mode if hypothesis fails:** Empty echo, timeout, or stale
+cmd byte discarded by the drain.
+**Run command:** `cargo run -q -p verify-galahad -- probe 0x88 --framing a --yes-read-only`
+**hid-safety-reviewer classification:** PENDING
+
+### Probe 4: TLLCD GetProductInfo - alternate firmware-info path (B-class)
+
+**Cmd byte:** 0x3D (decimal 61)
+**Framing class:** B
+**Source family / hypothesis:** TLLCD. TLLCD's cmd 61
+`GetProductInfo` returns a two-packet ASCII response: pkt 0 = 7
+comma-separated version fields (ChipCode, BootCode, Type, ModelA,
+ModelB, SoftwareVersion, UserVersion); pkt 1 = build datetime
+string. This is structurally similar to LCDV2's cmd 134
+`GetFirmwareVersion`, but on a different cmd byte and a different
+framing class (B vs A). If LCDV2 honours this byte, we may get an
+alternate identity / capability block. Cross-MCU prior is low (TLLCD
+is Sunplus, LCDV2 is Winbond), but the cost of probing is one HID
+round trip.
+**Citation:** `L-Connect.Core/LConnectCore/Products/TLLCD/LCDCommands.cs:14`
+(`GetProductInfo = 61`); response decoder
+`L-Connect.Core/LConnectCore/Products/TLLCD/FirmwareVersion.cs:71-135`;
+cross-referenced in
+`docs/protocol/cross-device-survey/per-family/tllcd.md:149, 266-273`.
+**Read/write classification:** read (`Get*` prefix; bare request,
+multi-packet ASCII response).
+**Why we expect this to be safe:** Bare B-class request, no payload
+mutation. Same drain-on-no-response behaviour as the other probes.
+**Expected response shape if hypothesis holds:** B-class echo with
+ASCII bytes in Data (or any non-empty response that proves LCDV2
+firmware recognises the byte).
+**Failure mode if hypothesis fails:** Empty echo, timeout, or stale
+cmd byte. The B-class probe path uses `OUTPUT_LEN=1024` packets which
+costs more wire bandwidth than A-class but no state mutation is
+possible.
+**Run command:** `cargo run -q -p verify-galahad -- probe 0x3D --framing b --yes-read-only`
+**hid-safety-reviewer classification:** PENDING
+
+### Probe 5: TLLCD ReadSerialNumber - per-fan addressing read (B-class)
+
+**Cmd byte:** 0x3E (decimal 62)
+**Framing class:** B
+**Source family / hypothesis:** TLLCD. TLLCD's cmd 62
+`ReadSerialNumber` returns 34 bytes: 32-byte ASCII serial + Port
+(0..3) + Index (0..2). The byte itself is interesting because TLLCD
+uses it as the per-fan-screen identity-read - the `Get*`/`Read*`
+prefix is the LCD-side analogue of LCDV2's deferred cmd 136
+`GetSerialNumber`. Probing this byte against LCDV2 distinguishes
+"LCDV2 honours both 0x88 and 0x3E for serial-read" (high info)
+vs "LCDV2 honours only 0x88" (mild info) vs "LCDV2 honours
+neither" (negative-info, narrows the address space). Cross-MCU
+prior is low.
+**Citation:** `L-Connect.Core/LConnectCore/Products/TLLCD/LCDCommands.cs:15`
+(`ReadSerialNumber = 62`); response decoder
+`L-Connect.Core/LConnectCore/Products/TLLCD/SerialNumberInfo.cs:36-53`;
+cross-referenced in
+`docs/protocol/cross-device-survey/per-family/tllcd.md:150, 167-191`.
+**Read/write classification:** read (`Read*` prefix; sibling pair 63
+is the corresponding `WriteSerialNumber` write).
+**Why we expect this to be safe:** Bare B-class request with empty
+payload. No state mutation is possible.
+**Expected response shape if hypothesis holds:** B-class echo with
+ASCII bytes in Data, possibly with port/index trailer bytes.
+**Failure mode if hypothesis fails:** Empty echo, timeout, or stale
+cmd byte discarded by the drain.
+**Run command:** `cargo run -q -p verify-galahad -- probe 0x3E --framing b --yes-read-only`
+**hid-safety-reviewer classification:** PENDING
+
+### Probe 6: Trinity GetFanPumpParams - B-framing fallback
+
+**Cmd byte:** 0x8C (decimal 140)
+**Framing class:** B
+**Source family / hypothesis:** Same source citation as Probe 1, but
+sent on B-class instead of A-class. Trinity's per-family staging file
+infers A-class on the basis that all of Trinity's other 13x-block
+commands are A-class, but this is "no caller in device class" -
+inferred from siblings, not from a Trinity call site. If the LCDV2
+firmware partitions reads by ReportID rather than cmd byte (i.e.,
+B-class is the canonical read class on LCDV2 for an LCD-related read
+the way A-class is for fan/pump-related reads), then Probe 1 may miss
+the right framing. Probing on B-class is a cheap belt-and-suspenders
+check before Phase 1 binds the cmd-140 codec to a specific class.
+**Citation:** Same as Probe 1
+(`L-Connect.Core/LConnectCore/Products/Galahad2Trinity/Commands.cs:18`,
+`docs/protocol/cross-device-survey/per-family/galahad2-trinity.md:45`).
+**Read/write classification:** read (same reasoning as Probe 1).
+**Why we expect this to be safe:** Bare B-class request, no payload
+mutation. Identical safety profile to Probe 1.
+**Expected response shape if hypothesis holds:** B-class echo with
+`Length>0` and a Data block carrying capability-like bytes.
+**Failure mode if hypothesis fails:** Empty echo, timeout, or stale
+cmd byte discarded by the drain. If both Probe 1 (A) and Probe 6 (B)
+return empty / timeout, we conclude cmd 140 is unimplemented on FW
+1.6 across both standard read framings.
+**Run command:** `cargo run -q -p verify-galahad -- probe 0x8C --framing b --yes-read-only`
+**hid-safety-reviewer classification:** PENDING
