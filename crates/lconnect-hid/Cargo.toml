@@ -1,5 +1,6 @@
 [package]
 name = "lconnect-hid"
+description = "HID transport abstraction for the lconnect-linux project."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

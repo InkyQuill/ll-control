@@ -21,7 +21,12 @@ pub mod framing;
 pub mod hidapi_backend;
 pub mod mock_backend;
 
-/// Crate-level error.
+/// Errors returned by all `lconnect-hid` I/O and framing operations.
+///
+/// `Error::HidApi` wraps the underlying `hidapi::HidError` directly via
+/// `#[from]`. All other variants report transport-level failures detected
+/// by this crate (short writes, read timeouts, response framing
+/// violations, echo-drain exhaustion).
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {

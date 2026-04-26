@@ -16,7 +16,7 @@ repository   = "https://github.com/inky/lconnect-linux"
 authors      = ["L-Connect Linux contributors"]
 
 [workspace.dependencies]
-# Used by `protocol`
+# Used by `protocol`, `lconnect-hid`
 thiserror  = "1"
 tracing    = "0.1"
 
