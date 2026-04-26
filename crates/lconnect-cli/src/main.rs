@@ -158,12 +158,70 @@ pub struct LedColorsArgs {
     pub device: Option<String>,
 }
 
-/// Placeholder — populated in P1E-6.
+/// `lconnectctl lcd <available|brightness|rotation|mode|image|clear> ...` —
+/// see [`LcdSubcommand`].
 #[derive(Args)]
 pub struct LcdArgs {
-    /// e.g. "Application" | "LocalUI" — populated in P1E-6.
-    #[arg(long)]
-    pub mode: Option<String>,
+    #[command(subcommand)]
+    pub command: LcdSubcommand,
+}
+
+#[derive(clap::Subcommand)]
+pub enum LcdSubcommand {
+    /// Print whether the device exposes an LCD.
+    Available {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Set LCD brightness (0..=100).
+    ///
+    /// NOTE: The Phase 1 IPC only exposes `set_lcd_config` wholesale, so
+    /// this also overwrites mode (to Application) and rotation (to 0). A
+    /// future `get_lcd_config` IPC method would let brightness be edited
+    /// without disturbing siblings.
+    Brightness {
+        percent: u8,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Set LCD rotation (0/90/180/270).
+    ///
+    /// NOTE: same caveat as `brightness` — also overwrites mode and
+    /// brightness.
+    Rotation {
+        degrees: u16,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Set LCD control mode (LocalUI, Application, ...).
+    ///
+    /// NOTE: same caveat as `brightness` — also overwrites brightness
+    /// and rotation.
+    Mode {
+        mode: String,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Upload an image (any format ffmpeg can decode) as JPEG to the LCD.
+    Image {
+        path: std::path::PathBuf,
+        /// Fit mode: crop | letterbox | stretch.
+        #[arg(long, default_value = "crop")]
+        fit: String,
+        /// Letterbox background colour (#RRGGBB) — only used with --fit=letterbox.
+        #[arg(long, default_value = "#000000")]
+        letterbox_bg: String,
+        /// JPEG quality 1..=100.
+        #[arg(long, default_value_t = 85)]
+        quality: u8,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Clear the displayed image (firmware reverts to LocalUI ~20s after).
+    Clear {
+        #[arg(long)]
+        device: Option<String>,
+    },
 }
 
 /// Placeholder — populated in P1E-7.
