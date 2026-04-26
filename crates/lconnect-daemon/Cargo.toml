@@ -18,6 +18,7 @@ lconnect-hid      = { path = "../lconnect-hid" }
 lconnect-ipc      = { path = "../lconnect-ipc" }
 
 tokio = { workspace = true, features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
 tracing.workspace = true
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-journald = "0.3"
