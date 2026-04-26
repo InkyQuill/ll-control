@@ -11,17 +11,19 @@
 //! holds the singleton internally; cloning the wrapping `Arc<dyn
 //! HidBackend>` is cheap.
 //!
-//! Phase 1 hardcodes the VID/PID filter to LCDV2 (`0x0416:0x7395`).
-//! P1B-5 replaces the hardcode with a `FamilyRegistry::lookup_vid_pid`
-//! consultation so Phase 3+ can register additional families without
-//! touching this file.
+//! VID/PID identification is delegated to a [`FamilyRegistry`]: callers
+//! pass a registry into [`HidApiBackend::new`] and `enumerate` filters
+//! by registered families. Phase 1 ships
+//! [`FamilyRegistry::with_default_lcdv2`] as the default; Phase 3+
+//! registers additional families before constructing the backend.
 //!
 //! # See also
 //!
 //! - [`crate::backend::HidBackend`] — the trait this implements
+//! - [`crate::family_registry::FamilyRegistry`] — VID/PID → family lookup
 //! - [`crate::mock_backend::MockBackend`] — fake for tests
 
-use crate::{DeviceFamilyId, DeviceInfo, Error, HidBackend, OpenHandle, Result};
+use crate::{DeviceInfo, Error, FamilyRegistry, HidBackend, OpenHandle, Result};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -34,20 +36,26 @@ use std::sync::{Arc, Mutex};
 #[derive(Clone)]
 pub struct HidApiBackend {
     api: Arc<Mutex<hidapi::HidApi>>,
+    registry: FamilyRegistry,
 }
 
 impl HidApiBackend {
-    /// Create a new backend instance.
+    /// Create a backend that uses `registry` to identify known devices.
+    ///
+    /// For Phase 1, pass `FamilyRegistry::with_default_lcdv2()` (or
+    /// simply `FamilyRegistry::default()`); Phase 3+ will register
+    /// additional families before constructing the backend.
     ///
     /// # Errors
     ///
     /// Returns `Error::HidApi` if `hidapi::HidApi::new()` fails (typically
     /// missing udev permissions on Linux — see the project's
     /// `99-lian-li-galahad2.rules` udev rule).
-    pub fn new() -> Result<Self> {
+    pub fn new(registry: FamilyRegistry) -> Result<Self> {
         let api = hidapi::HidApi::new()?;
         Ok(Self {
             api: Arc::new(Mutex::new(api)),
+            registry,
         })
     }
 }
@@ -58,15 +66,17 @@ impl HidBackend for HidApiBackend {
         api.refresh_devices()?;
         let mut out = Vec::new();
         for di in api.device_list() {
-            // Phase 1: hardcoded LCDV2 filter. P1B-5 swaps in FamilyRegistry.
-            if di.vendor_id() == 0x0416 && di.product_id() == 0x7395 {
-                out.push(DeviceInfo {
-                    family: DeviceFamilyId::new("galahad2-lcdv2"),
-                    vid: di.vendor_id(),
-                    pid: di.product_id(),
-                    serial: di.serial_number().map(str::to_owned),
-                    path: PathBuf::from(di.path().to_string_lossy().into_owned()),
-                });
+            if let Some(family) = self
+                .registry
+                .lookup_vid_pid(di.vendor_id(), di.product_id())
+            {
+                out.push(DeviceInfo::new(
+                    family.id(),
+                    di.vendor_id(),
+                    di.product_id(),
+                    di.serial_number().map(str::to_owned),
+                    PathBuf::from(di.path().to_string_lossy().into_owned()),
+                ));
             }
         }
         Ok(out)
