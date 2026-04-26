@@ -21,6 +21,10 @@ pub mod framing;
 pub mod hidapi_backend;
 pub mod mock_backend;
 
+pub use backend::{matches_echo, HidBackend, OpenHandle};
+pub use device_info::{DeviceFamilyId, DeviceInfo};
+pub use framing::Framing;
+
 /// Errors returned by all `lconnect-hid` I/O and framing operations.
 ///
 /// `Error::HidApi` wraps the underlying `hidapi::HidError` directly via
