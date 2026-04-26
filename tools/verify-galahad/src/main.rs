@@ -66,6 +66,35 @@ enum Cmd {
     /// Send a JPEG to the pump-cap LCD via cmd 14 (SendJpeg) or cmd 15
     /// (UploadJpeg). NOTE: physically changes the LCD content.
     UploadJpeg(UploadJpegArgs),
+    /// Send a single read-style request to the device using a chosen
+    /// framing class and dump the hex response. For Phase 0e cross-device
+    /// experimentation; the caller is responsible for choosing a cmd byte
+    /// that has been hid-safety-reviewer-cleared as read-only. See
+    /// `docs/protocol/captures/2026-04-26-cross-device-probes.txt` for
+    /// the curated probe set.
+    Probe(ProbeCliArgs),
+}
+
+/// Flags for `probe`. Distinct from
+/// [`verify_galahad::probe::ProbeArgs`] (the codec-layer struct that
+/// `run_probe` consumes) so the CLI can hold pre-parse state (the raw
+/// `--payload` string, the `--yes-read-only` gate) without polluting
+/// the codec layer.
+#[derive(Args, Debug)]
+struct ProbeCliArgs {
+    /// Command byte to send (decimal `134` or hex `0x86`).
+    #[arg(value_parser = parse_cmd_byte_arg)]
+    cmd: u8,
+    /// HID framing class.
+    #[arg(long, default_value = "a")]
+    framing: verify_galahad::probe::Framing,
+    /// Hex payload to send after the cmd byte (defaults to empty).
+    #[arg(long, default_value = "")]
+    payload: String,
+    /// Acknowledge that this probe has been hid-safety-reviewer-cleared
+    /// as read-only.
+    #[arg(long)]
+    yes_read_only: bool,
 }
 
 /// Flags for `set-pump-lighting`.
@@ -490,6 +519,21 @@ impl From<DirectionArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::L
     }
 }
 
+/// Parse a `u8` from decimal (`134`) or `0x`-prefixed hex (`0x86`).
+///
+/// Used by `probe`'s positional `<cmd>` argument so that captures and
+/// docs can be quoted in either form. Returns `String` (not `anyhow`)
+/// because clap value parsers require `Result<T, impl Display>`.
+fn parse_cmd_byte_arg(s: &str) -> Result<u8, String> {
+    let s = s.trim();
+    let (radix, body) = if let Some(rest) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+        (16, rest)
+    } else {
+        (10, s)
+    };
+    u8::from_str_radix(body, radix).map_err(|e| format!("invalid cmd byte {s:?}: {e}"))
+}
+
 /// Parse a `#RRGGBB` (or bare `RRGGBB`) string into an `Rgb`.
 fn parse_hex_color(s: &str) -> Result<lconnect_protocol::galahad2_lcdv2::lighting::Rgb> {
     let hex = s.strip_prefix('#').unwrap_or(s);
@@ -582,7 +626,60 @@ fn main() -> Result<()> {
         Cmd::SetFanLighting(args) => set_fan_lighting(args),
         Cmd::SetLedColors(args) => set_led_colors(args),
         Cmd::UploadJpeg(args) => upload_jpeg(args),
+        Cmd::Probe(args) => probe(args),
     }
+}
+
+fn probe(args: ProbeCliArgs) -> Result<()> {
+    if !args.yes_read_only {
+        return Err(anyhow!(
+            "refusing to probe without --yes-read-only; \
+             confirm cmd byte 0x{:02x} has been hid-safety-reviewer-\
+             cleared as read-only and re-run with --yes-read-only",
+            args.cmd
+        ));
+    }
+
+    let payload = verify_galahad::probe::parse_hex_payload(&args.payload)?;
+    let probe_args = verify_galahad::probe::ProbeArgs {
+        cmd: args.cmd,
+        framing: args.framing,
+        payload,
+    };
+
+    let api = HidApi::new().context("HidApi::new failed")?;
+    let device = api
+        .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
+        .context("could not open device — see `verify-galahad list` and udev rules")?;
+
+    println!(
+        "probe cmd=0x{:02x} framing={:?} payload={} bytes",
+        probe_args.cmd,
+        probe_args.framing,
+        probe_args.payload.len()
+    );
+
+    let response = verify_galahad::probe::run_probe(&device, &probe_args)?;
+    println!("response ({} bytes):", response.len());
+    print_hex_dump(&response);
+    Ok(())
+}
+
+/// Dump `bytes` as a 16-bytes-per-row hex grid, one row prefixed with
+/// its byte offset. Mirrors the inline format used by `handshake`,
+/// `firmware`, et al., but extracted so `probe` (which doesn't know
+/// `bytes.len()` at compile time) can share the same look.
+fn print_hex_dump(bytes: &[u8]) {
+    for (i, b) in bytes.iter().enumerate() {
+        if i % 16 == 0 {
+            if i > 0 {
+                println!();
+            }
+            print!("  {:04}: ", i);
+        }
+        print!("{:02x} ", b);
+    }
+    println!();
 }
 
 fn list_devices() -> Result<()> {
