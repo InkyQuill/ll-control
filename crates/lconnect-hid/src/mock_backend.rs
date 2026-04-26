@@ -160,24 +160,22 @@ struct MockHandle {
 }
 
 impl OpenHandle for MockHandle {
-    fn write(&self, buf: &[u8]) -> Result<usize> {
+    fn write(&self, buf: &[u8]) -> Result<()> {
         self.state
             .lock()
             .expect("state mutex poisoned")
             .write_history
             .push(buf.to_vec());
-        Ok(buf.len())
+        Ok(())
     }
 
-    fn read_timeout(&self, buf: &mut [u8], timeout_ms: i32) -> Result<usize> {
+    fn read_timeout(&self, buf: &mut [u8], _timeout_ms: i32) -> Result<usize> {
         let mut state = self.state.lock().expect("state mutex poisoned");
         if let Some(canned) = state.queued_responses.pop_front() {
             let n = canned.len().min(buf.len());
             buf[..n].copy_from_slice(&canned[..n]);
             return Ok(n);
         }
-        Err(Error::ReadTimeout {
-            ms: timeout_ms.max(0) as u64,
-        })
+        Ok(0) // Timeout signal: no canned response queued.
     }
 }

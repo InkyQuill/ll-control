@@ -32,3 +32,19 @@ fn framing_eq_and_hash() {
     assert_eq!(Framing::A, Framing::A);
     assert_ne!(Framing::A, Framing::B);
 }
+
+#[test]
+fn dyn_compat_assertions() {
+    // Compile-time guarantees: HidBackend and OpenHandle must be
+    // dyn-compatible so the daemon can hold them as trait objects.
+    fn _assert_object_safe<T: ?Sized>() {}
+    _assert_object_safe::<dyn lconnect_hid::HidBackend>();
+    _assert_object_safe::<dyn lconnect_hid::OpenHandle>();
+}
+
+#[test]
+fn matches_echo_rejects_short_buffer() {
+    use lconnect_hid::{matches_echo, Framing};
+    assert!(!matches_echo(&[], Framing::A, 0x01));
+    assert!(!matches_echo(&[0x01], Framing::A, 0x01)); // 1 byte: no cmd byte
+}

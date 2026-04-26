@@ -12,13 +12,16 @@ use std::path::PathBuf;
 
 /// Stable family slug. Used in opaque `DeviceId`s and persistence keys.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DeviceFamilyId(pub String);
+pub struct DeviceFamilyId(String);
 
 impl DeviceFamilyId {
+    /// Construct a slug from any string-convertible source.
     #[must_use]
     pub fn new(slug: impl Into<String>) -> Self {
         Self(slug.into())
     }
+
+    /// Return the slug as a `&str` for serialisation / logging.
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -26,7 +29,7 @@ impl DeviceFamilyId {
 }
 
 /// Per-device info populated from `hidapi` enumeration.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct DeviceInfo {
     /// Family slug ("galahad2-lcdv2", etc.).

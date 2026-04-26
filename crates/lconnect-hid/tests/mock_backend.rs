@@ -76,16 +76,13 @@ fn handle_replays_canned_responses_in_order() {
 }
 
 #[test]
-fn read_timeout_returns_error_when_no_responses() {
-    use lconnect_hid::Error;
+fn read_timeout_returns_zero_when_no_responses() {
     let mock = MockBackend::new();
     mock.add_device(lcdv2_info());
     let handle = mock.open(&lcdv2_info()).unwrap();
     let mut buf = [0u8; 64];
-    match handle.read_timeout(&mut buf, 100) {
-        Err(Error::ReadTimeout { .. }) => {}
-        other => panic!("expected ReadTimeout, got {other:?}"),
-    }
+    let n = handle.read_timeout(&mut buf, 100).unwrap();
+    assert_eq!(n, 0, "expected timeout signal (Ok(0))");
 }
 
 #[test]
