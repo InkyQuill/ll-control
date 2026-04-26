@@ -1,1 +1,256 @@
-//! Stub - implementation lands in subsequent P1C-* tasks.
+//! JSON-RPC 2.0 client over `UnixStream`.
+//!
+//! [`IpcClient::connect`] opens the socket, reads the `hello`
+//! notification the server pushes immediately on accept, and exposes a
+//! [`call`](IpcClient::call) async method for one-shot RPCs. For Phase 1
+//! the client also exposes [`subscribe`](IpcClient::subscribe), which
+//! returns an mpsc receiver of incoming notifications matching a method
+//! name (e.g., `"snapshot"`, `"device_attached"`).
+//!
+//! ## Architecture
+//!
+//! A single `UnixStream` is split into a read half and a write half. Two
+//! background tasks manage them:
+//!
+//! - **Reader task** parses each newline-framed JSON object. If it's a
+//!   [`Response`], the response is dispatched (by id) to a pending
+//!   oneshot. If it's a [`Notification`], a clone is forwarded to every
+//!   subscriber registered for that method name.
+//! - **Writer / dispatch task** serialises outbound work: it inserts a
+//!   pending oneshot before writing the request line (so a fast server
+//!   can never race the reader), and it registers new subscriptions.
+//!
+//! Both tasks exit when their channels close, which happens automatically
+//! when the [`IpcClient`] is dropped.
+//!
+//! Daemon-side errors come back as JSON-RPC error objects with codes
+//! mirroring [`crate::IpcError::jsonrpc_code`]; [`map_jsonrpc_error`]
+//! reverses that mapping so callers see the same `IpcError` variants
+//! regardless of which side produced them.
+
+use crate::jsonrpc::{Notification, Request, Response};
+use crate::{IpcError, Result};
+use serde_json::Value;
+use std::collections::HashMap;
+use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::net::UnixStream;
+use tokio::sync::{mpsc, oneshot, Mutex};
+
+/// JSON-RPC client connected to the daemon over a Unix socket.
+pub struct IpcClient {
+    next_id: AtomicU64,
+    tx: mpsc::Sender<ClientMsg>,
+    /// The `hello` notification the server pushed on connect (carries
+    /// version + capability info). Exposed so callers can sanity-check
+    /// the wire protocol version before issuing calls.
+    pub hello: Notification,
+}
+
+/// Messages sent from `call`/`subscribe` into the writer task.
+enum ClientMsg {
+    Call {
+        id: u64,
+        line: String,
+        reply: oneshot::Sender<Response>,
+    },
+    Subscribe {
+        method: String,
+        sink: mpsc::Sender<Notification>,
+    },
+}
+
+impl IpcClient {
+    /// Connect to the daemon at `socket_path`, read the server `hello`,
+    /// and spawn the reader/writer tasks.
+    ///
+    /// # Errors
+    /// Fails if the socket can't be opened or the `hello` line can't be
+    /// read or parsed as a [`Notification`].
+    pub async fn connect(socket_path: &Path) -> Result<Self> {
+        let stream = UnixStream::connect(socket_path)
+            .await
+            .map_err(|e| IpcError::Transport(e.to_string()))?;
+        let (read_half, mut write_half) = stream.into_split();
+        let mut reader = BufReader::new(read_half);
+
+        // Read the hello line synchronously before spawning the reader
+        // task — the caller gets back a fully usable client.
+        let mut hello_line = String::new();
+        let n = reader
+            .read_line(&mut hello_line)
+            .await
+            .map_err(|e| IpcError::Transport(e.to_string()))?;
+        if n == 0 {
+            return Err(IpcError::Transport("connection closed before hello".into()));
+        }
+        let hello: Notification = serde_json::from_str(hello_line.trim_end())
+            .map_err(|e| IpcError::Serialization(e.to_string()))?;
+
+        // Shared dispatch tables.
+        let pending: Arc<Mutex<HashMap<u64, oneshot::Sender<Response>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+        let subs: Arc<Mutex<HashMap<String, Vec<mpsc::Sender<Notification>>>>> =
+            Arc::new(Mutex::new(HashMap::new()));
+
+        // Reader task: distribute responses (by id) and notifications
+        // (by method) to their respective consumers.
+        let pending_r = pending.clone();
+        let subs_r = subs.clone();
+        tokio::spawn(async move {
+            let mut line = String::new();
+            loop {
+                line.clear();
+                match reader.read_line(&mut line).await {
+                    Ok(0) => break, // EOF
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::debug!("ipc client read error: {e}");
+                        break;
+                    }
+                }
+                let trimmed = line.trim_end();
+                if trimmed.is_empty() {
+                    continue;
+                }
+
+                // Try to parse as a Response first (has `id`); fall back
+                // to Notification (no `id`). Both share `jsonrpc` /
+                // `method` / `params` shapes only partially, so attempt
+                // both rather than discriminating up front.
+                if let Ok(resp) = serde_json::from_str::<Response>(trimmed) {
+                    if let Some(id_val) = resp.id.as_ref().and_then(Value::as_u64) {
+                        if let Some(tx) = pending_r.lock().await.remove(&id_val) {
+                            let _ = tx.send(resp);
+                        }
+                        continue;
+                    }
+                    // Response with no parseable id: drop. Could log,
+                    // but the daemon shouldn't produce these.
+                }
+                if let Ok(notif) = serde_json::from_str::<Notification>(trimmed) {
+                    let sinks: Vec<mpsc::Sender<Notification>> = subs_r
+                        .lock()
+                        .await
+                        .get(&notif.method)
+                        .cloned()
+                        .unwrap_or_default();
+                    for s in sinks {
+                        let _ = s.send(notif.clone()).await;
+                    }
+                }
+            }
+            // Connection closed: fail any in-flight calls so they don't
+            // hang on `reply_rx.await`.
+            let mut pending = pending_r.lock().await;
+            pending.clear();
+        });
+
+        // Writer / dispatch task.
+        let (tx, mut rx) = mpsc::channel::<ClientMsg>(64);
+        let pending_w = pending.clone();
+        let subs_w = subs.clone();
+        tokio::spawn(async move {
+            while let Some(msg) = rx.recv().await {
+                match msg {
+                    ClientMsg::Call { id, line, reply } => {
+                        // Insert before writing so the reader can never
+                        // observe a response for an unknown id.
+                        pending_w.lock().await.insert(id, reply);
+                        if let Err(e) = write_half.write_all(line.as_bytes()).await {
+                            tracing::error!("ipc client write failed: {e}");
+                            // Drop the pending entry so reply_rx.await
+                            // returns an error promptly.
+                            pending_w.lock().await.remove(&id);
+                            break;
+                        }
+                    }
+                    ClientMsg::Subscribe { method, sink } => {
+                        subs_w.lock().await.entry(method).or_default().push(sink);
+                    }
+                }
+            }
+        });
+
+        Ok(IpcClient {
+            next_id: AtomicU64::new(1),
+            tx,
+            hello,
+        })
+    }
+
+    /// One-shot RPC call. Awaits the matching response.
+    ///
+    /// # Errors
+    /// Returns the daemon's [`IpcError`] (mapped from JSON-RPC error
+    /// codes) on failure, or [`IpcError::Transport`] /
+    /// [`IpcError::Serialization`] for connection-level problems.
+    pub async fn call(&self, method: &str, params: Value) -> Result<Value> {
+        let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        let req = Request::new(id, method, params);
+        let mut line =
+            serde_json::to_string(&req).map_err(|e| IpcError::Serialization(e.to_string()))?;
+        line.push('\n');
+
+        let (reply_tx, reply_rx) = oneshot::channel();
+        self.tx
+            .send(ClientMsg::Call {
+                id,
+                line,
+                reply: reply_tx,
+            })
+            .await
+            .map_err(|_| IpcError::Transport("client multiplexer closed".into()))?;
+
+        let resp = reply_rx
+            .await
+            .map_err(|_| IpcError::Transport("response dropped".into()))?;
+
+        match (resp.result, resp.error) {
+            (Some(v), None) => Ok(v),
+            (None, Some(e)) => Err(map_jsonrpc_error(e.code, e.message)),
+            (Some(_), Some(_)) => Err(IpcError::Transport(
+                "invalid response: both result and error set".into(),
+            )),
+            (None, None) => Err(IpcError::Transport(
+                "invalid response: neither result nor error set".into(),
+            )),
+        }
+    }
+
+    /// Subscribe to a notification method (e.g., `"snapshot"`,
+    /// `"device_attached"`).
+    ///
+    /// The returned receiver yields notifications as long as the
+    /// connection is alive. Multiple subscriptions to the same method
+    /// are independent — each gets its own clone of every notification.
+    pub async fn subscribe(&self, method: &str) -> mpsc::Receiver<Notification> {
+        let (tx, rx) = mpsc::channel(32);
+        let _ = self
+            .tx
+            .send(ClientMsg::Subscribe {
+                method: method.to_string(),
+                sink: tx,
+            })
+            .await;
+        rx
+    }
+}
+
+/// Map a JSON-RPC error code + message back to an [`IpcError`] variant.
+///
+/// Inverse of [`crate::IpcError::jsonrpc_code`]. Unknown codes degrade
+/// to [`IpcError::Transport`] so callers always get a typed error.
+fn map_jsonrpc_error(code: i32, message: String) -> IpcError {
+    match code {
+        -32000 => IpcError::DeviceNotFound(message),
+        -32001 => IpcError::DeviceBusy(message),
+        -32002 => IpcError::InvalidArgument(message),
+        -32003 => IpcError::NotImplemented(message),
+        -32004 => IpcError::ConfirmationRequired,
+        -32005 => IpcError::ProtocolMismatch(message),
+        _ => IpcError::Transport(format!("code={code}: {message}")),
+    }
+}
