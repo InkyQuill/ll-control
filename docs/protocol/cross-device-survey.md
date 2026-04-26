@@ -510,7 +510,17 @@ All command bytes from `HydroShiftLCD/Commands.cs:7-27`. Framing inferred from `
 
 VID `0x1CBE` is Lian-Li's own assigned USB-IF VID; VID `0x1A86` is QinHeng / WCH (used for the alternate display-mode interface).
 
-**Framing classes:** **WinUSB+DES envelope**, owned by `lcd207.dll` (per the lcd207-sdk survey - see section 3.2.2). The HS II per-family staging file's original "in slv3.dll" claim has been **superseded**: HS II's wired wire format is in `lcd207.dll` via `H2Controller.cs` / `H2SController.cs` / `WinUsbH2.cs` / `WinUsbH2S.cs`, NOT slv3, and **HS II uses WinUSB, not HID, for frames**. HID is only used out-of-band for SN discovery and `SetMonitorMode` magic-byte signalling.
+##### Control modes
+
+Per Lian Li's published product spec, HS II LCD has three operator-selectable control modes. Both proprietary DLLs participate in the host-side stack — which one drives a particular write depends on the user's chosen control mode at runtime.
+
+- **Offline** — the device runs from on-board firmware; no host comms on the LCD-content path. Fan / pump PWM and lighting may still be driven via the wired HID side, but the LCD shows whatever is in device-side flash (boot logo or last-applied stored content).
+- **Wireless** — the host talks to the device through the L-Wireless transmitter dongle using the SL Wireless RF protocol implemented in `slv3.dll`. Image content is shipped via `RF_SendPic` chunks (chunked through `MasterDevice.SendRfData` into 60-B WinUSB fragments under cmd `0x10 Usb_SendRf`); see section 3.2.1.
+- **USB Streaming** — the host talks to the device directly over WinUSB using the protocol implemented in `lcd207.dll`. Image content is shipped via `PushJpg = 0x65` (transient JPG / `0x66` for PNG) or `UpdateFireWare = 0x28` with filename `/usr/data/boot.jpg` (stored boot logo, same opcode as firmware update distinguished by filename); see section 3.2.2.
+
+A Linux daemon supporting HS II would need to implement both transports to feature-match the official software (or a documented subset, with the unsupported mode disabled in the daemon UI). The two-PID-per-shape USB topology (`...Circle` + `...CircleDisplayMode`, analogous Square pair) is a separate axis from the three control modes: the `*DisplayMode` PIDs are the OS-level "secondary monitor" view of the panel, switchable via SDK `SetDesktopMode()` / `SetMonitorMode()` calls inside USB Streaming mode. Wireless mode does not involve the display-mode PID.
+
+**Framing classes:** **dual-transport** depending on control mode. **USB Streaming mode**: WinUSB+DES envelope owned by `lcd207.dll` (per section 3.2.2) via `H2Controller.cs` / `H2SController.cs` / `WinUsbH2.cs` / `WinUsbH2S.cs`. **Wireless mode**: SL Wireless RF protocol owned by `slv3.dll` (per section 3.2.1) via `RFController` + `MasterDevice`. The HS II per-family staging file's original "in slv3.dll" claim has been **clarified**: it was partially right (Wireless mode) and partially wrong (USB Streaming, which is in lcd207.dll). For USB Streaming mode specifically, **HS II uses WinUSB, not HID, for frames**; HID is only used out-of-band for SN discovery and `SetMonitorMode` magic-byte signalling.
 
 **Status:** all entries `inferred-static` - no live HS II hardware run has been performed.
 
@@ -613,7 +623,7 @@ The two SKUs (Circle, Square) **share the same RequestType enum** - the SDK wrap
 
 ##### Notable divergences from LCDV2
 
-1. **No exposed wire-byte protocol from open C# source** - all HID I/O performed inside `lcd207.dll` (per section 3.2.2 / lcd207-sdk survey).
+1. **No exposed wire-byte protocol in the per-family C# source** - all wire-level work happens inside two proprietary DLLs depending on control mode: `slv3.dll` (Wireless mode, section 3.2.1) and `lcd207.dll` (USB Streaming mode, section 3.2.2). Both wire formats are now closed by the SDK surveys.
 2. **Different MCU vendor.** LCDV2 = `0x0416`; HS II = `0x1CBE` (TI Stellaris) for HID + `0x1A86` (WCH) for display-mode.
 3. **Two-PID-per-shape design.** Linux port will need to handle two distinct USB interfaces per device.
 4. **High-level theme/template/modular system** - much closer to a TV than to a status LED.
@@ -624,13 +634,18 @@ The two SKUs (Circle, Square) **share the same RequestType enum** - the SDK wrap
 
 ##### Cmd-15 hypothesis: HS II findings
 
-Resolved via the lcd207-sdk survey (see section 3.2.2): HS II's wired LCD pipeline uses `CmdType.PushJpg = 0x65` (transient JPG) and `CmdType.UpdateFireWare = 0x28` with filename `/usr/data/boot.jpg` (stored boot logo, same opcode as firmware update distinguished by filename).
+Resolved by the SDK surveys, with a control-mode caveat:
 
-The high-level "activate stored content" RequestType verbs (`ApplyTemplate`, `ApplyThemeInfo`, `ApplyModulars`, `ApplyBackgroundOnlyCustomTheme`) drive the wire-level mix of `PushJpg` + `UpdateFireWare` calls inside `lcd207.dll`. The `Sync*` (transient sync) vs `Apply*` (persistent apply) host-side distinction does not map to a single transient-vs-stored opcode pair on the wire - it maps to a filename routing inside the shared `UpdateFireWare = 0x28` opcode.
+- **USB Streaming mode** (per section 3.2.2 / lcd207-sdk): transient = `CmdType.PushJpg = 0x65` (JPG / raw `0x66` for PNG); stored boot logo = `CmdType.UpdateFireWare = 0x28` with filename `/usr/data/boot.jpg` (same opcode as firmware update, distinguished by filename in header `[16..]`).
+- **Wireless mode** (per section 3.2.1 / slv3-sdk): transient = `RF_SendPic = 0x22` chunks (220-B per chunk, last chunk index `0xFF`); **no stored variant at the slv3 level** — wireless AIO LCDs persist via `RF_SaveCfg = 0x15` on a periodic schedule.
+
+The high-level "activate stored content" RequestType verbs (`ApplyTemplate`, `ApplyThemeInfo`, `ApplyModulars`, `ApplyBackgroundOnlyCustomTheme`) drive the wire-level mix of these calls inside whichever DLL owns the active control mode. The `Sync*` (transient sync) vs `Apply*` (persistent apply) host-side distinction does not map to a single transient-vs-stored opcode pair on the wire — in USB Streaming mode it maps to a filename routing inside the shared `UpdateFireWare = 0x28` opcode; in Wireless mode it has no stored equivalent and persistence is on-device.
 
 ##### Open questions
 
-1. cmd-15 hypothesis from HS II resolved by lcd207-sdk survey (transient = `PushJpg=0x65`, stored = `UpdateFireWare=0x28` with filename).
+> Wire-format opacity is now closed for both transport-bearing modes (Wireless = section 3.2.1, USB Streaming = section 3.2.2). Remaining open questions are about HS II's higher-level orchestration.
+
+1. cmd-15 hypothesis from HS II resolved per the control-mode breakdown above.
 2. Receiver firmware version meaning - hard-coded `Math.Max(rawValue, 11) - 2` (Circle) / `18) - 10` (Square) thresholds.
 3. Two-PID switching mechanics - whether SDK `SetDesktopMode()` triggers USB bus-reset or out-of-band command channel.
 
@@ -737,7 +752,7 @@ Importantly, TLLCD also exposes a **stored-slot selection mechanism** via the `J
 
 Service-side: `L-Connect-Service/LConnectService/Products/SLV3LCD/SLV3LCDController.cs`.
 
-**Marketed name:** Lian-Li SL-Wireless V3 LCD fan. 120 mm and 140 mm variants with per-variant RPM ranges (`LConnectCore/Products/LWireless/Constants.cs:35-41`).
+**Marketed name:** Lian-Li SL Wireless LCD fan (the screen-equipped SKU in the SL Wireless fan family). The "SLV3" prefix names the **SL Wireless** protocol family (the same family the `slv3.dll` SDK implements - see section 3.2.1) and **not** "SL Version 3" / "Strimer Light V3" / "Side LCD V3"; speculations to that effect in earlier writeups have been corrected. Fan ships in 120 mm and 140 mm variants with per-variant RPM ranges (`LConnectCore/Products/LWireless/Constants.cs:35-41`).
 
 **ControllerTypeID / ControllerClass:**
 - `ControllerTypeID.SLV3LCD = 16977920` - `LConnectCore/Devices/ControllerTypeID.cs:29` (hex `0x01032000`)
@@ -1275,7 +1290,7 @@ The `LWireless/` folder contains six sub-folders (one per receiver family). Each
 ###### Child family: SLV3
 
 - **Source folder:** `LConnectCore/Products/LWireless/SLV3/` (`LWirelessLightingConfig.cs`, `LWirelessUtilityLightEffectsSetting.cs`)
-- **Marketed name:** Lian Li UNI FAN SL V3 (wireless variant)
+- **Marketed name:** Lian Li UNI FAN SL Wireless (the wireless-capable SL fan in the SL Wireless family; the "SLV3" prefix names the **SL Wireless** protocol family - see section 3.2.1, not "SL Version 3")
 - **Status:** `inferred-static` passthrough.
 
 ###### Child family: SLV3LCD (wireless variant)
@@ -1533,15 +1548,17 @@ Wire layer is `WinUSB+DES envelope` (resolved via lcd207-sdk).
 
 **Source:** decompiled `slv3.dll` at `/home/inky/Development/lian-li/slv3/slv3/` + `slv3.models.dll` at `/home/inky/Development/lian-li/slv3.models/slv3/models/`.
 
+**What it is:** the host-side **SL Wireless** protocol library used by Lian Li's SL Wireless transmitter dongle and the wireless-capable subset of the device catalog. The DLL filename (`slv3.dll`) and the namespace (`slv3` / `slv3.models`) name the **SL Wireless** product family - **not** "SL Version 3", "Strimer Light V3", or "Side LCD V3". Earlier writeups in this survey that speculated on the version-number reading have been corrected.
+
 **Status:** all citations are `inferred-static` (decompiled artifacts: anonymous-method names retained, some raw IL hints in `WinUsb.cs:151-161,304` etc., but the wire-relevant code is intact).
 
 **Used by these families:**
 
-- **SLV3LCD** - `L-Connect-Service/LConnectService/Products/SLV3LCD/SLV3LCDController.cs:190-846` (consumes `STRController.GetAllControlDevice`, `ShowAndSaveImg`, `RefreshSTRPosInfo`, `RestLcdHub`, `PlayVGroupMedia`).
+- **SLV3LCD** (= "SL Wireless LCD") - `L-Connect-Service/LConnectService/Products/SLV3LCD/SLV3LCDController.cs:190-846` (consumes `STRController.GetAllControlDevice`, `ShowAndSaveImg`, `RefreshSTRPosInfo`, `RestLcdHub`, `PlayVGroupMedia`). The archetypal slv3 client.
 - **TLV2LCD** - `L-Connect-Service/LConnectService/Products/TLV2LCD/TLV2LCDController.cs:191-847` (same call surface as SLV3LCD).
-- **HydroShift II LCD** - **only via `slv3.models` enums** (effect IDs and `LightEffectSet` DTO). The HID transport for HS II LCD itself is in `lcd207.dll` (per section 3.2.2 below), not slv3. Wireless HS II variants are routed through `RFController`.
-- **UniversalScreen 8.8"** - slv3 reaches this product only through `WinUsb.Get88inch_LED()` / `WinUsb.Led_Send` (the LED side of the 8.8" board, VID `0x0416` / PID `0x8050` = 1046 / 32848). The **panel** side (LCD frames) goes through `lcd207.dll`'s WinUSB stack (per section 3.2.2), not slv3. The lighting board IS in slv3.
-- **LWireless hub (RF / wireless variants)** - `L-Connect.Core/LConnectCore/Products/LWireless/LWirelessDevice.cs:48-196` (consumes `RFController.SetAioThemeIndex`, `Bind`, `GetAllGroup`, `Init`, `SetFansRPM`, `FgSync`, etc.).
+- **HydroShift II LCD** - slv3 is the SL Wireless transport for HS II's **Wireless** control mode (one of three operator-selectable modes; see section 3.1.6 "Control modes"). Image content in Wireless mode is shipped via `RF_SendPic` chunks. HS II's **USB Streaming** mode goes through `lcd207.dll` instead (section 3.2.2). In addition to the wireless transport, slv3 also supplies the *effect/style vocabulary* via `slv3.models` enums (effect IDs, `LightEffectSet` DTO), which are consumed in both Wireless and USB Streaming modes.
+- **UniversalScreen 8.8"** - slv3 owns the **lighting board** side only (LED ring around the panel; VID `0x0416` / PID `0x8050` = 1046 / 32848 via `WinUsb.Get88inch_LED()` / `WinUsb.Led_Send`). The **panel** side (LCD frames) goes through `lcd207.dll`'s WinUSB stack (per section 3.2.2), not slv3. One physical board, two SDKs.
+- **LWireless hub (RF transmitter dongle, plus all wireless device variants)** - `L-Connect.Core/LConnectCore/Products/LWireless/LWirelessDevice.cs:48-196` (consumes `RFController.SetAioThemeIndex`, `Bind`, `GetAllGroup`, `Init`, `SetFansRPM`, `FgSync`, etc.). The SL Wireless transmitter dongle is the host-side endpoint for every wireless write.
 - **Lancool 207 Digital** - **NOT** a direct slv3 caller. The "Lancool 207" path inside slv3 (`DevTypes.LC217 = 65`, `RF_217CloseWifi = 35`, `Close217Wifi(macStr)`) is the **wireless** Lancool 217 case fronted by the LWireless hub, not the wired 207.
 
 ##### Transports
@@ -1689,14 +1706,16 @@ Wireless AIO LCDs (Pipeline B) have **no stored variant**: only transient `RF_Se
 
 **Source:** decompiled `lcd207.dll` at `/home/inky/Development/lian-li/lcd207/lcd207/`.
 
+**What it is:** the host-side proprietary **wired-LCD streaming protocol** library. lcd207 is **not** an RF / wireless transport - it is a fork of slv3's `WinUsb.cs` encryption + framing layer (same DES-CBC envelope, same key+IV `slv3tuzx`, same body-at-offset-512 layout) extended with AIO-control opcodes. The "lcd207" filename is a misnomer - Lancool 207 is one of four clients, not the headline one. When an HS II LCD operates in **USB Streaming** control mode (one of three operator-selectable modes; see section 3.1.6), this is the SDK that drives it.
+
 **Status:** all citations are `inferred-static`.
 
 **Used by these families** (confirmed by L-Connect-Service `using lcd207;` directives):
 
-- **HydroShift II LCD Circle** - `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2CSDK.cs:1-187` is a thin pass-through to `lcd207.H2Controller`.
-- **HydroShift II LCD Square** - `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2SSDK.cs:1-187` is a thin pass-through to `lcd207.H2SController`.
-- **Lancool 207 Digital** - `L-Connect-Service/LConnectService/Products/Lancool207Digital/Lancool207DigitalController.cs:1-2` calls `lcd207.LCDController` methods.
-- **UniversalScreen 8.8"** - `L-Connect-Service/LConnectService/Products/UniversalScreen8p8Inch/UniversalScreen8p8InchController.cs:1` (`using lcd207;`); the `sdkController` field is typed `LEDController`. **This confirms the open question raised in the per-family staging files** - UniversalScreen 8.8" is also a lcd207 client, on the LCD side (PID `0xA088`) plus an LED side (PID `0x8050` VID `0x0416`) and a HID-side wireless-sensor companion (PID `0xAD21` VID `0x1A86`).
+- **HydroShift II LCD Circle - USB Streaming control mode only.** `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2CSDK.cs:1-187` is a thin pass-through to `lcd207.H2Controller`. HS II's other two control modes (Offline / Wireless) do not go through lcd207; Wireless mode goes through slv3 (section 3.2.1).
+- **HydroShift II LCD Square - USB Streaming control mode only.** `L-Connect-Service/LConnectService/Products/HydroShiftIILCD/H2SSDK.cs:1-187` is a thin pass-through to `lcd207.H2SController`. Same control-mode caveat as Circle.
+- **Lancool 207 Digital** (wired-only family) - `L-Connect-Service/LConnectService/Products/Lancool207Digital/Lancool207DigitalController.cs:1-2` calls `lcd207.LCDController` methods.
+- **UniversalScreen 8.8" - panel side only.** `L-Connect-Service/LConnectService/Products/UniversalScreen8p8Inch/UniversalScreen8p8InchController.cs:1` (`using lcd207;`); the `sdkController` field is typed `LEDController`. **This confirms the open question raised in the per-family staging files** - UniversalScreen 8.8"'s LCD-panel side (PID `0xA088`) is a lcd207 client. The board's **lighting** side (PID `0x8050` VID `0x0416`) is owned by **slv3**, not lcd207. The HID-side wireless-sensor companion (PID `0xAD21` VID `0x1A86`) is independent of both.
 - **L-Connect-Service shared logger** - `L-Connect-Service/LConnectService/Products/LCD207DLLLoggerWrapper.cs` adapts the SDK's `Loger.cs` to Serilog.
 
 The four product families plus the legacy-wrapper share **one** `CmdType` enum, **one** DES-CBC encryption envelope (key `slv3tuzx`, identical to slv3), and three fan-out transport classes: `WinUsb` (Lancool 207 LCD), `WinUsbH2` (HS II Circle), `WinUsbH2S` (HS II Square). `WinUsbLed` is a sub-class of `WinUsb` for the UniversalScreen 8.8" LED-side. `HIDUsb` is independent of the encrypted CmdType protocol.
@@ -1970,6 +1989,39 @@ Reference-graph facts surfaced via the SDK surveys:
 2. Implement the cross-SDK cross-link (lcd207's `SendPumpFan` skipping when slv3's `RFController.GetAllGroup` reports a wireless waterblock peer bound).
 3. Replace the cross-process shared-memory IPC patterns (Windows `WriteProcessMemory` / `ReadProcessMemory`) with Linux equivalents (`process_vm_readv`, `memfd_create` + `SCM_RIGHTS`, or D-Bus byte streams).
 4. Handle the named-pipe preview channel as a Unix-domain socket with an explicit access-mode policy.
+
+### 4.10 Family-level transport categorisation
+
+Cross-cutting view of which transport each family uses, accounting for HS II's dual-transport story (Wireless via slv3, USB Streaming via lcd207) and UniversalScreen 8.8"'s split (LCD panel via lcd207, lighting board via slv3). "slv3" = SL Wireless RF transport (named after the SL Wireless protocol family, not "SL Version 3"); "lcd207" = wired-LCD streaming protocol over WinUSB with DES-CBC-encrypted command headers.
+
+| Family | Wired (L-Connect.Core direct) | Wired LCD (lcd207) | Wireless (slv3) |
+|---|---|---|---|
+| Galahad II LCDV2 | yes | - | - |
+| Galahad II LCD (older) | unclear (no device-class in source) | - | - |
+| Galahad II Trinity | yes | - | - |
+| HydroShift I | yes | - | - |
+| HydroShift II Circle | - | yes (USB Streaming mode) | yes (Wireless mode) |
+| HydroShift II Square | - | yes (USB Streaming mode) | yes (Wireless mode) |
+| Lancool 207 Digital | - | yes | - |
+| UniversalScreen 8.8" panel | - | yes | - |
+| UniversalScreen 8.8" lighting | - | - | yes |
+| SLV3LCD (SL Wireless LCD) | - | - | yes |
+| LWireless hub (top-level) | - | - | yes (RF transmitter to children) |
+| TLFan | yes | - | - |
+| TLLCD | yes | - | - |
+| StrimerPlus (wired) | yes | - | - |
+| StrimerPlus (wireless variant in LWireless) | - | - | yes |
+| Ene6K77Fan | yes | - | - |
+| Trinity (Regular + Performance) | yes | - | - |
+
+**HS II three-control-modes note:** HS II LCD's product spec exposes **Offline / Wireless / USB Streaming** as user-selectable control modes. Offline does not involve a host transport at all (device runs from on-board firmware). Wireless mode goes through slv3 (RF). USB Streaming mode goes through lcd207 (WinUSB). Both DLLs participate in the host-side stack; which one drives a given write depends on the user's chosen mode at runtime. See section 3.1.6 "Control modes".
+
+**Phase 1 implication:** the Linux daemon needs to embed at minimum:
+1. L-Connect.Core's wired protocol logic for the chosen Phase 1 family (Galahad II LCDV2).
+2. lcd207-equivalent code only when adding HS II / Lancool 207 / UniversalScreen panel (Phase 3+).
+3. slv3-equivalent code only when adding wireless-capable devices, including HS II Wireless mode (Phase 3+).
+
+For Phase 1 (LCDV2 only), neither lcd207 nor slv3 functionality is needed — only L-Connect.Core/galahad2_lcdv2/ codecs.
 
 ## 5. OpenRGB cross-validator findings
 
@@ -2414,7 +2466,22 @@ authorises it.
   `L-Connect.Service + LConnect.Core + slv3 + lcd207` collapsed into one
   Rust process. **For Phase 1, only the LCDV2-relevant subset (the
   `LConnect.Core/Products/Galahad2Vision/` slice) ships;** slv3 and
-  lcd207 equivalents are Phase 3+ work.
+  lcd207 equivalents are Phase 3+ work. To clarify the naming used
+  across this survey:
+    - **slv3 = SL Wireless transport** (the host-side library for Lian
+      Li's SL Wireless RF protocol; named after the protocol family,
+      not "SL Version 3"). Only needed for wireless-capable devices
+      (LWireless hub + children: SLV3LCD, TLV2 wireless fans, HS II
+      LCD in **Wireless** control mode, Lancool 217, V150, Strimer
+      Plus wireless, UniversalScreen 8.8" lighting board, etc.).
+    - **lcd207 = wired-LCD streaming protocol** (a fork of slv3's
+      WinUSB encryption layer extended with AIO-control opcodes; not
+      an RF transport). Needed for HS II LCD in **USB Streaming**
+      control mode (per section 3.1.6 "Control modes" - HS II has
+      three modes: Offline / Wireless / USB Streaming, the latter two
+      using different DLLs), Lancool 207 Digital, and UniversalScreen
+      8.8" panel side.
+    - See section 4.10 for the per-family transport matrix.
 - **Phase 1 device scope:** LCDV2 only - no StrimerPlus, no Trinity, no
   fan-only families, no HS I, no HS II, no TLFan / TLLCD, no SLV3LCD /
   TLV2LCD, no Lancool 207, no UniversalScreen, no LWireless. Per the

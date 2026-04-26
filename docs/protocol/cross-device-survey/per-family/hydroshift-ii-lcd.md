@@ -20,6 +20,40 @@ All claims here are 🌗 inferred unless explicitly noted otherwise — Phase
 0e is a static-source survey and no live HS II hardware run has been
 performed in this project.
 
+## Control modes
+
+Per Lian Li's published product spec, HS II LCD has three operator-
+selectable control modes:
+
+- **Offline** — the device runs from on-board firmware; no host comms
+  on the LCD-content path. Fan / pump PWM and lighting may still be
+  driven via the wired HID side, but the LCD shows whatever is in
+  device-side flash (boot logo or last-applied stored content).
+- **Wireless** — the host talks to the device through the L-Wireless
+  transmitter dongle using the SL Wireless RF protocol implemented in
+  `slv3.dll`. Image content is shipped via `RF_SendPic` chunks (chunked
+  through `MasterDevice.SendRfData` into 60-B WinUSB fragments under
+  cmd `0x10 Usb_SendRf`); see `slv3-sdk.md`.
+- **USB Streaming** — the host talks to the device directly over WinUSB
+  using the protocol implemented in `lcd207.dll`. Image content is
+  shipped via `PushJpg = 0x65` (transient JPG / `0x66` for PNG) or
+  `UpdateFireWare = 0x28` with filename `/usr/data/boot.jpg` (stored
+  boot logo, same opcode as firmware update distinguished by filename);
+  see `lcd207-sdk.md`.
+
+Both DLLs participate in the host-side stack — which one drives a
+particular write depends on the user's chosen control mode at runtime.
+A Linux daemon supporting HS II would need to implement both transports
+to feature-match the official software (or a documented subset, with
+the unsupported mode disabled in the daemon UI).
+
+The two-PID-per-shape USB topology (`...Circle` + `...CircleDisplayMode`,
+analogous Square pair) is a separate axis from the three control modes:
+the `*DisplayMode` PIDs are the OS-level "secondary monitor" view of
+the panel, switchable via the SDK `SetDesktopMode()` / `SetMonitorMode()`
+calls inside USB Streaming mode. Wireless mode does not involve the
+display-mode PID.
+
 ## Source folder
 
 `L-Connect.Core/LConnectCore/Products/HydroShiftIILCD/` plus
@@ -405,13 +439,22 @@ These are the points where HS II differs most from
 `docs/protocol/galahad2-lcdv2.md`. They are critical context for the
 Linux port roadmap.
 
-1. **No exposed wire-byte protocol.** LCDV2 has a public
-   `Command` enum and `ACommandPacket`/`BCommandPacket`/`CCommandPacket`
-   source files. HS II has **none of these** (no `Commands.cs`, no
-   packet files, no `new byte[64]`). All HID I/O is performed inside
-   the proprietary `slv3` DLL via static classes `H2Controller` (Circle,
-   `H2CSDK.cs`) and `H2SController` (Square, `H2SSDK.cs`). This is the
-   single largest divergence in the entire survey.
+1. **No exposed wire-byte protocol in the per-family C# source.** LCDV2
+   has a public `Command` enum and `ACommandPacket`/`BCommandPacket`/
+   `CCommandPacket` source files. HS II has **none of these** (no
+   `Commands.cs`, no packet files, no `new byte[64]` in `Products/HydroShiftIILCD/`).
+   All wire-level work is performed inside two proprietary DLLs that
+   participate depending on the user's selected control mode (see
+   "Control modes" above): `slv3.dll` for **Wireless** mode (via
+   `RFController` + `MasterDevice`; see `slv3-sdk.md`) and `lcd207.dll`
+   for **USB Streaming** mode (via static classes `H2Controller` /
+   `H2SController`; see `lcd207-sdk.md`). Both wire formats are now
+   resolved by the SDK surveys; the original "in slv3.dll" claim from
+   the first pass of this writeup was partially right (Wireless) and
+   partially wrong (USB Streaming, which is in lcd207.dll). HS II uses
+   **WinUSB**, not HID, for frames in USB Streaming mode; HID is only
+   used out-of-band for SN discovery and `SetMonitorMode` magic-byte
+   signalling.
 
 2. **Different MCU vendor.** LCDV2 = `0x0416` (Winbond/Nuvoton).
    HS II = `0x1CBE` (TI Stellaris) for the HID interface and `0x1A86`
@@ -586,6 +629,11 @@ byte — and the four `Apply*` operations are good candidates for what
 that byte triggers semantically.
 
 ## Open questions
+
+> **Wire-format opacity is now closed for both transport-bearing modes**:
+> Wireless mode = slv3-sdk (`slv3-sdk.md`); USB Streaming mode =
+> lcd207-sdk (`lcd207-sdk.md`). The remaining open questions are about
+> HS II's higher-level orchestration and Linux-side feature parity.
 
 1. **cmd-15 hypothesis from HS II:** does
    `ApplyBackgroundOnlyCustomTheme` (`RequestType.cs:47`) emit a single
