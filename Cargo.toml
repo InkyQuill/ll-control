@@ -1,8 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/protocol",
+    "crates/lconnect-hid",
     "crates/lconnect-image",
+    "crates/protocol",
     "tools/verify-galahad",
 ]
 
@@ -17,6 +18,7 @@ authors      = ["L-Connect Linux contributors"]
 [workspace.dependencies]
 # Used by `protocol`
 thiserror  = "1"
+tracing    = "0.1"
 
 # Used by `verify-galahad`
 hidapi     = "2.5"
