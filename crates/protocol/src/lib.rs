@@ -12,6 +12,7 @@ pub mod galahad2_lcdv2;
 
 /// Errors produced by the protocol crate.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
     /// A response or input buffer was too short for the operation.
     #[error("buffer too short: need {need} bytes, got {got}")]

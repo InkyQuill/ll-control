@@ -71,17 +71,17 @@ impl CCommandPacket {
         &self.bytes
     }
 
-    /// Parse and validate an inbound C-class response (typically 512 bytes).
+    /// Parse a 512-byte response. Verifies report ID + command echo +
+    /// declared length.
     ///
     /// # Errors
     ///
-    /// Returns [`crate::Error::BufferTooShort`] if `buf` is shorter than the
-    /// 11-byte header (or shorter than `HEADER_LEN + length` once `length`
-    /// has been read), [`crate::Error::UnexpectedReportId`] if the report
-    /// id byte is not [`REPORT_ID`], [`crate::Error::UnexpectedCommand`] if
-    /// the command echo doesn't match `expected_command`, and
-    /// [`crate::Error::InvalidLength`] if the device's announced `Length`
-    /// exceeds [`PAYLOAD_MAX`].
+    /// - [`crate::Error::BufferTooShort`] if `buf.len() < HEADER_LEN`
+    ///   (or shorter than `HEADER_LEN + length` once `length` has been read).
+    /// - [`crate::Error::UnexpectedReportId`] if `buf[0] != REPORT_ID`.
+    /// - [`crate::Error::UnexpectedCommand`] if `buf[1] != expected_command`.
+    /// - [`crate::Error::InvalidLength`] if the declared `Length` field
+    ///   exceeds [`PAYLOAD_MAX`] (501).
     pub fn from_response(buf: &[u8], expected_command: u8) -> crate::Result<CResponse<'_>> {
         if buf.len() < HEADER_LEN {
             return Err(crate::Error::BufferTooShort {
@@ -194,7 +194,7 @@ pub struct CPacketChunks<'a> {
 impl<'a> CPacketChunks<'a> {
     /// Construct a fresh chunker for `payload` under the given `command`
     /// byte. See [`CCommandPacket::build_packets_for_write`] for semantics.
-    pub fn new(command: u8, payload: &'a [u8]) -> Self {
+    pub(crate) fn new(command: u8, payload: &'a [u8]) -> Self {
         Self {
             command,
             payload,
@@ -250,3 +250,6 @@ impl Iterator for CPacketChunks<'_> {
         (remaining, Some(remaining))
     }
 }
+
+impl ExactSizeIterator for CPacketChunks<'_> {}
+impl std::iter::FusedIterator for CPacketChunks<'_> {}
