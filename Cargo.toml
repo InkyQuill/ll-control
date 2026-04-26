@@ -8,6 +8,7 @@ members = [
     "crates/lconnect-ipc",
     "crates/protocol",
     "tools/verify-galahad",
+    "xtask",
 ]
 
 [workspace.package]
