@@ -23,6 +23,7 @@ pub mod mock_backend;
 
 pub use backend::{matches_echo, HidBackend, OpenHandle};
 pub use device_info::{DeviceFamilyId, DeviceInfo};
+pub use family_registry::{DeviceFamily, FamilyRegistry, Galahad2LcdV2Family};
 pub use framing::Framing;
 pub use hidapi_backend::HidApiBackend;
 pub use mock_backend::MockBackend;
