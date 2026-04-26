@@ -633,9 +633,10 @@ fn main() -> Result<()> {
 fn probe(args: ProbeCliArgs) -> Result<()> {
     if !args.yes_read_only {
         return Err(anyhow!(
-            "refusing to probe without --yes-read-only; \
-             confirm cmd byte 0x{:02x} has been hid-safety-reviewer-\
-             cleared as read-only and re-run with --yes-read-only",
+            "an arbitrary cmd byte may mutate device state; \
+             refusing to probe without --yes-read-only. \
+             Confirm cmd byte 0x{:02x} has been hid-safety-reviewer-cleared as \
+             read-only and re-run with --yes-read-only",
             args.cmd
         ));
     }
@@ -652,6 +653,10 @@ fn probe(args: ProbeCliArgs) -> Result<()> {
         .open(GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID)
         .context("could not open device — see `verify-galahad list` and udev rules")?;
 
+    println!(
+        "probe target: vid=0x{:04x} pid=0x{:04x}",
+        GALAHAD2_LCDV2_VID, GALAHAD2_LCDV2_PID
+    );
     println!(
         "probe cmd=0x{:02x} framing={:?} payload={} bytes",
         probe_args.cmd,
@@ -1514,4 +1519,45 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_cmd_byte_arg_decimal() {
+        assert_eq!(parse_cmd_byte_arg("134"), Ok(134));
+    }
+
+    #[test]
+    fn parse_cmd_byte_arg_hex_lowercase() {
+        assert_eq!(parse_cmd_byte_arg("0x86"), Ok(0x86));
+    }
+
+    #[test]
+    fn parse_cmd_byte_arg_hex_uppercase() {
+        assert_eq!(parse_cmd_byte_arg("0X86"), Ok(0x86));
+    }
+
+    #[test]
+    fn parse_cmd_byte_arg_with_whitespace() {
+        // The fn calls .trim() on the input
+        assert_eq!(parse_cmd_byte_arg("  134  "), Ok(134));
+    }
+
+    #[test]
+    fn parse_cmd_byte_arg_rejects_overflow_decimal() {
+        assert!(parse_cmd_byte_arg("256").is_err());
+    }
+
+    #[test]
+    fn parse_cmd_byte_arg_rejects_overflow_hex() {
+        assert!(parse_cmd_byte_arg("0x100").is_err());
+    }
+
+    #[test]
+    fn parse_cmd_byte_arg_rejects_non_hex() {
+        assert!(parse_cmd_byte_arg("0xZZ").is_err());
+    }
 }

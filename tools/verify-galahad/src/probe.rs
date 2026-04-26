@@ -122,7 +122,7 @@ pub struct ProbeArgs {
 /// assert_eq!(parse_hex_payload("0xAA 0xBB").unwrap(), vec![0xaa, 0xbb]);
 /// assert_eq!(parse_hex_payload("").unwrap(), Vec::<u8>::new());
 /// ```
-#[must_use = "the parsed bytes are useless if discarded"]
+#[must_use = "feed the parsed bytes into ProbeArgs::payload"]
 pub fn parse_hex_payload(s: &str) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
     for token in s.split_whitespace() {
@@ -189,6 +189,11 @@ const READ_TIMEOUT_MS: i32 = 500;
 /// extrapolated from the same C# pattern; live verification is part of
 /// the Phase 0e probe runs that consume this helper.
 ///
+/// The response is recognized by `buf[0] == report_id && buf[1] == cmd`
+/// — both bytes are required so a stray B/C-class unsolicited packet
+/// whose byte-1 happens to match the probed cmd byte cannot be
+/// misinterpreted as our response.
+///
 /// # Errors
 ///
 /// Returns an error if:
@@ -199,7 +204,7 @@ const READ_TIMEOUT_MS: i32 = 500;
 ///   `PROBE_DRAIN_LIMIT` read attempts (each capped at
 ///   `READ_TIMEOUT_MS`).
 ///
-/// # Safety
+/// # Caller responsibilities
 ///
 /// Sending an arbitrary cmd byte mutates device state if the cmd byte
 /// has any write semantics. The caller is responsible for choosing a
@@ -244,30 +249,36 @@ pub fn run_probe(device: &HidDevice, args: &ProbeArgs) -> Result<Vec<u8>> {
 
     // Drain stale responses until the echo for our cmd arrives. Both
     // A-class and B-class place the echo at response offset 1 (after
-    // the report ID); we mirror the existing `read_until_command`
-    // helper's convention.
+    // the report ID at offset 0); we require both bytes to match so a
+    // stray B/C-class unsolicited packet whose byte-1 happens to
+    // match the probed cmd byte cannot be misinterpreted as our
+    // response. This mirrors the existing `read_until_command`
+    // helper's convention in `main.rs`.
     let mut buf = vec![0u8; in_len];
+    let mut stale_count: u32 = 0;
+    let mut timeout_count: u32 = 0;
     for _attempt in 0..PROBE_DRAIN_LIMIT {
         let n = device
             .read_timeout(&mut buf, READ_TIMEOUT_MS)
             .context("HID read_timeout failed")?;
         if n == 0 {
-            return Err(anyhow!(
-                "read timeout waiting for echo of cmd 0x{:02x}",
-                args.cmd
-            ));
+            timeout_count += 1;
+            eprintln!("probe: drain attempt timed out (no bytes)");
+            continue;
         }
-        if n > 1 && buf[1] == args.cmd {
+        if n > 1 && buf[0] == report_id && buf[1] == args.cmd {
             buf.truncate(n);
             return Ok(buf);
         }
+        stale_count += 1;
         eprintln!(
-            "  drained stale probe response (cmd 0x{:02x}), retrying...",
-            buf.get(1).copied().unwrap_or(0)
+            "probe: stale response (cmd byte 0x{:02x} != expected 0x{:02x}); draining",
+            buf.get(1).copied().unwrap_or(0),
+            args.cmd
         );
     }
     Err(anyhow!(
-        "drained {PROBE_DRAIN_LIMIT} stale responses without finding echo of cmd 0x{:02x}",
+        "drained {stale_count} stale + {timeout_count} timeout reads without finding echo of cmd 0x{:02x} (report_id 0x{report_id:02x})",
         args.cmd
     ))
 }
