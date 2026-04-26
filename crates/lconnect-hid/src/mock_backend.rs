@@ -95,6 +95,22 @@ impl MockBackend {
         inner.states.entry(key).or_default();
     }
 
+    /// Remove a previously-registered device. Subsequent calls to
+    /// `enumerate` will no longer report it; subsequent `open` calls will
+    /// fail with `Error::DeviceNotFound`.
+    ///
+    /// Already-opened handles continue to work — their backing state is
+    /// retained for `write_history` inspection. The state is dropped only
+    /// when both the handle and the `MockBackend` go out of scope.
+    pub fn remove_device(&self, info: &DeviceInfo) {
+        let mut inner = self.inner.lock().expect("mock mutex poisoned");
+        let key = DeviceKey::from(info);
+        inner.devices.retain(|d| DeviceKey::from(d) != key);
+        // Intentionally retain `states[key]` so already-opened handles
+        // continue to function and `write_history` remains inspectable
+        // after detach.
+    }
+
     /// Queue a canned response that the next `read_timeout` call on the
     /// device's handle will return.
     ///
