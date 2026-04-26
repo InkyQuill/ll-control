@@ -36,6 +36,8 @@ pub mod set_lighting;
 
 pub mod bpacket;
 
+pub mod cpacket;
+
 pub mod lcd;
 
 pub mod set_led_colors;
