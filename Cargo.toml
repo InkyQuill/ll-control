@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/lconnect-hid",
     "crates/lconnect-image",
+    "crates/lconnect-ipc",
     "crates/protocol",
     "tools/verify-galahad",
 ]
@@ -24,6 +25,11 @@ tracing    = "0.1"
 hidapi     = "2.5"
 anyhow     = "1"
 clap       = { version = "4", features = ["derive"] }
+
+# Used by `lconnect-ipc`
+serde      = "1"
+serde_json = "1"
+tokio      = { version = "1", default-features = false }
 
 [profile.release]
 opt-level     = 3
