@@ -31,7 +31,7 @@ pub struct DeviceDescriptor {
     pub hid_path: PathBuf,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct SensorSnapshot {
     pub coolant_c_x10: i16, // tenths of C; serialised as integer to keep wire compact
