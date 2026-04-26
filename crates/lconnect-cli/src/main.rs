@@ -224,12 +224,21 @@ pub enum LcdSubcommand {
     },
 }
 
-/// Placeholder — populated in P1E-7.
+/// `lconnectctl daemon <status|stats|version>` — see [`DaemonSubcommand`].
 #[derive(Args)]
 pub struct DaemonArgs {
-    /// e.g. "status" | "stats" — populated in P1E-7.
-    #[arg(long)]
-    pub action: Option<String>,
+    #[command(subcommand)]
+    pub command: DaemonSubcommand,
+}
+
+#[derive(clap::Subcommand)]
+pub enum DaemonSubcommand {
+    /// Print "OK" and the daemon's IPC version.
+    Status,
+    /// Print daemon stats counters.
+    Stats,
+    /// Print the IPC version the daemon advertises in its hello message.
+    Version,
 }
 
 fn init_tracing() {
