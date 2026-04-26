@@ -10,5 +10,7 @@
 
 pub mod actor;
 pub mod config;
+pub mod ipc_server;
 pub mod manager;
 pub mod persistence;
+pub mod stats;
