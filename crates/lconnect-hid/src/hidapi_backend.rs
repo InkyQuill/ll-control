@@ -94,7 +94,7 @@ struct HidApiHandle {
 }
 
 impl OpenHandle for HidApiHandle {
-    fn write(&self, buf: &[u8]) -> Result<usize> {
+    fn write(&self, buf: &[u8]) -> Result<()> {
         let dev = self.inner.lock().expect("hidapi handle mutex poisoned");
         let n = dev.write(buf)?;
         if n != buf.len() {
@@ -103,7 +103,7 @@ impl OpenHandle for HidApiHandle {
                 expected: buf.len(),
             });
         }
-        Ok(n)
+        Ok(())
     }
 
     fn read_timeout(&self, buf: &mut [u8], timeout_ms: i32) -> Result<usize> {

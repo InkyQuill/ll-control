@@ -16,19 +16,28 @@ use crate::{DeviceInfo, Framing, Result};
 pub trait OpenHandle: Send + Sync {
     /// Write a HID output report.
     ///
-    /// # Errors
-    /// Returns `Error::ShortWrite` on partial write or `Error::HidApi`
-    /// for backend-level failures.
-    fn write(&self, buf: &[u8]) -> Result<usize>;
-
-    /// Read with timeout.
+    /// On success the entire `buf` was written. Implementations promote
+    /// short writes to `Error::ShortWrite` rather than returning a partial
+    /// byte count.
     ///
-    /// `timeout_ms` matches `hidapi`'s convention: positive value waits
+    /// # Errors
+    /// `Error::ShortWrite` on partial write; `Error::HidApi` for
+    /// backend-level failures.
+    fn write(&self, buf: &[u8]) -> Result<()>;
+
+    /// Read a HID input report with timeout.
+    ///
+    /// `timeout_ms` matches `hidapi`-rs convention: positive value waits
     /// up to N ms; `0` is non-blocking; `-1` blocks forever.
     ///
+    /// # Returns
+    /// `Ok(n)` where `n > 0` is the byte count of the response, or `Ok(0)`
+    /// to signal a timeout (not an error). Higher-level drain logic
+    /// converts repeated `Ok(0)` into `Error::EchoExhausted` when looking
+    /// for a specific cmd echo.
+    ///
     /// # Errors
-    /// Returns `Error::HidApi` for backend failures. A 0-byte return is
-    /// the timeout signal (not an error).
+    /// `Error::HidApi` for backend-level failures.
     fn read_timeout(&self, buf: &mut [u8], timeout_ms: i32) -> Result<usize>;
 }
 
