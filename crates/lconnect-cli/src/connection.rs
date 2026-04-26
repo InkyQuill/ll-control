@@ -5,9 +5,6 @@
 //! environment variable so integration tests and dev workflows can point
 //! at an alternate socket without a config file.
 
-// Unused until P1E-2 lands the first subcommand body that calls it.
-#![allow(dead_code)]
-
 /// Connect to the running daemon and return a ready-to-use IPC client.
 ///
 /// The socket path is resolved as follows:
