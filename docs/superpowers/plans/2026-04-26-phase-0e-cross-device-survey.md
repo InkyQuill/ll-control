@@ -1180,3 +1180,150 @@ When all of the following pass, Phase 0e is complete and the Phase 1 plan can be
 - [ ] No C# or OpenRGB source has been pasted into the survey doc (reviewer subagent confirms)
 
 When all pass, the Phase 1 plan author begins.
+
+---
+
+## Post-execution notes (2026-04-26)
+
+**Final task count:** original was 22 tasks; mid-phase additions were
+P0e-12.5 (slv3 SDK survey) and P0e-12.6 (lcd207 SDK survey), bringing
+the total to 24 tasks. Plus the small naming/HS-II-modes fix-up
+between P0e-17 and P0e-18 — not numbered as a discrete task.
+
+**Commits:** 25 in this phase, from `c150ecb` (P0e-1 scaffold)
+through `f9c8a03` (P0e-21 cross-link). Mid-phase additions
+(P0e-12.5 / P0e-12.6 / naming clarification) are included in the
+count.
+
+**Final survey size:** 2502 lines in
+`docs/protocol/cross-device-survey.md`, plus 4321 lines across 15
+per-family staging files (13 device families + 2 shared SDKs).
+
+**Probes file:** 467 lines, 6 probes documented + run, 2 probes
+elicited structured responses from LCDV2 (probes 1, 3 A-class), 4
+timed out (probes 2, 4, 5, 6 B-class).
+
+**Verify-galahad test count:** 23 tests (7 unit + 16 integration)
++ 1 doctest, all clean.
+
+**Headline cross-device findings:**
+
+1. **slv3 / lcd207 are forks of the same DES-CBC encryption envelope**
+   (key+IV "slv3tuzx") — slv3 owns the SL Wireless / RF transports,
+   lcd207 owns the wired-LCD streaming protocol (HS II Circle/Square,
+   Lancool 207, UniversalScreen panel). Both share `PushJpg=0x65`
+   (transient) + `UpdateFireWare=0x28` with filename
+   `/usr/data/boot.jpg` (stored). The cmd-15 hypothesis pattern is
+   universal across the wired-LCD ecosystem at the wire level.
+
+2. **HS II LCD has three operator-selectable control modes** (Offline /
+   Wireless / USB Streaming) and the Wireless and USB Streaming modes
+   route through DIFFERENT SDKs (slv3 vs lcd207 respectively). A daemon
+   supporting HS II therefore needs both SDKs implemented to feature-
+   match LConnect3.
+
+3. **LCDV2 firmware has asymmetric per-framing parser behavior**
+   (Phase 0e probe finding): A-class echoes ALL cmd bytes with a
+   structured response template (capability discovery is possible);
+   B-class is silent on unknown cmds (strict gating, no probing). This
+   constrains Phase 1 daemon design: never speculate B-class cmd bytes;
+   capability-discover via A-class.
+
+4. **Five framing classes are needed for full multi-device support**
+   (vs the three A/B/C the protocol crate currently knows): A-class
+   (HID 64), B-class (HID 1024/512), C-class (HID 512/512),
+   StrimerPlus (HID Feature reports, ReportID 0xE0, no Length /
+   PacketNumber), TLLCD T-class (HID 512/64 asymmetric), lcd207
+   WinUSB-EP01 with DES envelope, slv3 RF-over-WinUSB
+   (`MasterDevice.SendRfData`). The daemon's `Framing` enum
+   needs extensibility from day one.
+
+5. **VID-clustering as MCU-vendor signal**: 0x0416 (Winbond/Nuvoton)
+   covers the Galahad II family + HS I + LWireless V1 hub +
+   UniversalScreen lighting board; 0x1CBE (Lian-Li own) covers
+   SLV3LCD + TLV2LCD + HS II wired + Lancool 207 + UniversalScreen
+   panel; 0x0CF2 (ENE) covers Strimer Plus + Ene6K77Fan; 0x04FC
+   (Sunplus) covers TLLCD; 0x1A86 (WCH) covers wireless V2 hubs +
+   all DisplayMode endpoints. This taxonomy is at section 4.6 of
+   the synthesized survey.
+
+**Cmd-15 hypothesis status:** the hypothesis is now closed at the
+*cross-family pattern* level — every wired-LCD family with a stored-
+image path uses a transient-vs-stored split. LCDV2's specific
+activation path (cmd 15 ACK'd in full per Phase 0d but no visible
+render) was NOT directly resolved by the probe set; the strongest
+remaining hypothesis is that LCDV2 follows the slv3/lcd207 pattern
+of a separate filename-keyed activation cmd. Phase 1 may revisit if
+needed.
+
+**Plan deviations:**
+
+- **Mid-phase addition:** P0e-12.5 (slv3 SDK survey) and P0e-12.6
+  (lcd207 SDK survey) were added when the user decompiled both DLLs
+  during the survey. Neither was in the original 22-task plan; both
+  closed substantial opacity gaps for HS II / SLV3LCD / Lancool 207 /
+  UniversalScreen.
+- **Mid-phase clarification commit:** `6920278` was a focused fix-up
+  applying the "slv3 = SL Wireless protocol" naming clarification +
+  the HS II three-control-modes architectural reframing after the
+  user surfaced product-spec context not visible in the source tree.
+- **Polish round per code-touching task:** P0e-17 codec layer
+  received a 5-fix polish (commit `006b0f7`); P0e-18 CLI plumbing
+  received an 8-fix polish (commit `b55f027`). Both batches were
+  consolidated from 3 - 4 reviewer reports each (spec compliance +
+  code quality + rust-practices-verifier + hid-safety-reviewer).
+- **Probe set parallelism:** the original plan suggested 11
+  per-family surveys could run in parallel via per-family staging
+  files. Live execution showed 12-way parallel dispatch hit Anthropic
+  rate limits; backed off to batches of 3-4. All eventually landed.
+
+**Real-hardware findings on FW 1.6 (LCDV2):**
+
+- A-class permissive echo confirmed for cmds 0x88 (`GetSerialNumber`,
+  in LCDV2's enum but never invoked in any codec) and 0x8C
+  (`GetFanPumpParams`, NOT in LCDV2's enum but Trinity's). LCDV2
+  acknowledges both with a `[01, cmd, ?, ?, ?, length, payload..., 0...]`
+  template; the `length` byte signals "this many bytes reserved for
+  the response slot" but actual payload data is all zeros.
+- B-class strict-on-unknown confirmed across cmds 0x3C, 0x3D, 0x3E,
+  0x8C — all timed out completely with no response packet at all.
+- LCDV2's serial number storage returns 32 bytes of zeros — likely
+  not programmed or not readable on FW 1.6 via cmd 0x88.
+- No bricking, no LED/LCD/RPM artifacts during any of the 6 probes.
+  The hid-safety-reviewer's read-only classification was correct in
+  practice as well as on paper.
+
+**Phase 1 plan inputs (clean recap, lift verbatim into Phase 1 plan):**
+
+- Framing enum extensibility from day 1 (>=5 framing classes needed)
+- LCDV2 cmd 15 stays codec-only, unexposed in IPC, until activation
+  discovered (Phase 0e did not close this; Phase 1 may revisit)
+- lighting_keeper cadence: 1.5 s
+- lcd_keeper cadence: <=15 s
+- No firmware paths in Phase 1 (all UploadFirmware / ActiveFirmware /
+  UpdateFireWare / lcd207 raw bytes 247/248 deferred)
+- No DES-CBC in Phase 1 (LCDV2 doesn't use it; slv3/lcd207 do but
+  no LCDV2 path goes through them)
+- Code organization: defer the protocol/src/common/ refactor to
+  Phase 3's first task (when the second device family lands)
+- Phase 1 supports only LCDV2 - no Trinity, StrimerPlus, fan-only
+  families, lcd207-using families, or slv3-using families
+- New finding from probes: A-class can be used for capability
+  discovery in the daemon; B-class must use a hardcoded allowlist
+
+**Verification gates at exit:**
+
+- `cargo build --workspace` and `cargo build --workspace --release`
+  succeed: confirmed
+- `cargo test --workspace`: all tests passing (workspace + protocol
+  integration + verify-galahad 23 tests + 1 doctest)
+- `cargo clippy --workspace --all-targets -- -D warnings`: clean
+- `cargo fmt --all -- --check`: clean
+- `cargo doc --workspace --no-deps`: clean
+
+**Next:** Phase 1 (daemon + IPC + CLI) plan author lifts the
+findings from `cross-device-survey.md` section 6.5 + the probe
+findings from `2026-04-26-cross-device-probes.txt` into the Phase 1
+plan's "Phase 0e inputs" section, then writes the implementation
+plan per the design at
+`docs/superpowers/specs/2026-04-26-phase-1-daemon-design.md`.
