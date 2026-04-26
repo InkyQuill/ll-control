@@ -32,6 +32,20 @@ use anyhow::{anyhow, Context, Result};
 /// (TLLCD-T, lcd207-WinUSB-EP01, slv3-RF, etc.) are documented in the
 /// cross-device-survey but not yet selectable here — Phase 1+ extends
 /// `Framing` if they become daemon-relevant.
+///
+/// # See also
+///
+/// The wire-level constants encoded here (output/input lengths, ReportID)
+/// duplicate the protocol crate's authoritative definitions:
+///
+/// - `crates/protocol/src/galahad2_lcdv2/packets.rs` — A-class
+///   `OUTPUT_LEN = 64`, `REPORT_ID = 0x01`
+/// - `crates/protocol/src/galahad2_lcdv2/bpacket.rs` — B-class
+///   `OUTPUT_LEN = 1024`, `INPUT_LEN = 512`, `REPORT_ID = 0x02`
+/// - C-class (Phase 1+) — `OUTPUT_LEN = INPUT_LEN = 512`, `REPORT_ID = 0x03`,
+///   per `docs/protocol/galahad2-lcdv2.md` framing notes
+///
+/// If those constants change, update `Framing` to match.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 #[non_exhaustive]
 pub enum Framing {
@@ -88,14 +102,15 @@ pub struct ProbeArgs {
 
 /// Parse a hex string into bytes.
 ///
-/// Accepts lower or upper case, optional `0x` / `0X` prefixes, and
-/// whitespace separators. Rejects odd-length cleaned input and
-/// non-hex characters.
+/// The input is split on whitespace into tokens; each token may be
+/// prefixed with `0x` or `0X` (stripped); each token must be an
+/// even-length sequence of hex digits. Empty input yields an empty
+/// `Vec`.
 ///
 /// # Errors
 ///
-/// Returns an error if the cleaned input has odd length or contains
-/// any non-hex character.
+/// Returns an error if any token has odd length after prefix stripping,
+/// is empty after prefix stripping, or contains non-hex characters.
 ///
 /// # Examples
 ///
@@ -105,21 +120,31 @@ pub struct ProbeArgs {
 /// assert_eq!(parse_hex_payload("0xAA 0xBB").unwrap(), vec![0xaa, 0xbb]);
 /// assert_eq!(parse_hex_payload("").unwrap(), Vec::<u8>::new());
 /// ```
+#[must_use = "the parsed bytes are useless if discarded"]
 pub fn parse_hex_payload(s: &str) -> Result<Vec<u8>> {
-    let cleaned: String = s
-        .replace("0x", "")
-        .replace("0X", "")
-        .chars()
-        .filter(|c| !c.is_whitespace())
-        .collect();
-    if cleaned.len() % 2 != 0 {
-        return Err(anyhow!("hex payload has odd length: {}", cleaned.len()));
+    let mut bytes = Vec::new();
+    for token in s.split_whitespace() {
+        let stripped = token
+            .strip_prefix("0x")
+            .or_else(|| token.strip_prefix("0X"))
+            .unwrap_or(token);
+        if stripped.is_empty() {
+            return Err(anyhow!("empty hex token in input: {s:?}"));
+        }
+        if stripped.len() % 2 != 0 {
+            return Err(anyhow!(
+                "hex token has odd length: token={token:?}, input={s:?}"
+            ));
+        }
+        for i in (0..stripped.len()).step_by(2) {
+            let byte = u8::from_str_radix(&stripped[i..i + 2], 16).with_context(|| {
+                format!(
+                    "non-hex digit in token {token:?} at byte offset {} of input {s:?}",
+                    i / 2
+                )
+            })?;
+            bytes.push(byte);
+        }
     }
-    (0..cleaned.len())
-        .step_by(2)
-        .map(|i| {
-            u8::from_str_radix(&cleaned[i..i + 2], 16)
-                .with_context(|| format!("non-hex digit at offset {i}"))
-        })
-        .collect()
+    Ok(bytes)
 }

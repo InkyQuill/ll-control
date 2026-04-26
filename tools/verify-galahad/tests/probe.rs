@@ -22,12 +22,40 @@ fn parse_hex_payload_accepts_empty_string() {
 
 #[test]
 fn parse_hex_payload_rejects_odd_length() {
-    assert!(parse_hex_payload("aabbc").is_err());
+    let err = parse_hex_payload("aabbc").unwrap_err();
+    let msg = err.to_string();
+    assert!(
+        msg.contains("odd length"),
+        "expected 'odd length' in: {msg}"
+    );
 }
 
 #[test]
 fn parse_hex_payload_rejects_non_hex() {
-    assert!(parse_hex_payload("aazz").is_err());
+    let err = parse_hex_payload("aazz").unwrap_err();
+    let msg = err.to_string();
+    assert!(msg.contains("non-hex"), "expected 'non-hex' in: {msg}");
+}
+
+#[test]
+fn parse_hex_payload_rejects_embedded_0x_in_token() {
+    // "a0xb" was previously parsed as 0xab; it must now error because
+    // the token is "a0xb" with the 0x not at the start, so stripping
+    // does nothing, and "a0xb" is not valid hex.
+    let result = parse_hex_payload("a0xb");
+    assert!(result.is_err(), "expected error, got: {result:?}");
+}
+
+#[test]
+fn parse_hex_payload_handles_per_token_prefixes() {
+    // Two tokens, each with its own 0x prefix
+    assert_eq!(parse_hex_payload("0xaa 0xBB").unwrap(), vec![0xaa, 0xbb]);
+}
+
+#[test]
+fn parse_hex_payload_rejects_empty_token_after_prefix() {
+    // "0x" alone is a token that becomes empty after stripping
+    assert!(parse_hex_payload("0x").is_err());
 }
 
 #[test]
