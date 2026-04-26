@@ -1,0 +1,28 @@
+[package]
+name = "lconnect-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "lconnectctl"
+path = "src/main.rs"
+
+[dependencies]
+lconnect-ipc   = { path = "../lconnect-ipc" }
+lconnect-image = { path = "../lconnect-image" }
+
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal", "io-std"] }
+anyhow.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+xdg = "2"
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/lconnect-cli",
     "crates/lconnect-daemon",
     "crates/lconnect-hid",
     "crates/lconnect-image",
