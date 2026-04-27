@@ -7,12 +7,12 @@
 //! incoming notifications to stdout until the user hits Ctrl+C.
 
 use anyhow::{anyhow, Context};
-use lconnect_ipc::types::{DeviceDescriptor, SensorSnapshot};
+use lconnect_ipc::types::SensorSnapshot;
 use serde_json::json;
 use std::io::{IsTerminal, Write};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::connection::connect;
+use crate::connection::{connect, resolve_device};
 use crate::format::print_ndjson_line;
 
 /// Number of human-readable lines emitted per redraw block. Kept here
@@ -28,9 +28,8 @@ const TTY_BLOCK_LINES: usize = 4;
 pub async fn run(device: Option<String>, json: bool) -> anyhow::Result<()> {
     let client = connect().await?;
 
-    // Resolve the target device. Mirrors the logic the sibling P1E-2
-    // task uses in `commands::devices::resolve_device`; copied locally
-    // to avoid a cross-file dependency between parallel tasks.
+    // Resolve the target device via the shared helper in
+    // `crate::connection`.
     let device_id = resolve_device(&client, device).await?;
 
     // Register the subscription *before* asking the daemon to start
@@ -103,39 +102,6 @@ pub async fn run(device: Option<String>, json: bool) -> anyhow::Result<()> {
                     let _ = stdout.flush();
                 }
             }
-        }
-    }
-}
-
-/// Resolve a device id from the optional `--device` flag.
-///
-/// If `device` is `Some`, it's used verbatim. Otherwise the CLI calls
-/// `list_devices` and picks the only attached device, erroring if zero
-/// or more than one are present.
-async fn resolve_device(
-    client: &lconnect_ipc::client::IpcClient,
-    device: Option<String>,
-) -> anyhow::Result<String> {
-    if let Some(d) = device {
-        return Ok(d);
-    }
-    let value = client
-        .call("list_devices", json!({}))
-        .await
-        .context("list_devices failed")?;
-    let devices: Vec<DeviceDescriptor> =
-        serde_json::from_value(value).context("decoding list_devices response")?;
-    match devices.as_slice() {
-        [] => Err(anyhow!(
-            "no devices attached; pass --device <id> once one is connected"
-        )),
-        [only] => Ok(only.id.0.clone()),
-        many => {
-            let ids: Vec<&str> = many.iter().map(|d| d.id.0.as_str()).collect();
-            Err(anyhow!(
-                "multiple devices attached ({}); pass --device <id> to choose one",
-                ids.join(", ")
-            ))
         }
     }
 }

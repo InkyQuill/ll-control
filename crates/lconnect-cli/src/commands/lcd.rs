@@ -14,34 +14,9 @@
 //! A future `get_lcd_config` IPC method would let each knob be edited
 //! independently. Track that under the daemon-IPC plan.
 
-use crate::connection::connect;
+use crate::connection::{connect, resolve_device};
 use crate::{LcdArgs, LcdSubcommand};
 use serde_json::json;
-
-/// Resolve a `DeviceId`: honour `--device` if present, otherwise call
-/// `list_devices` and auto-pick when exactly one device is attached.
-async fn resolve_device(
-    client: &lconnect_ipc::client::IpcClient,
-    override_id: Option<String>,
-) -> anyhow::Result<lconnect_ipc::DeviceId> {
-    use lconnect_ipc::DeviceId;
-    if let Some(s) = override_id {
-        return Ok(DeviceId(s));
-    }
-    let v = client.call("list_devices", serde_json::json!({})).await?;
-    let descs: Vec<lconnect_ipc::DeviceDescriptor> = serde_json::from_value(v)?;
-    match descs.len() {
-        0 => anyhow::bail!("no devices attached"),
-        1 => Ok(descs.into_iter().next().unwrap().id),
-        _ => {
-            let ids: Vec<String> = descs.into_iter().map(|d| d.id.0).collect();
-            anyhow::bail!(
-                "ambiguous device; specify --device. candidates: {}",
-                ids.join(", ")
-            )
-        }
-    }
-}
 
 /// Parse a `#RRGGBB` (or `RRGGBB`) hex string into an `[r, g, b]` triple.
 fn parse_hex_rgb(s: &str) -> anyhow::Result<[u8; 3]> {

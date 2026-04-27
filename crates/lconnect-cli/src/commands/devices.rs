@@ -1,18 +1,18 @@
 //! `devices`, `firmware`, and `snapshot` subcommands.
 //!
 //! All three open a single IPC connection via [`crate::connection::connect`]
-//! and issue one JSON-RPC call. The shared [`resolve_device`] helper
-//! handles the `--device` flag for `firmware` and `snapshot`: when omitted
-//! it auto-picks the only attached device, errors with the candidate list
-//! when ambiguous, and errors cleanly when nothing is attached.
+//! and issue one JSON-RPC call. The shared
+//! [`crate::connection::resolve_device`] helper handles the `--device`
+//! flag for `firmware` and `snapshot`: when omitted it auto-picks the only
+//! attached device, errors with the candidate list when ambiguous, and
+//! errors cleanly when nothing is attached.
 
-use anyhow::{anyhow, bail, Context, Result};
-use lconnect_ipc::client::IpcClient;
-use lconnect_ipc::types::{DeviceDescriptor, DeviceId, FirmwareInfo, SensorSnapshot};
+use anyhow::{Context, Result};
+use lconnect_ipc::types::{DeviceDescriptor, FirmwareInfo, SensorSnapshot};
 use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::connection;
+use crate::connection::{self, resolve_device};
 
 /// `lconnectctl devices` — list every attached device.
 pub async fn run(json_mode: bool) -> Result<()> {
@@ -81,40 +81,6 @@ pub async fn snapshot(device: Option<String>, json_mode: bool) -> Result<()> {
         print_snapshot_human(&snap);
     }
     Ok(())
-}
-
-/// Pick the target device for a per-device subcommand.
-///
-/// - `Some(id)` → wrap as [`DeviceId`] verbatim; we let the daemon validate it.
-/// - `None` → call `list_devices` and pick the only attached device. If
-///   none are attached, error with "no devices attached". If more than
-///   one, error with the candidate list and ask the user to pass `--device`.
-async fn resolve_device(client: &IpcClient, device: Option<String>) -> Result<DeviceId> {
-    if let Some(s) = device {
-        return Ok(DeviceId::new(s));
-    }
-
-    let value = client
-        .call("list_devices", json!({}))
-        .await
-        .context("list_devices RPC failed while resolving --device")?;
-    let descriptors: Vec<DeviceDescriptor> = serde_json::from_value(value)
-        .context("failed to deserialise list_devices response as Vec<DeviceDescriptor>")?;
-
-    match descriptors.len() {
-        0 => bail!("no devices attached"),
-        1 => Ok(descriptors.into_iter().next().unwrap().id),
-        _ => {
-            let ids: Vec<String> = descriptors
-                .iter()
-                .map(|d| d.id.as_str().to_string())
-                .collect();
-            Err(anyhow!(
-                "ambiguous, please specify --device. Candidates: {}",
-                ids.join(", ")
-            ))
-        }
-    }
 }
 
 /// Render the human-readable device table used by `lconnectctl devices`.
