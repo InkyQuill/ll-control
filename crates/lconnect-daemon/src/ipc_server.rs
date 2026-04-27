@@ -64,7 +64,7 @@ use lconnect_protocol::galahad2_lcdv2::firmware::{
 };
 use lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
 use lconnect_protocol::galahad2_lcdv2::lcd::{
-    build_lcd_control_request, Brightness, LCDControlSetting,
+    build_lcd_control_request, Brightness, LCDControlMode, LCDControlSetting,
 };
 use lconnect_protocol::galahad2_lcdv2::lighting::{
     FanLightingSetting, PumpLightingSetting, Rgb as ProtoRgb,
@@ -660,11 +660,42 @@ impl DaemonRpc for IpcServerImpl {
     async fn clear_lcd(&self, dev: DeviceId) -> Result<()> {
         self.stats.inc_ipc_request();
         let handles = self.handles(&dev).await?;
+
+        // Step 1: stop the lcd_keeper's refresh loop so the next
+        // interval tick does not race the LocalUI mode change with
+        // another cmd-14 frame push.
         handles
             .lcd_frame_tx
             .send(LcdFrameMsg::Clear)
             .await
             .map_err(|e| IpcError::DeviceBusy(format!("lcd_frame_tx closed: {e}")))?;
+
+        // Step 2: explicitly revert the panel to LocalUI. P1H-1 live
+        // smoke discovered the LCDV2 firmware does NOT auto-revert
+        // after the keeper stops refreshing -- the panel held the last
+        // uploaded JPEG indefinitely. Sending an LCDControl with
+        // mode=LocalUI does cause the panel to clear, which is what
+        // a "clear" IPC call has to mean for callers.
+        //
+        // LCDControlSetting is `#[non_exhaustive]`; mutate after default-
+        // construction (mirrors set_lcd_config above).
+        let mut setting = LCDControlSetting::default();
+        setting.mode = LCDControlMode::LocalUI;
+        let bytes = build_lcd_control_request(setting).to_vec();
+        write_and_wait(&handles, bytes).await?;
+
+        // Step 3: persist the new control_mode so a daemon restart /
+        // hot-replug does not silently re-issue the previous (e.g.
+        // Application) mode and bring the stale frame back. Brightness
+        // and rotation are preserved -- they are user-facing display
+        // attributes, not part of "is anything currently shown?".
+        let mut settings = self.current_settings(&dev).await;
+        settings.lcd = LcdSection {
+            brightness: settings.lcd.brightness,
+            rotation: settings.lcd.rotation,
+            control_mode: "LocalUI".to_string(),
+        };
+        self.commit_settings(&dev, &handles, settings).await;
         Ok(())
     }
 

@@ -54,6 +54,12 @@ fn lcdv2_info(serial: &str, path: &str) -> DeviceInfo {
 struct Harness {
     client: IpcClient,
     server_task: tokio::task::JoinHandle<()>,
+    /// Cheap clone of the `MockBackend` used by the manager. Tests can
+    /// peek at `write_history` to assert the daemon issued the right
+    /// HID writes -- the manager owns its `Arc<dyn HidBackend>`, but
+    /// `MockBackend` is `Arc<Mutex<...>>`-internal so this clone shares
+    /// the same backing state.
+    mock: MockBackend,
     _tmp: TempDir,
 }
 
@@ -69,6 +75,7 @@ async fn make_harness(allow_raw_send: bool) -> Harness {
     let tmp = TempDir::new().expect("tempdir");
     let mock = MockBackend::new();
     mock.add_device(lcdv2_info("SN-A", "/mock/hidraw0"));
+    let mock_for_inspect = mock.clone();
     let backend: Arc<dyn HidBackend> = Arc::new(mock);
 
     let store = Arc::new(PersistenceStore::new_with_root(tmp.path().to_path_buf()));
@@ -110,6 +117,7 @@ async fn make_harness(allow_raw_send: bool) -> Harness {
     Harness {
         client,
         server_task,
+        mock: mock_for_inspect,
         _tmp: tmp,
     }
 }
@@ -360,6 +368,50 @@ async fn get_lighting_info_returns_static_catalog() {
     assert!(
         modes.iter().any(|m| m == "rainbow"),
         "fan modes catalog must include rainbow, got: {modes:?}"
+    );
+
+    h.shutdown().await;
+}
+
+/// Regression test for the P1H-1 finding: clear_lcd MUST issue an
+/// LCDControl{mode=LocalUI} (cmd 12) write -- not just drop the
+/// keeper's frame slot. Pre-fix the daemon assumed the firmware self-
+/// reverted, but live smoke proved the panel held the last frame
+/// indefinitely.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn clear_lcd_sends_lcd_control_localui() {
+    let h = make_harness(false).await;
+
+    let info = lcdv2_info("SN-A", "/mock/hidraw0");
+    let history_before = h.mock.write_history(&info).len();
+
+    let _ = h
+        .client
+        .call("clear_lcd", json!({ "dev": "galahad2-lcdv2:0001" }))
+        .await
+        .expect("clear_lcd");
+
+    // The MockBackend records every write the daemon makes. clear_lcd
+    // should add at least one new write whose cmd-byte (offset 1) is
+    // 12 (LCDControl). The setting's mode field is at offset 6 of the
+    // payload (which itself starts after the 6-byte A-class header,
+    // so absolute offset 6 in the packet).
+    let history_after = h.mock.write_history(&info);
+    let new_writes = &history_after[history_before..];
+
+    let lcd_control_cmd = 12u8;
+    let lcd_control_writes: Vec<&Vec<u8>> = new_writes
+        .iter()
+        .filter(|w| w.len() >= 2 && w[1] == lcd_control_cmd)
+        .collect();
+    assert!(
+        !lcd_control_writes.is_empty(),
+        "clear_lcd must issue at least one LCDControl (cmd {lcd_control_cmd}) write; \
+         got new write cmds: {:?}",
+        new_writes
+            .iter()
+            .map(|w| w.get(1).copied())
+            .collect::<Vec<_>>()
     );
 
     h.shutdown().await;

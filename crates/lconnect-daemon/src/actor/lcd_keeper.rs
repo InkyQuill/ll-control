@@ -2,8 +2,8 @@
 //! cadence to keep the LCD out of LocalUI mode.
 //!
 //! Cmd 14 (`SendJpeg`) is empirically transient: the firmware decodes and
-//! displays the JPEG within ~50ms but auto-reverts to LocalUI default
-//! after ~20s (see the rustdoc on
+//! displays the JPEG within ~50ms but stops showing it within roughly
+//! 20s if the keeper does not refresh (see the rustdoc on
 //! `lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request`).
 //! For sustained static-image display, this actor re-pushes the stored
 //! frame every `refresh_ms` (production: 15000) so the firmware never
@@ -11,8 +11,14 @@
 //!
 //! Internal state is `Option<bytes::Bytes>` -- the "current frame slot".
 //! - `LcdFrameMsg::Set(b)` pushes immediately AND stores the frame.
-//! - `LcdFrameMsg::Clear` drops the slot. No clear command is issued;
-//!   the firmware self-reverts to LocalUI ~20s after the last cmd 14.
+//! - `LcdFrameMsg::Clear` drops the slot. The keeper itself does NOT
+//!   issue any wire command on Clear -- it just stops refreshing. The
+//!   IPC layer's `clear_lcd` is the path that actually clears the
+//!   panel, by sending `LCDControl{mode=LocalUI}` (cmd 12) directly
+//!   through the hid_io channel after instructing this keeper to stop.
+//!   P1H-1 live smoke confirmed the firmware does NOT auto-revert
+//!   when the keeper goes quiet -- the panel holds the last uploaded
+//!   frame indefinitely until an explicit mode change arrives.
 //! - On interval tick, if the slot is `Some`, the frame is re-pushed.
 //!
 //! Phase 4's theme engine plugs into the same `frame_rx` mpsc with
@@ -60,9 +66,13 @@ pub fn spawn(
                         current = Some(jpeg);
                     }
                     Some(LcdFrameMsg::Clear) => {
-                        // No clear command on the wire -- the firmware
-                        // self-reverts to LocalUI ~20s after the last
-                        // cmd 14. Just drop the slot so we stop refreshing.
+                        // Drop the slot so we stop refreshing. The
+                        // keeper does NOT issue any wire command here
+                        // -- the IPC layer's clear_lcd sends
+                        // LCDControl{mode=LocalUI} directly to revert
+                        // the panel. (Pre-P1H-1 we believed the
+                        // firmware self-reverted; live smoke proved
+                        // otherwise. See module-level docs.)
                         current = None;
                     }
                     None => {
