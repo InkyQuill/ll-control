@@ -11,37 +11,11 @@
 //! `set_led_colors`. The colour list is either a single `--color` repeated
 //! `--count` times or a `--from-file` containing one `#RRGGBB` per line.
 
-use crate::connection::connect;
+use crate::connection::{connect, resolve_device};
 use crate::{LedColorsArgs, LightingArgs, LightingSubcommand};
-use anyhow::{anyhow, bail, Context, Result};
-use lconnect_ipc::client::IpcClient;
-use lconnect_ipc::types::{DeviceDescriptor, DeviceId, LightingInfo, Rgb};
+use anyhow::{bail, Context, Result};
+use lconnect_ipc::types::{LightingInfo, Rgb};
 use serde_json::json;
-
-/// Resolve a `DeviceId`: honour `--device` if present, otherwise call
-/// `list_devices` and auto-pick when exactly one device is attached.
-async fn resolve_device(client: &IpcClient, override_id: Option<String>) -> Result<DeviceId> {
-    if let Some(s) = override_id {
-        return Ok(DeviceId::new(s));
-    }
-    let v = client
-        .call("list_devices", json!({}))
-        .await
-        .context("list_devices RPC failed while resolving --device")?;
-    let descs: Vec<DeviceDescriptor> = serde_json::from_value(v)
-        .context("failed to deserialise list_devices response as Vec<DeviceDescriptor>")?;
-    match descs.len() {
-        0 => bail!("no devices attached"),
-        1 => Ok(descs.into_iter().next().unwrap().id),
-        _ => {
-            let ids: Vec<String> = descs.iter().map(|d| d.id.as_str().to_string()).collect();
-            Err(anyhow!(
-                "ambiguous, please specify --device. Candidates: {}",
-                ids.join(", ")
-            ))
-        }
-    }
-}
 
 /// Validate that `kind` is one of `fan` or `pump`.
 fn validate_lighting_kind(kind: &str) -> Result<&'static str> {
