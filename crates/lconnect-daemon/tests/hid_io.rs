@@ -52,3 +52,41 @@ async fn write_read_64_returns_canned_response() {
     assert_eq!(resp[0], 0x01);
     assert_eq!(resp[1], 0x86);
 }
+
+#[tokio::test]
+async fn write_read_512_c_class_returns_canned_response() {
+    // C-class framing uses report_id 0x03 (e.g., SendH264Frame512 cmd 0x0d).
+    // Pre-fix, drain_for_echo_512 hardcoded report_id 0x02 and would
+    // discard this response as stale, exhausting the retry budget and
+    // poisoning the device's USB read buffer for the next call.
+    let mock = MockBackend::new();
+    mock.add_device(lcdv2_info());
+    let mut canned = vec![0u8; 512];
+    canned[0] = 0x03;
+    canned[1] = 0x0d;
+    mock.queue_response(&lcdv2_info(), canned);
+
+    let backend: Arc<dyn HidBackend> = Arc::new(mock);
+    let (_sd_tx, sd_rx) = watch::channel(false);
+    let tx = hid_io::spawn(backend, lcdv2_info(), sd_rx).expect("spawn hid_io");
+
+    let (reply_tx, reply_rx) = oneshot::channel();
+    let mut bytes = vec![0u8; 512];
+    bytes[0] = 0x03;
+    bytes[1] = 0x0d;
+    tx.send(HidCommand::WriteRead512 {
+        bytes,
+        expected_report_id: 0x03,
+        expected_cmd: 0x0d,
+        reply: reply_tx,
+    })
+    .await
+    .expect("send hid command");
+
+    let resp = reply_rx
+        .await
+        .expect("hid_io dropped reply channel")
+        .expect("hid_io returned an error");
+    assert_eq!(resp[0], 0x03);
+    assert_eq!(resp[1], 0x0d);
+}

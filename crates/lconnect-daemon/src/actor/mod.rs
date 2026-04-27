@@ -41,9 +41,16 @@ pub enum HidCommand {
         expected_cmd: u8,
         reply: oneshot::Sender<lconnect_hid::Result<[u8; 64]>>,
     },
-    /// Write then read one response (B-class).
+    /// Write then read one response (512-byte; B-class or C-class).
+    ///
+    /// `expected_report_id` distinguishes the two framings: `0x02` for
+    /// `FramingKind::B` and `0x03` for `FramingKind::C`. Hardcoding either
+    /// here would cause the drain loop to discard real responses on the
+    /// other class and leave the device's USB buffer poisoned with
+    /// the actual reply for the next unrelated read to consume.
     WriteRead512 {
         bytes: Vec<u8>,
+        expected_report_id: u8,
         expected_cmd: u8,
         reply: oneshot::Sender<lconnect_hid::Result<[u8; 512]>>,
     },
