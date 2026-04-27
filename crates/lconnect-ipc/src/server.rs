@@ -1,19 +1,19 @@
-//! JSON-RPC 2.0 server over `UnixListener`.
+//! JSON-RPC 2.0 server over `UnixListener` (or any `AsyncRead+AsyncWrite` stream).
 //!
-//! [`IpcServer::serve`] binds the socket, accepts long-lived connections,
-//! reads line-delimited JSON-RPC requests, dispatches them to a
-//! [`DaemonRpc`] impl, and writes responses on the same connection.
-//! Server-pushed notifications (e.g. `hello`, `snapshot`) ride the same
-//! connection.
+//! [`IpcServer::serve`] binds the socket and accepts long-lived
+//! connections, spawning a per-connection task that reads line-delimited
+//! JSON-RPC requests, dispatches them to a [`DaemonRpc`] impl, and writes
+//! responses on the same connection. The per-connection writer is shared
+//! (`Arc<Mutex<W>>`) so request responses and server-pushed notifications
+//! (e.g. `hello`, `snapshot`) serialise their writes without interleaving
+//! partial JSON lines.
 //!
 //! # Concurrency model
 //!
-//! Connections are driven concurrently inside a single task using
-//! [`futures::stream::FuturesUnordered`]. The crate's tokio dependency
-//! does not enable the `rt` feature, so `tokio::spawn` is unavailable
-//! here; callers that want to handle accept errors or co-locate the
-//! server with other tasks should drive [`IpcServer::serve`] from the
-//! daemon's runtime.
+//! Each accepted connection runs on its own [`tokio::spawn`]ed task, so a
+//! slow or stalled client cannot block the accept loop or starve other
+//! clients. Streaming subscriptions (e.g. `subscribe_snapshots`) further
+//! spawn a per-subscription pump task that shares the connection writer.
 //!
 //! # Wire format
 //!
@@ -38,8 +38,7 @@ use crate::{
     DaemonRpc, DeviceId, FramingKind, IpcError, LcdConfig, LedTarget, LightingConfig, LightingKind,
     Pwm, PwmSource, ResetToken,
 };
-use futures::stream::{FuturesUnordered, StreamExt};
-use futures::FutureExt;
+use futures::stream::StreamExt;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::Path;
@@ -71,8 +70,11 @@ impl<R: DaemonRpc> IpcServer<R> {
     /// Bind the socket and accept connections forever.
     ///
     /// Removes any stale socket file at `socket_path` before binding.
-    /// Each accepted connection is driven to completion concurrently
-    /// alongside the accept loop via [`FuturesUnordered`].
+    /// Each accepted connection is handed off to a dedicated
+    /// [`tokio::spawn`]ed task, so slow clients cannot stall the accept
+    /// loop. The spawned [`tokio::task::JoinHandle`]s are intentionally
+    /// detached: a per-connection panic ends that connection but does
+    /// not propagate into the daemon's runtime.
     ///
     /// # Errors
     /// Fails if the socket path is already in use, unwritable, or the
@@ -86,34 +88,14 @@ impl<R: DaemonRpc> IpcServer<R> {
         let listener = UnixListener::bind(socket_path)?;
         info!("IPC server listening at {}", socket_path.display());
 
-        let mut connections: FuturesUnordered<_> = FuturesUnordered::new();
         loop {
-            // Drive the accept loop and any in-flight connections
-            // concurrently. We do not depend on the tokio `macros`
-            // feature here, so we use `futures::future::select` over
-            // hand-fused futures rather than `tokio::select!`.
-            let accept = listener.accept().fuse();
-            futures::pin_mut!(accept);
-
-            // If there are no in-flight connections, just wait for the
-            // next accept; otherwise race accept against the next
-            // completion from the connection set.
-            if connections.is_empty() {
-                let (stream, _addr) = accept.await?;
-                connections.push(spawn_connection(stream, self.rpc.clone()));
-            } else {
-                let next = connections.next();
-                futures::pin_mut!(next);
-                match futures::future::select(accept, next).await {
-                    futures::future::Either::Left((accept_res, _next)) => {
-                        let (stream, _addr) = accept_res?;
-                        connections.push(spawn_connection(stream, self.rpc.clone()));
-                    }
-                    futures::future::Either::Right((_done, _accept)) => {
-                        // A connection finished; loop and re-arm.
-                    }
+            let (stream, _addr) = listener.accept().await?;
+            let rpc = self.rpc.clone();
+            tokio::spawn(async move {
+                if let Err(e) = handle_connection(stream, rpc).await {
+                    warn!("IPC connection ended with error: {e}");
                 }
-            }
+            });
         }
     }
 
@@ -136,18 +118,6 @@ impl<R: DaemonRpc> IpcServer<R> {
         S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     {
         handle_connection(stream, self.rpc.clone()).await
-    }
-}
-
-/// Wrap [`handle_connection`] so it returns `()` (suitable for stuffing
-/// into a [`FuturesUnordered`]) and logs any per-connection error.
-async fn spawn_connection<S, R>(stream: S, rpc: Arc<R>)
-where
-    S: AsyncRead + AsyncWrite + Send + Unpin + 'static,
-    R: DaemonRpc,
-{
-    if let Err(e) = handle_connection(stream, rpc).await {
-        warn!("IPC connection ended with error: {e}");
     }
 }
 
