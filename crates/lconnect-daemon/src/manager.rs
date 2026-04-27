@@ -435,14 +435,21 @@ fn parse_rotation(s: &str) -> ScreenRotation {
 
 /// Map the persistence LCD-mode string back into the wire-format enum.
 /// Empty / unknown -> LocalUI. Mirrors `ipc_server::lcd_mode_from_str`.
+///
+/// LCDTest and LCDSetting are intentionally rejected here as defense in
+/// depth: a malformed (e.g. hand-edited) persistence file, or a TOML
+/// written before the IPC-side guard landed, must not be able to re-issue
+/// a panel-locking mode on every hot-plug. Both parsers must agree.
 fn parse_lcd_mode(s: &str) -> LCDControlMode {
     match s {
+        "LocalUI" | "local_ui" => LCDControlMode::LocalUI,
         "Application" | "application" => LCDControlMode::Application,
         "LocalH264" | "local_h264" => LCDControlMode::LocalH264,
         "LocalAVI" | "local_avi" => LCDControlMode::LocalAVI,
-        "LCDSetting" | "lcd_setting" => LCDControlMode::LCDSetting,
-        "LCDTest" | "lcd_test" => LCDControlMode::LCDTest,
-        _ => LCDControlMode::LocalUI,
+        _ => {
+            warn!("ignoring unknown/unsafe persisted LCD mode '{s}'; falling back to LocalUI");
+            LCDControlMode::LocalUI
+        }
     }
 }
 
@@ -465,4 +472,51 @@ fn build_descriptor(id: &DeviceId, info: &DeviceInfo) -> anyhow::Result<DeviceDe
     }))?;
     debug!("built descriptor for {}", id.as_str());
     Ok(descriptor)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Replay-side parser must accept every mode the IPC layer is
+    /// allowed to persist. Mirrors `ipc_server::tests::
+    /// lcd_mode_from_str_accepts_safe_modes` so the two parsers can't
+    /// drift apart.
+    #[test]
+    fn parse_lcd_mode_accepts_safe_modes() {
+        assert!(matches!(parse_lcd_mode("LocalUI"), LCDControlMode::LocalUI));
+        assert!(matches!(
+            parse_lcd_mode("Application"),
+            LCDControlMode::Application
+        ));
+        assert!(matches!(
+            parse_lcd_mode("LocalH264"),
+            LCDControlMode::LocalH264
+        ));
+        assert!(matches!(
+            parse_lcd_mode("LocalAVI"),
+            LCDControlMode::LocalAVI
+        ));
+    }
+
+    /// Defense in depth: even if a malformed TOML lands on disk with
+    /// `lcd.control_mode = "LCDTest"`, replay must NOT re-issue the
+    /// panel-locking mode on hot-plug. Both parsers must reject the
+    /// same set of values.
+    #[test]
+    fn parse_lcd_mode_rejects_unsafe_modes() {
+        for unsafe_mode in [
+            "LCDTest",
+            "lcd_test",
+            "LCDSetting",
+            "lcd_setting",
+            "garbage",
+            "",
+        ] {
+            assert!(
+                matches!(parse_lcd_mode(unsafe_mode), LCDControlMode::LocalUI),
+                "unsafe/unknown persisted mode {unsafe_mode:?} must fall back to LocalUI"
+            );
+        }
+    }
 }

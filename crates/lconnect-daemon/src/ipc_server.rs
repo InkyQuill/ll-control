@@ -400,12 +400,19 @@ fn rotation_from_degrees(deg: u16) -> ScreenRotation {
 
 fn lcd_mode_from_str(s: &str) -> LCDControlMode {
     match s {
+        "LocalUI" | "local_ui" => LCDControlMode::LocalUI,
         "Application" | "application" => LCDControlMode::Application,
         "LocalH264" | "local_h264" => LCDControlMode::LocalH264,
         "LocalAVI" | "local_avi" => LCDControlMode::LocalAVI,
-        "LCDSetting" | "lcd_setting" => LCDControlMode::LCDSetting,
-        "LCDTest" | "lcd_test" => LCDControlMode::LCDTest,
-        _ => LCDControlMode::LocalUI,
+        // LCDTest and LCDSetting are intentionally not exposed via IPC --
+        // they are firmware-internal modes that lock the panel until
+        // explicitly cleared. Treat them as unknown so set_lcd_config
+        // does not persist a mode that would re-lock the panel on every
+        // hot-plug. Mirrors the CLI's `validate_mode` guard.
+        _ => {
+            warn!("ignoring unknown/unsafe LCD mode '{s}'; falling back to LocalUI");
+            LCDControlMode::LocalUI
+        }
     }
 }
 
@@ -846,5 +853,56 @@ impl DaemonRpc for IpcServerImpl {
         self.stats.inc_ipc_request();
         let n = u32::try_from(self.manager.list().await.len()).unwrap_or(u32::MAX);
         Ok(self.stats.snapshot(n))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Sanity check that the public LCD modes still round-trip through the
+    /// IPC parser. If LocalUI/Application/LocalH264/LocalAVI ever stop
+    /// matching, this test fails before we ship a daemon that can't
+    /// honour valid IPC requests.
+    #[test]
+    fn lcd_mode_from_str_accepts_safe_modes() {
+        assert!(matches!(
+            lcd_mode_from_str("LocalUI"),
+            LCDControlMode::LocalUI
+        ));
+        assert!(matches!(
+            lcd_mode_from_str("Application"),
+            LCDControlMode::Application
+        ));
+        assert!(matches!(
+            lcd_mode_from_str("LocalH264"),
+            LCDControlMode::LocalH264
+        ));
+        assert!(matches!(
+            lcd_mode_from_str("LocalAVI"),
+            LCDControlMode::LocalAVI
+        ));
+    }
+
+    /// LCDTest and LCDSetting are firmware-internal modes that lock the
+    /// panel until explicitly cleared; they MUST NOT be reachable through
+    /// the IPC parser, regardless of casing/snake-casing. If this test
+    /// ever flips, a direct IPC caller can persist a mode that re-bricks
+    /// the panel on every hot-plug.
+    #[test]
+    fn lcd_mode_from_str_rejects_unsafe_modes() {
+        for unsafe_mode in [
+            "LCDTest",
+            "lcd_test",
+            "LCDSetting",
+            "lcd_setting",
+            "garbage",
+            "",
+        ] {
+            assert!(
+                matches!(lcd_mode_from_str(unsafe_mode), LCDControlMode::LocalUI),
+                "unsafe/unknown mode {unsafe_mode:?} must fall back to LocalUI"
+            );
+        }
     }
 }
