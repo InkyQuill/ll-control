@@ -1,0 +1,112 @@
+Cmd-15 (UploadJpeg) activation investigation -- DEFERRED
+==========================================================
+
+Status:    Deferred. Not run during the Phase 1 timebox.
+Reason:    The power-cycle hypothesis test requires a full host
+           reboot or a physical USB unplug/replug of the AIO
+           pump while the host is on. The user could not perform
+           that during the Phase 1 smoke window.
+Date:      2026-04-27 (filed)
+Operator:  Inky
+
+
+Background
+----------
+Phase 0e closed the cross-family classification of cmd 15: it is
+a transient PushJpg + stored UpdateFireWare with a filename pattern
+(see docs/protocol/cross-device-survey.md section 6.5). What remains
+unknown for the LCDV2 specifically is the *activation* mechanism --
+when does a successfully uploaded cmd-15 image actually render on
+the LCD?
+
+Two hypotheses are open:
+
+(a) Boot-time display: cmd 15 writes a stored image. The firmware
+    renders it on next power-cycle (or USB resume from suspend).
+    A "boot logo" / "splash" path. If true, exposing this through
+    a future `lconnectctl lcd boot-image <PATH>` is a clean Phase 3
+    feature.
+
+(b) Sibling activate cmd: similar to slv3/lcd207's filename-keyed
+    UpdateFireWare. After cmd 15, a second cmd writes a marker
+    that selects which uploaded image is "active". The Phase 0e
+    cross-family survey strongly suggests slv3 / lcd207 work this
+    way, but the LCDV2-specific activate cmd has not been
+    identified.
+
+
+Procedure (when ready to run)
+-----------------------------
+
+Step 1 -- Power-cycle hypothesis (highest priority)
+
+  cargo run -p verify-galahad -- upload-jpeg \
+    --mode upload \
+    --path crates/lconnect-image/test-images/02-concentric-rings.png
+
+  ... after the upload completes, full host reboot OR physical USB
+      unplug + replug of the AIO pump cable.
+
+  Observe the LCD on next boot. Two outcomes:
+    -- shows concentric-rings: HYPOTHESIS (a) CONFIRMED.
+       Document the activation as "next power-cycle". File
+       a Phase 3 follow-up to expose `lconnectctl lcd boot-image`
+       via a new IPC method (separate from set_lcd_image).
+       For Phase 1: do NOT lift the cmd-15 IPC seal mid-phase.
+
+    -- shows the firmware-default UI: HYPOTHESIS (a) refuted.
+       Move to Step 2.
+
+Step 2 -- LCDControlMode toggle hypothesis
+
+  After a successful cmd-15 upload, cycle through:
+    cargo run -p verify-galahad -- lcd-control --mode local-h264
+    cargo run -p verify-galahad -- lcd-control --mode local-avi
+    cargo run -p verify-galahad -- lcd-control --mode local-ui
+
+  Does the stored image render in either mode? Read-only-ish; these
+  are state changes, not writes to the LCD.
+
+Step 3 -- Sibling-activate-cmd C# grep
+
+  Search the C# source one more time for callers of cmd 15
+  (`UploadJpeg`):
+    rg -n "UploadJpeg|UploadJPG" winver/L-Connect\ 3/  # if available
+    rg -n "UploadJpeg|UploadJPG" /path/to/L-Connect3/
+
+  Look for any followup, retry, or paired command. Document any
+  candidate found.
+
+Step 4 -- Write findings
+
+  Replace the body of this file with the actual hypothesis +
+  observations + classification:
+    - confirmed
+    - refuted
+    - inconclusive (timebox expired)
+
+  Note any Phase 3 follow-up implications.
+
+
+Safety notes
+------------
+- Cmd 15 is currently sealed off from the IPC surface (set_lcd_image
+  only invokes cmd 14 SendJpeg). Verify-galahad is the only path
+  that can reach cmd 15. Do not lift the IPC seal until activation
+  is understood and the user has explicitly opted in.
+
+- The cross-device survey notes (section 6.5) classified cmd 15 as
+  "stored write" with no observed bricking risk in the LCDV2
+  family. The Phase 0e probes against the user's device produced
+  no visible behaviour change after the upload, so a single test
+  pass is presumed safe to retry.
+
+- Do not power-cycle the host while a cmd-15 upload is in flight.
+  Wait for verify-galahad to print success before cycling.
+
+
+Phase 1 disposition
+-------------------
+Cmd-15 investigation deferred. Phase 1 proceeds without lifting
+the IPC seal. Re-open this task when the user can spare a host
+reboot (or has scheduled maintenance window with the AIO).
