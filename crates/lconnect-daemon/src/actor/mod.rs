@@ -89,36 +89,43 @@ pub enum LightingStateMsg {
 
 /// Spawn the full per-device actor tree.
 ///
-/// Reads any persisted settings under `persistence_key`, opens the HID
-/// handle via `backend.open(&info)`, then spawns the five sibling
-/// actors (hid_io, sensor_poll, lighting_keeper, lcd_keeper,
-/// command_dispatch). The returned `DeviceHandles` is the daemon's
-/// only reference to the running tree -- dropping it (or flipping the
-/// shared `shutdown` watch) tears the whole tree down.
+/// Opens the HID handle via `backend.open(&info)`, then spawns the
+/// five sibling actors (hid_io, sensor_poll, lighting_keeper,
+/// lcd_keeper, command_dispatch) seeded from `initial_settings`. The
+/// returned `DeviceHandles` is the daemon's only reference to the
+/// running tree -- dropping it (or flipping the shared `shutdown`
+/// watch) tears the whole tree down.
 ///
-/// The keepers' "initial state" is seeded from on-disk persistence,
+/// The keepers' "initial state" is taken from `initial_settings`,
 /// which IS replay-on-spawn for lighting (the keepers re-issue their
 /// initial fan/pump state on their first interval tick). Explicit
 /// fan/pump PWM and LCD-config replay -- which are not auto-driven by
 /// any keeper -- land in P1D-15.
 ///
+/// # Why `initial_settings` is a parameter (not read here)
+///
+/// `manager::attach` performs a single `persistence.read(...)` and
+/// passes the same `DeviceSettings` instance into both this function
+/// (for keeper seeding) and `replay_persisted_settings` (for fan /
+/// pump / LCD writes). Reading twice would open a TOCTOU window where
+/// a sibling write between the two reads could leave the keepers
+/// seeded with state-A while replay sends state-B for fan/pump.
+/// `PersistenceStore` is still passed through because
+/// `command_dispatch` needs it for its own debounced writes.
+///
 /// # Errors
 ///
 /// Returns `Err` if `backend.open(&info)` fails (typically
 /// `Error::DeviceNotFound` if the hidraw path was racing detach).
-/// Persistence read errors are also propagated; on a corrupt or
-/// unreadable file, the manager logs and skips the device for this
-/// poll iteration.
 pub fn spawn_device_actor_tree(
     backend: Arc<dyn HidBackend>,
     info: DeviceInfo,
     config: &Config,
     persistence: Arc<PersistenceStore>,
     persistence_key: String,
+    initial_settings: DeviceSettings,
     shutdown: Shutdown,
 ) -> anyhow::Result<DeviceHandles> {
-    let settings = persistence.read(&persistence_key)?;
-
     let hid_io_tx = hid_io::spawn(backend, info, shutdown.clone())?;
 
     // sensor_poll: poll period derived from sensor_hz (clamped >=1 to
@@ -143,8 +150,8 @@ pub fn spawn_device_actor_tree(
     let _light_handle = lighting_keeper::spawn(
         hid_io_tx.clone(),
         config.lighting.reissue_ms,
-        settings.lighting.fan.clone(),
-        settings.lighting.pump.clone(),
+        initial_settings.lighting.fan.clone(),
+        initial_settings.lighting.pump.clone(),
         lighting_state_rx,
         shutdown.clone(),
     );
@@ -153,7 +160,7 @@ pub fn spawn_device_actor_tree(
     let _disp_handle = command_dispatch::spawn(
         persistence,
         persistence_key,
-        settings,
+        initial_settings,
         settings_rx,
         shutdown,
     );

@@ -258,11 +258,12 @@ impl DeviceManager {
         // map), the sender's Drop flips the watch.
         let (shutdown_tx, shutdown_rx) = watch::channel(false);
 
-        // Re-read persisted settings so the replay helper sees exactly
-        // what the keepers were seeded with. spawn_device_actor_tree
-        // already reads them once internally; we accept the second
-        // read (one disk hit) to avoid restructuring the actor-tree
-        // entry point just to plumb the parsed struct out.
+        // invariant: same settings instance feeds keepers and replay
+        // -- TOCTOU window closed. spawn_device_actor_tree no longer
+        // reads persistence internally; it takes the parsed struct as
+        // a parameter so a sibling write between two reads cannot
+        // leave the keepers seeded with state-A while replay sends
+        // state-B for fan/pump.
         let settings = self.persistence.read(id.as_str())?;
 
         let handles = spawn_device_actor_tree(
@@ -271,6 +272,7 @@ impl DeviceManager {
             &self.config,
             self.persistence.clone(),
             id.as_str().to_string(),
+            settings.clone(),
             shutdown_rx,
         )?;
 
