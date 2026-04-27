@@ -53,7 +53,13 @@ async fn sensor_poll_publishes_decoded_snapshot() {
     let backend: Arc<dyn HidBackend> = Arc::new(mock);
     let (_sd_tx, sd_rx) = watch::channel(false);
 
-    let hid_tx = hid_io::spawn(backend, lcdv2_info(), sd_rx.clone()).expect("spawn hid_io");
+    let hid_tx = hid_io::spawn(
+        backend,
+        lcdv2_info(),
+        std::sync::Arc::new(lconnect_daemon::stats::Stats::new()),
+        sd_rx.clone(),
+    )
+    .expect("spawn hid_io");
     let mut snap_rx = sensor_poll::spawn(hid_tx, 50, sd_rx);
 
     // Wait for at least one tick to land. `changed()` resolves on the

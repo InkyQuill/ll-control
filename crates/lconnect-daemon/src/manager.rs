@@ -35,6 +35,7 @@ use crate::actor::{spawn_device_actor_tree, DeviceHandles, HidCommand};
 use crate::codec_str::{parse_lcd_mode, rotation_from_degrees};
 use crate::config::Config;
 use crate::persistence::{DeviceSettings, PersistenceStore};
+use crate::stats::Stats;
 use lconnect_hid::{DeviceFamilyId, DeviceInfo, HidBackend};
 use lconnect_ipc::{DeviceDescriptor, DeviceId};
 use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request as build_fan_pwm_request;
@@ -145,6 +146,11 @@ pub struct DeviceManager {
     backend: Arc<dyn HidBackend>,
     persistence: Arc<PersistenceStore>,
     config: Config,
+    /// Process-wide counter set; cloned into each spawned actor tree so
+    /// the hid_io actor can bump `hid_write_count` directly. The IPC
+    /// server holds its own clone for `daemon_stats` and IPC-side
+    /// counters.
+    stats: Arc<Stats>,
     /// Per-family attach-order counters. Reset on each daemon process.
     counters: HashMap<String, u32>,
     devices: Arc<RwLock<HashMap<DeviceId, ManagedDevice>>>,
@@ -159,11 +165,13 @@ impl DeviceManager {
         backend: Arc<dyn HidBackend>,
         persistence: Arc<PersistenceStore>,
         config: Config,
+        stats: Arc<Stats>,
     ) -> Self {
         Self {
             backend,
             persistence,
             config,
+            stats,
             counters: HashMap::new(),
             devices: Arc::new(RwLock::new(HashMap::new())),
             by_key: HashMap::new(),
@@ -274,6 +282,7 @@ impl DeviceManager {
             self.persistence.clone(),
             id.as_str().to_string(),
             settings.clone(),
+            self.stats.clone(),
             shutdown_rx,
         )?;
 

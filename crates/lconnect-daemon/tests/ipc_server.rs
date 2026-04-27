@@ -72,7 +72,12 @@ async fn make_harness(allow_raw_send: bool) -> Harness {
     let backend: Arc<dyn HidBackend> = Arc::new(mock);
 
     let store = Arc::new(PersistenceStore::new_with_root(tmp.path().to_path_buf()));
-    let manager = DeviceManager::new(backend, store.clone(), fast_poll_config());
+    let manager = DeviceManager::new(
+        backend,
+        store.clone(),
+        fast_poll_config(),
+        Arc::new(Stats::new()),
+    );
     let manager_handle = manager.spawn().await;
 
     // Wait for the first poll tick to attach the seeded device.

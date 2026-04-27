@@ -7,6 +7,7 @@
 use lconnect_daemon::config::Config;
 use lconnect_daemon::manager::DeviceManager;
 use lconnect_daemon::persistence::PersistenceStore;
+use lconnect_daemon::stats::Stats;
 use lconnect_hid::{DeviceFamilyId, DeviceInfo, HidBackend, MockBackend};
 use lconnect_ipc::DeviceId;
 use std::path::PathBuf;
@@ -40,7 +41,7 @@ async fn attach_spawns_actor_tree() {
     let tmp = TempDir::new().expect("tempdir");
     let store = Arc::new(PersistenceStore::new_with_root(tmp.path().to_path_buf()));
 
-    let manager = DeviceManager::new(backend, store, fast_poll_config());
+    let manager = DeviceManager::new(backend, store, fast_poll_config(), Arc::new(Stats::new()));
     let handle = manager.spawn().await;
 
     // Initially: no devices.
@@ -73,7 +74,7 @@ async fn detach_drops_actor_tree() {
     let info = lcdv2_info("SN-A", "/mock/hidraw0");
     mock.add_device(info.clone());
 
-    let manager = DeviceManager::new(backend, store, fast_poll_config());
+    let manager = DeviceManager::new(backend, store, fast_poll_config(), Arc::new(Stats::new()));
     let handle = manager.spawn().await;
 
     // Wait for the attach to be observed (poll tick + replay settle).
@@ -132,7 +133,7 @@ async fn device_id_allocation_per_family() {
     mock.add_device(lcdv2_info("SN-A", "/mock/hidraw0"));
     mock.add_device(lcdv2_info("SN-B", "/mock/hidraw1"));
 
-    let manager = DeviceManager::new(backend, store, fast_poll_config());
+    let manager = DeviceManager::new(backend, store, fast_poll_config(), Arc::new(Stats::new()));
     let handle = manager.spawn().await;
 
     // Wait for both attachments to reconcile (poll tick + replay
@@ -199,7 +200,7 @@ async fn replay_writes_fan_pwm_on_attach() {
     let info = lcdv2_info("SN-A", "/mock/hidraw0");
     mock.add_device(info.clone());
 
-    let manager = DeviceManager::new(backend, store, fast_poll_config());
+    let manager = DeviceManager::new(backend, store, fast_poll_config(), Arc::new(Stats::new()));
     let _handle = manager.spawn().await;
 
     // 50 ms hot-plug poll + 50 ms replay settle + 50 ms post-fan-PWM
