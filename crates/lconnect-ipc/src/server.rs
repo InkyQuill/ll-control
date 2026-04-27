@@ -24,12 +24,13 @@
 //!
 //! Returns a stream and therefore needs the writer half of the
 //! connection to be shared between the request-loop and a stream-pump
-//! task. [`handle_connection`] wraps the write half in an
+//! task. The per-connection handler wraps the write half in an
 //! `Arc<Mutex<...>>` so the request-response loop and any spawned
 //! notification pump can serialise their writes without interleaving
 //! partial JSON lines. The dispatcher's `subscribe_snapshots` arm
 //! returns immediately with `{"subscribed": true, ...}` and spawns a
-//! per-subscription task that consumes the [`BoxStream`] from
+//! per-subscription task that consumes the
+//! [`futures::stream::BoxStream`] returned from
 //! `IpcServerImpl::subscribe_snapshots` and emits each item as a
 //! `"snapshot"` notification.
 

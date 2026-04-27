@@ -24,8 +24,8 @@
 //! when the [`IpcClient`] is dropped.
 //!
 //! Daemon-side errors come back as JSON-RPC error objects with codes
-//! mirroring [`crate::IpcError::jsonrpc_code`]; [`map_jsonrpc_error`]
-//! reverses that mapping so callers see the same `IpcError` variants
+//! mirroring [`crate::IpcError::jsonrpc_code`]; the client reverses
+//! that mapping internally so callers see the same `IpcError` variants
 //! regardless of which side produced them.
 
 use crate::jsonrpc::{Notification, Request, Response};
