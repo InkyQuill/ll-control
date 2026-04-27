@@ -389,6 +389,14 @@ fn pump_scope_from_str(s: &str) -> PumpLightingScope {
     }
 }
 
+/// Convert a 0..=100 percentage to the wire value (0..=4) that the
+/// LCDV2 firmware expects for `brightness` and `speed` fields. This
+/// mirrors verify-galahad's `args.brightness / 25` convention from
+/// Phase 0c. Out-of-range percent values clamp at 4.
+fn percent_to_wire(percent: u8) -> u8 {
+    (percent / 25).min(4)
+}
+
 fn rotation_from_degrees(deg: u16) -> ScreenRotation {
     match deg {
         90 => ScreenRotation::Rotate90,
@@ -594,8 +602,10 @@ impl DaemonRpc for IpcServerImpl {
             LightingKind::Fan => {
                 let setting = FanLightingSetting {
                     mode: fan_mode_from_str(&cfg.mode),
-                    brightness: cfg.brightness_percent,
-                    speed: cfg.speed_percent,
+                    // Wire range is 0..=4 (5 levels); user gives 0..=100 percent.
+                    // Phase 0c found the device silently ignores out-of-range bytes.
+                    brightness: percent_to_wire(cfg.brightness_percent),
+                    speed: percent_to_wire(cfg.speed_percent),
                     color1: proto_color,
                     direction: direction_from_str(&cfg.direction),
                     disabled: cfg.disabled,
@@ -630,8 +640,9 @@ impl DaemonRpc for IpcServerImpl {
                 let setting = PumpLightingSetting {
                     scope: pump_scope_from_str(&scope_str),
                     mode: pump_mode_from_str(&cfg.mode),
-                    brightness: cfg.brightness_percent,
-                    speed: cfg.speed_percent,
+                    // Wire range is 0..=4; user gives 0..=100 percent. See Fan arm.
+                    brightness: percent_to_wire(cfg.brightness_percent),
+                    speed: percent_to_wire(cfg.speed_percent),
                     color1: proto_color,
                     direction: direction_from_str(&cfg.direction),
                     disabled: cfg.disabled,

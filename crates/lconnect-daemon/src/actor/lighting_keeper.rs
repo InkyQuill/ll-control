@@ -111,11 +111,18 @@ async fn write_and_log(hid_io_tx: &mpsc::Sender<HidCommand>, bytes: Vec<u8>, kin
     }
 }
 
+/// Convert a 0..=100 percentage to the wire value (0..=4) the LCDV2
+/// firmware expects for `brightness` and `speed`. Mirrors verify-galahad's
+/// `args.brightness / 25` from Phase 0c. Out-of-range values clamp at 4.
+fn percent_to_wire(percent: u8) -> u8 {
+    (percent / 25).min(4)
+}
+
 fn fan_setting_from_state(s: &LightingState) -> FanLightingSetting {
     let mut setting = FanLightingSetting {
         mode: parse_fan_mode(&s.mode),
-        brightness: s.brightness,
-        speed: s.speed,
+        brightness: percent_to_wire(s.brightness),
+        speed: percent_to_wire(s.speed),
         direction: parse_direction(&s.direction),
         disabled: s.disabled,
         ..FanLightingSetting::default()
@@ -129,8 +136,8 @@ fn pump_setting_from_state(s: &PumpLightingState) -> PumpLightingSetting {
     let mut setting = PumpLightingSetting {
         scope: parse_pump_scope(&s.scope),
         mode: parse_pump_mode(&s.mode),
-        brightness: s.brightness,
-        speed: s.speed,
+        brightness: percent_to_wire(s.brightness),
+        speed: percent_to_wire(s.speed),
         direction: parse_direction(&s.direction),
         disabled: s.disabled,
         ..PumpLightingSetting::default()
