@@ -3830,3 +3830,119 @@ When all of the following pass, Phase 1 is complete and Phase 2 (GUI shell) can 
 **Type consistency:** `Framing` (lconnect-hid) and `FramingKind` (lconnect-ipc) are intentionally separate types — the IPC type serialises across the wire as a strict A/B/C subset, while the internal `Framing` enum is `#[non_exhaustive]` for future extension. Conversion happens at the IPC boundary in `IpcServerImpl::raw_send`. Trait-method names in P1C-2 match what `IpcServer::dispatch` (P1C-4), the dispatch table in `IpcServerImpl` (P1D-11), and CLI subcommands (P1E-2..P1E-7) all reference. `DeviceHandles` field names are stable from P1D-4 through P1D-11.
 
 **Scope check:** Phase 1 is one cohesive deliverable (a working daemon + CLI). It is not decomposable into independent sub-projects without artificial cuts. The sub-phase breakdown (A..H) gives the implementer natural progress checkpoints, but each sub-phase depends on its predecessors.
+
+---
+
+## Phase 1 post-execution notes (filed 2026-04-27)
+
+**Final task count:** 41 of 41 planned tasks landed (P1A-1 through P1H-2),
+with P1G-1 explicitly deferred (procedure documented for future run).
+
+**Commit count:** ~50 commits between `eccf9dd` (last pre-P1A) and the
+Phase 1 closure tag.
+
+**Workspace gates at closure:**
+- `cargo build --workspace` ✓
+- `cargo build --workspace --release` ✓
+- `cargo test --workspace` ✓
+- `cargo clippy --workspace --all-targets -- -D warnings` ✓
+- `cargo fmt --all -- --check` ✓
+- `cargo doc --workspace --no-deps` ✓ (3 minor link warnings in `lconnect-ipc`,
+  filed as Style follow-ups)
+
+**Headline findings during execution:**
+
+1. **Lighting wire-conversion bug surfaced live** (`c920aff`). The protocol
+   crate's `PumpLightingSetting.brightness` / `.speed` are raw `u8` wire
+   bytes; the LCDV2 expects 0..=4. Daemon was writing raw 0..=100 percent.
+   Out-of-range bytes are silently ignored by firmware -- the IPC call
+   succeeds, HID write counter increments, no errors anywhere, but the
+   LED does not change. The Phase 1 unit test for `lighting_keeper`
+   (P1D-7) used MockBackend and asserted on the cmd byte at offset 1
+   but not the byte values at the brightness/speed offsets, which is
+   why the bug shipped. Improvement for Phase 2 testing strategy:
+   byte-level fixture comparison against verify-galahad's known-good
+   output for any new wire-touching codec.
+
+2. **`clear_lcd` does not visibly clear the LCD** (filed as task #132).
+   The Phase 0 assumption "firmware reverts to LocalUI ~20s after the
+   last cmd 14" was disproven: the LCDV2 firmware holds the last frame
+   indefinitely. Sending an explicit `LCDControl{mode=LocalUI}` does
+   revert the panel. Fix: `clear_lcd` should drop the keeper's frame
+   slot AND issue an explicit mode change.
+
+3. **HID-write counter undercounts.** `Stats::inc_hid_write` only fires
+   from `IpcServerImpl`'s helpers; keeper-driven writes (lighting,
+   LCD refresh) bypass the counter. Functionally invisible -- writes
+   still succeed -- but observability is incomplete. Fix scoped: move
+   the counter increment into the `hid_io` actor itself.
+
+4. **Concurrent agents on the same git index.** Three of the seven
+   parallel-task batches in the plan execution had at least one
+   sibling agent inadvertently capture another's staged hunks. Mitigated
+   by saving the `feedback_parallel-task-staging.md` memory: `git commit
+   -- <pathspec>` is the reliable per-agent isolation. After the memory
+   was saved (mid-Phase 1), no further sibling-staging mishaps occurred.
+
+5. **Verification cycle was load-bearing.** The two-agent audit
+   (rust-practices-verifier + hid-safety-reviewer) caught two Critical
+   and three High issues that smoke testing alone would not have found
+   (e.g. the C-class drain hardcoded report_id, a `LCDTest` mode
+   reachable through IPC). All five issues fixed before live smoke;
+   the live smoke would have been considerably more dangerous without
+   that pass.
+
+**Plan deviations:**
+
+- **P1B-1 through P1B-5** were already in flight when the plan was
+  formally written; the plan's task numbering retroactively documents
+  what landed. No deviation in content.
+- **`SensorSnapshot::Default`** was added to `lconnect-ipc` as a
+  prerequisite for `sensor_poll` (extra commit `8fbd5b1` in the P1D-6
+  batch). Not in the plan but trivially needed.
+- **`MockBackend::remove_device`** was added to `lconnect-hid` mid-
+  P1D-10 (one-line addition); the manager test needed it and the mock
+  hadn't grown that method yet. Functionally correct, just not
+  pre-anticipated.
+- **`tokio` features** grew incrementally (`rt` added in P1C-5,
+  `macros`/`rt-multi-thread` in dev-dependencies). Final feature set
+  matches the production needs of every consumer.
+
+**Real-hardware findings to feed forward:**
+
+- Re-issue cadence works as designed -- the lighting_keeper at 1.5s
+  and lcd_keeper at 15s both kept their respective state visible
+  across the test windows.
+- The firmware's LCD self-revert assumption was wrong (see headline 2).
+- The cmd-131 (SetPumpLighting) and cmd-20 (SetLedColors) paths
+  interact: a per-LED write is overridden by the next preset re-issue.
+  Phase 2's GUI lighting page should adopt the C# host's "one mode at
+  a time" UX (preset OR per-LED, not both concurrently).
+- Persistence replay across daemon restart is fast (~620 ms from
+  daemon start to fully-replayed device state on this rig).
+
+**Phase 2 inputs:**
+
+- The IPC contract (`DaemonRpc` trait, 17 methods) is now proven
+  end-to-end against real hardware. The Phase 2 GUI consumes this
+  contract verbatim.
+- The in-memory transport seam (P1C-6) is the attach point for the
+  Phase 2 mock-daemon harness (P2B-1). All 17 methods can be
+  exercised without hardware.
+- The lighting wire-conversion fix (`c920aff`) means the GUI can pass
+  user-facing 0..=100 percentages directly to the IPC and the daemon
+  handles the conversion. No GUI-side scaling needed.
+- Open follow-ups for early Phase 2 cleanup (per the rust-practices
+  audit Style findings): consolidate the `resolve_device` helpers
+  duplicated across the CLI command modules into a single
+  `crate::resolve_device` (or `connection.rs`) helper; consolidate the
+  string-to-enum parsers duplicated between `ipc_server` and
+  `lighting_keeper`. Both are mechanical refactors that pay back
+  immediately.
+
+**Phase 1 closure status: SHIPPABLE for development builds.**
+The two non-blocking follow-ups (clear_lcd, stats undercount) are
+quality-of-life issues, not correctness or safety issues. The
+deferred cmd-15 investigation is preserved for a future maintenance
+window. Phase 2 (GUI) execution can begin against the IPC surface
+this phase delivered.

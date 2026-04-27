@@ -1,8 +1,8 @@
 # L-Connect Linux
 
-Linux-native client for Lian Li L-Connect 3 hardware. **Phase 0d
-complete; daemon work begins next.** Protocol verification only at
-this stage — no daemon or GUI yet.
+Linux-native client for Lian Li L-Connect 3 hardware. **Phase 1
+complete: `lconnectd` daemon + `lconnectctl` CLI live-verified
+against Galahad II LCDV2.** GUI lands in Phase 2.
 
 ## Status
 
@@ -42,9 +42,18 @@ this stage — no daemon or GUI yet.
   confirmed asymmetric per-framing parser behavior (A-class permissive
   echo, B-class strict-on-unknown). New `verify-galahad probe`
   subcommand for cross-device experimentation.
-- 🚧 Daemon, GUI, theme engine — Phases 1–6.
-- 🚧 `CCommandPacket` (third framing class) — needed for
-  `SendH264Frame512`. Phase 1+.
+- ✅ **Phase 1**: `lconnectd` daemon + `lconnectctl` CLI live-verified
+  against Galahad II LCDV2 (FW 1.6, 2026-04-27). Sensors at 1 Hz,
+  fan/pump PWM, lighting (preset modes + per-LED via cmd 20), LCD
+  config + JPEG image with daemon-managed 15 s refresh loop, and
+  persistence replay across daemon restart and device hot-plug.
+  `CCommandPacket` framing codec landed. systemd `--user` unit + udev
+  rule + AUR PKGBUILD skeleton in place. Cmd-15 investigation deferred
+  (procedure preserved at
+  `docs/protocol/captures/2026-04-27-cmd15-investigation.txt`). See
+  `docs/protocol/captures/2026-04-27-phase-1-smoke-run.txt` for the
+  live smoke transcript.
+- 🚧 GUI, theme engine — Phases 2–6.
 
 See [`docs/superpowers/specs/2026-04-25-lconnect-linux-design.md`](docs/superpowers/specs/2026-04-25-lconnect-linux-design.md)
 for the full design and [`docs/superpowers/plans/`](docs/superpowers/plans/)
@@ -89,7 +98,7 @@ cargo run -p verify-galahad -- probe 0x86 --framing a --yes-read-only           
 
 For non-root access to the Galahad II LCDV2 hidraw node, install the rule
 from `docs/protocol/captures/legacy-scaffold/99-lian-li-galahad2.rules`
-(a proper multi-device rule lands in Phase 1):
+(a proper multi-device rule lands with the daemon — see below):
 
 ```bash
 sudo install -m 0644 \
@@ -98,6 +107,34 @@ sudo install -m 0644 \
 sudo udevadm control --reload-rules && sudo udevadm trigger
 # unplug and replug the device
 ```
+
+## Daemon installation
+
+Phase 1 ships `lconnectd` (the background daemon) and `lconnectctl` (the
+control CLI). The daemon owns the HID handles and exposes a JSON-RPC
+surface over `$XDG_RUNTIME_DIR/lconnect/daemon.sock`.
+
+```bash
+# Build + install binaries
+cargo install --path crates/lconnect-daemon
+cargo install --path crates/lconnect-cli
+
+# udev rule for non-root device access (multi-device)
+sudo install -m 0644 packaging/udev/70-lianli-hid.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
+
+# systemd --user unit
+mkdir -p ~/.config/systemd/user
+cp packaging/systemd/lconnectd.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now lconnectd
+
+# Confirm
+lconnectctl daemon status
+lconnectctl devices
+```
+
+Arch users: an AUR PKGBUILD skeleton is at `packaging/arch/PKGBUILD`.
 
 ## License
 
