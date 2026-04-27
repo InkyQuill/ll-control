@@ -36,6 +36,7 @@ async fn main() -> Result<()> {
         Arc::clone(&backend),
         Arc::clone(&persistence),
         config.clone(),
+        Arc::clone(&stats),
     );
     let manager_handle = manager.spawn().await;
 

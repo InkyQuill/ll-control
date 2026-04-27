@@ -38,7 +38,13 @@ async fn lcd_keeper_pushes_on_set_and_repushes_on_interval() {
     let backend: Arc<dyn HidBackend> = Arc::new(mock);
     let (_sd_tx, sd_rx) = watch::channel(false);
 
-    let hid_tx = hid_io::spawn(backend, lcdv2_info(), sd_rx.clone()).expect("spawn hid_io");
+    let hid_tx = hid_io::spawn(
+        backend,
+        lcdv2_info(),
+        std::sync::Arc::new(lconnect_daemon::stats::Stats::new()),
+        sd_rx.clone(),
+    )
+    .expect("spawn hid_io");
 
     let (frame_tx, frame_rx) = mpsc::channel::<LcdFrameMsg>(8);
     // 100ms refresh: at ~250ms we expect the immediate Set push plus at

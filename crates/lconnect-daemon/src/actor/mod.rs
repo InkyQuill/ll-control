@@ -11,6 +11,7 @@ pub mod sensor_poll;
 
 use crate::config::Config;
 use crate::persistence::{DeviceSettings, PersistenceStore};
+use crate::stats::Stats;
 use lconnect_hid::{DeviceInfo, HidBackend};
 use lconnect_ipc::SensorSnapshot;
 use std::sync::Arc;
@@ -117,6 +118,11 @@ pub enum LightingStateMsg {
 ///
 /// Returns `Err` if `backend.open(&info)` fails (typically
 /// `Error::DeviceNotFound` if the hidraw path was racing detach).
+// The arity is load-bearing: every parameter is a distinct dependency
+// (backend, info, config, persistence, persistence_key, initial_settings,
+// stats, shutdown). Bundling them into a struct just to mollify clippy
+// would obscure the call site, so we silence the lint here instead.
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_device_actor_tree(
     backend: Arc<dyn HidBackend>,
     info: DeviceInfo,
@@ -124,9 +130,10 @@ pub fn spawn_device_actor_tree(
     persistence: Arc<PersistenceStore>,
     persistence_key: String,
     initial_settings: DeviceSettings,
+    stats: Arc<Stats>,
     shutdown: Shutdown,
 ) -> anyhow::Result<DeviceHandles> {
-    let hid_io_tx = hid_io::spawn(backend, info, shutdown.clone())?;
+    let hid_io_tx = hid_io::spawn(backend, info, stats, shutdown.clone())?;
 
     // sensor_poll: poll period derived from sensor_hz (clamped >=1 to
     // avoid div-by-zero if config arrives with sensor_hz = 0).

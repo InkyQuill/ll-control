@@ -68,7 +68,13 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
 
     // hid_io actor (P1D-5).
     let (_sd_tx, sd_rx) = watch::channel(false);
-    let hid_io_tx = hid_io::spawn(backend, lcdv2_info(), sd_rx.clone()).expect("spawn hid_io");
+    let hid_io_tx = hid_io::spawn(
+        backend,
+        lcdv2_info(),
+        std::sync::Arc::new(lconnect_daemon::stats::Stats::new()),
+        sd_rx.clone(),
+    )
+    .expect("spawn hid_io");
 
     // lighting_keeper actor with a tight 50ms re-issue cadence so the
     // test wraps in well under a second.

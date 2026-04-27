@@ -223,8 +223,14 @@ impl IpcServerImpl {
 
 /// Issue an `HidCommand::Write` and await its reply, mapping any error
 /// into a generic `IpcError::DeviceBusy` (the only IPC variant for HID
-/// I/O failures). Bumps `Stats::hid_write_count` on success.
-async fn write_and_wait(handles: &DeviceHandles, stats: &Stats, bytes: Vec<u8>) -> Result<()> {
+/// I/O failures).
+///
+/// `Stats::hid_write_count` is bumped inside the hid_io actor on the
+/// success path, so this helper does not touch the counter directly --
+/// keeper-driven writes (which never enter this helper) need to count
+/// too, and centralising the increment at the actor avoids the
+/// double-counting hazard the IPC-side increment used to introduce.
+async fn write_and_wait(handles: &DeviceHandles, bytes: Vec<u8>) -> Result<()> {
     let (reply_tx, reply_rx) = oneshot::channel();
     handles
         .hid_io_tx
@@ -235,20 +241,17 @@ async fn write_and_wait(handles: &DeviceHandles, stats: &Stats, bytes: Vec<u8>) 
         .await
         .map_err(|e| IpcError::DeviceBusy(format!("hid_io channel closed: {e}")))?;
     match reply_rx.await {
-        Ok(Ok(())) => {
-            stats.inc_hid_write();
-            Ok(())
-        }
+        Ok(Ok(())) => Ok(()),
         Ok(Err(e)) => Err(IpcError::DeviceBusy(format!("hid write failed: {e}"))),
         Err(e) => Err(IpcError::DeviceBusy(format!("hid reply dropped: {e}"))),
     }
 }
 
 /// Issue an `HidCommand::WriteRead64`, decoding any I/O failure to
-/// `IpcError::DeviceBusy`. Bumps `Stats::hid_write_count` on success.
+/// `IpcError::DeviceBusy`. The hid_io actor bumps
+/// `Stats::hid_write_count` on the success path; see [`write_and_wait`].
 async fn write_read_64(
     handles: &DeviceHandles,
-    stats: &Stats,
     bytes: Vec<u8>,
     expected_cmd: u8,
 ) -> Result<[u8; 64]> {
@@ -262,16 +265,15 @@ async fn write_read_64(
         })
         .await
         .map_err(|e| IpcError::DeviceBusy(format!("hid_io channel closed: {e}")))?;
-    let buf = reply_rx
+    reply_rx
         .await
         .map_err(|e| IpcError::DeviceBusy(format!("hid reply dropped: {e}")))?
-        .map_err(|e| IpcError::DeviceBusy(format!("hid round-trip failed: {e}")))?;
-    stats.inc_hid_write();
-    Ok(buf)
+        .map_err(|e| IpcError::DeviceBusy(format!("hid round-trip failed: {e}")))
 }
 
 /// Issue an `HidCommand::WriteRead512`, decoding any I/O failure to
-/// `IpcError::DeviceBusy`. Bumps `Stats::hid_write_count` on success.
+/// `IpcError::DeviceBusy`. The hid_io actor bumps
+/// `Stats::hid_write_count` on the success path; see [`write_and_wait`].
 ///
 /// `expected_report_id` selects between B-class (`0x02`) and C-class
 /// (`0x03`) framings — the drain loop in `hid_io` matches against this
@@ -279,7 +281,6 @@ async fn write_read_64(
 /// the device's USB read buffer.
 async fn write_read_512(
     handles: &DeviceHandles,
-    stats: &Stats,
     bytes: Vec<u8>,
     expected_report_id: u8,
     expected_cmd: u8,
@@ -295,12 +296,10 @@ async fn write_read_512(
         })
         .await
         .map_err(|e| IpcError::DeviceBusy(format!("hid_io channel closed: {e}")))?;
-    let buf = reply_rx
+    reply_rx
         .await
         .map_err(|e| IpcError::DeviceBusy(format!("hid reply dropped: {e}")))?
-        .map_err(|e| IpcError::DeviceBusy(format!("hid round-trip failed: {e}")))?;
-    stats.inc_hid_write();
-    Ok(buf)
+        .map_err(|e| IpcError::DeviceBusy(format!("hid round-trip failed: {e}")))
 }
 
 /// Generate a 16-byte cryptographically-random hex token.
@@ -344,7 +343,7 @@ impl DaemonRpc for IpcServerImpl {
         // sharing the same expected cmd.
         let cmd = Command::GetFirmwareVersion as u8;
         let req = build_firmware_request().to_vec();
-        let buf1 = write_read_64(&handles, &self.stats, req, cmd).await?;
+        let buf1 = write_read_64(&handles, req, cmd).await?;
         // Second packet: send an empty A-frame? The C# reads two frames
         // for a single write. The drain helper consumes the first echo
         // and stops; we do not yet have a "read-only" path. Mirror the
@@ -353,13 +352,7 @@ impl DaemonRpc for IpcServerImpl {
         // round-trip yields packet 2-equivalent (and a leftover packet 1
         // that the next caller will see -- the drain_for_echo loop tolerates
         // up to 4 stale frames).
-        let buf2 = write_read_64(
-            &handles,
-            &self.stats,
-            build_firmware_request().to_vec(),
-            cmd,
-        )
-        .await?;
+        let buf2 = write_read_64(&handles, build_firmware_request().to_vec(), cmd).await?;
         let parsed = FirmwareVersion::from_two_responses(&buf1, &buf2)
             .map_err(|e| IpcError::ProtocolMismatch(format!("firmware decode: {e}")))?;
         let version = parsed.user_version.clone();
@@ -419,7 +412,7 @@ impl DaemonRpc for IpcServerImpl {
         let proto_pwm = ProtoPwm::new(percent.percent())
             .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
         let bytes = build_fan_pwm_request(proto_pwm).to_vec();
-        write_and_wait(&handles, &self.stats, bytes).await?;
+        write_and_wait(&handles, bytes).await?;
 
         let mut settings = self.current_settings(&dev).await;
         settings.fan = FanSection {
@@ -447,7 +440,7 @@ impl DaemonRpc for IpcServerImpl {
             }
         };
         let bytes = build_pump_pwm_request(proto_source, proto_pwm).to_vec();
-        write_and_wait(&handles, &self.stats, bytes).await?;
+        write_and_wait(&handles, bytes).await?;
 
         let mut settings = self.current_settings(&dev).await;
         settings.pump = PumpSection {
@@ -513,7 +506,7 @@ impl DaemonRpc for IpcServerImpl {
                     ..FanLightingSetting::default()
                 };
                 let bytes = build_set_fan_lighting_request(setting).to_vec();
-                write_and_wait(&handles, &self.stats, bytes).await?;
+                write_and_wait(&handles, bytes).await?;
 
                 let state = LightingState {
                     mode: cfg.mode.clone(),
@@ -550,7 +543,7 @@ impl DaemonRpc for IpcServerImpl {
                     ..PumpLightingSetting::default()
                 };
                 let bytes = build_set_pump_lighting_request(setting).to_vec();
-                write_and_wait(&handles, &self.stats, bytes).await?;
+                write_and_wait(&handles, bytes).await?;
 
                 let state = PumpLightingState {
                     scope: scope_str,
@@ -603,7 +596,7 @@ impl DaemonRpc for IpcServerImpl {
             }
         };
         for pkt in packets {
-            write_and_wait(&handles, &self.stats, pkt.to_vec()).await?;
+            write_and_wait(&handles, pkt.to_vec()).await?;
         }
         Ok(())
     }
@@ -634,7 +627,7 @@ impl DaemonRpc for IpcServerImpl {
         setting.brightness = brightness;
         setting.rotation = rotation_from_degrees(cfg.rotation_degrees);
         let bytes = build_lcd_control_request(setting).to_vec();
-        write_and_wait(&handles, &self.stats, bytes).await?;
+        write_and_wait(&handles, bytes).await?;
 
         let mut settings = self.current_settings(&dev).await;
         settings.lcd = LcdSection {
@@ -710,7 +703,7 @@ impl DaemonRpc for IpcServerImpl {
         // observe the firmware's success ack before returning.
         let cmd = Command::ResetDevice as u8;
         let req = build_reset_request().to_vec();
-        let buf = write_read_64(&handles, &self.stats, req, cmd).await?;
+        let buf = write_read_64(&handles, req, cmd).await?;
         parse_reset_response(&buf)
             .map_err(|e| IpcError::ProtocolMismatch(format!("reset ack: {e}")))?;
         Ok(())
@@ -742,13 +735,11 @@ impl DaemonRpc for IpcServerImpl {
         // the real response from stale frames; passing the wrong id
         // poisons the USB buffer for subsequent reads.
         let buf: Vec<u8> = match framing {
-            FramingKind::A => write_read_64(&handles, &self.stats, bytes, expected_cmd)
+            FramingKind::A => write_read_64(&handles, bytes, expected_cmd).await?.to_vec(),
+            FramingKind::B => write_read_512(&handles, bytes, 0x02, expected_cmd)
                 .await?
                 .to_vec(),
-            FramingKind::B => write_read_512(&handles, &self.stats, bytes, 0x02, expected_cmd)
-                .await?
-                .to_vec(),
-            FramingKind::C => write_read_512(&handles, &self.stats, bytes, 0x03, expected_cmd)
+            FramingKind::C => write_read_512(&handles, bytes, 0x03, expected_cmd)
                 .await?
                 .to_vec(),
             other => {

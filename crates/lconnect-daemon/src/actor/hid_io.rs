@@ -11,6 +11,7 @@
 //! up with `Error::EchoExhausted`.
 
 use super::{HidCommand, Shutdown};
+use crate::stats::Stats;
 use lconnect_hid::{DeviceInfo, HidBackend, OpenHandle};
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -22,6 +23,13 @@ use tracing::debug;
 /// not a hot path). The returned `Sender` is the only way for sibling
 /// actors to perform I/O against this device.
 ///
+/// `stats` is the process-wide counter set; the actor bumps
+/// `hid_write_count` once per successful HID write (across all three
+/// `HidCommand` variants). Centralising the increment here is the
+/// single source of truth -- keepers and the IPC layer all funnel
+/// through `process_one`, so no caller can bypass the count by sending
+/// `HidCommand::Write` directly.
+///
 /// # Errors
 ///
 /// Returns the underlying `lconnect_hid::Error` (wrapped via `anyhow`)
@@ -30,6 +38,7 @@ use tracing::debug;
 pub fn spawn(
     backend: Arc<dyn HidBackend>,
     info: DeviceInfo,
+    stats: Arc<Stats>,
     mut shutdown: Shutdown,
 ) -> anyhow::Result<mpsc::Sender<HidCommand>> {
     let handle: Box<dyn OpenHandle> = backend.open(&info)?;
@@ -46,7 +55,7 @@ pub fn spawn(
                     break;
                 }
                 maybe_cmd = rx.recv() => match maybe_cmd {
-                    Some(cmd) => process_one(handle.clone(), cmd).await,
+                    Some(cmd) => process_one(handle.clone(), &stats, cmd).await,
                     None => break,
                 },
             }
@@ -56,7 +65,7 @@ pub fn spawn(
     Ok(tx)
 }
 
-async fn process_one(handle: Arc<dyn OpenHandle>, cmd: HidCommand) {
+async fn process_one(handle: Arc<dyn OpenHandle>, stats: &Stats, cmd: HidCommand) {
     match cmd {
         HidCommand::Write { bytes, reply } => {
             let h = handle.clone();
@@ -66,6 +75,11 @@ async fn process_one(handle: Arc<dyn OpenHandle>, cmd: HidCommand) {
                     "hid write: {join_err}"
                 ))),
             };
+            // Only count successful writes; a failed write is a HID
+            // I/O error, not a write that hit the device.
+            if r.is_ok() {
+                stats.inc_hid_write();
+            }
             let _ = reply.send(r);
         }
         HidCommand::WriteRead64 {
@@ -87,6 +101,9 @@ async fn process_one(handle: Arc<dyn OpenHandle>, cmd: HidCommand) {
                     "hid write_read_64: {join_err}"
                 ))),
             };
+            if r.is_ok() {
+                stats.inc_hid_write();
+            }
             let _ = reply.send(r);
         }
         HidCommand::WriteRead512 {
@@ -109,6 +126,9 @@ async fn process_one(handle: Arc<dyn OpenHandle>, cmd: HidCommand) {
                     "hid write_read_512: {join_err}"
                 ))),
             };
+            if r.is_ok() {
+                stats.inc_hid_write();
+            }
             let _ = reply.send(r);
         }
     }
