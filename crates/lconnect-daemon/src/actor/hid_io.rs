@@ -60,9 +60,12 @@ async fn process_one(handle: Arc<dyn OpenHandle>, cmd: HidCommand) {
     match cmd {
         HidCommand::Write { bytes, reply } => {
             let h = handle.clone();
-            let r = tokio::task::spawn_blocking(move || h.write(&bytes))
-                .await
-                .expect("hid write blocking task panicked");
+            let r = match tokio::task::spawn_blocking(move || h.write(&bytes)).await {
+                Ok(inner) => inner,
+                Err(join_err) => Err(lconnect_hid::Error::BlockingTaskFailed(format!(
+                    "hid write: {join_err}"
+                ))),
+            };
             let _ = reply.send(r);
         }
         HidCommand::WriteRead64 {
@@ -71,30 +74,41 @@ async fn process_one(handle: Arc<dyn OpenHandle>, cmd: HidCommand) {
             reply,
         } => {
             let h = handle.clone();
-            let r = tokio::task::spawn_blocking(move || -> lconnect_hid::Result<[u8; 64]> {
+            let r = match tokio::task::spawn_blocking(move || -> lconnect_hid::Result<[u8; 64]> {
                 h.write(&bytes)?;
                 let mut buf = [0u8; 64];
                 drain_for_echo_64(&*h, &mut buf, expected_cmd)?;
                 Ok(buf)
             })
             .await
-            .expect("hid write_read_64 blocking task panicked");
+            {
+                Ok(inner) => inner,
+                Err(join_err) => Err(lconnect_hid::Error::BlockingTaskFailed(format!(
+                    "hid write_read_64: {join_err}"
+                ))),
+            };
             let _ = reply.send(r);
         }
         HidCommand::WriteRead512 {
             bytes,
+            expected_report_id,
             expected_cmd,
             reply,
         } => {
             let h = handle.clone();
-            let r = tokio::task::spawn_blocking(move || -> lconnect_hid::Result<[u8; 512]> {
+            let r = match tokio::task::spawn_blocking(move || -> lconnect_hid::Result<[u8; 512]> {
                 h.write(&bytes)?;
                 let mut buf = [0u8; 512];
-                drain_for_echo_512(&*h, &mut buf, expected_cmd)?;
+                drain_for_echo_512(&*h, &mut buf, expected_report_id, expected_cmd)?;
                 Ok(buf)
             })
             .await
-            .expect("hid write_read_512 blocking task panicked");
+            {
+                Ok(inner) => inner,
+                Err(join_err) => Err(lconnect_hid::Error::BlockingTaskFailed(format!(
+                    "hid write_read_512: {join_err}"
+                ))),
+            };
             let _ = reply.send(r);
         }
     }
@@ -105,15 +119,22 @@ fn drain_for_echo_64(
     buf: &mut [u8; 64],
     expected_cmd: u8,
 ) -> lconnect_hid::Result<()> {
+    // A-class report_id is invariant per spec.
     drain_for_echo(h, &mut buf[..], 0x01, expected_cmd)
 }
 
 fn drain_for_echo_512(
     h: &dyn OpenHandle,
     buf: &mut [u8; 512],
+    expected_report_id: u8,
     expected_cmd: u8,
 ) -> lconnect_hid::Result<()> {
-    drain_for_echo(h, &mut buf[..], 0x02, expected_cmd)
+    // 512-byte responses span B-class (report_id 0x02) and C-class
+    // (report_id 0x03); the caller is responsible for telling us
+    // which one to expect so the drain loop matches the real reply
+    // instead of burning the retry budget and leaving it in the
+    // device's USB buffer for the next unrelated read.
+    drain_for_echo(h, &mut buf[..], expected_report_id, expected_cmd)
 }
 
 /// Drain up to four responses looking for `[report_id, expected_cmd, ...]`.

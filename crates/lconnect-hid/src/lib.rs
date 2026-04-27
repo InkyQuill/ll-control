@@ -57,6 +57,8 @@ pub enum Error {
         timeout: u32,
         expected_cmd: u8,
     },
+    #[error("blocking task failed: {0}")]
+    BlockingTaskFailed(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

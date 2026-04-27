@@ -270,10 +270,16 @@ async fn write_read_64(
 
 /// Issue an `HidCommand::WriteRead512`, decoding any I/O failure to
 /// `IpcError::DeviceBusy`. Bumps `Stats::hid_write_count` on success.
+///
+/// `expected_report_id` selects between B-class (`0x02`) and C-class
+/// (`0x03`) framings — the drain loop in `hid_io` matches against this
+/// byte to identify the real response among any stale ones still in
+/// the device's USB read buffer.
 async fn write_read_512(
     handles: &DeviceHandles,
     stats: &Stats,
     bytes: Vec<u8>,
+    expected_report_id: u8,
     expected_cmd: u8,
 ) -> Result<[u8; 512]> {
     let (reply_tx, reply_rx) = oneshot::channel();
@@ -281,6 +287,7 @@ async fn write_read_512(
         .hid_io_tx
         .send(HidCommand::WriteRead512 {
             bytes,
+            expected_report_id,
             expected_cmd,
             reply: reply_tx,
         })
@@ -810,16 +817,22 @@ impl DaemonRpc for IpcServerImpl {
         }
         let expected_cmd = bytes[1];
         let handles = self.handles(&dev).await?;
-        // FramingKind::A => 64-byte read; B and C both => 512-byte read.
+        // FramingKind::A => 64-byte read with report_id 0x01.
+        // FramingKind::B => 512-byte read with report_id 0x02.
+        // FramingKind::C => 512-byte read with report_id 0x03.
+        // The drain loop in hid_io matches the report_id to discriminate
+        // the real response from stale frames; passing the wrong id
+        // poisons the USB buffer for subsequent reads.
         let buf: Vec<u8> = match framing {
             FramingKind::A => write_read_64(&handles, &self.stats, bytes, expected_cmd)
                 .await?
                 .to_vec(),
-            FramingKind::B | FramingKind::C => {
-                write_read_512(&handles, &self.stats, bytes, expected_cmd)
-                    .await?
-                    .to_vec()
-            }
+            FramingKind::B => write_read_512(&handles, &self.stats, bytes, 0x02, expected_cmd)
+                .await?
+                .to_vec(),
+            FramingKind::C => write_read_512(&handles, &self.stats, bytes, 0x03, expected_cmd)
+                .await?
+                .to_vec(),
             other => {
                 return Err(IpcError::InvalidArgument(format!(
                     "unsupported FramingKind: {other:?}"
