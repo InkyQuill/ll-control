@@ -38,6 +38,10 @@
 //! settings, so the two views start in sync.
 
 use crate::actor::{DeviceHandles, HidCommand, LcdFrameMsg, LightingStateMsg};
+use crate::codec_str::{
+    parse_direction, parse_fan_mode, parse_lcd_mode, parse_pump_mode, parse_pump_scope,
+    percent_to_wire, rgb_to_hex, rotation_from_degrees,
+};
 use crate::config::Config;
 use crate::manager::ManagerHandle;
 use crate::persistence::{
@@ -60,14 +64,12 @@ use lconnect_protocol::galahad2_lcdv2::firmware::{
 };
 use lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
 use lconnect_protocol::galahad2_lcdv2::lcd::{
-    build_lcd_control_request, Brightness, LCDControlMode, LCDControlSetting, ScreenRotation,
+    build_lcd_control_request, Brightness, LCDControlSetting,
 };
 use lconnect_protocol::galahad2_lcdv2::lighting::{
     FanLightingSetting, PumpLightingSetting, Rgb as ProtoRgb,
 };
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
-    ArgbSignalSource, FanLightingMode, LightingDirection, PumpLightingMode, PumpLightingScope,
-};
+use lconnect_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource;
 use lconnect_protocol::galahad2_lcdv2::pump_pwm::{
     build_request as build_pump_pwm_request, PumpPwmSource,
 };
@@ -313,114 +315,12 @@ fn mint_reset_token() -> ResetToken {
     ResetToken(s)
 }
 
-/// Format an `Rgb` IPC type as a `#rrggbb` hex string for persistence.
-fn rgb_to_hex(c: Rgb) -> String {
-    format!("#{:02x}{:02x}{:02x}", c.r, c.g, c.b)
-}
-
 /// Convert an IPC `Rgb` to the protocol-crate `Rgb` (same shape, different module).
 fn rgb_to_proto(c: Rgb) -> ProtoRgb {
     ProtoRgb {
         r: c.r,
         g: c.g,
         b: c.b,
-    }
-}
-
-/// Map the IPC lighting-mode string into the wire-format fan enum,
-/// mirroring `lighting_keeper::parse_fan_mode` so cache-miss replays
-/// produce the same byte. Unknown values fall back to Rainbow.
-fn fan_mode_from_str(s: &str) -> FanLightingMode {
-    match s.to_ascii_lowercase().as_str() {
-        "rainbow" => FanLightingMode::Rainbow,
-        "rainbow_morph" | "rainbowmorph" => FanLightingMode::RainbowMorph,
-        "static" | "static_color" | "staticcolor" => FanLightingMode::StaticColor,
-        "breathing" => FanLightingMode::Breathing,
-        "runway" => FanLightingMode::Runway,
-        "meteor" => FanLightingMode::Meteor,
-        _ => FanLightingMode::Rainbow,
-    }
-}
-
-/// Map the IPC lighting-mode string into the wire-format pump enum.
-/// Unknown values fall back to Rainbow.
-fn pump_mode_from_str(s: &str) -> PumpLightingMode {
-    match s.to_ascii_lowercase().as_str() {
-        "rainbow" => PumpLightingMode::Rainbow,
-        "rainbow_morph" | "rainbowmorph" => PumpLightingMode::RainbowMorph,
-        "static" | "static_color" | "staticcolor" => PumpLightingMode::StaticColor,
-        "breathing" => PumpLightingMode::Breathing,
-        "runway" => PumpLightingMode::Runway,
-        "meteor" => PumpLightingMode::Meteor,
-        "ticker_tape" | "tickertape" => PumpLightingMode::TickerTape,
-        "fluctuation" => PumpLightingMode::Fluctuation,
-        "transmit" => PumpLightingMode::Transmit,
-        "colorful_starry_night" | "colorfulstarrynight" => PumpLightingMode::ColorfulStarryNight,
-        "static_starry_night" | "staticstarrynight" => PumpLightingMode::StaticStarryNight,
-        "voice" => PumpLightingMode::Voice,
-        "big_bang" | "bigbang" => PumpLightingMode::BigBang,
-        "burst" => PumpLightingMode::Burst,
-        "colors_morph" | "colorsmorph" => PumpLightingMode::ColorsMorph,
-        "bounce" => PumpLightingMode::Bounce,
-        _ => PumpLightingMode::Rainbow,
-    }
-}
-
-fn direction_from_str(s: &str) -> LightingDirection {
-    match s.to_ascii_lowercase().as_str() {
-        "reverse"
-        | "left"
-        | "counter_clockwise"
-        | "counterclockwise"
-        | "left_or_counter_clockwise" => LightingDirection::LeftOrCounterClockwise,
-        "up" => LightingDirection::Up,
-        "down" => LightingDirection::Down,
-        "spreaded" | "spread" => LightingDirection::Spreaded,
-        "gathered" | "gather" => LightingDirection::Gathered,
-        _ => LightingDirection::RightOrClockwise,
-    }
-}
-
-fn pump_scope_from_str(s: &str) -> PumpLightingScope {
-    match s.to_ascii_lowercase().as_str() {
-        "outer" => PumpLightingScope::Outer,
-        "all" => PumpLightingScope::All,
-        _ => PumpLightingScope::Inner,
-    }
-}
-
-/// Convert a 0..=100 percentage to the wire value (0..=4) that the
-/// LCDV2 firmware expects for `brightness` and `speed` fields. This
-/// mirrors verify-galahad's `args.brightness / 25` convention from
-/// Phase 0c. Out-of-range percent values clamp at 4.
-fn percent_to_wire(percent: u8) -> u8 {
-    (percent / 25).min(4)
-}
-
-fn rotation_from_degrees(deg: u16) -> ScreenRotation {
-    match deg {
-        90 => ScreenRotation::Rotate90,
-        180 => ScreenRotation::Rotate180,
-        270 => ScreenRotation::Rotate270,
-        _ => ScreenRotation::Rotate0,
-    }
-}
-
-fn lcd_mode_from_str(s: &str) -> LCDControlMode {
-    match s {
-        "LocalUI" | "local_ui" => LCDControlMode::LocalUI,
-        "Application" | "application" => LCDControlMode::Application,
-        "LocalH264" | "local_h264" => LCDControlMode::LocalH264,
-        "LocalAVI" | "local_avi" => LCDControlMode::LocalAVI,
-        // LCDTest and LCDSetting are intentionally not exposed via IPC --
-        // they are firmware-internal modes that lock the panel until
-        // explicitly cleared. Treat them as unknown so set_lcd_config
-        // does not persist a mode that would re-lock the panel on every
-        // hot-plug. Mirrors the CLI's `validate_mode` guard.
-        _ => {
-            warn!("ignoring unknown/unsafe LCD mode '{s}'; falling back to LocalUI");
-            LCDControlMode::LocalUI
-        }
     }
 }
 
@@ -601,13 +501,13 @@ impl DaemonRpc for IpcServerImpl {
         match kind {
             LightingKind::Fan => {
                 let setting = FanLightingSetting {
-                    mode: fan_mode_from_str(&cfg.mode),
+                    mode: parse_fan_mode(&cfg.mode),
                     // Wire range is 0..=4 (5 levels); user gives 0..=100 percent.
                     // Phase 0c found the device silently ignores out-of-range bytes.
                     brightness: percent_to_wire(cfg.brightness_percent),
                     speed: percent_to_wire(cfg.speed_percent),
                     color1: proto_color,
-                    direction: direction_from_str(&cfg.direction),
+                    direction: parse_direction(&cfg.direction),
                     disabled: cfg.disabled,
                     source: ArgbSignalSource::Mcu,
                     ..FanLightingSetting::default()
@@ -638,13 +538,13 @@ impl DaemonRpc for IpcServerImpl {
             LightingKind::Pump => {
                 let scope_str = cfg.scope.clone().unwrap_or_else(|| "inner".to_string());
                 let setting = PumpLightingSetting {
-                    scope: pump_scope_from_str(&scope_str),
-                    mode: pump_mode_from_str(&cfg.mode),
+                    scope: parse_pump_scope(&scope_str),
+                    mode: parse_pump_mode(&cfg.mode),
                     // Wire range is 0..=4; user gives 0..=100 percent. See Fan arm.
                     brightness: percent_to_wire(cfg.brightness_percent),
                     speed: percent_to_wire(cfg.speed_percent),
                     color1: proto_color,
-                    direction: direction_from_str(&cfg.direction),
+                    direction: parse_direction(&cfg.direction),
                     disabled: cfg.disabled,
                     source: ArgbSignalSource::Mcu,
                     ..PumpLightingSetting::default()
@@ -730,7 +630,7 @@ impl DaemonRpc for IpcServerImpl {
         // (even with `..Default::default()`) is rejected from outside
         // the protocol crate. Mutate after construction instead.
         let mut setting = LCDControlSetting::default();
-        setting.mode = lcd_mode_from_str(&cfg.mode);
+        setting.mode = parse_lcd_mode(&cfg.mode);
         setting.brightness = brightness;
         setting.rotation = rotation_from_degrees(cfg.rotation_degrees);
         let bytes = build_lcd_control_request(setting).to_vec();
@@ -870,27 +770,25 @@ impl DaemonRpc for IpcServerImpl {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lconnect_protocol::galahad2_lcdv2::lcd::LCDControlMode;
 
     /// Sanity check that the public LCD modes still round-trip through the
     /// IPC parser. If LocalUI/Application/LocalH264/LocalAVI ever stop
     /// matching, this test fails before we ship a daemon that can't
     /// honour valid IPC requests.
     #[test]
-    fn lcd_mode_from_str_accepts_safe_modes() {
+    fn parse_lcd_mode_accepts_safe_modes() {
+        assert!(matches!(parse_lcd_mode("LocalUI"), LCDControlMode::LocalUI));
         assert!(matches!(
-            lcd_mode_from_str("LocalUI"),
-            LCDControlMode::LocalUI
-        ));
-        assert!(matches!(
-            lcd_mode_from_str("Application"),
+            parse_lcd_mode("Application"),
             LCDControlMode::Application
         ));
         assert!(matches!(
-            lcd_mode_from_str("LocalH264"),
+            parse_lcd_mode("LocalH264"),
             LCDControlMode::LocalH264
         ));
         assert!(matches!(
-            lcd_mode_from_str("LocalAVI"),
+            parse_lcd_mode("LocalAVI"),
             LCDControlMode::LocalAVI
         ));
     }
@@ -901,7 +799,7 @@ mod tests {
     /// ever flips, a direct IPC caller can persist a mode that re-bricks
     /// the panel on every hot-plug.
     #[test]
-    fn lcd_mode_from_str_rejects_unsafe_modes() {
+    fn parse_lcd_mode_rejects_unsafe_modes() {
         for unsafe_mode in [
             "LCDTest",
             "lcd_test",
@@ -911,7 +809,7 @@ mod tests {
             "",
         ] {
             assert!(
-                matches!(lcd_mode_from_str(unsafe_mode), LCDControlMode::LocalUI),
+                matches!(parse_lcd_mode(unsafe_mode), LCDControlMode::LocalUI),
                 "unsafe/unknown mode {unsafe_mode:?} must fall back to LocalUI"
             );
         }

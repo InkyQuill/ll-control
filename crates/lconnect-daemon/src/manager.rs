@@ -32,13 +32,14 @@
 //! [`spawn_device_actor_tree`]: crate::actor::spawn_device_actor_tree
 
 use crate::actor::{spawn_device_actor_tree, DeviceHandles, HidCommand};
+use crate::codec_str::{parse_lcd_mode, rotation_from_degrees};
 use crate::config::Config;
 use crate::persistence::{DeviceSettings, PersistenceStore};
 use lconnect_hid::{DeviceFamilyId, DeviceInfo, HidBackend};
 use lconnect_ipc::{DeviceDescriptor, DeviceId};
 use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request as build_fan_pwm_request;
 use lconnect_protocol::galahad2_lcdv2::lcd::{
-    build_lcd_control_request, Brightness, LCDControlMode, LCDControlSetting, ScreenRotation,
+    build_lcd_control_request, Brightness, LCDControlSetting,
 };
 use lconnect_protocol::galahad2_lcdv2::pump_pwm::{
     build_request as build_pump_pwm_request, PumpPwmSource,
@@ -378,7 +379,7 @@ async fn replay_persisted_settings(handles: &DeviceHandles, settings: &DeviceSet
                 let mut setting = LCDControlSetting::default();
                 setting.mode = parse_lcd_mode(&lcd.control_mode);
                 setting.brightness = brightness;
-                setting.rotation = parse_rotation(&lcd.rotation);
+                setting.rotation = rotation_from_degrees(lcd.rotation.parse::<u16>().unwrap_or(0));
                 let bytes = build_lcd_control_request(setting).to_vec();
                 replay_write(handles, bytes, "LCD config").await;
             }
@@ -424,37 +425,6 @@ fn parse_pump_source(s: &str) -> PumpPwmSource {
     }
 }
 
-/// Map the persistence rotation string (a numeric `to_string()` of the
-/// degrees) back into the wire-format enum. Empty / unparseable -> 0deg.
-fn parse_rotation(s: &str) -> ScreenRotation {
-    match s.parse::<u16>().unwrap_or(0) {
-        90 => ScreenRotation::Rotate90,
-        180 => ScreenRotation::Rotate180,
-        270 => ScreenRotation::Rotate270,
-        _ => ScreenRotation::Rotate0,
-    }
-}
-
-/// Map the persistence LCD-mode string back into the wire-format enum.
-/// Empty / unknown -> LocalUI. Mirrors `ipc_server::lcd_mode_from_str`.
-///
-/// LCDTest and LCDSetting are intentionally rejected here as defense in
-/// depth: a malformed (e.g. hand-edited) persistence file, or a TOML
-/// written before the IPC-side guard landed, must not be able to re-issue
-/// a panel-locking mode on every hot-plug. Both parsers must agree.
-fn parse_lcd_mode(s: &str) -> LCDControlMode {
-    match s {
-        "LocalUI" | "local_ui" => LCDControlMode::LocalUI,
-        "Application" | "application" => LCDControlMode::Application,
-        "LocalH264" | "local_h264" => LCDControlMode::LocalH264,
-        "LocalAVI" | "local_avi" => LCDControlMode::LocalAVI,
-        _ => {
-            warn!("ignoring unknown/unsafe persisted LCD mode '{s}'; falling back to LocalUI");
-            LCDControlMode::LocalUI
-        }
-    }
-}
-
 /// Build a `DeviceDescriptor` from the daemon's view of a `DeviceInfo`.
 ///
 /// `DeviceDescriptor` is `#[non_exhaustive]`, so external crates cannot
@@ -479,11 +449,14 @@ fn build_descriptor(id: &DeviceId, info: &DeviceInfo) -> anyhow::Result<DeviceDe
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lconnect_protocol::galahad2_lcdv2::lcd::LCDControlMode;
 
     /// Replay-side parser must accept every mode the IPC layer is
-    /// allowed to persist. Mirrors `ipc_server::tests::
-    /// lcd_mode_from_str_accepts_safe_modes` so the two parsers can't
-    /// drift apart.
+    /// allowed to persist. Mirrors
+    /// `ipc_server::tests::parse_lcd_mode_accepts_safe_modes` so the two
+    /// call sites cannot drift apart -- both now call into
+    /// `crate::codec_str::parse_lcd_mode`, but the behavioural pin
+    /// stays here as the replay-path-specific safety net.
     #[test]
     fn parse_lcd_mode_accepts_safe_modes() {
         assert!(matches!(parse_lcd_mode("LocalUI"), LCDControlMode::LocalUI));

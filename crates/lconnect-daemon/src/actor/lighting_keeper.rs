@@ -9,12 +9,14 @@
 //! On send/reply error, we log and return -- the next tick retries.
 
 use super::{HidCommand, LightingStateMsg, Shutdown};
+use crate::codec_str::{
+    parse_direction, parse_fan_mode, parse_hex_color, parse_pump_mode, parse_pump_scope,
+    percent_to_wire,
+};
 use crate::persistence::{LightingState, PumpLightingState};
 use lconnect_ipc::LightingKind;
-use lconnect_protocol::galahad2_lcdv2::lighting::{FanLightingSetting, PumpLightingSetting, Rgb};
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
-    ArgbSignalSource, FanLightingMode, LightingDirection, PumpLightingMode, PumpLightingScope,
-};
+use lconnect_protocol::galahad2_lcdv2::lighting::{FanLightingSetting, PumpLightingSetting};
+use lconnect_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource;
 use lconnect_protocol::galahad2_lcdv2::set_lighting::{
     build_set_fan_lighting_request, build_set_pump_lighting_request,
 };
@@ -111,13 +113,6 @@ async fn write_and_log(hid_io_tx: &mpsc::Sender<HidCommand>, bytes: Vec<u8>, kin
     }
 }
 
-/// Convert a 0..=100 percentage to the wire value (0..=4) the LCDV2
-/// firmware expects for `brightness` and `speed`. Mirrors verify-galahad's
-/// `args.brightness / 25` from Phase 0c. Out-of-range values clamp at 4.
-fn percent_to_wire(percent: u8) -> u8 {
-    (percent / 25).min(4)
-}
-
 fn fan_setting_from_state(s: &LightingState) -> FanLightingSetting {
     let mut setting = FanLightingSetting {
         mode: parse_fan_mode(&s.mode),
@@ -147,135 +142,11 @@ fn pump_setting_from_state(s: &PumpLightingState) -> PumpLightingSetting {
     setting
 }
 
-/// Parse a fan-lighting mode string into the wire enum.
-///
-/// Unknown values default to `Rainbow` (the codec's own `FanLightingSetting`
-/// default), with a warning. Matches the lower-cased external IPC vocabulary.
-fn parse_fan_mode(s: &str) -> FanLightingMode {
-    match s.to_ascii_lowercase().as_str() {
-        "rainbow" => FanLightingMode::Rainbow,
-        "rainbow_morph" | "rainbowmorph" => FanLightingMode::RainbowMorph,
-        "static" | "static_color" | "staticcolor" => FanLightingMode::StaticColor,
-        "breathing" => FanLightingMode::Breathing,
-        "runway" => FanLightingMode::Runway,
-        "meteor" => FanLightingMode::Meteor,
-        "" => FanLightingMode::Rainbow,
-        other => {
-            warn!(
-                "lighting_keeper: unknown fan mode {:?}, defaulting to Rainbow",
-                other
-            );
-            FanLightingMode::Rainbow
-        }
-    }
-}
-
-/// Parse a pump-lighting mode string into the wire enum. Unknown -> Rainbow.
-fn parse_pump_mode(s: &str) -> PumpLightingMode {
-    match s.to_ascii_lowercase().as_str() {
-        "rainbow" => PumpLightingMode::Rainbow,
-        "rainbow_morph" | "rainbowmorph" => PumpLightingMode::RainbowMorph,
-        "static" | "static_color" | "staticcolor" => PumpLightingMode::StaticColor,
-        "breathing" => PumpLightingMode::Breathing,
-        "runway" => PumpLightingMode::Runway,
-        "meteor" => PumpLightingMode::Meteor,
-        "ticker_tape" | "tickertape" => PumpLightingMode::TickerTape,
-        "fluctuation" => PumpLightingMode::Fluctuation,
-        "transmit" => PumpLightingMode::Transmit,
-        "colorful_starry_night" | "colorfulstarrynight" => PumpLightingMode::ColorfulStarryNight,
-        "static_starry_night" | "staticstarrynight" => PumpLightingMode::StaticStarryNight,
-        "voice" => PumpLightingMode::Voice,
-        "big_bang" | "bigbang" => PumpLightingMode::BigBang,
-        "burst" => PumpLightingMode::Burst,
-        "colors_morph" | "colorsmorph" => PumpLightingMode::ColorsMorph,
-        "bounce" => PumpLightingMode::Bounce,
-        "" => PumpLightingMode::Rainbow,
-        other => {
-            warn!(
-                "lighting_keeper: unknown pump mode {:?}, defaulting to Rainbow",
-                other
-            );
-            PumpLightingMode::Rainbow
-        }
-    }
-}
-
-/// Parse a direction string into the wire enum. Empty / unknown ->
-/// `RightOrClockwise` (the codec's default, matching the C# constructor).
-fn parse_direction(s: &str) -> LightingDirection {
-    match s.to_ascii_lowercase().as_str() {
-        "forward" | "right" | "clockwise" | "right_or_clockwise" => {
-            LightingDirection::RightOrClockwise
-        }
-        "reverse"
-        | "left"
-        | "counter_clockwise"
-        | "counterclockwise"
-        | "left_or_counter_clockwise" => LightingDirection::LeftOrCounterClockwise,
-        "up" => LightingDirection::Up,
-        "down" => LightingDirection::Down,
-        "spreaded" | "spread" => LightingDirection::Spreaded,
-        "gathered" | "gather" => LightingDirection::Gathered,
-        "" => LightingDirection::RightOrClockwise,
-        other => {
-            warn!(
-                "lighting_keeper: unknown direction {:?}, defaulting to RightOrClockwise",
-                other
-            );
-            LightingDirection::RightOrClockwise
-        }
-    }
-}
-
-/// Parse a pump scope string into the wire enum. Unknown -> `Inner`.
-fn parse_pump_scope(s: &str) -> PumpLightingScope {
-    match s.to_ascii_lowercase().as_str() {
-        "inner" => PumpLightingScope::Inner,
-        "outer" => PumpLightingScope::Outer,
-        "all" => PumpLightingScope::All,
-        "" => PumpLightingScope::Inner,
-        other => {
-            warn!(
-                "lighting_keeper: unknown pump scope {:?}, defaulting to Inner",
-                other
-            );
-            PumpLightingScope::Inner
-        }
-    }
-}
-
-/// Parse a `#rrggbb` (or `rrggbb`) hex color into an `Rgb`.
-///
-/// On parse failure, returns `Rgb::BLACK` and logs a warning. This is the
-/// safest no-op default -- a black `color1` paired with `disabled = false`
-/// effectively produces no visible artifact for solid-color modes.
-fn parse_hex_color(s: &str) -> Rgb {
-    let trimmed = s.trim().trim_start_matches('#');
-    if trimmed.len() != 6 {
-        if !s.is_empty() {
-            warn!(
-                "lighting_keeper: malformed hex color {:?} (expected #rrggbb), defaulting to black",
-                s
-            );
-        }
-        return Rgb::BLACK;
-    }
-    let parse = |start: usize| u8::from_str_radix(&trimmed[start..start + 2], 16);
-    match (parse(0), parse(2), parse(4)) {
-        (Ok(r), Ok(g), Ok(b)) => Rgb { r, g, b },
-        _ => {
-            warn!(
-                "lighting_keeper: non-hex color {:?}, defaulting to black",
-                s
-            );
-            Rgb::BLACK
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lconnect_protocol::galahad2_lcdv2::lighting_enums::{FanLightingMode, LightingDirection};
+    use lconnect_protocol::galahad2_lcdv2::Rgb;
 
     #[test]
     fn parse_hex_color_with_hash() {
