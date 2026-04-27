@@ -9,6 +9,7 @@
 #![forbid(unsafe_code)]
 
 pub mod actor;
+mod codec_str;
 pub mod config;
 pub mod ipc_server;
 pub mod manager;
