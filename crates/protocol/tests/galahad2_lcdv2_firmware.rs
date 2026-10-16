@@ -80,7 +80,8 @@ fn from_two_responses_decodes_full_round_trip() {
         buf
     };
     let buf1 = mk(b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6");
-    let buf2 = mk(b"Apr 12 2024 14:33:21");
+    let mut buf2 = mk(b"Apr 12 2024 14:33:21");
+    buf2[4] = 1;
 
     let v = FirmwareVersion::from_two_responses(&buf1, &buf2).expect("valid pair");
     assert_eq!(v.user_version, "1.6");
@@ -107,5 +108,24 @@ fn from_two_responses_rejects_wrong_command_echo_on_first_packet() {
             expected: 134,
             got: 0x81
         }
+    ));
+}
+
+#[test]
+fn missing_date_is_empty_and_duplicate_version_cannot_be_a_date() {
+    let version = *lconnect_protocol::galahad2_lcdv2::packets::ACommandPacket::new_request(
+        134,
+        b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6",
+    )
+    .as_bytes();
+    let parsed = FirmwareVersion::from_optional_responses(&version, None).unwrap();
+    assert_eq!(parsed.user_version, "1.6");
+    assert!(parsed.raw_datetime.is_empty());
+    assert!(matches!(
+        FirmwareVersion::from_two_responses(&version, &version),
+        Err(lconnect_protocol::Error::UnexpectedPacketNumber {
+            expected: 1,
+            got: 0
+        })
     ));
 }

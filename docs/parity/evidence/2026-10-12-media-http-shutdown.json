@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "scope": "Explicit media HTTP listener shutdown and retained-descriptor regression",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "source_sha256": {
+    "desktop/src-tauri/src/media_http.rs": "bf85ecd4cbe2a24af8c1954e758c96e577c51d510ca76a6d7bce5e39847e9db6"
+  },
+  "before_fix": {
+    "repeat_log": "/tmp/media-shutdown-repeat.log",
+    "failure_on_run": 11,
+    "owner_diagnostic_log": "/tmp/media-shutdown-owner.log",
+    "owner_failure_on_run": 2,
+    "observation": "After joined server shutdown, distinct client/server endpoints connected and Linux TCP table still showed LISTEN. Owner scan completed after owner disappeared; no process identified."
+  },
+  "change": "Call shutdown(SHUT_RDWR) on borrowed listener before dropping it; join clients even on syscall failure; propagate syscall/task errors. Preserve strict post-shutdown connection rejection.",
+  "regression": "Retain cloned descriptor, drop original, prove listener remains reachable, explicitly stop socket, prove new connections rejected while retained descriptor still alive.",
+  "verification": {
+    "focused_http_tests": 5,
+    "repeated_full_library_runs": 20,
+    "tests_each_run": 61,
+    "all_features_test_results": [
+      "test result: ok. 61 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.24s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "fmt": "passed",
+    "strict_clippy_all_targets_all_features": "passed",
+    "rustdoc_all_features_warnings_denied": "passed",
+    "read_only_review": "No findings",
+    "logs": [
+      "/tmp/media-shutdown-fix.log",
+      "/tmp/media-shutdown-fixed-repeat.log",
+      "/tmp/media-shutdown-clippy.log",
+      "/tmp/media-shutdown-final-tests.log",
+      "/tmp/media-shutdown-doc.log"
+    ]
+  },
+  "limits": [
+    "Fork/exec descriptor inheritance is a hypothesis for original flake, not a proven owner attribution",
+    "No hardware, active desktop capture or native GUI run",
+    "ScreenRecord pipeline and UI remain absent",
+    "No full workspace qualification"
+  ]
+}

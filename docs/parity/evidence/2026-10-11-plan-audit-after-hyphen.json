@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-11",
+  "scope": "plan cleanup and remaining LCDV2 parity audit",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "active_plans": [
+    {
+      "path": "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md",
+      "open": 6,
+      "complete": 0
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md",
+      "open": 6,
+      "complete": 0
+    },
+    {
+      "path": "docs/superpowers/plans/basic-parity.md",
+      "open": 6,
+      "complete": 0
+    }
+  ],
+  "newly_deleted_plans": [],
+  "reason": "All three remaining plans have unresolved requirements. Prior cleanup removed ten superseded plans; their unresolved requirements remain in active plans/roadmap.",
+  "corrections": [
+    "Native cleanup and browser interrupted mutations no longer listed as unimplemented",
+    "CSS sizing/shaping/wrapping/whitespace/tabs/manual SHY removed from future implementation; locale/fallback/Windows raster remain",
+    "Recorded completed hyphen Rust review: 600 tests; previous integrated checkpoint remains historical"
+  ],
+  "hardware_run": false,
+  "link_check": "pass",
+  "other_checkout": "Original lconnect-linux historical copies and deferred ENE plan left unchanged"
+}

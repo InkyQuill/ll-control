@@ -58,7 +58,7 @@ fn validate_percent(label: &str, percent: u8) -> Result<()> {
 /// for any other shape.
 fn parse_hex_color(s: &str) -> Result<Rgb> {
     let trimmed = s.strip_prefix('#').unwrap_or(s);
-    if trimmed.len() != 6 {
+    if trimmed.len() != 6 || !trimmed.is_ascii() {
         bail!("invalid color {s:?}: expected #RRGGBB or RRGGBB");
     }
     let r = u8::from_str_radix(&trimmed[0..2], 16)
@@ -121,6 +121,10 @@ pub async fn run(args: LightingArgs) -> Result<()> {
             kind,
             mode,
             color,
+            additional_color,
+            sync_to_pump,
+            fan_size,
+            led_count,
             speed,
             brightness,
             direction,
@@ -132,6 +136,10 @@ pub async fn run(args: LightingArgs) -> Result<()> {
                 kind,
                 mode,
                 color,
+                additional_color,
+                sync_to_pump,
+                fan_size,
+                led_count,
                 speed,
                 brightness,
                 direction,
@@ -152,6 +160,10 @@ struct SetLighting {
     kind: String,
     mode: String,
     color: Option<String>,
+    additional_color: Vec<String>,
+    sync_to_pump: Option<bool>,
+    fan_size: Option<String>,
+    led_count: Option<u8>,
     speed: Option<u8>,
     brightness: Option<u8>,
     direction: Option<String>,
@@ -163,10 +175,32 @@ struct SetLighting {
 async fn set_lighting(args: SetLighting) -> Result<()> {
     let kind = validate_lighting_kind(&args.kind)?;
 
+    let update_topology =
+        args.sync_to_pump.is_some() || args.fan_size.is_some() || args.led_count.is_some();
+    if update_topology && kind != "fan" {
+        bail!("sync, size and LED count are fan-only");
+    }
     let color = match args.color.as_deref() {
         Some(s) => parse_hex_color(s)?,
         None => Rgb { r: 0, g: 0, b: 0 },
     };
+    let additional_colors = args
+        .additional_color
+        .iter()
+        .map(|s| parse_hex_color(s))
+        .collect::<Result<Vec<_>>>()?;
+    let lighting_kind = if kind == "fan" {
+        lconnect_ipc::LightingKind::Fan
+    } else {
+        lconnect_ipc::LightingKind::Pump
+    };
+    if !additional_colors.is_empty()
+        && (additional_colors.len() > 3
+            || lconnect_ipc::lighting_color_count(lighting_kind, &args.mode)
+                != Some(additional_colors.len() + 1))
+    {
+        bail!("additional colors must match the selected lighting mode");
+    }
     let brightness = args.brightness.unwrap_or(100);
     validate_percent("brightness", brightness)?;
     let speed = args.speed.unwrap_or(50);
@@ -176,9 +210,10 @@ async fn set_lighting(args: SetLighting) -> Result<()> {
         None => "forward".to_string(),
     };
 
-    let cfg = json!({
+    let mut cfg = json!({
         "mode": args.mode,
         "color": { "r": color.r, "g": color.g, "b": color.b },
+        "additional_colors": additional_colors,
         "brightness_percent": brightness,
         "speed_percent": speed,
         "direction": direction,
@@ -188,6 +223,32 @@ async fn set_lighting(args: SetLighting) -> Result<()> {
 
     let client = connect().await?;
     let dev = resolve_device(&client, args.device).await?;
+    if update_topology {
+        let info: LightingInfo = serde_json::from_value(
+            client
+                .call("get_lighting_info", json!({"dev":dev,"kind":"fan"}))
+                .await?,
+        )?;
+        let mut topology = info
+            .fan_topology
+            .context("daemon does not support fan topology settings")?;
+        if let Some(value) = args.sync_to_pump {
+            topology.sync_to_pump = value;
+        }
+        if let Some(value) = args.fan_size {
+            topology.size = match value.as_str() {
+                "280" => lconnect_ipc::FanLedSize::Mm280,
+                "360" => lconnect_ipc::FanLedSize::Mm360,
+                _ => bail!("fan size must be280 or360"),
+            };
+        }
+        if let Some(value) = args.led_count {
+            topology.manual_led_count = value;
+        }
+        topology.validate()?;
+        cfg["fan_topology"] = serde_json::to_value(topology)?;
+    }
+
     client
         .call(
             "set_lighting",
@@ -284,4 +345,102 @@ pub async fn led_colors(args: LedColorsArgs) -> Result<()> {
         .context("set_led_colors RPC failed")?;
     println!("Pushed {} colors to {target}", colors.len());
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+    #[test]
+    fn repeated_palette_arguments_preserve_channel_order_and_reject_non_ascii_colors() {
+        let cli = crate::Cli::try_parse_from([
+            "lconnectctl",
+            "lighting",
+            "set",
+            "pump",
+            "--mode",
+            "meteor",
+            "--color",
+            "010203",
+            "--additional-color",
+            "040506",
+            "--additional-color",
+            "070809",
+            "--additional-color",
+            "0a0b0c",
+        ])
+        .unwrap();
+        let crate::Cmd::Lighting(args) = cli.command else {
+            panic!("lighting command")
+        };
+        let LightingSubcommand::Set {
+            color,
+            additional_color,
+            ..
+        } = args.command
+        else {
+            panic!("set command")
+        };
+        let values = color
+            .into_iter()
+            .chain(additional_color)
+            .map(|s| parse_hex_color(&s).unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            values.iter().map(|c| [c.r, c.g, c.b]).collect::<Vec<_>>(),
+            [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+        );
+        assert!(parse_hex_color("aéabc").is_err());
+    }
+    #[test]
+    fn fan_topology_cli_requires_valid_sizes_counts_and_explicit_sync_value() {
+        let cli = crate::Cli::try_parse_from([
+            "lconnectctl",
+            "lighting",
+            "set",
+            "fan",
+            "--mode",
+            "meteor",
+            "--sync-to-pump",
+            "true",
+            "--fan-size",
+            "280",
+            "--led-count",
+            "31",
+        ])
+        .unwrap();
+        let crate::Cmd::Lighting(args) = cli.command else {
+            panic!("lighting")
+        };
+        let LightingSubcommand::Set {
+            sync_to_pump,
+            fan_size,
+            led_count,
+            ..
+        } = args.command
+        else {
+            panic!("set")
+        };
+        assert_eq!(
+            (sync_to_pump, fan_size.as_deref(), led_count),
+            (Some(true), Some("280"), Some(31))
+        );
+        for (flag, value) in [
+            ("--led-count", "7"),
+            ("--led-count", "51"),
+            ("--fan-size", "420"),
+        ] {
+            assert!(crate::Cli::try_parse_from([
+                "lconnectctl",
+                "lighting",
+                "set",
+                "fan",
+                "--mode",
+                "static",
+                flag,
+                value
+            ])
+            .is_err());
+        }
+    }
 }

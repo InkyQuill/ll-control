@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-12",
+  "scope": "LCD actor Screen reset commit/stop/apply; not yet external IPC/GUI or gallery reset",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "source_sha256": {
+    "crates/lconnect-daemon/src/actor/mod.rs": "914d79d233cc411472ac32f6e997d4189621683b39f09b8b6b88865d6670f031",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "2f84f8619225962e042742c276a0bc55b14970fa94cf65c6bbd0054f6774d7ad",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "121ba07b694d7f4c125258ce91998e4c6b01491c37ed1236308f3aee5444af0d",
+    "crates/lconnect-daemon/src/actor/lcd_render_tests.rs": "4426c14b86c0570b2a761140f6816e9c147afccb8c82f0c1c4e938c87c3a1c6f",
+    "crates/lconnect-daemon/src/persistence.rs": "584d694b4bc4cfffd2b99fd2de9e19f18e9bb31dad4cbe08eb2a503990d11983",
+    "crates/lconnect-daemon/tests/screen_reset_actor.rs": "784a44166dda4364e92934db75b17268e2412ff8bd8652121700de7ae0197e49",
+    "crates/lconnect-daemon/tests/screen_reset_storage.rs": "500d04884cdb150e950cefd9d7a89dcc78a440b149b065a370161ceef3ed6dce",
+    "crates/lconnect-daemon/tests/composition_ipc.rs": "00b43a9faf770f0754ff8d977f4a41b34ac6833631d70f06c260b868976abc20"
+  },
+  "behavior": [
+    "Prepared default validation before durable request; typed rejection vs recovery-required",
+    "Durable commit before configuration/frame transport; preparation invalidation and source stop/join",
+    "Application mode50%/0 degrees followed by clock theme",
+    "Duplicate ID preserves current source/config; caller reply loss does not cancel accepted work",
+    "Transport failure returns durable receipt plus lcd.last_error",
+    "Uncertain recovery stops source and blocks mutation until storage recovery/restart; queries remain available"
+  ],
+  "verification": {
+    "workspace": {
+      "passed": 741,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 106,
+      "log": "/tmp/screen-reset-actor-workspace.log"
+    },
+    "strict_clippy": "PASS /tmp/screen-reset-actor-clippy-final.log",
+    "fmt": "PASS",
+    "docs": "PASS /tmp/screen-reset-actor-doc.log",
+    "focused": "4 actor +5 storage tests; held old render success/error; real FFmpeg composition reset",
+    "review": "Rust static review: no actionable findings; active-composition coverage boundary subsequently addressed with real-codec test",
+    "initial_failure": "unsupported LCD mode LCDSetting during post-reset brightness patch; storage and actor corrected to Application, regression rerun passed",
+    "composition": "Private IPC/MockBackend existing workflow extended with actor reset; codec child PIDs absent before reply, old video count stable, media delete succeeds before manager shutdown",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN; full reset control not connected"
+  },
+  "remaining": [
+    "Persisted image/background/watermark collections and reset",
+    "External IPC receipt/readback, scope disclosure, explicit reapply after transport failure",
+    "GUI confirmation/outcome and native accessibility",
+    "Combined reset sleep/detach/restart acceptance"
+  ],
+  "plan_status": "All three active plans remain incomplete"
+}

@@ -48,10 +48,32 @@ pub struct Response {
     pub jsonrpc: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // A present null is a successful optional result, not an absent member.
+    #[serde(
+        default,
+        deserialize_with = "present_result",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub result: Option<Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "present_error",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub error: Option<ErrorObj>,
+}
+
+fn present_result<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<Option<Value>, D::Error> {
+    Value::deserialize(deserializer).map(Some)
+}
+
+fn present_error<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<Option<ErrorObj>, D::Error> {
+    // Unlike result, a present error must be an object, never JSON null.
+    ErrorObj::deserialize(deserializer).map(Some)
 }
 
 impl Response {

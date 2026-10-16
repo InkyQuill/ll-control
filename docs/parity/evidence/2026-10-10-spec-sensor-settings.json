@@ -1,0 +1,22 @@
+{
+  "baseline": "Windows L-Connect3 2.1.28.0",
+  "reference_root": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08",
+  "classification": "Static C# caller audit plus corroborating BAML strings; no reconstructed XAML or Windows runtime observation",
+  "files": {
+    "L-Connect 3/LConnect3cs/Views/Pages/SystemInfo/SpecPage.cs": "7326e97d8467d161bb20ad871b85ca022c7e6c47f75489c7ddfe1d8c738a62c4",
+    "L-Connect.Core/LConnectCore/SystemSpecification.cs": "b79bdfc08f6e327f7840647ec9ad223eb5f722345856eaba79daa04b0f1db7a6",
+    "L-Connect 3/LConnect3cs/Views/Pages/Settings/SensorSettingPage.cs": "b4faf1ddb398d5ad2547a76682da6f8ebaa3e54cb9590ae5c3df3ece6bea4ded",
+    "L-Connect 3/LConnect3cs/Views/Pages/Settings/MainPage.cs": "7a60501f59b6e5efdb481d625beff68a8c250efbd7f2cdd311f8fff42a85a460",
+    "L-Connect.Core/LConnectCore/SensorSettingTypes.cs": "8060f2939878332be8876f5bfd53307ed09b072cf54209c14240787996a78850",
+    "L-Connect-Service/LConnectService/Utils/HWiNFO/HWiNFOWrapper.cs": "7012e558c110b0519644b9ddb33a968818478ec06432f157941ba5c1eb28aba0",
+    "L-Connect-Service/LConnectService/SystemInformation.cs": "0e7c23e50d85873448be21a902f6d32f4ceef052b8c93935e332b97b8133d79d",
+    "L-Connect 3/views/pages/settings/sensorsettingpage.baml": "2c3bf4abf0ff4b748f607aa61dfd72203f0808eae5c52d91fa33c2e703028988",
+    "L-Connect 3/views/pages/settings/mainpage.baml": "5ccee0807f842f5e9ce95c5c42e54dc2f632db14993f5611bc4c25a2ba990f37",
+    "L-Connect 3/views/pages/systeminfo/resourcepage.baml": "2dde6e53f5d11c2e8812bf87a082603686d5e32048b37a2b419eba723c919edd"
+  },
+  "linux_files": {
+    "desktop/src/routes/+page.svelte": "0d83173e2cee357fdb60dd85a5bee4293f4e97be14d856c66807ed82835b922e",
+    "desktop/src/lib/Settings.svelte": "ac4d17dc67dcd40c136a019aa1ba16ff8e275761c3af8b709d2d4b9119d2c1fb",
+    "crates/lconnect-ipc/src/trait_def.rs": "1103ed115a3523c391e90e3264d064d2f0456eb129c03cdd094713b7724b5c1d"
+  }
+}

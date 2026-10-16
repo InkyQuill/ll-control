@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-11",
+  "scope": "Expanded editor accessible names, static text contrast, reflow and cooling curve delete focus",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/src/lib/Cooling.svelte": "c98d73941a8c4bcf6f560a015591055f25167e18e2354603f0bf3bd296e08e82",
+    "desktop/tests/expanded-accessibility.spec.ts": "6339c27d6ceb85aa62b511c2a1114ae0d2cbcb5f1b54ea064826aaefe238b249"
+  },
+  "red_green": {
+    "before": "Deleting third curve point left second temperature input inactive; keyboard focus assertion failed",
+    "after": "Deleting final or first point focuses nearest remaining temperature field; Tab continues to its PWM field"
+  },
+  "verification": {
+    "svelte_check": "0 errors, 0 warnings",
+    "production_build": "passed",
+    "browser_tests": 12,
+    "suites": [
+      "expanded-accessibility",
+      "control-keyboard",
+      "layer-keyboard"
+    ],
+    "log": "/tmp/lconnect-expanded-accessibility.log",
+    "red_log": "/tmp/lconnect-curve-focus-red.log",
+    "build_log": "/tmp/lconnect-curve-focus-build.log",
+    "review": "Focused self-review: typed event handler, tick before focus, owner/draft/channel/mode/generation guards, keyed mutable point rows; no new effects or IPC. ESLint/lint not configured."
+  },
+  "limits": [
+    "Headless Chromium with fixture RPC only",
+    "Contrast scan covers visible DOM text with solid ancestor backgrounds, excludes disabled controls and native option popup; input values, gradients, forced colors and OS scaling not covered",
+    "Native WebKitGTK keyboard and assistive technology not run",
+    "Full expanded editor validation/error/cancel flows remain open"
+  ]
+}

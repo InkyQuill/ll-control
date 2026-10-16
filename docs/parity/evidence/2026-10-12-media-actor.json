@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-12",
+  "scope": "Pinned v1/v2 media reader integrated into daemon LCD playback, profile selection and manager replay; MockBackend only",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "source_sha256": {
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "327f1dd766e68c7ddd23087cca0473940c9ae786ea0183286a49dde820aa87df",
+    "crates/lconnect-daemon/src/actor/mod.rs": "167dc28737a33c78e4fbf4d27c3bbf7e8bcde3371af1e1a24b6ef26270972e6d",
+    "crates/lconnect-daemon/src/media_assets.rs": "912744fec103f5947e9c3391ac10d5a727e3c7fb1df2344aab2c700f520ac309",
+    "crates/lconnect-daemon/src/ipc_server.rs": "6fa8219bd257ef239b698d57fa0e5372e2493d5aae248f7fb25ae05ebd900e88",
+    "crates/lconnect-daemon/src/manager.rs": "196d78c6fc83f750d15410ab10c5fd51514c3522d517ee7b43e86b04712efbe6",
+    "crates/lconnect-daemon/tests/lcd_keeper.rs": "b12e71e74cf2d9e9658c3352c2be7481e4e30106c454406fd81759ce5fd95fc2",
+    "crates/lconnect-cli/tests/media_library.rs": "cb0346612162a4a24a13958bd43f0ba7251326cc2df8a612011fa7c70574991b"
+  },
+  "checks": {
+    "rust_tests": 685,
+    "test_targets": 98,
+    "lcd_keeper": 16,
+    "cli_media_library": 3,
+    "fmt": "passed",
+    "clippy": "all-targets/all-features -D warnings passed",
+    "docs": "passed",
+    "production_gui_check": "passed",
+    "read_only_review": "no findings"
+  },
+  "logs_sha256": {
+    "/tmp/media-actor-check.log": "8a7aecc8272d1b60621b223022f4b83bc85448d4e9120ad43de0d99bb943ab80",
+    "/tmp/media-actor-lcd.log": "957561275b5e678e7226494b4f4daa6d84e2005b4cd94f802ac814c9dcd6d24b",
+    "/tmp/media-actor-lifecycle.log": "db7145fffddf00ae8f2d7fe21a609e20dee1ecde91e2b9d7dec280afd0e7dd2c",
+    "/tmp/media-actor-long.log": "c432be1ea58e409bd05f3a23e466f6dd63a5e5a1dba3e0b1f5dc733fcde5c9fe",
+    "/tmp/media-actor-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/media-actor-clippy.log": "727fd34181111df64a8fcc782cea28d5363958ae1f8bddc34d1ce3507a12c049",
+    "/tmp/media-actor-all.log": "ecb7d4830fe9134fdd3a656ba48339d57d6ec2e3503bf9b90c61dab299ecad8d",
+    "/tmp/media-actor-doc.log": "ee95f532a5b8d45b8ee33a3f3ab4823f25fe5b5614589b7ceda5d829863ea6ff",
+    "/tmp/media-actor-production.log": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889"
+  },
+  "coverage": [
+    "All 586 indexed frames plus first repeated frame compared as complete HID packet batches under virtual time",
+    "Clear queued behind in-flight batch waits for frame and reader then sends LocalUI; no stale frames and pin released",
+    "Image replacement joins old media, sends only JPEG afterwards, releases media pin",
+    "CLI/private Unix IPC v1/v2: list/select/profile, daemon restart, missing/recovery, sleep/wake with fresh attachment, old ID rejection, Clear and reference-protected delete",
+    "Existing diagnostic firmware/rotation/finite-loop and LCD tests retained"
+  ],
+  "limitations": [
+    "V2 publication internal only; no chunked RPC/native long-video import yet",
+    "Legacy load_prepared_clip/finite diagnostic API unchanged; v2 uses set_lcd_media",
+    "GUI import still10s/240frames/1MiB; v2 thumbnail not connected",
+    "SourceKind remains DiagnosticClip for existing client compatibility",
+    "No new codec, browser/native GUI or physical acceptance",
+    "Additional slow-read/first-frame cancellation and corruption-during-actor-playback fault qualification remains"
+  ],
+  "hardware_run": false
+}

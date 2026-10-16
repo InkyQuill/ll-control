@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "scope": "Font recovery acceptance and sensor part native selection; production unchanged",
+  "hardware": false,
+  "browser_focused_tests": 2,
+  "native": {
+    "ok": true,
+    "native_font_import": true,
+    "native_font_retry": true,
+    "native_font_parts": true,
+    "restart_replay": true,
+    "profiles_restart_replay": true,
+    "gui_closed_jpeg_frames": 2
+  },
+  "native_evidence": "/tmp/lconnect-native-tsc53bvc/acceptance.json",
+  "logs": [
+    "/tmp/font-recovery-browser.log",
+    "/tmp/font-recovery-native-build.log",
+    "/tmp/font-recovery-native.log"
+  ],
+  "sha256": {
+    "desktop/tests/font-recovery.spec.ts": "76d9823f3ffe4caf052d2b9cff2625b09cc75ad59ac87157bb7245e12dc0e4e5",
+    "desktop/scripts/native-smoke.js": "25431b0add227426caf0263475f4422f8fb9d5d3acdf8e6472a394fc74f64a08",
+    "desktop/scripts/native-smoke.py": "66ce87243c0b6cc98ac8a45b004fd3c1c3f2b691fa0d79123f7c9a7c05ece175"
+  },
+  "checks": [
+    "Browser held chunk + disconnect cancels without next chunk/finish; draft retained; reconnect and explicit retry succeed",
+    "Browser invalid Finish preserves draft and permits retry without auto Apply",
+    "Native real invalid TTF rejected; active theme and edited draft unchanged; valid File retry succeeds",
+    "Native sensor label and unit font choices remain draft until Apply, profile/restart preserve full theme"
+  ],
+  "remaining": [
+    "font cleanup/retention and drafts/session references",
+    "native disconnect during upload and lost Finish",
+    "native missing/corrupt already-saved dependency recovery",
+    "full Windows font catalog/metrics and hardware acceptance"
+  ]
+}

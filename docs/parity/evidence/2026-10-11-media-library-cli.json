@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "crates/lconnect-cli/src/main.rs": "5b8b119188a3e88a8c082821f33cc4438ecc013a660157208c3f23316b18a4f1",
+    "crates/lconnect-cli/src/commands/lcd.rs": "e8d1a291b8836f2e1bef0bfe814e98601432e3d86fee692487d329722075c8b8",
+    "crates/lconnect-cli/tests/lcd_commands.rs": "4539382768dcc67655f3ea2c3bedabbdab5d73274f262ab48dcb1b2f368c058e",
+    "crates/lconnect-cli/tests/media_library.rs": "f235c318214723ecac786f4871211e266f2291df44618ecdb684e3d4e047db28",
+    "crates/lconnect-cli/Cargo.toml": "9509e7790d7dfe00b9fbe020e750c3a52ecfd91e6d400230cb6fb53bff493dea",
+    "Cargo.lock": "7d93a478679c79ab9b818fc3759cb184b7810fdb5504de339621cc60a55e3978"
+  },
+  "log_sha256": {
+    "/tmp/media-cli-library-tests.log": "bccd9996d7433877fdbf04b1422a102f7023f1061918a9d000088e3b8cd6f2a1",
+    "/tmp/media-cli-review-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/media-cli-review-clippy.log": "a8c939532f493abc8a5b527a6f130761c9e52d0b4edc53bfe3ade71f19cb8c3e",
+    "/tmp/media-cli-review-test.log": "a56d40b2a90fed40de89d352bdad570049995f29cb76709e89b90ab8b2e68efb",
+    "/tmp/media-cli-review-doc.log": "9fe91d6cf1fd718fa424698ee35cc895f3ba1694e92dfd69a0c2b35287872a55"
+  },
+  "checks": {
+    "focused_cli_tests": 8,
+    "workspace_tests": 643,
+    "targets": 95,
+    "failed": 0,
+    "ignored": 0,
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "docs": "pass",
+    "review": "all findings resolved"
+  },
+  "covered": [
+    "CLI offline import/list through private Unix IPC to actual daemon store",
+    "Manager/store restart then saved-key playback via LCD actor and MockBackend",
+    "Complete512 H264 packet batch equals saved payload",
+    "Clear emits exact LocalUI packet and reports Idle/applied LocalUI",
+    "Invalid key/loops/manifest rejected before connecting or playing",
+    "Non-ASCII hex colour returns Result error rather than panicking"
+  ],
+  "limits": [
+    "Synthetic NAL transport fixture is not a video decoder test",
+    "Real FFmpeg decode tests are separate preparation evidence",
+    "No automatic saved playback selection/replay or GUI gallery yet",
+    "No hardware, production daemon or host sensor access; no new native GUI run"
+  ]
+}

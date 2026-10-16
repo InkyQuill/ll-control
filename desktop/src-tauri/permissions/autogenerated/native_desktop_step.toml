@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-native-desktop-step"
+description = "Enables the native_desktop_step command without any pre-configured scope."
+commands.allow = ["native_desktop_step"]
+
+[[permission]]
+identifier = "deny-native-desktop-step"
+description = "Denies the native_desktop_step command without any pre-configured scope."
+commands.deny = ["native_desktop_step"]

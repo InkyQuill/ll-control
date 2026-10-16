@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-12",
+  "scope": "GUI collection membership management panel and bridge allowlist",
+  "verification": {
+    "svelte_check": "PASS zero errors/warnings /tmp/collection-gui-check.log",
+    "frontend_build": "PASS /tmp/collection-gui-build.log",
+    "browser": "PASS five collection/profile workflows /tmp/collection-gui-browser.log; extended collection lost-reply/readback-failure workflow PASS /tmp/collection-gui-browser-fault.log",
+    "rust_gui_tests": "20 passed /tmp/collection-gui-rust.log",
+    "strict_gui_clippy": "PASS /tmp/collection-gui-clippy.log",
+    "fmt": "PASS",
+    "reviews": "Svelte stale settlement and focus findings fixed/re-reviewed; Rust bridge no actionable findings",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN"
+  },
+  "remaining": [
+    "Filter existing ImageGallery/MediaLibrary by persisted membership",
+    "Import into chosen collection",
+    "Full Screen reset external workflow",
+    "Native accessibility/acceptance"
+  ],
+  "sha256": {
+    "desktop/src/lib/ScreenCollections.svelte": "9f67aed840cec5e37bc0f52b2b05c0027894c8e8ce0784007d4ef6b3a3511613",
+    "desktop/src/lib/api.ts": "68e2efe7b7a2de246094776ad832f6c1c8f17b171775c42fa31b65f44e219d8b",
+    "desktop/src/routes/+page.svelte": "513ad484986b044116f84f0c0b159c469e45b68f0b7a65f2da73a768e81093ec",
+    "desktop/src-tauri/src/main.rs": "ff2570c1ee21ac37c334d9872cbf3104c6ea25319ef469307576ec2cf14c03cc",
+    "desktop/tests/collections.spec.ts": "6f828b4c373dcc19444613a9e22e86155960041925955c8f87e28b62b94e2a23"
+  }
+}

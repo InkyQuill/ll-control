@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Serialized full-group owner commit and durable storage acknowledgement/readback; runtime Apply and group IPC/CLI/GUI still pending",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/profile_group.rs": "b66aafa9df75d7fe105869ba47c7ab4f3ff64650baf799246e383f05b1edf17c",
+    "crates/lconnect-daemon/src/profile_group/import.rs": "953f7cf2c81c89b0b497f80decf9475f1709dab3bb18c3d084df5a9e6c9e6605",
+    "crates/lconnect-daemon/src/profile_archive.rs": "6dcb7b41bb40ead51ecae5b640b79ffcb7d6b5d1c91335cb417f9ace21746df7",
+    "crates/lconnect-daemon/src/profile_archive/group.rs": "f0d445655532ef4d85d8c2b6ccb6b5eb9e80c4ba54703f1b3c4334d95531c4fb",
+    "crates/lconnect-daemon/src/persistence.rs": "00f2a7238b45ae529c0d41c5f8c1c39d1b1ede1a2c8203943941325de83fba12",
+    "crates/lconnect-daemon/src/persistence_group_import_tests.rs": "c7fdc7daa120716e4affc679a3f63779bdfa08d1521f0577360880185db2d4c2",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "5d9d1898df9e73930b53da253c856ddc4b5014933ea21ff7d64dd684ca6fdc5e",
+    "crates/lconnect-daemon/src/state_transaction.rs": "94d2ad9fb7e7c136e7f4f82d2ea03b19a008ae88fa97195b667c279418428331",
+    "crates/lconnect-daemon/tests/profile_group_import.rs": "c22f53f0bacd2ed5a270dd8392d8b5add9d35f0968aa874c9213b5e42a03504b"
+  },
+  "contract": {
+    "receipt": "DeviceSettings.group_imports holds last64 records. OperationID32hex, kind, SHA256 original validated archive header (which contains all payload hashes), original target GroupRevision, committed profile/collection revisions and accepted desired-content digest. Same transaction as settings+library. Source export excludes receipts.",
+    "identity": "PreparedGroup retains source header identity before generated key remap; owner receives Arc<PreparedGroup> so caller/job can retry without decoding/publishing assets again. Reusing ID with different source/group/target is rejected.",
+    "owner": "New commit includes accepted neighboring queued deltas. Repeated commit preserves newer latest/dirty flags/pins, acknowledges current readback only. Screen commit clears prior screen owner leases; FanAndLighting keeps screen leases. Worker retains preparation even if response receiver disappears.",
+    "readback": "ReadGroupImport needs ID only, no PreparedGroup or asset publication. Returns original receipt with current latest/library and selected_content_current. Deleted slots or later settings are not replayed. Flag concerns desired settings/slot identities only, not payload rehash, live Apply or visible playback.",
+    "recovery": "Receipt and settings/profiles recover together through shared journal. Positive acknowledgement checks durable receipt and re-syncs files/directories. Unresolved journal/worker failure stops owner without flushing an older snapshot. Plain stale rejection retains dirty intent. Invalid/missing profile revision evidence is preserved, not replaced.",
+    "retention": "64-record bound; evicted original intent still fails stale original target profile revision CAS."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 977,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-group-commit-workspace-current.log"
+    },
+    "strict_clippy": "/tmp/lconnect-group-commit-clippy-final.log",
+    "rustdoc": "/tmp/lconnect-group-commit-doc-current.log",
+    "fmt": "/tmp/lconnect-group-commit-fmt-current.log",
+    "owner_storage": {
+      "count": 6,
+      "source": "crates/lconnect-daemon/tests/profile_group_import.rs",
+      "log": "/tmp/lconnect-group-commit-tests-final.log",
+      "coverage": [
+        "Dropped commit reply followed by ID readback, repeated Arc preparation does not add assets/revisions, later queued LCD edit retained/dirty and fresh-store restart reads current state.",
+        "After slot deletion, old receipt readback returns current library and never resurrects slot.",
+        "New import commits queued neighbor settings; stale rejection keeps pending newer state for shutdown flush.",
+        "Same ID changed source/target/group rejects;65 commits retain64 receipts and evicted old intent cannot reimport.",
+        "Fan group import keeps pending screen media intent and active owner pin.",
+        "Unresolved journal stops writer/channel without flushing old state, preserving journal and settings evidence.",
+        "Future/missing profile revision receipt blocks reads/replacement and preserves corrupted source bytes."
+      ]
+    },
+    "fault_and_ownership": {
+      "log": "/tmp/lconnect-group-commit-fault-final.log",
+      "tests": [
+        {
+          "source": "crates/lconnect-daemon/src/state_transaction.rs",
+          "name": "profile_group_import_recovers_whole_group_at_each_journal_boundary",
+          "cases": 6,
+          "coverage": "Both groups at Journal/Device/Profiles interruption boundaries; fresh store recovers receipt+settings+slots and selected-content acknowledgement."
+        },
+        {
+          "source": "crates/lconnect-daemon/src/persistence_group_import_tests.rs",
+          "name": "abandoned_contended_group_commit_keeps_pins_and_executor_until_publication",
+          "coverage": "Current-thread Tokio, shared state gate held by another worker; caller response dropped and only queued command/worker owns preparation. Image/media deletion blocked by pins; async timer releases contention; receipt committed once and recovered through owner readback."
+        }
+      ]
+    },
+    "frontend_native": "NOT RUN: group workflow not exposed to IPC/CLI/GUI and frontend unchanged",
+    "hardware": "NOT RUN: deferred by user; private file stores plus workspace existing MockBackend tests only"
+  },
+  "remaining": [
+    "Runtime coordinator/barriers and preparation; stale LCD/cooling/RGB actor deltas must not overwrite imported group",
+    "Generation/receipt-bound runtime Apply/recovery with sleep/detach/shutdown/failure matrix",
+    "Group transfer IPC/CLI/native GUI and browser/native fault/accessibility qualification",
+    "Windows ZIP/profile/assets interoperability",
+    "Physical tests deferred; additional effects/Style Express last"
+  ]
+}

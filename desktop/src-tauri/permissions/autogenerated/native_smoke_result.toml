@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-native-smoke-result"
+description = "Enables the native_smoke_result command without any pre-configured scope."
+commands.allow = ["native_smoke_result"]
+
+[[permission]]
+identifier = "deny-native-smoke-result"
+description = "Denies the native_smoke_result command without any pre-configured scope."
+commands.deny = ["native_smoke_result"]

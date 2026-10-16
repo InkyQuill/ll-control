@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Moscow",
+  "checkpoint_started": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Serialized manager handoff and original HID ownership; private-file/MockBackend software checks only. No product updater route or hardware/native GUI execution.",
+  "implementation": [
+    "ManagedDevice retains original DeviceInfo; manager queue handles scoped request after current enumerate/attach/replay pass.",
+    "Unique non-Clone FirmwareOwner removes target and peers from ordinary device map, retains original actor trees and HID handles without reopen/replay.",
+    "Foreign maintenance rejected before enqueue; stale/missing ID not retargeted; repeated claim rejected. One handoff per sealed process.",
+    "Owner checked quiesce concurrently joins all producers/save state, including peers after target error; target HID remains alive. Owner does not retain ordinary admission lease that would deadlock drain.",
+    "Owner close/drop or reply loss signals root shutdown; manager retains handoff stop/teardown receipts and waits physical I/O completion on daemon shutdown even with live owner or cancelled close waiter.",
+    "No automatic map restore/reclaim/reopen. Synchronous backend write cannot be force-interrupted."
+  ],
+  "checks": {
+    "workspace": {
+      "passed": 1189,
+      "failed": 0,
+      "ignored": 6,
+      "groups": 159
+    },
+    "new_normal_tests": 6,
+    "targeted": {
+      "passed": 6,
+      "failed": 0,
+      "ignored_external_fixture": 1
+    },
+    "pinned_real_manager_fixture": {
+      "passed": 1,
+      "runtime_seconds": 13.25,
+      "reports_after_quiesce": 622,
+      "chunk_echoes": 619,
+      "opens": 1,
+      "reopens": 0,
+      "durable_outcome": "AwaitingReconnect",
+      "saved_fan_policy_preserved": true
+    },
+    "fmt": "passed",
+    "strict_workspace_clippy": "passed",
+    "strict_native_feature_clippy": "passed",
+    "warnings_denied_workspace_rustdoc": "passed",
+    "hardware": "not run; user deferred",
+    "native_gui": "not run; no frontend/native app source change"
+  },
+  "coverage": [
+    "Blocked peer attach/replay finishes before handoff; all managed trees quiesced, readonly identity works on retained original target handle.",
+    "Requester cancelled after deterministic actual enqueue; reply loss closes roots without replay and shutdown joins.",
+    "Scope/missing/duplicate refusal with no extra HID open.",
+    "Shutdown waits for blocking handed-off I/O despite live owner; cancellation of owner-close waiter does not detach manager join.",
+    "Target save failure still joins peers and blocks checked preflight without flash commands.",
+    "External pinned image: manager handoff -> checked quiesce -> ordinary drain -> snapshot/journal arm -> original actor622reports -> durable exact progress/guard -> joined close; no restore."
+  ],
+  "fixture_correction": "First new mock activation response omitted researched byte12 success flag; strict unchanged production decoder correctly returned Unknown. Mock corrected to existing1.6 contract; final pinned run passed.",
+  "source_snapshot": {
+    "path": "/tmp/lconnect-handoff-source.json",
+    "sha256": "b68a900a9aa20fcd67cc6037c0cd05a87ae1a255f59aba68327dfbd47b9b3e97",
+    "files": 371,
+    "unchanged_after_checks": true
+  },
+  "logs": {
+    "fmt": {
+      "path": "/tmp/lconnect-handoff-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "workspace": {
+      "path": "/tmp/lconnect-handoff-workspace.log",
+      "sha256": "70c91963f9dbf08bc32cc97ef9cb520e655ba41d76147cc25a12e5854f96687f"
+    },
+    "clippy": {
+      "path": "/tmp/lconnect-handoff-clippy.log",
+      "sha256": "8d4a5ac8c0c2966414ab36d13aae1d5bc8364deba0745f6d822dcdbf072d7ed7"
+    },
+    "native-clippy": {
+      "path": "/tmp/lconnect-handoff-native-clippy.log",
+      "sha256": "c72703449e6efc43f121f24e8613fd28477344ed1f33ba9fc8917154cefb712c"
+    },
+    "doc": {
+      "path": "/tmp/lconnect-handoff-doc.log",
+      "sha256": "53fb149374e918299dbbaf9439509c86b1a6154c799ad2e54e52bfcf72af34f2"
+    },
+    "targeted": {
+      "path": "/tmp/lconnect-handoff-targeted.log",
+      "sha256": "3cfa759ab35560ce341ab99c6d778877104342efc93ab5e3ab70a08c627c6edb"
+    },
+    "pinned": {
+      "path": "/tmp/lconnect-handoff-pinned.log",
+      "sha256": "ecb2beb6e9a4e45e390e2e4788f83ac297e3240a2c03623a413f9f9e1a95c2dd"
+    }
+  },
+  "remaining": [
+    "Owned coordinator orchestration of staging close, manager ownership/keeper join, checked drain and fresh serialized snapshot/asset pins.",
+    "Bounded cancellation/power/shutdown policy and unresolved import/publication recovery.",
+    "Probe-only reconnect after joined original HID teardown and qualified guard/journal resolution/restoration including serial-less/missed reset policy.",
+    "Product Inspect/Apply/status/recovery EN/RU and delivery qualification.",
+    "Version/ACK mock evidence is not hardware revision/image/cooling qualification."
+  ]
+}

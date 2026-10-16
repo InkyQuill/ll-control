@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "CSS line_box true OpenType shaping and paragraph bidi; new styles default CSS mode",
+  "sha256": {
+    "Cargo.lock": "a5c242651f97370061d99eaada9e03823950abd6a19f8b58bc9c3e4950003328",
+    "crates/lconnect-image/Cargo.toml": "fa92634a79a41169a0659bc884571c22ac9910da1c7f27b7ff2531c16ea768e5",
+    "crates/lconnect-image/src/text_layout.rs": "3862ad4091a0bdd85a7c69ea7638ce126fe1cc0f2bf67bba96e2ba5c716afb6c",
+    "crates/lconnect-image/src/theme.rs": "71f554e8f461ed750286cd9303ce32a2d93a80149cdf905ad9d7d8eaa76809ae",
+    "crates/lconnect-image/src/lib.rs": "e790515c91bd208ba8c56d03c08805fd9dc131780cb493ce9796c478aeb4c5f4",
+    "desktop/src/lib/api.ts": "6ae896b334fd338cc8e2d49625ce9d8633596a2bc1f64fb784c6e40276ec6a14",
+    "desktop/src/lib/theme-presets.ts": "9aecdd08d3cf8350d52c72d9325fd3b41ad106fa25ce1136fb811e178a47914c",
+    "desktop/tests/presets.spec.ts": "c2e9aa85b3d49456f490c8019e8c9c4214667822e6146ce80c6bba94720ce682",
+    "desktop/scripts/text-shaping-oracle.mjs": "d4f5974e55bdafb781c816b789cce2203ef16fb1691fd89b04f767af1959e338"
+  },
+  "verification": {
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "rust_tests": {
+      "passed": 596,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "cargo_doc": "pass",
+    "frontend_check": "0 errors, 0 warnings",
+    "frontend_build": "pass",
+    "cross_language_themes": 26,
+    "focused_browser_tests": 9
+  },
+  "oracle": {
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+    "font": "DejaVuSans.ttf",
+    "size_px": 40,
+    "direction": "ltr",
+    "modes": {
+      "auto": {
+        "ffi": 39,
+        "office": 110,
+        "é": 25,
+        "é": 25,
+        "سلام": 83,
+        "(אבג)": 98,
+        "CPU אבג 42°C": 271,
+        "CPU سلام 42°C": 288
+      },
+      "geometricPrecision": {
+        "ffi": 38.671875,
+        "office": 109.74609375,
+        "é": 24.609375,
+        "é": 24.609375,
+        "سلام": 82.1484375,
+        "(אבג)": 97.55859375,
+        "CPU אבג 42°C": 271.93359375,
+        "CPU سلام 42°C": 287.734375
+      }
+    }
+  },
+  "limits": [
+    "No current native or physical LCD run",
+    "GeometricPrecision advances are not default hinted browser or Windows pixel parity",
+    "CJK/browser breaking, locale/script extensions, fallback and raster remain",
+    "Worst-case realtime shaping cost unmeasured"
+  ]
+}

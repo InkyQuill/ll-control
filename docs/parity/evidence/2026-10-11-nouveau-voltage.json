@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "crates/lconnect-daemon/src/sensors.rs": "39197b9f9e6c0d4a97896f712a0ada10a26adcf6aa1e3af4e45a071c017500a6",
+    "crates/lconnect-daemon/src/sensor_selection.rs": "0e6b050917ebd232f5b4edefb727b16769c601e5d0aa664567875a94e565e47f",
+    "crates/lconnect-daemon/tests/host_sensors.rs": "5590345f155ba41c10a02c5df85c4d0c09422d47ec9e4dba232a03529ff9bebf"
+  },
+  "kernel_references": [
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/drivers/gpu/drm/nouveau/nouveau_hwmon.c",
+      "sha256": "b814422960408e5ec5a626c1c2ea83121360663e13922b23ea9450a18c753ee4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/drivers/gpu/drm/nouveau/nvkm/subdev/volt/base.c",
+      "sha256": "c0dd9edeb0ca4c3fa8369c97774c14ca9185149fdacef16787c309e1b5b85cfb"
+    }
+  ],
+  "nvml_references": [
+    {
+      "url": "https://docs.nvidia.com/deploy/nvml-api/latest/api/structnvmlRailMetrics__t.html",
+      "sha256": "0db2cab791dbc4fcac1d159ad8d18f66e83496de00e5326f51ea3ced0acb6738",
+      "docs_updated": "2026-09-09"
+    },
+    {
+      "url": "https://docs.nvidia.com/deploy/nvml-api/latest/api/structnvmlObservedMetrics__t.html",
+      "sha256": "1bbc11cdf126d61c0522eb462b8c50eeccc18681fd8451810199a429e32ae494",
+      "docs_updated": "2026-09-09"
+    },
+    {
+      "url": "https://docs.nvidia.com/deploy/nvml-api/latest/api/structnvmlPmgrPwrTuple__t.html",
+      "sha256": "2efa8cd00506a0bb0f766e8fc5f256072a19ac40fe2875e73d61922d19ec47cb",
+      "docs_updated": "2026-09-09"
+    },
+    {
+      "url": "https://docs.nvidia.com/deploy/nvml-api/latest/api/structnvmlPwrModelOperatingPointPfpp1x__t.html",
+      "sha256": "f7b78284e2d98c29826eced0436e345a16c3d5e7e97068a46a33443e5799bda8",
+      "docs_updated": "2026-09-09"
+    }
+  ],
+  "checks": {
+    "focused_host_sensors": 27,
+    "workspace_tests_passed": 636,
+    "targets": 93,
+    "failed": 0,
+    "ignored": 0,
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "docs": "pass",
+    "review": "no actionable findings"
+  },
+  "log_sha256": {
+    "/tmp/nouveau-voltage-focused-final.log": "8261b65643cc2ead48a894ccfb563ad51adfbfdfe1300f08eb5af12d40a0a445",
+    "/tmp/nouveau-voltage-review-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/nouveau-voltage-review-clippy.log": "820a42b8426bf9cfe7699138f5eb150b3f15fabed03a738e6badfac5fa19cae1",
+    "/tmp/nouveau-voltage-review-test.log": "c3b550c47576e0b38ab4363123f66cf17975888061507cf424312641864f424c",
+    "/tmp/nouveau-voltage-review-doc.log": "cf5f1286bfcd7a8cc7dd281230fd5a6981a0c8877f73b87e09f853438cfef3a5"
+  },
+  "cases": [
+    "Exact nouveau in0 role; adjacent in1 excluded",
+    "mV to V, valid zero, invalid/disabled/stale readings",
+    "Physical identity and source selection survive hwmon renumbering",
+    "Disappearance retains existing mapping, disallows new missing selection, recovers same ID",
+    "Cache IPC LCD text and JPEG preview"
+  ],
+  "limitations": [
+    "Driver reported voltage may derive from kernel VID lookup, not guaranteed analog measurement",
+    "No hardware, host sensors, driver changes or production daemon access",
+    "Proprietary NVIDIA outside X remains open; reviewed NVML structs contain no voltage getter",
+    "GUI not changed or rerun; previous full-stack checkpoint predates provider changes"
+  ]
+}

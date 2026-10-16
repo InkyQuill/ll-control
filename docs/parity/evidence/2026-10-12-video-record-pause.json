@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-12",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2",
+  "scope": "VideoCut source record/pause, not desktop screen recording",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "reference": "VideoCutTool.cs:559-654; start snapshots Rects/time; pause stores End; 180000ms timer confirms",
+  "implementation": [
+    "Separate recording and manual drafts",
+    "Start/pause/EOF produce ordered intervals with immutable crop snapshots",
+    "Recording locks seek/crop/file/mode; unexpected seek/error discards unfinished interval",
+    "Source-time 180s total cap triggers preparation; explicit publication confirmation retained",
+    "Current-frame EOF marker floors milliseconds; native allows 1ms rounded browser/movie duration boundary"
+  ],
+  "verification": {
+    "frontend": "check 0 errors / 0 warnings; build passed",
+    "browser": "18 passed (32.7s)",
+    "rust": "28 passed (26 library + 2 binary)",
+    "quality": "strict all-targets Clippy, warning-denied docs, cargo fmt and whitespace checks passed",
+    "logs": [
+      "/tmp/video-record-check.log",
+      "/tmp/video-record-build.log",
+      "/tmp/video-record-browser.log",
+      "/tmp/video-record-rust.log",
+      "/tmp/video-record-clippy.log",
+      "/tmp/video-record-doc.log"
+    ],
+    "real_media": [
+      "Two intervals at0.25s/1.25s through pause/seek/EOF with distinct crops",
+      "Rejected play and unexpected seek recovery, empty-list admission and focus",
+      "200s H264 MP4 at16x playback yields end180000ms and auto-preparation",
+      "25-frame24fps MP4 accepts1042ms browser end and decodes25frames;1044ms rejected before encode"
+    ]
+  },
+  "limitations": [
+    "Headless Chromium/IPC mock, not native WebKitGTK",
+    "No hardware or active-display GUI access",
+    "Native keyboard/speech/scaling/recording/review lifecycle remain to qualify",
+    "Full VFR/nonzero PTS and source-error timing matrix still open",
+    "Gallery video re-edit and VideoEdit/AutoFill remain"
+  ],
+  "source_sha256": {
+    "desktop/src/lib/VideoSourcePreview.svelte": "9d6126e1ecef59e57b8c41f2725afeef8e95b7a9f4e1257de87ed904471166e8",
+    "desktop/src/lib/MediaImport.svelte": "6e5c05f10092939882e8f8921e524fc0bda68cfb20ec4cd7369e2c899fd81f69",
+    "desktop/tests/media-import.spec.ts": "f1f69973524577372e9a3e727ce1271d782cc653fef2ac112ded7aefc65d719c",
+    "desktop/src-tauri/src/media_prepare.rs": "8dcf2a282f2d3dd3e051ff1ce32b9c73443afbbebad648b8d9b2155f82ef6f3b"
+  }
+}

@@ -1,0 +1,455 @@
+{
+  "date": "2026-10-15",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "scope": "Durable publication ownership for named-slot Finish with global library target, source-bound receipt, protected rollback and startup reconciliation. Full-group v1 format preserved; raw payload staging now owned for both kinds.",
+  "source_sha256": {
+    "crates/lconnect-ipc/src/profile_archive.rs": "7cc495dc14020acb4b4ed92ec9d5a367ba684a0fd054c0c1d0605d9c1b9547d1",
+    "crates/lconnect-ipc/src/profiles.rs": "f5ec65d6f33fdc37263a6eb3a625b04491598197c90dea4002cbbbb3a2144efb",
+    "crates/lconnect-daemon/src/profiles.rs": "f31f286f5eb67ba7bcb9485595a1f059315ddcd1050978f2b0c34c747f290bbd",
+    "crates/lconnect-daemon/src/archive_transfer.rs": "c416265f3f8bf8bd0c3db1a869e2245fc11bf4c7c735b5f69b2e2eb6743ffb69",
+    "crates/lconnect-daemon/src/ipc_server.rs": "26ee68e5a96cbd3b54d88c29f49dfc0bd29304257599b75200a39d5d91197ed0",
+    "crates/lconnect-daemon/src/profile_archive.rs": "9154d47d213ad51e03b3c543bf37c42dfb2da451f5fd918400741e418c555a52",
+    "crates/lconnect-daemon/src/profile_archive/group.rs": "16ea7c98bffebe6c4dec122d697fccd043fc92b454226b424c1a58d9aecc9cb2",
+    "crates/lconnect-daemon/src/asset_publication.rs": "6555cb854a6c1041345ae7f6ff61a4bb14ad970c957dabc05fae786056a8357b",
+    "crates/lconnect-daemon/src/asset_publication/journal.rs": "e1ecee2be337ea89ce6e79acad5eed74681dc5e7a578056b5caf1296070f8579",
+    "crates/lconnect-daemon/src/asset_publication/journal_tests.rs": "1e57b85d4f33d3155b879b74ab4ade4ecd035fceb0ee8e3dc25ccef0c06ade7d",
+    "crates/lconnect-daemon/src/persistence.rs": "58aa85535641cb91f08fe13f27bc6c62ceaf84974bccfccc076bf51600a8c553",
+    "desktop/scripts/native-archive.py": "c5ad3315941c1d9d3d9ada0a0616d414c8adcea6da98e8314cb5d55c17e2d95a"
+  },
+  "checks": {
+    "workspace": {
+      "suites": 148,
+      "passed": 1067,
+      "failed": 0,
+      "ignored": 3,
+      "exit_code": 0,
+      "log": "/tmp/lconnect-slot-workspace.log"
+    },
+    "strict_clippy": {
+      "command": "cargo clippy -p lconnect-daemon -p lconnect-ipc --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-slot-clippy.log"
+    },
+    "strict_rustdoc": {
+      "command": "RUSTDOCFLAGS='-D warnings' cargo doc -p lconnect-daemon -p lconnect-ipc --no-deps",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-slot-doc.log"
+    },
+    "fmt": {
+      "command": "cargo fmt --all --check",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-slot-fmt-check.log"
+    },
+    "native_build": {
+      "command": "cargo build -p lconnect-gui --features native-smoke,custom-protocol",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-slot-native-build-final.log"
+    },
+    "mock_build": {
+      "command": "cargo build -p lconnect-daemon --example desktop-mock",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-slot-mock-build.log"
+    },
+    "documents": {
+      "files": 5,
+      "local_links": 140,
+      "missing": 0,
+      "fences_balanced": true
+    }
+  },
+  "cases": [
+    "SIGKILL Preparing: owned raw payloads and unreferenced image/name/font/media are removed; library stays at revision0.",
+    "SIGKILL after real profiles+receipt commit: all bytes preserved, no second slot edit.",
+    "Legacy SHA-less receipt in Preparing: conservatively retained with separate slot notice.",
+    "Armed without receipt and64 subsequent real slot commits/receipt eviction: retained with actionable Status diagnostic; no slot edit or hardware Apply replay.",
+    "Actual stale CAS after payload staging and asset publication: only failed import assets removed; ordinary upload and newer independent saved profile retained.",
+    "Caller task aborted while catalog blocks publication: blocking worker keeps permit, commits once, Status and Finish return same receipt.",
+    "Persisted legacy receipts round-trip without new field; new SHA receipts round-trip and invalid digests rejected.",
+    "Native named-slot file chooser export/import image/font/cached video, durable source digest, graceful WM_DELETE_WINDOW joined close, restart readback/preview, no implicit Apply, no remaining journal scopes.",
+    "Both full-group native round trips/restarts repeat successfully with shared scoped raw staging."
+  ],
+  "native": {
+    "named_slot": {
+      "fixture": "/tmp/lconnect-native-archive-78jq1vhj",
+      "acceptance": {
+        "after": {
+          "applied": null,
+          "generation": 0,
+          "last_error": null,
+          "persistence": {
+            "last_error": null,
+            "pending": false,
+            "saved": false
+          },
+          "requested": {
+            "brightness_percent": 100,
+            "mode": "LocalUI",
+            "rotation_degrees": 0
+          },
+          "source": "Idle"
+        },
+        "before": {
+          "applied": null,
+          "generation": 0,
+          "last_error": null,
+          "persistence": {
+            "last_error": null,
+            "pending": false,
+            "saved": false
+          },
+          "requested": {
+            "brightness_percent": 100,
+            "mode": "LocalUI",
+            "rotation_degrees": 0
+          },
+          "source": "Idle"
+        },
+        "dev": "galahad2-lcdv2:0001",
+        "library": {
+          "archive_imports": [
+            {
+              "committed_revision": 2,
+              "expected_revision": 1,
+              "group": "screen",
+              "id": "00e2811939754fa6a2216eae160f897f",
+              "size": 1213085,
+              "slot": 7,
+              "source_sha256": "158dd21e15d266fa84e0d22eb9bec5696dcdd7683b2756c32a5ee8a2c7ccd872"
+            }
+          ],
+          "profiles": [
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "builtin-midnight-v1",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "text",
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "font_asset": "599820687db3b1e33b0b2feb918566c6",
+                        "size": 32,
+                        "x": 30,
+                        "y": 50
+                      },
+                      "text": "Native archive text"
+                    }
+                  ],
+                  "name": "Archive source theme",
+                  "page_cache": [
+                    {
+                      "page": "rain",
+                      "theme": {
+                        "background": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "background_video": "bcf5a102bf2a426286d34310cad4a001",
+                        "layers": [
+                          {
+                            "effect": {
+                              "dynamic": false,
+                              "intensity": 1,
+                              "kind": "rain",
+                              "seed": 42,
+                              "sensor": null
+                            },
+                            "kind": "weather"
+                          }
+                        ],
+                        "name": "Cached Rain",
+                        "version": 3
+                      }
+                    }
+                  ],
+                  "version": 1
+                }
+              },
+              "name": "Archive source",
+              "slot": 0
+            },
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "56458c5af754cb94eef08c700edaa782",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "text",
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "font_asset": "880ab1b382a6fcf9bf069e75a91d4d04",
+                        "size": 32,
+                        "x": 30,
+                        "y": 50
+                      },
+                      "text": "Native archive text"
+                    }
+                  ],
+                  "name": "Archive source theme",
+                  "page_cache": [
+                    {
+                      "page": "rain",
+                      "theme": {
+                        "background": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "background_video": "a53a2fe8f02613ea588be62c05412081",
+                        "layers": [
+                          {
+                            "effect": {
+                              "dynamic": false,
+                              "intensity": 1,
+                              "kind": "rain",
+                              "seed": 42,
+                              "sensor": null
+                            },
+                            "kind": "weather"
+                          }
+                        ],
+                        "name": "Cached Rain",
+                        "version": 3
+                      }
+                    }
+                  ],
+                  "version": 1
+                }
+              },
+              "name": "Archive source",
+              "slot": 7
+            }
+          ],
+          "revision": 2,
+          "version": 1
+        },
+        "native_archive_export": true,
+        "native_archive_import": true,
+        "native_archive_readback": true,
+        "native_file_chooser": true,
+        "no_implicit_apply": true,
+        "ok": true,
+        "operation": "00e2811939754fa6a2216eae160f897f",
+        "preserved_editor": true,
+        "publication_journal_retired": true,
+        "receipt_manifest_sha256": "158dd21e15d266fa84e0d22eb9bec5696dcdd7683b2756c32a5ee8a2c7ccd872",
+        "post_restart_preview_bytes": 15229,
+        "post_restart_preview_sha256": "739a9b4dbb17a8e813b8cd590a58f4355d00ad9e200efb88e3f36219d19aecb5",
+        "restart_replay": true,
+        "normal_close": true,
+        "portal_events": [
+          {
+            "method": "SaveFile",
+            "path": "/tmp/lconnect-native-archive-78jq1vhj/exported archive.lcp"
+          },
+          {
+            "method": "OpenFile",
+            "path": "/tmp/lconnect-native-archive-78jq1vhj/exported archive.lcp"
+          }
+        ],
+        "exported_bytes": 1213085,
+        "gui_exit": 0
+      }
+    },
+    "screen_group": {
+      "fixture": "/tmp/lconnect-native-group-archive-xbr330pf",
+      "acceptance": {
+        "dev": "galahad2-lcdv2:0001",
+        "explicit_apply": true,
+        "group": "screen",
+        "inspect_no_mutation": true,
+        "library": {
+          "profiles": [
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "3c369dc7ab979a0d451675b02a6a740d",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "clock",
+                      "show_seconds": true,
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "size": 36,
+                        "x": 20,
+                        "y": 30
+                      },
+                      "twenty_four_hour": true
+                    }
+                  ],
+                  "name": "Native full group",
+                  "version": 1
+                }
+              },
+              "name": "Full-group slot",
+              "slot": 7
+            }
+          ],
+          "revision": 2,
+          "version": 1
+        },
+        "ok": true,
+        "operation": "8c85e4947cca4408b14eea3ffb6eb493",
+        "preserved_editor": true,
+        "reapply_no_commit": true,
+        "receipt": "{\"id\":\"8c85e4947cca4408b14eea3ffb6eb493\",\"kind\":\"screen\",\"source_sha256\":\"8c4aaa65beac58be35d1f54f265334d9573699f564f9950860b5f9f2ba8785d1\",\"expected\":{\"profile_revision\":1,\"settings_sha256\":\"99d9bf1b79a708f592339c689caf6ec864f0f4d15df863c19ec20516bd6fc69d\"},\"profile_revision\":2,\"collection_revision\":1,\"content_sha256\":\"843b13d97de390dd4186a69e1f951dec6ca155003730519229f6525bad5dda59\"}",
+        "publication_journal_retired": true,
+        "post_restart_preview_bytes": 12711,
+        "post_restart_preview_sha256": "25f95f4e1399a9ea9186ae4f1ac1320a3396033f43cfe89ca74708d3017b5570",
+        "restart_replay": true,
+        "normal_close": true,
+        "close_method": "WM_DELETE_WINDOW via xdotool windowquit",
+        "portal_events": [
+          {
+            "method": "SaveFile",
+            "path": "/tmp/lconnect-native-group-archive-xbr330pf/exported group.lcg"
+          },
+          {
+            "method": "OpenFile",
+            "path": "/tmp/lconnect-native-group-archive-xbr330pf/exported group.lcg"
+          }
+        ],
+        "exported_bytes": 25466,
+        "gui_exit": 0
+      }
+    },
+    "fan_and_lighting_group": {
+      "fixture": "/tmp/lconnect-native-group-archive-decmmg6h",
+      "acceptance": {
+        "dev": "galahad2-lcdv2:0001",
+        "explicit_apply": true,
+        "group": "fan_and_lighting",
+        "inspect_no_mutation": true,
+        "library": {
+          "profiles": [
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "builtin-midnight-v1",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "clock",
+                      "show_seconds": true,
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "size": 36,
+                        "x": 20,
+                        "y": 30
+                      },
+                      "twenty_four_hour": true
+                    }
+                  ],
+                  "name": "Native full group",
+                  "version": 1
+                }
+              },
+              "name": "Full-group slot",
+              "slot": 7
+            }
+          ],
+          "revision": 2,
+          "version": 1
+        },
+        "ok": true,
+        "operation": "4775f0fabe9b4379ae9af74007d5a8e4",
+        "preserved_editor": true,
+        "reapply_no_commit": true,
+        "receipt": "{\"id\":\"4775f0fabe9b4379ae9af74007d5a8e4\",\"kind\":\"fan_and_lighting\",\"source_sha256\":\"fdcc0fccf6da9baed00f08023645f29e06cb7c7a770ca657831c55907a2ef13d\",\"expected\":{\"profile_revision\":1,\"settings_sha256\":\"370d71a62319de221364c0a26936b9beb9ebae9538c29d2c9183ed60d39b5215\"},\"profile_revision\":2,\"collection_revision\":null,\"content_sha256\":\"b6a3145a9d36a8ae6ac59d335e04951b5bf86f3ce32a4d490cd1409f2136a6ba\"}",
+        "publication_journal_retired": true,
+        "post_restart_preview_bytes": 13068,
+        "post_restart_preview_sha256": "f577cc6905f0d1aca57c97855a8aa702a7ca236695fc5610b0beaf9d6dbcd4d1",
+        "restart_replay": true,
+        "normal_close": true,
+        "close_method": "WM_DELETE_WINDOW via xdotool windowquit",
+        "portal_events": [
+          {
+            "method": "SaveFile",
+            "path": "/tmp/lconnect-native-group-archive-decmmg6h/exported group.lcg"
+          },
+          {
+            "method": "OpenFile",
+            "path": "/tmp/lconnect-native-group-archive-decmmg6h/exported group.lcg"
+          }
+        ],
+        "exported_bytes": 479,
+        "gui_exit": 0
+      }
+    }
+  },
+  "intermediate_runs": [
+    {
+      "log": "/tmp/lconnect-slot-journal-crash.log",
+      "note": "Initial compile missing Debug derive, then fixture opacity0.5 invalid for u8; corrected before full workspace verification."
+    },
+    {
+      "log": "/tmp/lconnect-slot-native.log",
+      "fixture": "/tmp/lconnect-native-archive-i3xnagr0",
+      "note": "First native build omitted custom-protocol and expected dev URL; isolated GUI explicitly stopped and processes cleaned. Final rebuilt embedded frontend run passed."
+    }
+  ],
+  "not_run": [
+    "Real HID/hardware/host sensors/capture portals; deferred by user.",
+    "Expanded exact IO boundary/fsync/link/rename/resource/panic/shutdown/native crash fault matrix.",
+    "Windows ZIP interoperability; no new LCD effects implemented."
+  ]
+}

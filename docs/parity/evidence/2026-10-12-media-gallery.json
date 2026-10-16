@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-12",
+  "scope": "paginated video gallery and shared thumbnail queue; no hardware",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "source_sha256": {
+    "desktop/src/lib/MediaGallery.svelte": "1dfb6646ae1021949927f3a5da6b25fa5e589eb9d59e583c84eda118ba359928",
+    "desktop/src/lib/MediaLibrary.svelte": "70e5d1fa43533f83941c97c41fe5e4fb98b9056c9f2700a6b2595381581b1bbf",
+    "desktop/src/lib/MediaThumbnail.svelte": "c47f6c1f8f201fa72787c81db1c8d755813bc85d9ce92cde870dda0c9e1ae538",
+    "desktop/src/lib/media-thumbnails.ts": "ab1bdaeaf14f5603282b2e22eb0c26196ee45b8204046d2218ce5c8a7c1d385f",
+    "desktop/tests/media-gallery.spec.ts": "88e29048330f5c6468bb3fa93fe6aa07591be5f40a10e41819b1bc73eed37038",
+    "desktop/tests/media-thumbnail.spec.ts": "d05af38f32091b10c149ec9542b3a12307b79aacc6cfcb59b6f74baca3d73245",
+    "desktop/scripts/native-media.js": "233036900e383ac17774979aaec38216059de129d0213a87fd8855bf4ca24ca0"
+  },
+  "checks": {
+    "svelte_check": "0 errors / 0 warnings",
+    "frontend_build": "passed",
+    "focused_browser": "10 passed",
+    "full_browser": "135 passed",
+    "native_media": "passed; gallery_verified true, 144px real FFmpeg previews; profiles/delete/restart/cancel/close",
+    "rust_suite": "not rerun; no Rust production changes"
+  },
+  "initial_failure": {
+    "scenario": "page changes and close remove queued thumbnails before native dispatch",
+    "cause": "test considered hidden details subtree absent from accessible roles before asynchronous toggle unmounted it",
+    "fix": "includeHidden role count waits for actual component teardown before releasing held native request"
+  },
+  "logs_sha256": {
+    "/tmp/media-gallery-focused-fixed.log": "0d6db361a47d6e635795c674089420de2e322a2cef48dfcdb3bcbcba41051f47",
+    "/tmp/media-gallery-check-final.log": "90a6093d8b8ccb0ac2603dc2a487929f8eb4b3b20081068eccc8790452a77620",
+    "/tmp/media-gallery-build-final.log": "25f97bc0bfe89ad0fd7c55d35afd1e7e52028ad56602aaaebe846662dfecc7e2",
+    "/tmp/media-gallery-browser-final.log": "8b42a1b86f98a1c9e5d19c5b71725adbe30127ad068c7be33bb096c3186ca5c4",
+    "/tmp/media-gallery-native-build.log": "c542f7ace4bc5e0f492b10589205f448cbe28d3fb41442016e3a3d6ecea8d999",
+    "/tmp/media-gallery-mock-build.log": "c92508a29848820f033cd2ea015c85dde0953c88b07cc967ce34b7c08f610549",
+    "/tmp/media-gallery-native.log": "eb3ee60e1ad92809ec49084595c4ce60390f8d956b04badbd0480408a4a3da0f",
+    "/tmp/lconnect-native-media-j9682hqt/acceptance.json": "46a677bfd707e32e0ef1b6d0c4e6dcfc3e8ff6833ad5eee06a139b18e74cfd0c"
+  },
+  "limitations": [
+    "video cards only; combined static-image/video gallery and defaults remain",
+    "long video and video plus realtime sensor composition remain",
+    "native keyboard/screen reader gallery qualification remains",
+    "historical GTK chooser flakiness not proven fixed",
+    "no current hardware acceptance"
+  ]
+}

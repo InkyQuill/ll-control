@@ -1,0 +1,889 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "MeteorShower theme/schema/live renderer/sole H.264 owner/GUI/full page cache/profile/restart integration",
+  "checks": {
+    "workspace": {
+      "passed": 895,
+      "ignored": 2,
+      "log": "/tmp/lconnect-meteor-integration-workspace.log"
+    },
+    "strict_clippy": "/tmp/lconnect-meteor-integration-clippy.log",
+    "rustdoc": "/tmp/lconnect-meteor-integration-doc.log",
+    "format": "/tmp/lconnect-meteor-integration-fmt.log",
+    "schema_and_cache": {
+      "logs": [
+        "/tmp/lconnect-meteor-theme-schema.log",
+        "/tmp/lconnect-meteor-cache-bound.log"
+      ]
+    },
+    "live_sensor_preview": "/tmp/lconnect-meteor-live.log",
+    "mock_owner_restart_sleep_clear": "/tmp/lconnect-meteor-owner.log",
+    "browser": {
+      "passed": 39,
+      "runs": [
+        {
+          "passed": 38,
+          "files": [
+            "weather.spec.ts",
+            "background.spec.ts",
+            "video-background.spec.ts",
+            "profiles.spec.ts",
+            "media-profiles.spec.ts",
+            "media-delete.spec.ts"
+          ],
+          "log": "/tmp/lconnect-meteor-browser-final.log"
+        },
+        {
+          "passed": 1,
+          "scenario": "late Meteor CPU Load defaults cannot overwrite manual palettes or replacement theme",
+          "log": "/tmp/lconnect-meteor-late-browser.log"
+        }
+      ]
+    },
+    "svelte": {
+      "errors": 0,
+      "warnings": 0,
+      "log": "/tmp/lconnect-meteor-ui-final.log"
+    },
+    "frontend_contracts": 39,
+    "build": "/tmp/lconnect-meteor-build.log",
+    "native": {
+      "root": "/tmp/lconnect-native-weather-vz9ttdyq",
+      "mock_backend": true,
+      "isolated_xvfb_dbus": true,
+      "accepted_flags": {
+        "native_cpu_load_default": true,
+        "native_draft_boundary": true,
+        "native_equal_thresholds": true,
+        "native_full_page_state": true,
+        "native_meteor": true,
+        "native_profile": true,
+        "native_ranges": true,
+        "ok": true,
+        "restart_replay": true,
+        "profiles_restart": true,
+        "stream_after_gui_exit": true
+      },
+      "theme": {
+        "background": [
+          0,
+          0,
+          255
+        ],
+        "background_fill": {
+          "horizontal": {
+            "colors": [
+              [
+                52,
+                230,
+                209
+              ],
+              [
+                26,
+                115,
+                105
+              ]
+            ],
+            "flip": false
+          },
+          "mode": "solid",
+          "radial": {
+            "colors": [
+              [
+                52,
+                230,
+                209
+              ],
+              [
+                26,
+                115,
+                105
+              ]
+            ],
+            "flip": false
+          },
+          "vertical": {
+            "colors": [
+              [
+                52,
+                230,
+                209
+              ],
+              [
+                26,
+                115,
+                105
+              ]
+            ],
+            "flip": false
+          }
+        },
+        "layers": [
+          {
+            "effect": {
+              "colors": [
+                [
+                  255,
+                  17,
+                  34
+                ],
+                [
+                  0,
+                  0,
+                  255
+                ]
+              ],
+              "dynamic": true,
+              "retained_sensors": [
+                {
+                  "binding": {
+                    "high": 40,
+                    "low": 40,
+                    "sensor_id": "fixture:cpu",
+                    "unit": "celsius"
+                  },
+                  "high_colors": [
+                    [
+                      0,
+                      255,
+                      0
+                    ],
+                    [
+                      0,
+                      0,
+                      255
+                    ]
+                  ],
+                  "low_colors": [
+                    [
+                      255,
+                      255,
+                      255
+                    ],
+                    [
+                      0,
+                      0,
+                      255
+                    ]
+                  ]
+                }
+              ],
+              "seed": 42,
+              "sensor": {
+                "binding": {
+                  "high": 60,
+                  "low": 15,
+                  "sensor_id": "proc:cpu:utilization",
+                  "unit": "percent"
+                },
+                "high_colors": [
+                  [
+                    0,
+                    255,
+                    0
+                  ],
+                  [
+                    255,
+                    255,
+                    0
+                  ]
+                ],
+                "low_colors": [
+                  [
+                    255,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    255
+                  ]
+                ]
+              },
+              "speed": 3
+            },
+            "kind": "meteor"
+          },
+          {
+            "kind": "text",
+            "style": {
+              "align": "center",
+              "color": [
+                255,
+                0,
+                0
+              ],
+              "size": 32,
+              "x": 240,
+              "y": 120
+            },
+            "text": "Snow overlay"
+          }
+        ],
+        "name": "Native Meteor page",
+        "page_cache": [
+          {
+            "page": "basic",
+            "theme": {
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "background_image": {
+                "asset": "97470522a7e7a2472ea18494a227cbaa",
+                "fit": "crop"
+              },
+              "layers": [
+                {
+                  "kind": "text",
+                  "style": {
+                    "align": "center",
+                    "color": [
+                      255,
+                      0,
+                      0
+                    ],
+                    "size": 32,
+                    "x": 240,
+                    "y": 120
+                  },
+                  "text": "Weather overlay"
+                }
+              ],
+              "name": "Native Weather",
+              "version": 1
+            }
+          },
+          {
+            "page": "snow",
+            "theme": {
+              "background": [
+                0,
+                0,
+                255
+              ],
+              "background_fill": {
+                "horizontal": {
+                  "colors": [
+                    [
+                      52,
+                      230,
+                      209
+                    ],
+                    [
+                      26,
+                      115,
+                      105
+                    ]
+                  ],
+                  "flip": false
+                },
+                "mode": "solid",
+                "radial": {
+                  "colors": [
+                    [
+                      52,
+                      230,
+                      209
+                    ],
+                    [
+                      26,
+                      115,
+                      105
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      52,
+                      230,
+                      209
+                    ],
+                    [
+                      26,
+                      115,
+                      105
+                    ]
+                  ],
+                  "flip": false
+                }
+              },
+              "layers": [
+                {
+                  "effect": {
+                    "dynamic": true,
+                    "intensity": 1,
+                    "kind": "snow",
+                    "seed": 42,
+                    "sensor": {
+                      "high": 45,
+                      "low": 45,
+                      "sensor_id": "proc:cpu:utilization",
+                      "unit": "percent"
+                    }
+                  },
+                  "kind": "weather"
+                },
+                {
+                  "kind": "text",
+                  "style": {
+                    "align": "center",
+                    "color": [
+                      255,
+                      0,
+                      0
+                    ],
+                    "size": 32,
+                    "x": 240,
+                    "y": 120
+                  },
+                  "text": "Snow overlay"
+                }
+              ],
+              "name": "Native Snow page",
+              "version": 3
+            }
+          },
+          {
+            "page": "rain",
+            "theme": {
+              "background": [
+                255,
+                0,
+                0
+              ],
+              "background_fill": {
+                "horizontal": {
+                  "colors": [
+                    [
+                      52,
+                      230,
+                      209
+                    ],
+                    [
+                      26,
+                      115,
+                      105
+                    ]
+                  ],
+                  "flip": false
+                },
+                "mode": "solid",
+                "radial": {
+                  "colors": [
+                    [
+                      52,
+                      230,
+                      209
+                    ],
+                    [
+                      26,
+                      115,
+                      105
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      52,
+                      230,
+                      209
+                    ],
+                    [
+                      26,
+                      115,
+                      105
+                    ]
+                  ],
+                  "flip": false
+                }
+              },
+              "layers": [
+                {
+                  "effect": {
+                    "dynamic": true,
+                    "intensity": 1,
+                    "kind": "rain",
+                    "retained_sensors": [
+                      {
+                        "high": 60,
+                        "low": 30,
+                        "sensor_id": "proc:cpu:utilization",
+                        "unit": "percent"
+                      },
+                      {
+                        "high": 40,
+                        "low": 40,
+                        "sensor_id": "fixture:cpu",
+                        "unit": "celsius"
+                      }
+                    ],
+                    "seed": 42,
+                    "sensor": {
+                      "high": 90,
+                      "low": 15,
+                      "sensor_id": "amdgpu:2f61:utilization",
+                      "unit": "percent"
+                    }
+                  },
+                  "kind": "weather"
+                },
+                {
+                  "kind": "text",
+                  "style": {
+                    "align": "center",
+                    "color": [
+                      255,
+                      0,
+                      0
+                    ],
+                    "size": 32,
+                    "x": 240,
+                    "y": 120
+                  },
+                  "text": "Rain overlay"
+                }
+              ],
+              "name": "Native Rain page",
+              "version": 3
+            }
+          }
+        ],
+        "version": 3
+      },
+      "profiles": {
+        "profiles": [
+          {
+            "content": {
+              "kind": "screen",
+              "value": {
+                "background": [
+                  0,
+                  0,
+                  255
+                ],
+                "background_fill": {
+                  "horizontal": {
+                    "colors": [
+                      [
+                        52,
+                        230,
+                        209
+                      ],
+                      [
+                        26,
+                        115,
+                        105
+                      ]
+                    ],
+                    "flip": false
+                  },
+                  "mode": "solid",
+                  "radial": {
+                    "colors": [
+                      [
+                        52,
+                        230,
+                        209
+                      ],
+                      [
+                        26,
+                        115,
+                        105
+                      ]
+                    ],
+                    "flip": false
+                  },
+                  "vertical": {
+                    "colors": [
+                      [
+                        52,
+                        230,
+                        209
+                      ],
+                      [
+                        26,
+                        115,
+                        105
+                      ]
+                    ],
+                    "flip": false
+                  }
+                },
+                "layers": [
+                  {
+                    "effect": {
+                      "colors": [
+                        [
+                          255,
+                          17,
+                          34
+                        ],
+                        [
+                          0,
+                          0,
+                          255
+                        ]
+                      ],
+                      "dynamic": true,
+                      "retained_sensors": [
+                        {
+                          "binding": {
+                            "high": 40,
+                            "low": 40,
+                            "sensor_id": "fixture:cpu",
+                            "unit": "celsius"
+                          },
+                          "high_colors": [
+                            [
+                              0,
+                              255,
+                              0
+                            ],
+                            [
+                              0,
+                              0,
+                              255
+                            ]
+                          ],
+                          "low_colors": [
+                            [
+                              255,
+                              255,
+                              255
+                            ],
+                            [
+                              0,
+                              0,
+                              255
+                            ]
+                          ]
+                        }
+                      ],
+                      "seed": 42,
+                      "sensor": {
+                        "binding": {
+                          "high": 60,
+                          "low": 15,
+                          "sensor_id": "proc:cpu:utilization",
+                          "unit": "percent"
+                        },
+                        "high_colors": [
+                          [
+                            0,
+                            255,
+                            0
+                          ],
+                          [
+                            255,
+                            255,
+                            0
+                          ]
+                        ],
+                        "low_colors": [
+                          [
+                            255,
+                            0,
+                            0
+                          ],
+                          [
+                            0,
+                            0,
+                            255
+                          ]
+                        ]
+                      },
+                      "speed": 3
+                    },
+                    "kind": "meteor"
+                  },
+                  {
+                    "kind": "text",
+                    "style": {
+                      "align": "center",
+                      "color": [
+                        255,
+                        0,
+                        0
+                      ],
+                      "size": 32,
+                      "x": 240,
+                      "y": 120
+                    },
+                    "text": "Snow overlay"
+                  }
+                ],
+                "name": "Native Meteor page",
+                "page_cache": [
+                  {
+                    "page": "basic",
+                    "theme": {
+                      "background": [
+                        12,
+                        18,
+                        30
+                      ],
+                      "background_image": {
+                        "asset": "97470522a7e7a2472ea18494a227cbaa",
+                        "fit": "crop"
+                      },
+                      "layers": [
+                        {
+                          "kind": "text",
+                          "style": {
+                            "align": "center",
+                            "color": [
+                              255,
+                              0,
+                              0
+                            ],
+                            "size": 32,
+                            "x": 240,
+                            "y": 120
+                          },
+                          "text": "Weather overlay"
+                        }
+                      ],
+                      "name": "Native Weather",
+                      "version": 1
+                    }
+                  },
+                  {
+                    "page": "snow",
+                    "theme": {
+                      "background": [
+                        0,
+                        0,
+                        255
+                      ],
+                      "background_fill": {
+                        "horizontal": {
+                          "colors": [
+                            [
+                              52,
+                              230,
+                              209
+                            ],
+                            [
+                              26,
+                              115,
+                              105
+                            ]
+                          ],
+                          "flip": false
+                        },
+                        "mode": "solid",
+                        "radial": {
+                          "colors": [
+                            [
+                              52,
+                              230,
+                              209
+                            ],
+                            [
+                              26,
+                              115,
+                              105
+                            ]
+                          ],
+                          "flip": false
+                        },
+                        "vertical": {
+                          "colors": [
+                            [
+                              52,
+                              230,
+                              209
+                            ],
+                            [
+                              26,
+                              115,
+                              105
+                            ]
+                          ],
+                          "flip": false
+                        }
+                      },
+                      "layers": [
+                        {
+                          "effect": {
+                            "dynamic": true,
+                            "intensity": 1,
+                            "kind": "snow",
+                            "seed": 42,
+                            "sensor": {
+                              "high": 45,
+                              "low": 45,
+                              "sensor_id": "proc:cpu:utilization",
+                              "unit": "percent"
+                            }
+                          },
+                          "kind": "weather"
+                        },
+                        {
+                          "kind": "text",
+                          "style": {
+                            "align": "center",
+                            "color": [
+                              255,
+                              0,
+                              0
+                            ],
+                            "size": 32,
+                            "x": 240,
+                            "y": 120
+                          },
+                          "text": "Snow overlay"
+                        }
+                      ],
+                      "name": "Native Snow page",
+                      "version": 3
+                    }
+                  },
+                  {
+                    "page": "rain",
+                    "theme": {
+                      "background": [
+                        255,
+                        0,
+                        0
+                      ],
+                      "background_fill": {
+                        "horizontal": {
+                          "colors": [
+                            [
+                              52,
+                              230,
+                              209
+                            ],
+                            [
+                              26,
+                              115,
+                              105
+                            ]
+                          ],
+                          "flip": false
+                        },
+                        "mode": "solid",
+                        "radial": {
+                          "colors": [
+                            [
+                              52,
+                              230,
+                              209
+                            ],
+                            [
+                              26,
+                              115,
+                              105
+                            ]
+                          ],
+                          "flip": false
+                        },
+                        "vertical": {
+                          "colors": [
+                            [
+                              52,
+                              230,
+                              209
+                            ],
+                            [
+                              26,
+                              115,
+                              105
+                            ]
+                          ],
+                          "flip": false
+                        }
+                      },
+                      "layers": [
+                        {
+                          "effect": {
+                            "dynamic": true,
+                            "intensity": 1,
+                            "kind": "rain",
+                            "retained_sensors": [
+                              {
+                                "high": 60,
+                                "low": 30,
+                                "sensor_id": "proc:cpu:utilization",
+                                "unit": "percent"
+                              },
+                              {
+                                "high": 40,
+                                "low": 40,
+                                "sensor_id": "fixture:cpu",
+                                "unit": "celsius"
+                              }
+                            ],
+                            "seed": 42,
+                            "sensor": {
+                              "high": 90,
+                              "low": 15,
+                              "sensor_id": "amdgpu:2f61:utilization",
+                              "unit": "percent"
+                            }
+                          },
+                          "kind": "weather"
+                        },
+                        {
+                          "kind": "text",
+                          "style": {
+                            "align": "center",
+                            "color": [
+                              255,
+                              0,
+                              0
+                            ],
+                            "size": 32,
+                            "x": 240,
+                            "y": 120
+                          },
+                          "text": "Rain overlay"
+                        }
+                      ],
+                      "name": "Native Rain page",
+                      "version": 3
+                    }
+                  }
+                ],
+                "version": 3
+              }
+            },
+            "name": "Native Rain ranges",
+            "slot": 0
+          }
+        ],
+        "revision": 3,
+        "version": 1
+      }
+    }
+  },
+  "behavior": [
+    "v3 has exactly one leading procedural Weather or Meteor layer; legacy v1/v2 preserved",
+    "Up to3 nonrecursive distinct inactive Basic/Rain/Snow/Meteor pages",
+    "Only active scene renders; all cached asset references remain owned",
+    "Continuous Meteor motion consumes current live sensors; preview has independent timeline",
+    "Existing sole composition worker supports procedural Meteor without media decoder/pin",
+    "Static slider/color pairs and dynamic source-specific threshold/palette pairs survive source/page changes",
+    "Semantic CPU Load defaults with owner/request guards; missing binding blocks Apply/profile Save",
+    "GUI row deletion returns Basic and retains Meteor; background version changes include Meteor",
+    "Native preview/Apply/slot load/restart preserves Meteor and3 cached full pages; video packets continue after GUI exit"
+  ],
+  "limitations": [
+    "No current hardware; user deferred it",
+    "Meteor native background-video/extended fault matrix still open",
+    "Windows stochastic trail/acceleration/raster/default font/layout equivalence unproven",
+    "Unavailable/recovery comparison remains open; Linux static fallback is explicit",
+    "Other18 effect pages still absent"
+  ]
+}

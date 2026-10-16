@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-12",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Additive pre-recording Setup engine; production owner/UI integration pending",
+  "verification": {
+    "library_passed": 86,
+    "binary_passed": 2,
+    "ignored": 1,
+    "fmt": "passed",
+    "strict_clippy_all_targets_native_smoke": "passed",
+    "rustdoc": "passed",
+    "review": "read-only; lower duration bound finding addressed"
+  },
+  "acceptance": [
+    "Setup longer than recording budget: zero frames/time/mux bytes",
+    "Full-source snapshot during setup",
+    "Selected crop applied to every saved frame including first",
+    "23-24 frames and 0.95-1.05s output after setup and mid-recording pause/resume",
+    "No-source snapshot/start errors remain retryable in Setup; cancellation joins"
+  ],
+  "limitations": [
+    "Production Tauri owner and GUI still use immediate start",
+    "No real desktop/PipeWire/HID tests",
+    "Fixed synthetic geometry/timestamps; real segment and resize qualification pending",
+    "Full180s engine test not rerun for this additive slice"
+  ],
+  "sha256": {
+    "desktop/src-tauri/src/screen_record.rs": "93e1dc6651695d787620ab7a42aa9d8621cf32cc7991421ff5ff32000086465e",
+    "desktop/src-tauri/src/screen_record/tests.rs": "55dcfa11b2accd514d167ff58004020ee1057f526b484e89086cdd24d9bfb576"
+  }
+}

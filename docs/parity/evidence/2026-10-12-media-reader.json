@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-12",
+  "scope": "Owned blocking media reader foundation; not connected to LCD actor",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "source_sha256": {
+    "crates/lconnect-daemon/src/media_reader.rs": "70d00bce61adf2100248e76016c5196eb16837c122c374aa10abdd9f7b027dd7",
+    "crates/lconnect-daemon/src/lib.rs": "228f2c6d65b70b38b075945eb03a4999d9126cf835d748429adf401fb755684a",
+    "crates/lconnect-daemon/tests/media_reader.rs": "3a90699ee094b0275e0d81970fd2d234ab775b9c30b959d8362f60ae3d5c9fe1"
+  },
+  "checks": {
+    "unit_tests": 6,
+    "file_store_integration_tests": 2,
+    "rust_tests": 682,
+    "rust_test_targets": 98,
+    "fmt": "passed",
+    "clippy": "all-targets/all-features -D warnings passed",
+    "docs": "passed",
+    "production_gui_check": "passed",
+    "review": "Two findings fixed (outstanding permit drain; pin test masking); follow-up read-only review no findings"
+  },
+  "logs_sha256": {
+    "/tmp/media-reader-unit-final.log": "c617fdcea9e6428727f3cd25ff257842caa293e0ca4350341a8eecf70bb4aad7",
+    "/tmp/media-reader-integration.log": "36c95b7e2599077d56e55c5eebf8aab6b6cccabbb7f0be9cf9a1bd15fc285179",
+    "/tmp/media-reader-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/media-reader-clippy.log": "b8d4b041dc4e719ce2445fe64e7907d4335945f9b7601d1905b807985ae9c582",
+    "/tmp/media-reader-all.log": "1b78d1d044ecc50eae08f576bb7487b3617b13e79cda28a9e166a1e5c012ed85",
+    "/tmp/media-reader-doc.log": "30be71634e0c7c237bd3879edc57b0a8ef1985fb925e73285b07b85d2a957d86",
+    "/tmp/media-reader-production.log": "4cf86278c1e6d659943a46a3d7e3da429ac15be90f0f17742e24ef85228e7d3e"
+  },
+  "coverage": [
+    "bounded two queued AUs plus one blocked send",
+    "loop order and legacy/v2 586-frame file source",
+    "cancelled stop retains worker handle and pin owner until read exits",
+    "panic JoinError reported once; repeated stop safe",
+    "drop unblocks backpressure",
+    "deterministic outstanding permit send after initial stop drain",
+    "only-reader pin prevents deletion until joined stop; independent pending-save pin remains",
+    "truncation after source open ends stream without repeated last frame"
+  ],
+  "limitations": [
+    "No actor/replay/sleep integration yet",
+    "User import still 10s/240frames/1MiB",
+    "Noninterruptible filesystem read remains owned until completion; Drop not joined",
+    "Legacy source still materializes bounded H264Clip; indexed source retains bounded index",
+    "Framing fixtures are not a new codec test",
+    "No new frontend/browser/native GUI or hardware runs"
+  ]
+}

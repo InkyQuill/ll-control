@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "crates/lconnect-daemon/src/sensors.rs": "25327ca356fbafc1f831795cb591629b5cdc52d9e3a27bb40c623a7a472987cd",
+    "crates/lconnect-daemon/src/sensor_selection.rs": "23ddb0e0b7b5535bc1baacaf6c3f559eee3f09198431fe25258535576fc372b3",
+    "crates/lconnect-daemon/tests/host_sensors.rs": "4467867948026818fd6e258d51b71225e235010da127830609c39398ac265d05"
+  },
+  "reference": {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/drivers/hwmon/nct6775-core.c",
+    "sha256": "d5562c815a4579035ab3d958877d01db1308e65fdef7f74bf6439e4af8b19b99",
+    "symbols": [
+      "NCT6779_REG_IN",
+      "nct6775_probe REG_VIN assignments",
+      "in_from_reg",
+      "show_in_reg"
+    ],
+    "units_documentation": "https://docs.kernel.org/hwmon/nct6775.html"
+  },
+  "supported_drivers": [
+    "nct6779",
+    "nct6791",
+    "nct6792",
+    "nct6793",
+    "nct6795",
+    "nct6796",
+    "nct6797",
+    "nct6798",
+    "nct6799"
+  ],
+  "channel": "in0_input CPUVC",
+  "checks": {
+    "focused_host_sensors": 27,
+    "workspace_tests_passed": 632,
+    "targets": 93,
+    "failed": 0,
+    "ignored": 0,
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "docs": "pass",
+    "review": "no actionable findings"
+  },
+  "logs": [
+    "/tmp/nct-voltage-tests-final.log",
+    "/tmp/nct-voltage-review-fmt.log",
+    "/tmp/nct-voltage-review-clippy.log",
+    "/tmp/nct-voltage-review-test.log",
+    "/tmp/nct-voltage-review-doc.log"
+  ],
+  "cases": [
+    "CPUVC mV to V for9 exact chip names; no VID/other pins",
+    "Unknown chip or misleading label excluded",
+    "hwmon renumbering stable ID and CPU default selection",
+    "Negative/malformed invalid; disabled unavailable; real zero valid",
+    "Cache stale removes value; disappearance preserves existing mapping without substituting zero; same source recovers",
+    "NCT6798 cache/IPC/theme text/JPEG consumer via existing integration fixture"
+  ],
+  "limitations": [
+    "No hardware or host sensor reads; no driver loading or writes",
+    "Board wiring/measurement accuracy not proven by kernel register labels",
+    "Other CPU voltage providers remain unsupported",
+    "GUI/full-stack suite not rerun after this provider change"
+  ]
+}

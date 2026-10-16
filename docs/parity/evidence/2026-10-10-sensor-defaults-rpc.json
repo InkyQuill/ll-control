@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "scope": "Production get/set sensor defaults RPC and resolved readings; memory transport integration with MockBackend, UI not yet wired",
+  "hardware": false,
+  "workspace_tests": 524,
+  "failed": 0,
+  "ignored": 0,
+  "fmt": "passed",
+  "strict_clippy": "passed",
+  "docs": "passed",
+  "logs": [
+    "/tmp/sensor-defaults-rpc-review-fmt.log",
+    "/tmp/sensor-defaults-rpc-review-clippy.log",
+    "/tmp/sensor-defaults-rpc-review-test.log",
+    "/tmp/sensor-defaults-rpc-review-doc.log"
+  ],
+  "sha256": {
+    "crates/lconnect-ipc/src/sensor_defaults.rs": "986ae8e0b6feeb219b8bb33a31b1e77936712e1d9d6c6386843e232ee80f6429",
+    "crates/lconnect-ipc/src/trait_def.rs": "bdc0e8cffc68dff3509be7f2941f0b3c3065aa49039650f4d4f5c66f7a600092",
+    "crates/lconnect-ipc/src/server.rs": "466584dc62073b0f11426b7bb285dc239f314c2a6d89addc801a3ed98c5d99b4",
+    "crates/lconnect-daemon/src/ipc_server.rs": "bb90af7bca83ed275ad1a391b5c778547712ab5dc11773f57b3f9e9c0c1f88f6",
+    "crates/lconnect-daemon/src/persistence.rs": "4e8626b8f6bd6698294b6841b7796a43762cfc2530d5a44d5c8b8ee00845268e",
+    "crates/lconnect-daemon/tests/sensor_defaults_ipc.rs": "696f8aefeb93663bb4b82b1ed810254778b451094763880ae007d5b6a5a416d9"
+  }
+}

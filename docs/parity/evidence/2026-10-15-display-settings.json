@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-15",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "scope": "Global Celsius/Fahrenheit presentation settings; canonical sensor/control data preserved; System LCD sensor/cycle display with live atomic units; no new effects and no live hardware tests. Interface language remains separate incomplete work.",
+  "source_sha256": {
+    "crates/lconnect-ipc/src/display_settings.rs": "85455f97717c5ad97d320f8fda4497bea7f4d232ad13229464eedc2b8bf73c23",
+    "crates/lconnect-ipc/src/theme.rs": "4cfbf61e2ea8143a719742b99b14ce96fcb4bcea70f4471d7cba8861e9683998",
+    "crates/lconnect-ipc/src/lib.rs": "a357d1c7711bd5220b4c0bba54becf4d33d72fc7c621f65f9a0fcc78dcfa6042",
+    "crates/lconnect-ipc/src/trait_def.rs": "191678e6e7c13862690a45515721d1c0b6787728817e07440d7f4037b8b8527d",
+    "crates/lconnect-ipc/src/server.rs": "e5c0ce7df8adef9f03d7f376077d3ddfb38360c5df6e0ee9bc1c0b84dd44612d",
+    "crates/lconnect-daemon/src/display_settings.rs": "381f5023840bbd2fa5829c792b155a3fbb26b9689564a549ee8f14292d066751",
+    "crates/lconnect-daemon/src/lib.rs": "772e275a9df05afb54ea99c5bf2831bef640693e50a42e571934ad4fb8ab9c25",
+    "crates/lconnect-daemon/src/persistence.rs": "52e2d64e6ca1c4fba2b9aabce12ed5c9477c47fce6a223fed9283970815e9bb6",
+    "crates/lconnect-daemon/src/manager.rs": "b9e9fdf9e8756e112240f28ed82139861bbf60b3e0138abb0842aaf4bd873492",
+    "crates/lconnect-daemon/src/ipc_server.rs": "154bcf5b0ba883388d726e53b643d59824b2d793f673243c3c271d74bb0157d8",
+    "crates/lconnect-daemon/src/theme_runtime.rs": "7f16f3e12bd596370b809a1509b99c15b7a08ece33ac48798614b77a6ba00653",
+    "crates/lconnect-daemon/src/actor/screen_group.rs": "98598803b3ed9e47096dde05a004d132633ae1bc2a238d390ff33ac68e7e5e88",
+    "crates/lconnect-daemon/tests/theme_runtime.rs": "90c82e13c5e7442e30048bccae95b7d9ccef1b03148d7bccbed75e03420078ee",
+    "crates/lconnect-cli/src/commands/display_settings.rs": "49c3980935159593e80afc435f2ec6273ef74dc6e100bc3aa3f581fb8ede4325",
+    "crates/lconnect-cli/src/commands/mod.rs": "fe832f3dc4ad9df54a6d1dda9d1f9daa689b7b09ad7032d930113f8f43263978",
+    "crates/lconnect-cli/src/main.rs": "1cc5a12f2e7a8ed7a4dcf1d96610f75bb85fc55a8e9069d5ab21f0f8b1f6fd7e",
+    "crates/lconnect-cli/tests/display_settings.rs": "4741b8b8809e349fc1a846801145e588c09c4c1071308d0c8dde07a6734b2ea8",
+    "desktop/src/lib/api.ts": "fa1dc595c48a13a553f928914d51070573e348f5e5314664ab8cc22cc40fc63d",
+    "desktop/src/lib/DisplaySettings.svelte": "c65311022968401fb909e9562b36d3559dcc70cf501a962165850d3e98947ab1",
+    "desktop/src/lib/TemperatureInput.svelte": "767fad51e14cbc12ea059e28daf394b7a4511d8c4ad08a3a8d71ba744d7510b6",
+    "desktop/src/lib/presentation.svelte.ts": "771bdc9db09dd3b7b7255eb81b2dd7217f8db509083b581e06789cd2dca40e28",
+    "desktop/src/lib/temperature.ts": "a90fd098173bdfe2391d2c95993eaf3cb01b6f7a55b11b54ac017d1eecee1892",
+    "desktop/src/lib/theme-presets.ts": "3421a90eb4bf992bdf68047c765598e37714ff213859ee939bc04294b70ae2ee",
+    "desktop/src/lib/SensorDefaults.svelte": "1042ace15724d9202cd0d981871bb6fd817fe35fab3a8149b27db2b490e5447b",
+    "desktop/src/lib/Cooling.svelte": "200adf025d93d37791d7b338d0173a40e59ab65d6df17705e768c21edcf3ecb5",
+    "desktop/src/lib/Lighting.svelte": "3709244153d5c5439640b76ee64b7de4597d4bcc3aec3cfdabf28244232619c7",
+    "desktop/src/lib/DynamicRgb.svelte": "6b1069672b666bca4bcd0167f073fe1405ab7057bdf2fcee431e822c02152a03",
+    "desktop/src/lib/WeatherEditor.svelte": "afed52b71f58197bd56052fe13a02d3f0ce32fd447bc0e7b2ccf40f28e3de619",
+    "desktop/src/routes/+page.svelte": "ae209087621a71d8d4b3e4eba62dfb303d08d87c0697289be746e8bfb557fbef",
+    "desktop/src-tauri/src/main.rs": "082cd5d0c72bc2374d9243f5e38b1723ae2dece781d3d8a9dfb498d888f6cb3b",
+    "desktop/scripts/native-display-settings.js": "701a522878c97de0c58452e94bbe2be3c9cebb3712e51d4a36e6f17b3cd4cdff",
+    "desktop/scripts/native-display-settings.py": "5321aa4de86ac241fd73d56cc374e918a4ff94c7b53793e57a88fcfd7f57dcaf",
+    "desktop/tests/display-settings.spec.ts": "17330ab77a54cccbf4f93df0f45c59a255140fea804ba58385faf11055d0ff9d",
+    "desktop/tests/dynamic-rgb-profiles.spec.ts": "2585a2700506095dc8e295d57dd07296c1877e2a1b80f0193a1d79cff4fa2f80",
+    "desktop/tests/dynamic-rgb-reconnect.spec.ts": "564651f3b5dee4a9cad3d9169f7e61a4734e5f313ebe46fca825fdd0859e1090",
+    "desktop/tests/dynamic-rgb.spec.ts": "9e53f6708e66c139fbf1d0574d2e3133418ff5de849f266008ac853775e8cd32",
+    "desktop/tests/external-controls.spec.ts": "d1afc4a838fefca87b7b172f736aa102ffad23e985bd0ef40bab8b9ab8df543b",
+    "desktop/tests/lighting-numeric.spec.ts": "83065ef90a6c0b3e2ef19ced6db63dc606b1ad432917a8b962213c167dab5564",
+    "desktop/tests/lighting-serialization.spec.ts": "095977f6e155a0aee9dc1da400b53dc1ae0a6ded7dd2c9d135e59308d7072186"
+  },
+  "reference_root": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08",
+  "reference_sha256": {
+    "L-Connect 3/LConnect3cs/Views/Pages/Settings/GeneralPage.cs": "2cddcf068a40314de4f39ac511a975b2891cd1b33db0bfb0238a7dd5987bfce0",
+    "L-Connect 3/LConnect3cs/Helpers/LocaleHelper.cs": "7889369ef7e05649dc09eab6e52da5ad90ea16aa6707efa89eaf60e6530b2015",
+    "L-Connect 3/LConnect3cs/SystemStatus.cs": "90a8fed85a39e0325ea8fdcdc4b968b670342bd605d6763027be8b19363f0e18",
+    "L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionController.cs": "9fdeaa5f184f0d9b7da3f373981a3a3585b4658327b023aef1604533fb3753be",
+    "L-Connect-Service/LConnectService/Products/Galahad2Vision/Galahad2VisionController.cs": "62b9dadd2d7d2065e9b0cffb2815cd70e1935ee0ac3843e6cb8d205e3b8114d7"
+  },
+  "checks": {
+    "workspace": {
+      "passed": 1095,
+      "ignored": 3,
+      "suites": 151,
+      "log": "/tmp/lconnect-display-settings-workspace.log"
+    },
+    "store_focused": {
+      "passed": 3,
+      "log": "/tmp/lconnect-display-settings-store.log"
+    },
+    "runtime_pixels": {
+      "passed": 1,
+      "log": "/tmp/lconnect-display-settings-runtime.log"
+    },
+    "unix_cli_preview_and_startup": {
+      "passed": 1,
+      "log": "/tmp/lconnect-display-settings-cli-final.log"
+    },
+    "browser": {
+      "passed": 36,
+      "log": "/tmp/lconnect-display-settings-browser-final2.log"
+    },
+    "frontend": {
+      "check": "0 errors / 0 warnings",
+      "build": "pass",
+      "contracts": 39,
+      "logs": [
+        "/tmp/lconnect-display-settings-frontend-final.log",
+        "/tmp/lconnect-display-settings-build-final.log",
+        "/tmp/lconnect-display-settings-contracts.log"
+      ]
+    },
+    "strict_clippy": {
+      "workspace_all_targets": "pass",
+      "native_smoke_all_targets": "pass",
+      "logs": [
+        "/tmp/lconnect-display-settings-clippy-final.log",
+        "/tmp/lconnect-display-settings-native-clippy.log"
+      ]
+    },
+    "rustdoc": "/tmp/lconnect-display-settings-doc.log",
+    "fmt": "/tmp/lconnect-display-settings-fmt-final.log"
+  },
+  "native": {
+    "fixture": "/tmp/lconnect-native-display-settings-hro0fftw",
+    "log": "/tmp/lconnect-display-settings-native-final.log",
+    "initial_and_recovery": true,
+    "gui_and_daemon_restart": true,
+    "system_layer_preview": true,
+    "fahrenheit_ui_with_canonical_celsius_source": true,
+    "joined_close": true,
+    "devices": 0,
+    "hid_writes": 0
+  },
+  "remaining": [
+    "Interface language/resource dictionaries not implemented",
+    "Expanded native keyboard/AT-SPI/scaling/range/error qualification of temperature editors",
+    "Real LCD JPEG/H264/overlay/closed-GUI/restart/sleep/reconnect acceptance deferred by user",
+    "Global settings corruption starts with last known unit (Celsius at first startup), surfaces errors and never rewrites the unsupported file",
+    "Mini6/FPS, firmware/delivery and other roadmap requirements remain open"
+  ],
+  "recovered_general_xaml": {
+    "path": "/home/inky/Development/lian-li/scratch/xaml-2.1.28-system-2026-10-10/views/pages/settings/generalpage.xaml",
+    "sha256": "a756317591cbad773ec6943d31c994209adf7cdb83b30f978df0cbc81556adf4"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Moscow",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Owned explicit internal reconnect job after acknowledged transfer and checked original close. Private-file/MockBackend only. No public probe/Apply/clear RPC, native GUI, real device, production daemon or host D-Bus execution.",
+  "implementation": [
+    "FirmwareOwner::close_for_reconnect produces a non-Clone owner only after checked original root teardown. It binds the original backend/admission/target/operation; journal loading cannot reconstruct this capability.",
+    "Internal begin_firmware_reconnect requires terminal transfer AwaitingReconnect and retained original-close owner; one job per process. Runtime/shutdown/duplicate/pre-transfer checks precede consumption.",
+    "One owned blocking worker observes actual absence then unique same-serial target and fresh identity through existing strict probe. Window30s/poll200ms/cancel checks20ms between calls. New path alone is not absence. First probe error ends job without retry.",
+    "Retained status/completion and explicit cancel survive observer/waiter loss. Main shutdown path cancels both jobs and joins the actual reconnect blocking worker; synchronous backend calls cannot be forcibly interrupted.",
+    "FreshIdentityObserved is a read-only historical summary, not flash success or resolution authority. Original transfer AwaitingReconnect report, saved intent, journal/settings quarantine remain unchanged. Late cancel/deadline suppresses fresh evidence."
+  ],
+  "checks": {
+    "workspace": {
+      "passed": 1209,
+      "failed": 0,
+      "ignored": 7,
+      "groups": 162
+    },
+    "new_normal_tests": 5,
+    "targeted_coordinator_tests": {
+      "passed": 14,
+      "failed": 0
+    },
+    "external_pinned_fixture": {
+      "passed": 1,
+      "scenario_modes": 4,
+      "runtime_seconds": 23.53,
+      "full_transfers": 2,
+      "chunk_echoes_each": 619,
+      "owned_probe_chains": 1,
+      "original_handle_closed_before_probe": true,
+      "fresh_handle_query_count": 1,
+      "fresh_handle_commands": [
+        134
+      ],
+      "mode0_opens_and_closes": 2,
+      "other_modes_opens_and_closes": 1,
+      "saved_journal_and_guard_preserved": true,
+      "image_sha256": "68e2d11c409e75b1e25bf9c2e84b891bcdc18ac735bafa67a0ee25a218b2d9d3"
+    },
+    "fmt": "passed",
+    "strict_workspace_all_targets_clippy": "passed",
+    "strict_native_smoke_custom_protocol_all_targets_clippy": "passed",
+    "warnings_denied_workspace_rustdoc": "passed",
+    "frozen_rust_manifest_files_unchanged": 387,
+    "hardware": "not run; user deferred",
+    "native_gui": "not run; no frontend/native app source change"
+  },
+  "new_normal_coverage": [
+    "Actual manager handoff/quiesce/close with a synthetic acknowledged activation journal, then observed detach and changed-path fresh query. Observer loss/reattach still completes; original roots closed first, exactly one fresh cmd134, no replay and raw journal/settings unchanged.",
+    "Changed path without observed absence times out using the same loop with80ms fixture window, no fresh open and no evidence.",
+    "Foreign admission scope and externally replaced but mutually consistent journal/guard operation ID cannot reuse the original-close owner.",
+    "Blocked fresh-handle cmd134 write: dropped pending shutdown waiter does not detach I/O; repeated shutdown remains pending until gate releases. Final Cancelled without evidence, handle closed and quarantine unchanged.",
+    "Injected probe writer panic: worker actually joins/unwinds handle, retained Failed/unconfirmed diagnostic, raw journal/settings unchanged."
+  ],
+  "limits": [
+    "No product live-status/probe/Apply/recovery UI EN/RU or public probe/clear RPC.",
+    "No durable reconnect evidence, qualified guard/journal resolution/restoration or permission to retry flash.",
+    "Restart cannot reconstruct the original-close capability or infer an already missed reset. Serial-less and missed-fast-reset recovery policy remain.",
+    "Observation deadline is not a hard bound on synchronous backend open/write; forced I/O interruption is unavailable.",
+    "Extended power/cleanup/transport/resource fault matrix and actual hardware/image/revision/cooling qualification remain."
+  ],
+  "logs": {
+    "workspace": "/tmp/lconnect-owned-probe-workspace.log",
+    "targeted": "/tmp/lconnect-owned-probe-targeted.log",
+    "pinned": "/tmp/lconnect-owned-probe-pinned.log",
+    "fmt": "/tmp/lconnect-owned-probe-fmt.log",
+    "clippy": "/tmp/lconnect-owned-probe-clippy.log",
+    "native-clippy": "/tmp/lconnect-owned-probe-native-clippy.log",
+    "doc": "/tmp/lconnect-owned-probe-doc.log"
+  },
+  "log_sha256": {
+    "workspace": "e89e82536291c45ce0a5b388674ee5f610a79f7d562ed4379293d51026f3ceec",
+    "targeted": "b41c4109b17f28add332984e83bf7bce5dc0025e10fc80435d437d62a47e95fc",
+    "pinned": "9472b0a90f150f4c23180e42d803706c3b5a72c4aa4a333145e475755b19e36c",
+    "fmt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clippy": "00f7d35c299bbc5ce09cc20844b3cfc7a2aed4ae6792ce4a7478ad899e66417d",
+    "native-clippy": "af483519f7ed68276a8a074645efa0bc78c0e1272aa2d68641ffcff0831ba187",
+    "doc": "1a4e3e5c95bbf5c121f2af5b08b8222530434b6af8d56834102ff92629adbb4e"
+  },
+  "changed_source_sha256": {
+    "crates/lconnect-daemon/src/manager.rs": "6c785132b2f01028cfccd8c28198c9da068a9c8d8536f8a009cb65ea72e86819",
+    "crates/lconnect-daemon/src/actor/firmware_probe.rs": "a4b94070235bec7c3e112209ec6658b930a60a7a730346879101ca51adcb6909",
+    "crates/lconnect-daemon/src/ipc_server.rs": "2bedf7b65943fceee0e14c495ab2af72f04d5cf16a7067e1bad04a318bc9735d",
+    "crates/lconnect-daemon/src/ipc_server/firmware_coordinator.rs": "1d36243a10a517985ace98404cd02fa8588b225ecc12c0f10cb0d7ed0b83faca",
+    "crates/lconnect-daemon/src/ipc_server/firmware_coordinator/reconnect.rs": "0383959b3428eaeab268be4094384950f8e16d26d40b764805d068740142e05a",
+    "crates/lconnect-daemon/tests/firmware_coordinator.rs": "deeabbd6ce9f9c6f560782027ab61d0f6c0c4722818c6346adc3fd3081ca0d46"
+  },
+  "plans": {
+    "basic-parity.md": 5,
+    "2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "2026-09-09-m2-sensors-and-cooling.md": 6,
+    "deleted": []
+  }
+}

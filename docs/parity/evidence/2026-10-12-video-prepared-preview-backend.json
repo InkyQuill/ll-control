@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-12",
+  "scope": "Prepared MP4 preview and review ownership backend, not exposed to GUI yet",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "verification": {
+    "tests": [
+      "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "clippy": "strict all-targets passed",
+    "docs": "warnings denied, passed",
+    "fmt": "cargo fmt applied; diff whitespace check passed",
+    "logs": [
+      "/tmp/video-prepared-preview-tests.log",
+      "/tmp/video-prepared-preview-clippy.log",
+      "/tmp/video-prepared-preview-doc.log"
+    ],
+    "codec": "Decoded frame hashes of 12-frame crop/concat H264 and stream-copied MP4 are identical",
+    "ownership": "Single admission; one-shot take of same prepared file; cancelled and shutdown review cleaned; duplicate prepare/take rejected"
+  },
+  "limits": {
+    "range_bytes": 262144,
+    "mp4_budget": "encoded payload + 64 bytes/frame + 1MiB",
+    "remux_timeout_seconds": 600
+  },
+  "remaining": [
+    "Tauri protocol/range response handling, access scoping, reload/errors",
+    "GUI preparation/review/confirm/cancel flow",
+    "Native WebKitGTK seek/CSP/codecs",
+    "Extended codecs, long inputs, timing and physical acceptance"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/media_prepare.rs": "b7f82ef3b965544356e7558317ed8f7145a18bc3b5849e145802b1d7ce6ad6d1",
+    "desktop/src-tauri/src/media_import.rs": "2f91e667a9dca2cf6d938ec02f4e5013383cf1fb934fef44234b9041edfb2b4b"
+  }
+}

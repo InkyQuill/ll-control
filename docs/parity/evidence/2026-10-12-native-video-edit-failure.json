@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-12",
+  "scope": "Native VideoEdit GTK chooser / actual Tauri inspection and encoding / WebKitGTK review",
+  "result": "FAIL: prepared custom-protocol video cannot decode in WebKitGTK",
+  "environment": {
+    "webkitgtk": "2.54.1",
+    "display": "private Xvfb/Openbox",
+    "backend": "private Unix IPC MockBackend",
+    "decoder_trial": "GST_PLUGIN_FEATURE_RANK=avdec_h264:512,nvh264dec:0,vah264dec:0,vulkanh264dec:0; GST_DEBUG=3"
+  },
+  "fixture": "/tmp/lconnect-native-media-xbj5mrrb",
+  "observed": {
+    "source": "H264 MP4 128x64 24fps 2s; source_ready native metadata received; duration-1/FPS bound displayed; two-frame guard rejects0.01s",
+    "source_playback": "blob preload stayed ready0 without error; explicit Play/scroll decoded to ready4",
+    "encoding": "1.101001..1.600001 seconds with brightness255 reached review_ready; library remained empty",
+    "review": {
+      "alerts": [],
+      "error": "Error: native prepared protocol decode",
+      "keys": [],
+      "ok": false,
+      "phases": [],
+      "stack": "@tauri://localhost:8:125\n@tauri://localhost",
+      "videos": [
+        {
+          "label": "Исходное видео",
+          "network": 1,
+          "paused": true,
+          "ready": 4,
+          "src": "blob:tauri://localhost/04706445-6557-4f40-b2fb-92b3d98e03a6"
+        },
+        {
+          "code": 4,
+          "error": "",
+          "label": "Готовый ролик",
+          "network": 3,
+          "paused": false,
+          "ready": 0,
+          "src": "media-preview://localhost/42bdb0c8128e4d4a92881bc5cd354c84"
+        }
+      ]
+    },
+    "protocol": "GET bytes=0-1445 =>206 Content-Type video/mp4 Content-Range bytes0-1445/2364; response observed with temporary native-smoke tracing, removed after diagnosis",
+    "publication": "not reached; persisted12-frame/white-pixel assertions remain unexecuted"
+  },
+  "verification": {
+    "native_build": "passed before each run",
+    "fmt": "passed",
+    "python_compile": "passed",
+    "javascript_syntax": "passed",
+    "full_native_workflow": "failed; not acceptance",
+    "hardware": "not run"
+  },
+  "next": "Repair native bounded preview/source delivery; preserve opaque IDs, cancellation ownership and memory bounds; rerun same harness without skipping playback. Qualify gallery protocol separately.",
+  "upstream_context": [
+    "https://bugs.webkit.org/show_bug.cgi?id=146351"
+  ],
+  "upstream_causality": "Historical custom-scheme reports are context only, not proof of this cause",
+  "source_sha256": {
+    "desktop/scripts/native-media.py": "772f4d379ab1491fd16b2745b9f6d1929a6b9b6c2e4225bb3dc1137090842907",
+    "desktop/scripts/native-media.js": "98077933b8580df3bb9ec330fc1fbe100d158205109b3bbd2abe68e15b051e1b",
+    "desktop/scripts/native-file-chooser.py": "9a27157fab0aacc5641fb8874f541aa332fb77e21222d31df4802ca381cf52c4",
+    "desktop/src-tauri/src/main.rs": "1b29e34a320872636defb685a139ffeb9be0d1d3d46f9832491d0f86345a7556"
+  }
+}

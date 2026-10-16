@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Quickstart and troubleshooting consolidation",
+  "sha256": {
+    "README.md": "e64c1851b4ab02f50bfb9268825615c4487164737bbc3ffaa236ce64b988ff77",
+    "desktop/README.md": "c807a6540ebdc73ccb088240b6759bcfbac0199ecaa458bf1c088ac501a0a8b8",
+    "docs/quickstart.md": "e82e3c1fdbce9739f2e32e933ecdb2e21ca6cb87d3a530071940c971b5bf63f1",
+    "docs/parity/lcd-theme-workflow.md": "6abba9f97d5047d387626b6b8b8e3aa41cda6ee4d09b29f7c495dcd358d84bf1",
+    "docs/parity/basic-parity-checklist.md": "401c8d7208d32d114306d3849a9ccec99b7f4a4e137d73118651e655a0a6b2ab",
+    "docs/superpowers/plans/basic-parity.md": "2872ed0f161c130286133367c9f40bc400d0d5555429cee49e055ccf205b3c5e",
+    "docs/superpowers/plans/README.md": "8c7e852a922bef198e1f1d82dd7d1483f037028e490575ceb8a6e10d331e7451",
+    "roadmap.md": "2494878bd708020e7a913537df19ff1076b94fe05b05204a1b1a63c17f806fa7"
+  },
+  "checks": {
+    "cli_build": "pass",
+    "cli_help_paths": 10,
+    "example_theme_schema": "pass",
+    "relative_links": "pass"
+  },
+  "plans": [
+    {
+      "path": "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md",
+      "open_items": 6
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md",
+      "open_items": 6
+    },
+    {
+      "path": "docs/superpowers/plans/basic-parity.md",
+      "open_items": 6
+    }
+  ],
+  "limits": "No installation, production daemon, systemd/udev mutation, or hardware test performed."
+}

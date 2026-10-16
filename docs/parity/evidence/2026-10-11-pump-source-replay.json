@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-11",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scenario": "Motherboard pump80 -> restart -> manual MCU67 -> restart, fan73 retained",
+  "initial_result": "New regression timed out: direct raw PWM replay bypassed cooling actor, leaving applied state empty",
+  "fix": "Replay manual fan/pump via existing CoolingCommand::Manual before device publication; active policies still suppress raw replay",
+  "verification": {
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "tests": {
+      "passed": 608,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "passed",
+    "companion_review": "no actionable findings"
+  },
+  "logs": [
+    "/tmp/pump-replay-review-fmt.log",
+    "/tmp/pump-replay-review-clippy.log",
+    "/tmp/pump-replay-review-test.log",
+    "/tmp/pump-replay-review-doc.log"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/src/manager.rs": "362c64cdf664939a251c24537f159e36d7eaaad48d80701afb0e04bb7d3b53e5",
+    "crates/lconnect-daemon/tests/cooling_ipc.rs": "96192590520b28203565064e91120b427c6722464c1292809b158ea2276a5af7"
+  },
+  "side_effect": "Successful manual replay schedules persistence and normalizes source spelling while preserving effective configuration",
+  "hardware_run": false,
+  "native_gui_run": false,
+  "limitations": [
+    "Mock packets do not prove physical source/duty/RPM",
+    "Overall cooling acceptance and base parity remain open"
+  ]
+}

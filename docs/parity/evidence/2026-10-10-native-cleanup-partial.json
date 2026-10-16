@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-10",
+  "scope": "Native partial image/font unlink failure and explicit retry",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/scripts/native-smoke.js": "0e4e836d4581ccb6ef9056cffacb804ca9ae01c9f515f34d9c6582017035aad3",
+    "desktop/scripts/native-smoke.py": "9bed8afb5c284bb75813c25d1a26bd6c4d0b6c2dd0c4cb00a5646c3a6ef871e4",
+    "desktop/scripts/native-unlink-fault.c": "569aa8da1257531552a2937f617681b302f3968ac487e122dbea6f15e1450be4",
+    "desktop/scripts/native-fault-proxy.py": "c7b3479789cfb1a9ec49404bfaeb4696ce55afb775cfc4725d9fae497bf511cf"
+  },
+  "native_artifact": "/tmp/lconnect-native-285fr0f0/acceptance.json",
+  "native_artifact_sha256": "2b45b63b034cd03a13e121f66c8262dfcc43c9a1cec1361e5aa9685e2bd9fa34",
+  "verification": {
+    "native_smoke": "passed",
+    "native_build": "passed",
+    "javascript_syntax": "passed",
+    "python_compile": "passed",
+    "c_compile_wall_wextra_werror": "passed",
+    "production_code_changed": false
+  },
+  "assertions": [
+    "For image and font independently, GUI scan finds two seeded orphan files",
+    "Fixture-only LD_PRELOAD returns EACCES for one exact private path; daemon deletes other file and returns per-key failure",
+    "GUI shows deleted count 1 and failing key, requires fresh scan before retry",
+    "Fixture verifies failed bytes unchanged and successful orphan absent before disabling fault",
+    "Explicit rescan finds only one remaining candidate; retry removes it without error and both paths are absent after final restart",
+    "Active theme preserved and full native restart/replay checks pass"
+  ],
+  "limits": [
+    "Synthetic syscall failure rather than actual filesystem ACL condition",
+    "Only MockBackend and private roots",
+    "Global software acceptance and hardware acceptance remain separate gates"
+  ]
+}

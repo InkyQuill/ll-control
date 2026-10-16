@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Bundled Abril Fatface, Caprasimo, Cubic11 renderer/IPC/editor/profile/restart",
+  "native_evidence": "/tmp/lconnect-native-z43qfeby/acceptance.json",
+  "verification": {
+    "rust_all_target_tests": 549,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "theme_contracts": 26,
+    "browser_before_license_ui_fix": 43,
+    "focused_browser_after_fix": 6,
+    "native_smoke": "passed",
+    "rust_review": "No remaining findings"
+  },
+  "native": {
+    "display_fonts": true,
+    "restart_replay": true,
+    "profiles_restart_replay": true
+  },
+  "assertions": [
+    "Each enum renderer matches managed rendering from explicit file bytes; Cubic CJK outlines and raster",
+    "26 frontend themes validate against Rust schema including all three new wire names",
+    "Native DOM selects all three, Apply persists fonts, full theme/profile equality after restart",
+    "Complete notices accessible in inline native details without CSP change"
+  ],
+  "resolved_during_verification": [
+    "Initial native fetch of license resource failed due to CSP; replaced with bundled raw inline text, native rerun passed"
+  ],
+  "sha256": {
+    "crates/lconnect-ipc/src/theme.rs": "b393fb173ead1d6764738e50a1d20467b0947e256652814d704d3a8f7bd4764d",
+    "crates/lconnect-image/src/theme.rs": "5207120ab962daf6738d74a6d008d86ff3cbebebdc4932dc217256a3d5f42dcd",
+    "crates/lconnect-image/tests/theme.rs": "a1d3f233f66858c9fca227bb19ca3785f4f0ed55719a5b77e2d3dda6de8c942d",
+    "desktop/src/lib/api.ts": "4637549fc1d2f002cb318d978baf3eaf19ef9aa12b51a47fafc00cf80820d167",
+    "desktop/src/lib/FontSelect.svelte": "6fef3324fce816565626420984e511da318253d280f02355cabcb5a56066c29a",
+    "desktop/src/lib/FontImport.svelte": "8f1783e3aa2f7729f326eb18278298ca3352329978933e76a6111d2eee718225",
+    "desktop/scripts/preset-contract.ts": "62b6b37f9e470d0ddb394d5695c41c4a95d9a7f895b363e35738f53c93520e54",
+    "desktop/scripts/native-smoke.js": "4e11462c0f38797cd0ead4731ae0423cb4b5671afe1c67cef7b717775e6d75bb",
+    "desktop/scripts/native-smoke.py": "3daceaa27d15a4f2bb7546658f00b11e7f436945ee82aa63628b0df717ee285a",
+    "desktop/static/font-licenses.txt": "2aa1e14cb222a97f7c4a49bf3a21f8367c69061f2e83e298a4fe41a09cb93838",
+    "crates/lconnect-image/assets/DisplayFonts-provenance.json": "a28e5ae382fdaf269dfdae13bd2242ab855ce0ed91f9afbb29c48786155dfa77"
+  },
+  "limits": [
+    "Noto three codepoints still missing",
+    "No pixel-identical Windows metrics/shaping or physical LCD claim",
+    "Full43 browser run preceded license display-only change; final6 focused cases and full native cover final UI"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "asset": "0b99204585c8afb0d8213167b4b87136",
+  "dev": "galahad2-lcdv2:0001",
+  "ok": true,
+  "preview_bytes": 15611,
+  "theme": {
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "layers": [
+      {
+        "asset": "0b99204585c8afb0d8213167b4b87136",
+        "fit": "contain",
+        "height": 480,
+        "kind": "image",
+        "opacity": 255,
+        "shadow": {
+          "blur": 2,
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "opacity": 60,
+          "x": 2,
+          "y": 2
+        },
+        "width": 480,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "format": "date",
+        "kind": "clock",
+        "show_seconds": false,
+        "style": {
+          "align": "center",
+          "color": [
+            0,
+            0,
+            255
+          ],
+          "size": 24,
+          "x": 240,
+          "y": 120
+        },
+        "twenty_four_hour": false
+      },
+      {
+        "decimals": 1,
+        "kind": "sensor",
+        "label": "CPU",
+        "sensor_id": "fixture:cpu",
+        "style": {
+          "align": "center",
+          "color": [
+            255,
+            0,
+            0
+          ],
+          "font": "mono",
+          "size": 40,
+          "x": 240,
+          "y": 200
+        },
+        "temperature_unit": "celsius",
+        "unit": "celsius"
+      }
+    ],
+    "name": "Native DOM applied",
+    "version": 1
+  },
+  "gui_closed_jpeg_frames": 2,
+  "restart_replay": true
+}

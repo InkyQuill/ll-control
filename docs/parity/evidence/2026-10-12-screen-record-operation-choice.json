@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-12",
+  "scope": "ScreenRecord Cancel/Edit/Import operation choice, matching versioned Windows branches with explicit Linux review/Save",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "verification": {
+    "focused_tests": 26,
+    "frontend_check": "0 errors,0 warnings",
+    "frontend_build": "passed",
+    "native_build": "passed",
+    "native_acceptance": {
+      "close_while_recording": true,
+      "collection_membership": true,
+      "explicit_save": true,
+      "ok": true,
+      "operation_choice": true,
+      "prepared_decode": true,
+      "resumed_frames": true,
+      "review_reedit": true,
+      "saved_key": "c3b51bc3717e47d1b92b9f53af368d6d",
+      "source_dimensions": [
+        320,
+        240
+      ],
+      "source_seek": true,
+      "normal_close_exit": 0
+    },
+    "review": "stale refresh race corrected and regression added; no remaining findings"
+  },
+  "native_directory": "/tmp/lconnect-native-recording-nbnoa0yl",
+  "limits": [
+    "Synthetic source only; no real portal/PipeWire/hardware",
+    "Native auto-limit and failure/accessibility matrix still pending",
+    "Linux explicit Save remains a separate publication step"
+  ],
+  "logs": [
+    "/tmp/recording-choice-check.log",
+    "/tmp/recording-choice-tests.log",
+    "/tmp/recording-choice-build.log",
+    "/tmp/recording-choice-native-build.log",
+    "/tmp/recording-choice-native-run.log"
+  ],
+  "sha256": {
+    "desktop/src/lib/ScreenRecorder.svelte": "6d98ccf503bd3c58790b1cd079ba2a3577d5c562662f670f2ebdcb6cd1f496f2",
+    "desktop/tests/screen-record-ui.spec.ts": "1f4d8f0412ce2c0688625cbebb5fe45876e36aa69bf72eae9df4c9409f0a781e",
+    "desktop/scripts/native-recording.js": "8faa055a661a6bb9cda732564108eeb5146c6d29878fd56427490852b5ed47b1"
+  }
+}

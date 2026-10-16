@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-12",
+  "scope": "Documentation-only remaining-plan reconciliation after VideoEdit kernel checkpoint",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "reference_exe_sha256": "2cdfa7ae3717dd773417cabb3338957f15ca29f5de46b5a77788b5e680cf4080",
+  "active_plan_open_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 5
+  },
+  "newly_completed_plans_removed": [],
+  "reason": "All three surviving plans retain unmet acceptance or implementation requirements; earlier plan deletions preserved.",
+  "corrections": [
+    "Removed chronological completed editor steps from active roadmap and duplicate task queue from plan index",
+    "Replaced stale latest-checkpoint counts with kernel and AutoFill evidence",
+    "Explicitly separate implemented channel kernel from missing preparation/UI wiring",
+    "Label earlier implementation-status paragraphs as historical checkpoint states"
+  ],
+  "checkpoint_hash_reconciliation": {
+    "2026-10-12-video-adjustments-kernel.json": {
+      "source_hash_entries": 3,
+      "changed_since_checkpoint": []
+    },
+    "2026-10-12-video-autofill.json": {
+      "source_hash_entries": 4,
+      "changed_since_checkpoint": []
+    },
+    "2026-10-12-gallery-video-editor-ui.json": {
+      "source_hash_entries": 8,
+      "changed_since_checkpoint": [
+        "desktop/src/lib/MediaImport.svelte",
+        "desktop/src/lib/VideoSourcePreview.svelte",
+        "desktop/tests/media-import.spec.ts"
+      ]
+    }
+  },
+  "validation": {
+    "broken_local_links": [],
+    "tests_run": false,
+    "native_run": false,
+    "hardware_run": false
+  },
+  "inspected_source_sha256": {
+    "desktop/src-tauri/src/video_adjustments.rs": "590f80e47606fed807c7e75a40caa11c2d9234dd86f7dc856494ed04b5bca319",
+    "desktop/src-tauri/src/media_prepare.rs": "f78240965b861e68f7736916ebdad82951d5e074217c9f30ea8afe218081fade",
+    "desktop/src-tauri/src/main.rs": "72325ee00b9ae33380a1981aa975c10b3da1ab97f107da0191c1b53b7ec5fe07",
+    "desktop/src/lib/MediaImport.svelte": "3bde852b1d1916657e438cb39498cb8bd491b2c450356b28b3850c3ae349c828",
+    "desktop/src/lib/VideoSourcePreview.svelte": "025161bc81e4d5f47a21089eb041f1c7660acb42d6487fed7c09b41511ea0459",
+    "desktop/src/lib/collection-membership.ts": "2517632f30cb908255f0ac3ef8bb33f9c78f371d5a71585e6fda885c997e50dc",
+    "desktop/src/lib/MediaLibrary.svelte": "2792c03e09452af2ab09da5c8cb9677bf2aebfd5b7b84fef84b3ee3e486d0558"
+  },
+  "updated_documents": {
+    "roadmap.md": "613ef7d7f56625a4b703d2f9d101dce1733857ef237a6532c045bcbfb4a31e1c",
+    "docs/superpowers/plans/README.md": "ba7fde519cc90158a9a8c48f67c98997fcc0a292b2c986d4e1d01ce6476dd4d9",
+    "docs/superpowers/plans/basic-parity.md": "090bafee1ec73becfe415f692fa6a46e4d67672cae0ac52b419cc46c13502f65",
+    "docs/parity/basic-parity-checklist.md": "fce6d1864ea62dd36d0ae680abe017ef74ef74e8dffd51adc8a1a2e1bc17d531",
+    "docs/parity/implementation-status.md": "a4a1ec9e9ff8f322f04ea3196e036fa40ce354d5c64c23150ec28ecd71dc43ce"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Native saved profile missing/corrupt font and image, failed Apply preservation and recovery",
+  "native_evidence": "/tmp/lconnect-native-6ffbygnn/acceptance.json",
+  "verification": {
+    "python_compile": "passed",
+    "javascript_syntax": "passed",
+    "native_build": "passed",
+    "native_smoke": "passed",
+    "git_diff_check": "passed"
+  },
+  "faults": [
+    "Dependency request:font:corrupt",
+    "Dependency request:font:missing",
+    "Dependency request:font:restore-corrupt",
+    "Dependency request:font:restore-missing",
+    "Dependency request:image:corrupt",
+    "Dependency request:image:missing",
+    "Dependency request:image:restore-corrupt",
+    "Dependency request:image:restore-missing"
+  ],
+  "assertions": [
+    "Saved profile remains loadable with externally missing/corrupt font or image",
+    "DOM Apply shows error and no success; edited draft retained",
+    "Failed Apply preserves complete profile library/revision and active theme; source remains Theme",
+    "Restoring exact bytes permits explicit DOM Apply and clears error",
+    "Full previous font import/partial upload/lost Finish, control, reconnect, GUI-close rendering and restart suite passes"
+  ],
+  "sha256": {
+    "desktop/scripts/native-smoke.py": "3b21066a032f596015ab20a1fd463162ad93e24ef693b27dc9ea25bd2d705da5",
+    "desktop/scripts/native-smoke.js": "bc71947c1af02370a29e45ff51abedad115d7747a3c7539487d84f8013b58bd3",
+    "desktop/scripts/native-fault-proxy.py": "a5c485424d8aae8e56c5cd672f38705207551561f417993798383ec246eeb056",
+    "desktop/src/routes/+page.svelte": "29a7254d4448f955551956822b527470d55db13b734ad3ffb49a175d53b0a6c8",
+    "crates/lconnect-daemon/src/theme_fonts.rs": "fcf356971c15c0d362acae3b28b582e7f096f41b5259e0d4a9316d332b93142f",
+    "crates/lconnect-daemon/src/theme_assets.rs": "6755ca79f78e384ece38baa607f6c4a04fcdd635b0c1dc8573378e8e8a042720"
+  },
+  "limitations": [
+    "No daemon restart while dependency is missing; restart after restoration verified",
+    "No physical LCD observation",
+    "Cleanup concurrency/partial unlink failure and active-sensor loss remain"
+  ]
+}

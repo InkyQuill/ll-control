@@ -12,10 +12,12 @@ name = "lconnectctl"
 path = "src/main.rs"
 
 [dependencies]
+rand = "0.8"
+tempfile = "3"
 lconnect-ipc   = { path = "../lconnect-ipc" }
 lconnect-image = { path = "../lconnect-image" }
 
-tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal", "io-std"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal", "io-std", "time"] }
 anyhow.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
@@ -25,4 +27,6 @@ clap = { version = "4", features = ["derive"] }
 xdg = "2"
 
 [dev-dependencies]
-tempfile = "3"
+lconnect-daemon = { path = "../lconnect-daemon" }
+lconnect-hid = { path = "../lconnect-hid" }
+lconnect-protocol = { path = "../protocol" }

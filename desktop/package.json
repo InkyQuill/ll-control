@@ -1,0 +1,30 @@
+{
+  "name": "lconnect-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
+    "build": "vite build",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "tauri": "tauri",
+    "check:contracts": "node --experimental-strip-types scripts/preset-contract.ts | cargo run --quiet --locked --manifest-path ../Cargo.toml -p lconnect-ipc --example validate-themes",
+    "check:locales": "node scripts/check-locales.mjs --strict",
+    "audit:locales": "node scripts/check-locales.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "svelte": "^5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@sveltejs/adapter-static": "^3",
+    "@sveltejs/kit": "^2",
+    "@sveltejs/vite-plugin-svelte": "^6",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^26.6.4",
+    "svelte-check": "^4",
+    "typescript": "^5",
+    "vite": "^7"
+  }
+}

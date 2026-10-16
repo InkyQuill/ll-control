@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-15",
+  "baseline": "Windows L-Connect3 2.1.28.0 / LCDV2; Mini implemented as desktop-shell integration",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "scope": "Initial Plasma applet and shared TypeScript six-slot model; no separate application window. GNOME Shell adapter remains open.",
+  "source_sha256": {
+    "integrations/common/mini.ts": "fd7e39d1b0633c51ffc036329853d179b61019febb3aac0894101a18c8a06e60",
+    "integrations/plasma/CMakeLists.txt": "94aeec1527f6f9b2976e0a79087c417d72effbf0f5c2b7c70e5bd125e61d4937",
+    "integrations/plasma/README.md": "a372d8312cdb4bfe9963eaade423eba0480c2ef311c3eb567a6b51879eaeaed5",
+    "integrations/plasma/native/feed.h": "8b377a006e85809c19e974c98a58ce954c0745648be03a55075992fa5f40b3c6",
+    "integrations/plasma/native/feed.cpp": "8830c04639f513ec2277a8fc983dc0613ea816498777a31684f44d101cc13db1",
+    "integrations/plasma/tests/feed_test.cpp": "bfd732618b70cc891f84e70c82bee3d6296c3777b264dc53050b5beed1940824",
+    "integrations/plasma/tests/tst_config.qml.in": "a7d1ba24ec32c6ae6009049082eceda37e0f97fd6ec8329d14f107883d6d7683",
+    "integrations/plasma/tests/test-config.py": "07c20371dcf477b0fc2f4b2faeb54d27d52e106bab5ba6d06f71da89dc7e2277",
+    "integrations/plasma/tests/native-plasma.py": "b42f903f57da82a5ae3e1f7694f7387f287e8161e560ffe9174500d6cfdf086a",
+    "integrations/plasma/package/metadata.json": "107dd8be239375e88e7acd33db495d2fa245a7ad5445c6a5685d66ed6434e461",
+    "integrations/plasma/package/contents/ui/main.qml": "2ead78c44e0491ba847cf07aa8725eacfc63596a2898d1983927023ee41206a2",
+    "integrations/plasma/package/contents/ui/configGeneral.qml": "40a38ce44d3770e26bea2fb28086e02ae924bee0e787764a49aef95f32a3952a",
+    "integrations/plasma/package/contents/config/main.xml": "fd64a5ee8e47c67685bfb39455560393336cb587a1f87caf68ae6ec9d42bc4cc",
+    "integrations/plasma/package/contents/config/config.qml": "f79da79e1ef35b6a0fddb9e53bf58f06d817973fbe8dfc35a0a4bd285eb98f50",
+    "integrations/common/tests/mini.test.mjs": "b26053043e2db0e06acd4f340190fbe820e6e8f9b5bc0d79cd0866f6ef5e941d"
+  },
+  "checks": {
+    "typescript": "strict compilation; ES2017 output for Qt JS",
+    "ctest": {
+      "groups": 3,
+      "pass": true,
+      "cases": {
+        "shared_model_node": 3,
+        "qt_feed": 4,
+        "qml_config_keyboard": 2
+      },
+      "log": "/tmp/lconnect-mini-plasma-checks-final.log"
+    },
+    "qml_lint": {
+      "pass": true,
+      "warnings": 0,
+      "log": "/tmp/lconnect-mini-plasma-qmllint-final.log"
+    },
+    "cpp": "-Wall -Wextra -Werror",
+    "native": {
+      "versions": {
+        "Plasma": "6.7.5",
+        "Qt": "6.12.0"
+      },
+      "fixture": "/tmp/lconnect-mini-plasma-native-yy85uc0m",
+      "acceptance": {
+        "package_loaded": true,
+        "real_cli": true,
+        "readonly_methods": [
+          "get_display_settings",
+          "get_sensor_defaults",
+          "list_sensors"
+        ],
+        "calls": 15,
+        "helper_count": 1,
+        "helper_reaped": true,
+        "language_cache_persisted": true,
+        "english_screenshot": "english.png",
+        "russian_screenshot": "russian.png",
+        "hardware_access": false,
+        "host_installation": false,
+        "staged_package": true
+      },
+      "context": "Private Xvfb/session bus/XDG; staged native QML module and real applet package loaded in plasmawindowed test host; real CLI against synthetic read-only Unix peer. Not the active shell session. No physical device or daemon collector."
+    },
+    "visual_review": {
+      "english": [
+        "CPU load 38.0%",
+        "CPU power 80.0 W",
+        "CPU voltage 1.25 V",
+        "GPU load 15.0%",
+        "GPU power 72.0 W",
+        "GPU voltage 1.05 V"
+      ],
+      "russian": "Own Russian labels and decimal comma; source readings unchanged; six cards visible",
+      "images": [
+        "images/2026-10-15-mini-plasma-en.png",
+        "images/2026-10-15-mini-plasma-ru.png"
+      ]
+    },
+    "rust_and_tauri": "Unchanged this slice; previous checkpoint is 2026-10-15-mini-shell-feed-english-default.json. No fresh Rust/browser suite claim."
+  },
+  "log_sha256": {
+    "/tmp/lconnect-mini-plasma-cmake-final.log": "1b04ebdf463bd3f1bcbf60ca58c9387e659a5d873424918100a840fecf1cffa7",
+    "/tmp/lconnect-mini-plasma-build-final.log": "849cff937a7a0f05ce4e75afdc8653a072db78c610827adde02ab102ee61eb27",
+    "/tmp/lconnect-mini-plasma-checks-final.log": "ba926318666844d412ac3fb633c17d201ba1c3b29b9b93ca2576b980716d2c52",
+    "/tmp/lconnect-mini-plasma-qmllint-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/lconnect-mini-plasma-stage-final.log": "430feb6c14045eb633f10cb46d14d232ac45c1340f0d7ae9fd5d561d2028a3fa",
+    "/tmp/lconnect-mini-plasma-runtime-final.log": "a743bc782967c2a33eb1169d0ac7a1fec713032ee747c1a5f827042aa2a9cfc8"
+  },
+  "corrected_during_acceptance": [
+    "ES2020 optional catch binding is unsupported in Qt JS; compile common module for ES2017",
+    "QVariant nested sequences are not standard JS arrays; transfer validated JSON text and parse in QML",
+    "Keep ListModel delegates stable across slot edits; keyboard focus survives source changes and polling"
+  ],
+  "limits": [
+    "Full Plasma configuration Apply/Cancel/restart and multi-instance behavior pending",
+    "Panel compact/popup layout and keyboard behavior not confirmed in a real panel",
+    "Session login/logout/suspend/resume and package upgrade/removal pending",
+    "Minimum build/API versions are declarations, not a fully qualified support matrix",
+    "GNOME Shell extension absent",
+    "Linux FPS provider absent; FPS stays unavailable",
+    "Sway/other environments deferred; support list not decided",
+    "Physical hardware testing deferred; new LCD effects remain last"
+  ],
+  "image_sha256": {
+    "images/2026-10-15-mini-plasma-en.png": "175b498341460c8bd3940eaff05d2ab809198d711efb56082bc1feb09d251070",
+    "images/2026-10-15-mini-plasma-ru.png": "a7a9cd6d5cd925785a0ba53aa5a2417125b9d7231d354e352376f80b19c019e4"
+  }
+}

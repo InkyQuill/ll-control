@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Internal readonly reconnect evidence helper; private files and scripted MockBackend only. No real HID, product Apply, restore or quarantine resolution.",
+  "implementation": [
+    "AwaitingReconnect record + matching canonical guard required; Unknown/NotStarted/Armed and serial-less targets cannot construct automatic probe.",
+    "Actual backend enumeration must first observe target serial absent; already attached or new path without absence is not fresh reconnect. Enumeration errors do not establish absence.",
+    "Unique same VID/PID/serial candidate only; fresh handle drains <=10 nonblocking reads then sends one cmd134, bounded shared collector, exact researched full1.6 token and optional PN1.",
+    "Recheck unchanged journal raw bytes and guard before query and after reply; close handle and re-enumerate same candidate before one-time evidence.",
+    "Guard read bypasses implicit state recovery and refuses pending settings/profile transactions without disk writes. Ordinary profile recovery also rejects guarded before/after snapshots.",
+    "Evidence has private operation ID, DeviceInfo and parsed identity; no clearing API or writable continuation token."
+  ],
+  "checks": {
+    "workspace": {
+      "passed": 1167,
+      "failed": 0,
+      "ignored": 5,
+      "groups": 157
+    },
+    "new_probe_cases": 6,
+    "journal_regressions": 12,
+    "fmt": "passed",
+    "strict_workspace_clippy": "passed",
+    "strict_native_feature_clippy": "passed",
+    "warnings_denied_workspace_rustdoc": "passed",
+    "native_gui": "not run; no frontend/native app source change",
+    "hardware": "not run; user deferred"
+  },
+  "coverage": [
+    "Observed absence/reappearance, old and new hidraw paths, exact1.6 identity with/without optional date, stale pre-query input drain; single query/no replay/no clearing, handle drop.",
+    "Enumeration failure not considered detach; other serial and duplicate same-serial candidates never opened.",
+    "Open/write/read failure, noisy input, missing response, wrong version/model, disappearance during query and journal edit after query never yield evidence or restore.",
+    "Missing/mismatched settings guard and corrupt/deleted journal refuse before open.",
+    "Pending profile transaction cannot trigger implicit redo through probe; ordinary redo cannot remove guard, files preserved."
+  ],
+  "source_snapshot": {
+    "path": "/tmp/lconnect-firmware-probe-final-source.json",
+    "sha256": "7282d1073652cde3aa8f6e31abd998ce1b979306dcd5d3d9f45704386460804b",
+    "files": 368,
+    "unchanged_after_checks": true
+  },
+  "logs": {
+    "fmt": {
+      "path": "/tmp/lconnect-firmware-probe-final-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "workspace": {
+      "path": "/tmp/lconnect-firmware-probe-final-workspace.log",
+      "sha256": "31116ee61b980793d084c845b1d1f901efee0b7da3f3a1f30225d32c8368b00f"
+    },
+    "clippy": {
+      "path": "/tmp/lconnect-firmware-probe-final-clippy.log",
+      "sha256": "2b34696728dc82b03cbf6311d7e3a6a41658bbde097834c3010a78bc82842c1a"
+    },
+    "native-clippy": {
+      "path": "/tmp/lconnect-firmware-probe-final-native-clippy.log",
+      "sha256": "4cf86278c1e6d659943a46a3d7e3da429ac15be90f0f17742e24ef85228e7d3e"
+    },
+    "doc": {
+      "path": "/tmp/lconnect-firmware-probe-final-doc.log",
+      "sha256": "d43338b24f963dd9bf0b47fc8539f3f12abdd75ec9f31de712ef685978158db3"
+    }
+  },
+  "remaining": [
+    "Global admission/job drain including cancellation-surviving workers/streams/monitors/reapers, manager discovery/replay and power transitions.",
+    "Coordinator must join old HID owner and exclude all writers before using probe in a joined blocking job; helper does not enforce this lifecycle alone.",
+    "Qualified durable resolution/restoration, serial-less identity recovery and missed fast-reset/restart policy.",
+    "Matching version token is not installed-image hash or hardware revision proof.",
+    "Staged Inspect/Apply/status/recovery product UI EN/RU, delivery and deferred hardware qualification."
+  ]
+}

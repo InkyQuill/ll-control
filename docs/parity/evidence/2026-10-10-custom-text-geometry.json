@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "hardware": false,
+  "evidence_kind": "static source, not original browser screenshot",
+  "reference_sha256": {
+    "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/index.html": "598e0b01927b25fd54fb2eb162f7d0ba693a9d551708546ea8e8da544c622fb8",
+    "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/js/app.8fc94db7.js": "f3691c15dbe62d1248abee444dc94c82a34c46e45697bda4ccad77825c6e878a",
+    "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/css/app.430a4e44.css": "c0f1d6d5bb1febfe0503b78a8ee23c3416cee0c044a3d4513e4f9342fa4357ec"
+  },
+  "component": "TextCustomShowMode",
+  "js_offset": 562279,
+  "findings": [
+    "Image/Color use wrap_custom_large width=max-width358",
+    "Inline padding w(effect,size) returns 0 for Image/Color, overriding general text_wrap padding22",
+    "maxHeight initial; letterSpacing initial for Image/Color",
+    "horizontal left0/center50% translateX/right0, vertical top0/center50% translateY/bottom0; center class combines translates",
+    "TextAlignment maps separate child text-start/center/end",
+    "size25/43/65 maps lineHeight29/58/77",
+    "Newline split filters empty entries in Windows; Linux intentionally preserves blank lines"
+  ],
+  "remaining": [
+    "Bundled font catalog and TC coverage",
+    "Glyph metrics and vertical CSS line-box alignment versus ab_glyph raster",
+    "Effect-specific geometry belongs to corresponding future effects, not generic Image/Color defaults"
+  ]
+}

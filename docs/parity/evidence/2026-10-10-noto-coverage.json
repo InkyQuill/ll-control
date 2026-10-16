@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Noto TC2.002 OTF coverage and renderer/native integration",
+  "native_evidence": "/tmp/lconnect-native-genxnk_6/acceptance.json",
+  "verification": {
+    "rust_all_target_tests": 549,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "rust_review": "No findings",
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "theme_contracts": 26,
+    "focused_browser_tests": 6,
+    "native_smoke": "passed",
+    "offline_reproduction": "both output hashes match manifest"
+  },
+  "font_comparison": {
+    "Regular": {
+      "bundled_sha256": "66a8a11a814912b60a439dcc221ce7c4b7acdc5d276dff4dd9081346aadb5713",
+      "windows_sha256": "8d9cd5f210c0204d2a1ddaeaf82db1071e242126f4e18b9c350d8b1680bae400",
+      "cmap_count": 20748,
+      "missing_codepoints": [],
+      "extra_codepoints": [],
+      "horizontal_metric_differences": [],
+      "outline_differences": [],
+      "full_license_embedded": true
+    },
+    "Bold": {
+      "bundled_sha256": "7424adca975f2e26e00a6e8bd2fdc99fe6117f073c8874558985224fda6c247f",
+      "windows_sha256": "0ec69b757289fe2a8245424f0fb2f5d3f5bf2e98cf239d9ab4545544cd525f65",
+      "cmap_count": 20748,
+      "missing_codepoints": [],
+      "extra_codepoints": [],
+      "horizontal_metric_differences": [],
+      "outline_differences": [],
+      "full_license_embedded": true
+    }
+  },
+  "sha256": {
+    "crates/lconnect-image/src/theme.rs": "e99fbb8aaf8f109e1bf404eb929b8969a78c242efc0e39808645960281757a69",
+    "crates/lconnect-image/tests/theme.rs": "7dc59dbaf56b3214307845cfb1b19cbbda66f19dbfcf796ef2b9d751e65da429",
+    "crates/lconnect-image/tests/fonts.rs": "d8d88664544cdab0187715b3b3d71383c5aa01ed6556f83d446c86beb4623583",
+    "crates/lconnect-daemon/tests/font_upload_ipc.rs": "57c9d3db538f9695c352d4045aff691a6c11101e122d7a145ea23a5a34fec86c",
+    "crates/lconnect-image/assets/NotoSansTC-provenance.json": "50110fde9a231d56c05a7753b0268399e6bbeb85d9cd5e3c492832b6cb76d7aa",
+    "tools/prepare-noto-tc.py": "b6484ffdebb2e07bada94b0ee94a091b368e0d01004b7bb3de5db01501eaf447",
+    "desktop/scripts/native-smoke.js": "61cb8e810bc3f8c81d49236246037803987083bdcb72305053e733e83ce4bca7",
+    "desktop/scripts/native-smoke.py": "77b2272dc8af26efd26ad065ba226f845e3789ff01cddcc21012dcd9c30ec7d2",
+    "desktop/static/font-licenses.txt": "6c5a7d3f477da9675fccf82b6ef8136251507298530e91a11bffe9d1bb3141c7"
+  },
+  "assertions": [
+    "Both weights provide nonzero glyph IDs and real outlines for U+2252/U+25C8/U+30EDE",
+    "Every Unicode-mapped glyph horizontal metric and outline command compared with local Windows2.1.28 font assets",
+    "New OTF passes chunked upload, byte preservation, managed/bundled preview equality",
+    "Native extra text layer retains bundled Noto and three recovered codepoints through Apply/profile/restarts",
+    "Full license embedded; offline reproduction checks pinned inputs and exact output hashes"
+  ],
+  "limits": [
+    "No physical LCD observation",
+    "Equal outlines and horizontal metrics do not prove identical kerning/shaping/line layout/raster",
+    "Focused font browser cases only; full browser suite not repeated",
+    "Existing Vite dev warning about raw import from static/font-licenses.txt remains; build and native inline notices passed"
+  ]
+}

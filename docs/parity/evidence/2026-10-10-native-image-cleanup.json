@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-10",
+  "scope": "Native image cleanup protects profile-only and offline-device-only assets across restart",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/scripts/native-smoke.js": "e67ffb55fb844bfeb5150f96c81d58be34c30dbf9055e46dfaabf6e783ae0ad5",
+    "desktop/scripts/native-smoke.py": "a893ea9c96e03c40c572d3a7eb545f4f7ffc46c8cf306c3e892eaecdd97bb956"
+  },
+  "native_artifact": "/tmp/lconnect-native-rn3h0nkq/acceptance.json",
+  "native_artifact_sha256": "5858c90a45c859f58828dcbd516d14e61f535bf6b71715a134c34365c97d2f4e",
+  "verification": {
+    "native_smoke": "passed",
+    "mock_native_build": "passed",
+    "python_compile": "passed",
+    "javascript_syntax": "passed",
+    "production_code_changed": false,
+    "rust_browser_suites_rerun": false
+  },
+  "assertions": [
+    "Prior-lifetime image assets seeded without import/session registry registration",
+    "Profile-only slot6, offline-device-only settings/devices/offline.toml, and unused orphan",
+    "GUI dry-run sees exactly one candidate and three retained references including active theme",
+    "GUI delete removes only orphan and preserves active LCD theme",
+    "Final fixture restart keeps profile library and both image files; preview_lcd_theme renders each retained asset"
+  ],
+  "iteration_note": "Initial fixture put offline.toml outside settings/devices; corrected path, checked TOML before startup, and included active theme in expected retained count. Final full run passed.",
+  "limits": [
+    "No hardware",
+    "Native draft-only/session-only protection, corrupt roots, partial unlink/retry and font retained-reference matrix remain open",
+    "This checkpoint does not close entire cleanup matrix"
+  ]
+}

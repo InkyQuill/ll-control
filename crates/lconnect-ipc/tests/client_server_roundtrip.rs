@@ -25,6 +25,8 @@ use lconnect_ipc::{
 };
 use serde_json::json;
 use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::net::UnixStream;
 
 /// Mock daemon impl. Only `list_devices` and `daemon_stats` return real
 /// data; everything else returns [`IpcError::NotImplemented`] so the test
@@ -32,6 +34,8 @@ use std::sync::Arc;
 struct MockDaemon {
     devices: Vec<DeviceDescriptor>,
     stats: DaemonStats,
+    theme_gate: Option<Arc<tokio::sync::Semaphore>>,
+    theme_waiters: Arc<std::sync::atomic::AtomicUsize>,
 }
 
 impl MockDaemon {
@@ -62,12 +66,34 @@ impl MockDaemon {
         Self {
             devices: vec![descriptor],
             stats,
+            theme_gate: None,
+            theme_waiters: Default::default(),
         }
     }
 }
 
 #[async_trait]
 impl DaemonRpc for MockDaemon {
+    async fn begin_lcd_theme(
+        &self,
+        _dev: DeviceId,
+        _theme: lconnect_ipc::LcdTheme,
+    ) -> Result<futures::future::BoxFuture<'static, Result<lconnect_ipc::LcdState>>> {
+        let gate = self
+            .theme_gate
+            .clone()
+            .ok_or_else(|| IpcError::NotImplemented("mock".into()))?;
+        self.theme_waiters
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let guard = ThemeWaiter(self.theme_waiters.clone());
+        Ok(Box::pin(async move {
+            let _guard = guard;
+            let _permit = gate.acquire().await.unwrap();
+            Err(IpcError::InvalidArgument(
+                "delayed preparation failed".into(),
+            ))
+        }))
+    }
     async fn list_devices(&self) -> Result<Vec<DeviceDescriptor>> {
         Ok(self.devices.clone())
     }
@@ -227,4 +253,147 @@ async fn client_server_roundtrip() {
     drop(client);
     server_task.abort();
     let _ = server_task.await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn oversized_request_closes_only_its_connection() {
+    let tmp = tempfile::tempdir().expect("tempdir");
+    let socket_path = tmp.path().join("lconnect-ipc-bounded-test.sock");
+    let server = IpcServer::new(Arc::new(MockDaemon::new()));
+    let server_path = socket_path.clone();
+    let server_task = tokio::spawn(async move {
+        let _ = server.serve(&server_path).await;
+    });
+
+    let mut oversized = loop {
+        match UnixStream::connect(&socket_path).await {
+            Ok(stream) => break stream,
+            Err(_) => tokio::time::sleep(std::time::Duration::from_millis(10)).await,
+        }
+    };
+    let mut hello = String::new();
+    BufReader::new(&mut oversized)
+        .read_line(&mut hello)
+        .await
+        .expect("read hello");
+    assert!(hello.contains("\"method\":\"hello\""));
+
+    let chunk = vec![b'x'; 64 * 1024];
+    for _ in 0..=128 {
+        if oversized.write_all(&chunk).await.is_err() {
+            break;
+        }
+    }
+    let mut byte = [0_u8; 1];
+    let close_result =
+        tokio::time::timeout(std::time::Duration::from_secs(2), oversized.read(&mut byte))
+            .await
+            .expect("server should close oversized connection");
+    match close_result {
+        Ok(0) => {}
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::BrokenPipe
+            ) => {}
+        other => panic!("expected EOF or connection reset, got {other:?}"),
+    }
+
+    let healthy = IpcClient::connect(&socket_path)
+        .await
+        .expect("second connection remains usable");
+    let devices = healthy
+        .call("list_devices", json!({}))
+        .await
+        .expect("second connection request");
+    let devices: Vec<DeviceDescriptor> = serde_json::from_value(devices).expect("decode devices");
+    assert_eq!(devices.len(), 1);
+
+    drop(healthy);
+    server_task.abort();
+    let _ = server_task.await;
+}
+
+struct ThemeWaiter(Arc<std::sync::atomic::AtomicUsize>);
+impl Drop for ThemeWaiter {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+#[tokio::test]
+async fn deferred_theme_replies_are_bounded_multiplexed_and_dropped_with_connection() {
+    let mut daemon = MockDaemon::new();
+    let gate = Arc::new(tokio::sync::Semaphore::new(0));
+    daemon.theme_gate = Some(gate.clone());
+    let waiters = daemon.theme_waiters.clone();
+    let (a, b) = lconnect_ipc::transport_memory::mem_pair();
+    let server =
+        tokio::spawn(async move { IpcServer::new(Arc::new(daemon)).serve_stream(b).await });
+    let client = Arc::new(IpcClient::from_stream(a).await.unwrap());
+    let params = json!({"dev":"galahad2-lcdv2:test-0001","theme":{
+        "version":1,"name":"Deferred","background":[0,0,0],"layers":[]
+    }});
+    let mut pending = Vec::new();
+    for _ in 0..4 {
+        let client = client.clone();
+        let params = params.clone();
+        pending.push(tokio::spawn(async move {
+            client.call("set_lcd_theme", params).await
+        }));
+    }
+    wait_theme_count(&waiters, 4).await;
+    let rejected = tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        client.call("set_lcd_theme", params.clone()),
+    )
+    .await
+    .unwrap()
+    .unwrap_err();
+    assert!(rejected.to_string().contains("too many pending"));
+    let devices = tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        client.call("list_devices", json!({})),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(devices.as_array().unwrap().len(), 1);
+    assert!(pending.iter().all(|task| !task.is_finished()));
+    gate.add_permits(4);
+    for task in pending {
+        assert!(task
+            .await
+            .unwrap()
+            .unwrap_err()
+            .to_string()
+            .contains("delayed preparation failed"));
+    }
+    wait_theme_count(&waiters, 0).await;
+    // Hold one more admitted future, then tear down its connection. The future
+    // guard must be released even if it has not returned a response.
+    gate.forget_permits(4);
+    let caller = client.clone();
+    let pending = tokio::spawn(async move { caller.call("set_lcd_theme", params).await });
+    wait_theme_count(&waiters, 1).await;
+    server.abort();
+    assert!(server.await.unwrap_err().is_cancelled());
+    wait_theme_count(&waiters, 0).await;
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_secs(2), pending)
+            .await
+            .unwrap()
+            .unwrap()
+            .is_err()
+    );
+}
+
+async fn wait_theme_count(count: &std::sync::atomic::AtomicUsize, expected: usize) {
+    tokio::time::timeout(std::time::Duration::from_secs(2), async {
+        while count.load(std::sync::atomic::Ordering::SeqCst) != expected {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
 }

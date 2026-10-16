@@ -19,7 +19,7 @@
 
 use super::{HidCommand, Shutdown};
 use lconnect_ipc::SensorSnapshot;
-use lconnect_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
+use lconnect_protocol::galahad2_lcdv2::handshake::HandshakeInfo;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::{mpsc, oneshot, watch};
 use tracing::debug;
@@ -36,15 +36,45 @@ use tracing::debug;
 pub fn spawn(
     hid_io_tx: mpsc::Sender<HidCommand>,
     poll_period_ms: u64,
-    mut shutdown: Shutdown,
+    shutdown: Shutdown,
 ) -> watch::Receiver<SensorSnapshot> {
+    spawn_with_cache(
+        hid_io_tx,
+        poll_period_ms,
+        shutdown,
+        Default::default(),
+        String::new(),
+    )
+}
+
+pub fn spawn_with_cache(
+    hid_io_tx: mpsc::Sender<HidCommand>,
+    poll_period_ms: u64,
+    shutdown: Shutdown,
+    cache: crate::sensors::SensorCache,
+    key: String,
+) -> watch::Receiver<SensorSnapshot> {
+    spawn_with_cache_tracked(hid_io_tx, poll_period_ms, shutdown, cache, key).0
+}
+
+/// Return the owned task as well as the snapshot feed for teardown barriers.
+pub fn spawn_with_cache_tracked(
+    hid_io_tx: mpsc::Sender<HidCommand>,
+    poll_period_ms: u64,
+    mut shutdown: Shutdown,
+    cache: crate::sensors::SensorCache,
+    key: String,
+) -> (watch::Receiver<SensorSnapshot>, tokio::task::JoinHandle<()>) {
     let (tx, rx) = watch::channel(SensorSnapshot::default());
-    tokio::spawn(async move {
+    let task = tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_millis(poll_period_ms));
         // Default `Burst` policy would compensate for any missed ticks;
         // `Delay` is friendlier to the device when poll work runs slow.
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         loop {
+            if *shutdown.borrow() || shutdown.has_changed().is_err() {
+                break;
+            }
             tokio::select! {
                 _ = shutdown.changed() => {
                     debug!("sensor_poll shutting down");
@@ -53,6 +83,7 @@ pub fn spawn(
                 _ = interval.tick() => {
                     match poll_once(&hid_io_tx).await {
                         Ok(snapshot) => {
+                            cache.publish(std::time::Instant::now(), crate::sensors::device_readings(&key, &snapshot));
                             // `send` errors only when there are no receivers;
                             // that's a normal teardown signal.
                             if tx.send(snapshot).is_err() {
@@ -68,23 +99,16 @@ pub fn spawn(
             }
         }
     });
-    rx
+    (rx, task)
 }
 
 /// Issue one GetHandshakeInfo round-trip and decode the response into
 /// a `SensorSnapshot`.
 async fn poll_once(tx: &mpsc::Sender<HidCommand>) -> anyhow::Result<SensorSnapshot> {
-    let req = build_request();
     let (reply_tx, reply_rx) = oneshot::channel();
-    tx.send(HidCommand::WriteRead64 {
-        bytes: req.to_vec(),
-        // `GetHandshakeInfo` (129 / 0x81) is echoed plain, no `| 0x80`
-        // mask — see hid_io::drain_for_echo / Phase 0e notes.
-        expected_cmd: 0x81,
-        reply: reply_tx,
-    })
-    .await
-    .map_err(|e| anyhow::anyhow!("hid_io channel closed: {e}"))?;
+    tx.send(HidCommand::PollSensors { reply: reply_tx })
+        .await
+        .map_err(|e| anyhow::anyhow!("hid_io channel closed: {e}"))?;
     let resp = reply_rx
         .await
         .map_err(|e| anyhow::anyhow!("hid_io reply dropped: {e}"))??;

@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-12",
+  "scope": "Paused capture-region engine, serialized owner command and readback; GUI remains pending",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "verification": {
+    "library_passed": 82,
+    "library_ignored": 1,
+    "binary_passed": 2,
+    "full_duration_test": "passed explicitly after pipeline changes",
+    "full_duration_summary": "full limit: Status { phase: LimitReached, frames: 4320, active_millis: 179928, region: None }; decoded=4320; duration=180; bytes=35350262",
+    "fmt": "passed",
+    "strict_clippy_all_features": "passed",
+    "docs_all_features": "passed",
+    "default_check": "passed",
+    "native_existing_workflow": {
+      "close_while_recording": true,
+      "collection_membership": true,
+      "explicit_save": true,
+      "ok": true,
+      "operation_choice": true,
+      "prepared_decode": true,
+      "resumed_frames": true,
+      "review_reedit": true,
+      "saved_key": "f640b786193b48d09e1bcfe776f3a08d",
+      "source_dimensions": [
+        320,
+        240
+      ],
+      "source_seek": true,
+      "normal_close_exit": 0
+    }
+  },
+  "covered": [
+    "Initial full source red and blue sample pixels",
+    "Every decoded frame of subsequent red and blue regions across pauses",
+    "Fixed320x240 dimensions and SAR1:1",
+    "Normalized validation, rejection while recording and after finish",
+    "Stale ID rejection and last accepted region status readback"
+  ],
+  "correction": "Initial MP4 renegotiation failure from changed pixel aspect ratio fixed by pinning SAR1:1",
+  "limits": [
+    "No region GUI/pre-recording selection or paused source preview yet",
+    "No real PipeWire/portal/hardware",
+    "Source resize and multi-monitor/fractional mapping unqualified",
+    "Native regression uses full-source capture, not region selection"
+  ],
+  "logs": [
+    "/tmp/recording-region-suite.log",
+    "/tmp/recording-region-clippy.log",
+    "/tmp/recording-region-doc.log",
+    "/tmp/recording-region-default.log",
+    "/tmp/recording-region-full-limit.log",
+    "/tmp/recording-region-native-run.log"
+  ],
+  "sha256": {
+    "desktop/src-tauri/src/screen_record.rs": "8dd00e0110b1cd53f557b57fdaf2b859a85927eb4392352dbfa3ef1d5709db51",
+    "desktop/src-tauri/src/screen_record/tests.rs": "f4db6c75a9448add3d689c3e2b0ad1d05607894fa5392fb7c9446682beee16af",
+    "desktop/src-tauri/src/screen_record_jobs.rs": "0f6128427116831eed98fa93bea52987deb1f65e6bd4697aa5ac3c5808ad31ad",
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "cbdc72a322c6ee427b24a1bdcbe6398bc5948a445cbc91d3f43c3ce3992616a2",
+    "desktop/src-tauri/src/media_prepare.rs": "126eecb189650ef9cb9b005b455868a85457fa375366803c7552570da0acb4a9"
+  }
+}

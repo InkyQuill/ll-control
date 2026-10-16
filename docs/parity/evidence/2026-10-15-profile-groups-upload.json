@@ -1,0 +1,96 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Public full-group upload and complete pre-import inspection through IPC/actual CLI. No target asset publication, settings commit, receipt or device Apply. Finish/readback/reapply transport remains open.",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/group_uploads.rs": "992070d8789cc0216753c3697b5793d75abccea106618ba4083f6edbaa97b597",
+    "crates/lconnect-daemon/src/group_exports.rs": "61bbffd5625bb9a96f25bcb26520ccc4a55def031935784e1cbde69196f255f5",
+    "crates/lconnect-daemon/src/ipc_server.rs": "ba9cea8a6221a64c7931c86e9673974d533472e39b939acf47073c1ab676f825",
+    "crates/lconnect-daemon/src/lib.rs": "c975247de8c5a1275c29a1b63b1b22940e275b02feb851755af741900cae6c47",
+    "crates/lconnect-daemon/tests/group_uploads_ipc.rs": "3b42252c098f7ac375c9f6c5958fcb3e80c7b712e150a0f65cde8b58ab3fd3e3",
+    "crates/lconnect-cli/src/commands/group_archives.rs": "fd3f97663f56041edec61e09cdb8e87175d34b636883eb7fde940a153f109bdb",
+    "crates/lconnect-cli/tests/group_archive.rs": "dfdad292cec79b348f4d94f36c0e9cab91bca86a570daa0c0cdad6e292342188",
+    "crates/lconnect-ipc/src/group_upload.rs": "80af36857e699724b7ed75fa702f99aa765d0a0cf773299cbf34268f667f23c9",
+    "crates/lconnect-ipc/src/server.rs": "11315b7698486974a2a7d0165b84bd6bd91e868abdd7da0025b6ac5e29f4e0e1",
+    "crates/lconnect-ipc/src/trait_def.rs": "0114464423a6f76aef032e1f826603957e922bbddab20d8e13707bfa18723e59",
+    "crates/lconnect-ipc/src/lib.rs": "2e875aaf374e74e6fb6bd25b65c877cf687dd5a67fce3d18d4221278806b5d75"
+  },
+  "contract": {
+    "identity": "32 lowercase hex ID bound to target device/group/opaque owner revision/size. Fresh Begin requires current snapshot; retry returns same session. Status/Cancel/Release address stored target independently of attachment. Inspect returning after delayed admission is bound to original Entry, never a replacement session reusing its id.",
+    "upload": "Unlinked temporary file; chunks1..64KiB with absolute offset. Exact repeated offset+bytes acknowledged without append; changed repeated bytes/partial overlap terminally fail and close raw staging. Gaps/overflow/oversize/incomplete Inspect rejected before disk I/O.",
+    "inspection": "Checksum-checked typed manifest and correct group before full prepare_group; all payload hashes/decoders/remap validated in private temporary PersistenceStore. Temporary stores/assets/pins removed before Prepared. Target shared/legacy gallery inventory is unchanged. Summary logical remap IDs do not refer to target assets. Original uploaded file remains staged until Cancel/Release/expiry for a future Finish stage.",
+    "ownership": "Entry and global operation permits move into owned blocking worker; dropped RPC waiter cannot hide work. Status uses separate short metadata mutex, not file/decoder lock. Cancel sets cancelling and schedules serialized owned cleanup; reservation persists until actual raw-file/staging cleanup. Already running codec/filesystem operation is not forcibly interrupted. Panic monitor marks failed and closes staging. Late Release only removes the same Arc entry, preserving reused ids in both export/upload registries.",
+    "limits": {
+      "sessions": 4,
+      "workers": 2,
+      "chunk_bytes": 65536,
+      "single_archive_max": 8590983212,
+      "logical_reserved_max": 17181966424,
+      "idle_seconds": 300,
+      "reaper_seconds": 15,
+      "budget_scope": "Separate upload pool; export has its own reservation pool. Not a hard cap on all temporary codec files/memory."
+    },
+    "cli": "profiles group inspect screen|fan-and-lighting FILE [--device]. Size/magic checked locally, streamed in chunks, exact reply binding/received checked, polling to validated Prepared. JSON contains metadata only; ID on stderr. Cancel/Release cleanup requested with bounded waiting; no configuration Apply."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 1026,
+      "failed": 0,
+      "ignored": 2,
+      "exit_code": 0,
+      "log": "/tmp/lconnect-group-upload-workspace-final.log",
+      "command": "cargo test --locked --workspace"
+    },
+    "strict_clippy": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-group-upload-clippy-final.log",
+      "packages": [
+        "lconnect-daemon",
+        "lconnect-image",
+        "lconnect-ipc",
+        "lconnect-cli",
+        "lconnect-protocol"
+      ],
+      "flags": "--locked --all-targets -- -D warnings"
+    },
+    "strict_rustdoc": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-group-upload-doc-final.log",
+      "flags": "RUSTDOCFLAGS=-D warnings; --locked --no-deps; same five packages"
+    },
+    "standalone_cli": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-group-upload-cli-final.log",
+      "command": "cargo check --locked -p lconnect-cli"
+    },
+    "fmt": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-group-upload-fmt-final.log"
+    },
+    "regressions": [
+      {
+        "test": "actual_rpc_group_upload_validates_payload_binding_retries_and_cleanup_without_commit_or_pwm",
+        "coverage": "Actual memory RPC/DeviceManager/MockBackend and real archive codec: incomplete/gap, exact repeated Chunk, changed duplicate -> failed, foreign target/group, idempotent Begin, wrong archive group and corrupt manifest, valid Screen gallery-only image in private quarantine, unchanged target catalogs/owner snapshots/receipt/PWM count and cleanup."
+      },
+      {
+        "test": "abandoned_upload_worker_and_cancel_retain_budget_until_real_work_exits",
+        "coverage": "Held blocking operation, abandoned waiter, Cancel -> cancelling; third MAX reservation rejected while real work held; Status available; after release work exits/cancellation completes and capacity available again."
+      },
+      {
+        "test": "actual_cli_full_group_backups_keep_large_gallery_only_payloads_manual_zero_and_do_not_overwrite",
+        "coverage": "Extended existing actual lconnectctl/private Unix socket test: full Screen archive >1MiB uploaded/inspected, source sparse slot2 in typed summary, wrong group rejected, owner snapshot/receipts unchanged. Existing backup/clean-store decode/manual0/no-overwrite paths remain passing."
+      }
+    ],
+    "gui": "NOT RUN; no native/browser session or frontend changes",
+    "hardware": "NOT RUN; deferred by user, no physical device accessed"
+  },
+  "remaining": [
+    "Finish/owner receipt/readback/reapply transport and CLI; target publication/preflight/commit/Apply using ready actors",
+    "Runtime job admission before public Finish, unknown storage/partial install reconciliation and production lifecycle faults",
+    "Export/import GUI and native signal/expiry/stalled-backend/shutdown fault acceptance",
+    "Windows ZIP decoder/mapping, remaining basic parity roadmap; extra LCD effects/Style Express last",
+    "Real hardware acceptance explicitly deferred"
+  ]
+}

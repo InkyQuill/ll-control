@@ -1,0 +1,18 @@
+{
+  "baseline": "Windows L-Connect3 2.1.28.0",
+  "reference_root": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08",
+  "classification": "static source audit; BAML strings only corroboration, not reconstructed XAML",
+  "files": {
+    "L-Connect 3/LConnect3cs/MiniSystemInformationWindow.cs": "01883ee137db3a70f1b8e8a9c8caf255510e39c02b0f449f21f50fe8f6a749fe",
+    "L-Connect 3/LConnect3cs/Views/Pages/SystemInfo/MainPage.cs": "64e99e74272f1f4e5435baef61f11636749eb5b23b67c2ff8ba41bc76936376f",
+    "L-Connect 3/LConnect3cs/Views/Pages/SystemInfo/ResourcePage.cs": "1058884d92843a33c7444609717e2f0ac62c84e6cb88e4221eca37dd562561e0",
+    "L-Connect 3/views/pages/systeminfo/resourcepage.baml": "2dde6e53f5d11c2e8812bf87a082603686d5e32048b37a2b419eba723c919edd",
+    "L-Connect 3/LConnect3cs/Views/UserControls/SystemResource/Network.cs": "7f2cc5482350050e8bfa4e7f6044f86a19f2211f8809fe8111a633fcb49e783f",
+    "L-Connect 3/LConnect3cs/SystemStatus.cs": "90a8fed85a39e0325ea8fdcdc4b968b670342bd605d6763027be8b19363f0e18",
+    "L-Connect-Service/LConnectService/SystemInformation.cs": "0e7c23e50d85873448be21a902f6d32f4ceef052b8c93935e332b97b8133d79d",
+    "L-Connect-Service/LConnectService/Utils/HWiNFO/HWiNFOWrapper.cs": "7012e558c110b0519644b9ddb33a968818478ec06432f157941ba5c1eb28aba0",
+    "L-Connect-Service/LConnectService/Utils/HWiNFO/Managers/HWiNFOGPULoadSensorManager.cs": "35578b24e185fa43a012cda66d85763e4dabdd1753e6ca079afde14cc5f949b3",
+    "L-Connect.Core/LConnectCore/SystemResource.cs": "f487c78fe072d0f82cd6c70209ad54e5f135e389aa420e8406c3789b53c825c8",
+    "L-Connect.Core/LConnectCore/StorageStatus.cs": "3628f129164d551b130c84a219457f918c16e5c0b264eb03115c249f5268e62d"
+  }
+}

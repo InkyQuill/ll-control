@@ -1,0 +1,199 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "scope": "Official catalog and exact LCDV2 firmware candidate acquisition; offline pinned-byte inspector; static binary handler analysis. No daemon/protocol/GUI update integration and no device access.",
+  "baseline": {
+    "application": "Windows L-Connect3 2.1.28.0",
+    "target": "Galahad II LCDV2 0416:7395",
+    "decompiled_reference_root": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08",
+    "source_sha256": {
+      "L-Connect 3/LConnect3cs/Utils/AppUpdater.cs": "f45af739a9000e065e720a9887b46669eb01e5d111beea6e3a1e60648cb2c7b4",
+      "L-Connect 3/LConnect3cs/Utils/RawUpdateVersionInfo.cs": "0a2c76afad8ded9391b93a2700e72fee76063e93a3361fd846bd06f063c7454b",
+      "L-Connect 3/LConnect3cs/Utils/UpdateVersionInfo.cs": "2b183556991de13cc76645cf71ce717910d8cd2a5ef286c7d2d60bb156bcea9d",
+      "L-Connect 3/LConnect3cs/Utils/FirmwareUpdateUtils.cs": "ee405b486a330a4ebd6e6681548c7b519d9583f8b21950afedb07589d922221f",
+      "L-Connect 3/LConnect3cs/Utils/Firmware/Galahad2VisionFirmwareUpgrader.cs": "869556c3a71ea7e033f286094adc5bad16324898cd79998537919b42f8f28118",
+      "L-Connect.Core/LConnectCore/Products/Galahad2Vision/BCommandPacket.cs": "bdb257d64b0229cf12df2139ca7de07a1f85eb2f18e315646c2215d9782e1678",
+      "L-Connect.Core/LConnectCore/Products/Galahad2Vision/Galahad2VisionDevice.cs": "ae477ceb2f008fbfd80dcd12642acf111db3b5b673eaecdc57f30bad6a6956f1"
+    },
+    "provenance": "AppUpdater hash rechecked against prior firmware-identity checkpoint; original assembly hashes not rerun this slice."
+  },
+  "catalog": {
+    "url": "https://lianli-update-2025.lianli-cn.com/lianli-update-2025/lianli-l3-update/firmwares-en-US.json",
+    "observed_utc": "2026-10-15",
+    "live_not_frozen_baseline": true,
+    "sha256": "d8eb75cf90d2b299b205415184f2b72e0b0502141197871ab58db26d3da73beb",
+    "key": "GA II LCD",
+    "row": {
+      "version": "1.6",
+      "compile": "2025/10/31",
+      "file": "HH015CHS_N9H26HSSQ_GALAHADII-Vision_V201041_pid7395.bin",
+      "url": "https://lianli-update-2025.lianli-cn.com/lianli-l3-update/HH015CHS_N9H26HSSQ_GALAHADII-Vision_V201041_pid7395.bin",
+      "md5": "3a341bb5da86a5119545c14ec805a307",
+      "size": "626212",
+      "detail": "https://lian-li.com/L3-changelog/",
+      "history": {
+        "1.6": "2025/10/31",
+        "1.4": "2024/10/22",
+        "1.2": "2024/01/04"
+      }
+    },
+    "mapping": "AppUpdater.cs:370 GA II LCD -> GA2LCD; FirmwareUpdateUtils.cs:192-194 LCD/LCDV2 -> GA2LCD",
+    "ru_request": "HTTP403 observed; no permanent availability conclusion"
+  },
+  "image": {
+    "path": "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6/HH015CHS_N9H26HSSQ_GALAHADII-Vision_V201041_pid7395.bin",
+    "bytes": 626212,
+    "md5": "3a341bb5da86a5119545c14ec805a307",
+    "sha256": "68e2d11c409e75b1e25bf9c2e84b891bcdc18ac735bafa67a0ee25a218b2d9d3",
+    "download": "39 HTTPS range requests; If-Match vendor MD5 ETag; exact Content-Range and length checks, reassembled MD5/size match. Initial full requests and resume timed out; partial files never accepted.",
+    "metadata_observations": {
+      "offset_pointer_location": "0x6000",
+      "offset_pointer_le32": "0x80000",
+      "markers_le32": [
+        "0x12345678",
+        "0x55aaaa55"
+      ],
+      "build_date_offset": "0x80008",
+      "raw_build_date": "Oct 30 2025",
+      "build_time_offset": "0x80014",
+      "raw_build_time": "17:01:18",
+      "identity_offset": "0x80024",
+      "identity": "N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6"
+    },
+    "b_framing_source_derived": {
+      "payload_max": 1013,
+      "packet_count": 619,
+      "last_payload_bytes": 178,
+      "output_report_length": 1024,
+      "reply_length": 512
+    }
+  },
+  "static_analysis": {
+    "tool": "Ghidra headless",
+    "processor": "ARM:LE:32:v5t",
+    "compiler": "default",
+    "base": 0,
+    "analysis_log": "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6/ghidra.log",
+    "exports_outside_repository": [
+      "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6/firmware-refs.txt",
+      "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6/upload-analysis.txt"
+    ],
+    "findings": [
+      {
+        "address": "0x3c418",
+        "inference": "Dispatcher calls B callbacks from 0x862f8 and sends 512-byte response."
+      },
+      {
+        "address": "0x8219c",
+        "inference": "Collects total bytes from PN0, requires sequential later PN; PN0 resets accumulation. Retry semantics must not assume idempotence."
+      },
+      {
+        "address": "0x81a94",
+        "inference": "cmd11 returns copied input envelope; errors cmd2 with byte6 = 0x80 + local code. On full byte count validates offset/magic, persists staging file and compares readback; intermediate echo is not final persistence proof."
+      },
+      {
+        "address": "0x815d8",
+        "inference": "cmd10 payload01 checks upload state/staged file, copies and verifies final file, sets raw bytes11/12 to1, emits reply then resets. Error branches use cmd2/byte6 envelope. Persistent boot/recovery unresolved."
+      },
+      {
+        "address": "0x80bb0",
+        "inference": "cmd134 returns identity/date in two PN roles using fixed build strings."
+      }
+    ],
+    "confidence": "Static source-derived only, exact image SHA-256; inferred function roles and statuses are not hardware ACK qualification."
+  },
+  "implementation": {
+    "tool": "tools/inspect-lcdv2-firmware.py",
+    "behavior": "No filename trust, target constrained to researched VID/PID, exact size and full SHA-256 plus identity consistency. O_PATH pins a regular inode before read via /proc/self/fd; bounded read. Unknown rejected, always flash_ready=false. No network, HID, packet serialization or update call.",
+    "source_sha256": {
+      "tools/inspect-lcdv2-firmware.py": "4531256444ed437d4b93e47c585c95758c5843d43cb0d3acd726d5b23582d9de",
+      "tools/tests/test_inspect_lcdv2_firmware.py": "38a185468addf8b361daf907f367fc9bb654bdf2c7c113f0907d2288dc448a40"
+    }
+  },
+  "checks": {
+    "synthetic_tests": {
+      "passed": 8,
+      "failed": 0,
+      "log": "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6/inspector-tests.log",
+      "coverage": [
+        "exact bytes independent of filename",
+        "target rejected before path open",
+        "empty/truncated/oversize/same-length-corrupted rejected",
+        "token/filename spoof rejected",
+        "identity-offset record consistency",
+        "symlink/FIFO/directory rejected",
+        "actual CLI rejects synthetic/missing files",
+        "pathname replacement with FIFO symlink cannot redirect pinned inode read"
+      ]
+    },
+    "real_cli": [
+      {
+        "file": "lcdv2-complete.bin",
+        "target": "0416:7395",
+        "returncode": 0,
+        "result": {
+          "status": "recognized_candidate",
+          "target": "0416:7395",
+          "size": 626212,
+          "sha256": "68e2d11c409e75b1e25bf9c2e84b891bcdc18ac735bafa67a0ee25a218b2d9d3",
+          "version": "1.6",
+          "raw_token": "N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6",
+          "identity_offset": 524324,
+          "flash_ready": false,
+          "remaining_gates": [
+            "chunk_and_activation_ack",
+            "interruption_recovery",
+            "exclusive_owner_update_job",
+            "bound_reconnect_verification",
+            "hardware_revision_qualification"
+          ]
+        }
+      },
+      {
+        "file": "lcdv2-complete.bin",
+        "target": "0416:7398",
+        "returncode": 1,
+        "result": {
+          "status": "rejected",
+          "flash_ready": false,
+          "error": "This candidate is researched only for 0416:7395."
+        }
+      },
+      {
+        "file": "corrupted.bin",
+        "target": "0416:7395",
+        "returncode": 1,
+        "result": {
+          "status": "rejected",
+          "flash_ready": false,
+          "error": "Unknown image SHA-256; no firmware recognized."
+        }
+      },
+      {
+        "file": "lcdv2.bin",
+        "target": "0416:7395",
+        "returncode": 1,
+        "result": {
+          "status": "rejected",
+          "flash_ready": false,
+          "error": "Unknown image size; expected 626212 bytes."
+        }
+      }
+    ],
+    "rust_browser_native": "NOT RUN: this slice changes only research Python tool/tests and documents; no application sources changed.",
+    "hardware": "NOT RUN; no HID or daemon started."
+  },
+  "external_reference_manifest": {
+    "path": "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6/manifest.json",
+    "sha256": "3f90a3b77eed9a53e2091bb432cf2d6b4a3040d918bfdbeebfa7d81c5ab72033"
+  },
+  "remaining": [
+    "Hardware revision/model compatibility is not proved by catalog mapping, filename or identity token.",
+    "Generic image format/signature/target validation absent; inspector recognizes one exact candidate only.",
+    "Catalog MD5 is not a signature; pinned SHA256 records analyzed bytes.",
+    "ACK/error parser, exclusive update job, persistent boot/recovery model, identity-bound reconnect and version verification remain unimplemented.",
+    "No hardware flash/fault injection on the only AIO.",
+    "Mini is Plasma/GNOME integration, English default and Russian required; other environments/languages and extra effects stay deferred."
+  ]
+}

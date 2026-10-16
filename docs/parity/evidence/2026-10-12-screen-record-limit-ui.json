@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-12",
+  "scope": "Automatic LimitReached prompt and cancellation back to retained recording",
+  "reference": "Windows 2.1.28 ScreenRecordTool.cs timeCodeUpdateTimer_Tick and confirm, lines389-418",
+  "verification": {
+    "frontend_check": "0 errors, 0 warnings",
+    "focused_tests": 14,
+    "logs": [
+      "/tmp/recording-limit-check.log",
+      "/tmp/recording-limit-tests.log"
+    ]
+  },
+  "assertions": [
+    "LimitReached opens a modal automatically",
+    "Escape preserves recording and restores Finish focus",
+    "Repeated polling does not reopen dismissed modal",
+    "Acceptance sends Finish once, with no Prepare or publication"
+  ],
+  "remaining": [
+    "Actual full180s recording and native UI acceptance",
+    "Region/interval editing and Windows operation-choice parity",
+    "No real capture or hardware test"
+  ],
+  "sha256": {
+    "desktop/src/lib/ScreenRecorder.svelte": "e35f2f1813d0df507a16139ff586eb146fcb827e59326d997b816824af0ec5f7",
+    "desktop/tests/screen-record-ui.spec.ts": "70329e156664dabc54b4d7619cdcb6c2ee378d99c9fc63c5d5cde4fff3e0aaad"
+  }
+}

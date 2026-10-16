@@ -166,10 +166,7 @@ async fn device_id_allocation_per_family() {
 /// P1D-15: replay-on-spawn re-issues the persisted fan PWM as the
 /// first HID write after the actor tree comes up.
 ///
-/// We pre-seed the persistence directory with a TOML for the device
-/// the manager is about to allocate as `galahad2-lcdv2:0001` (the
-/// first attached device of the family always gets `:0001` because
-/// the per-family counter starts at 0 and is bumped before formatting).
+/// We pre-seed the stable VID/PID/serial settings key for the device.
 /// On attach, `replay_persisted_settings` should issue exactly one
 /// `SetFanPWM` (cmd 139) write through the hid_io actor; the
 /// MockBackend records it in `write_history`.
@@ -182,15 +179,12 @@ async fn replay_writes_fan_pwm_on_attach() {
 
     let tmp = TempDir::new().expect("tempdir");
 
-    // Pre-seed the persistence root: the manager's allocate_id starts
-    // at counter 0 -> the first attached galahad2-lcdv2 device gets
-    // the key "galahad2-lcdv2:0001". File path is
-    // <root>/devices/<key>.toml. Hand-written TOML keeps the test
-    // independent of the PersistenceStore::write code path.
+    // SN-A UTF-8 bytes are hex encoded in the stable settings filename.
+    // Hand-written TOML avoids depending on PersistenceStore::write.
     let devices_dir = tmp.path().join("devices");
     std::fs::create_dir_all(&devices_dir).expect("create devices dir");
     std::fs::write(
-        devices_dir.join("galahad2-lcdv2:0001.toml"),
+        devices_dir.join("0416-7395-serial-534e2d41.toml"),
         "schema_version = 1\n[fan]\npwm_percent = 75\n",
     )
     .expect("seed persistence file");

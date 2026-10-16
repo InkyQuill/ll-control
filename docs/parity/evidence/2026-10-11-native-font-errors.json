@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "desktop/src/lib/FontImport.svelte": "2be680bf7c1576347f4ec63beb416d6b69e7d4f0c2db144f27d06def1ce90167",
+    "desktop/scripts/native-keyboard.js": "f461f36e67cc2276f6e8e511524d52d2d71663888c4ea1e29365a2f8db865c83",
+    "desktop/scripts/native-keyboard.py": "12091e709a2f13e6d645328e0746c91e462ca019cf1f0fb2fab87aef8b78052c",
+    "desktop/scripts/native-file-chooser.py": "59c37d0eab897e5a38e58d378a08acf5248de23fbcdbe5e6c0dc0c4eb1cefad9",
+    "desktop/src-tauri/src/main.rs": "7c0229b0995e63de80fd373f9222c5d8b1c8f1542b5998ae2feb915e70cc3d27"
+  },
+  "fixture_root": "/tmp/lconnect-native-keyboard-0qvau4yz",
+  "checks": {
+    "native_steps": 543,
+    "atspi_variants": 12,
+    "live_events": 46,
+    "native_build": "pass",
+    "fmt": "pass",
+    "gui_strict_clippy": "pass",
+    "python_syntax": "pass",
+    "javascript_syntax": "pass",
+    "review": "no remaining findings"
+  },
+  "cases": [
+    "Invalid TTF error after native GTK selection",
+    "16MiB+1 sparse TTF rejected by size validation",
+    "Each failure preserves theme/font choices and picker focus; enabled input permits retry",
+    "Both distinct errors emitted assertive AT-SPI events",
+    "Valid TTF selected twice after errors, errors cleared, exactly two managed files with fixture bytes",
+    "Exact imported font selected and applied; JPEG preview generated",
+    "Expanded font error/imported states reflow at 320CSSpx with WebKit zoom400"
+  ],
+  "logs": [
+    "/tmp/font-errors-build.log",
+    "/tmp/font-errors-fmt.log",
+    "/tmp/font-errors-clippy.log",
+    "/tmp/font-errors-native-final.log"
+  ],
+  "earlier_run": {
+    "root": "/tmp/lconnect-native-keyboard-8y4obzat",
+    "result": "GUI passed; Python final old reflow-name assertion failed; expected names updated and full native rerun passed"
+  },
+  "limitations": [
+    "MockBackend/private Xvfb only; no hardware",
+    "OS and GTK font scaling unchanged",
+    "No screen-reader speech or every editor error/limit state",
+    "Production FontImport unchanged since previous focus fix; no new full-stack qualification"
+  ]
+}

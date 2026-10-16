@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-12",
+  "scope": "ScreenCast session negotiation foundation, not ScreenRecord UI/encoder",
+  "baseline": "L-Connect3 2.1.28.0 / GA2LCD",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "verification": {
+    "rust_library_tests": 60,
+    "rust_binary_tests": 2,
+    "screencast_tests": 4,
+    "strict_clippy": "passed",
+    "rustdoc": "warnings denied passed",
+    "format": "passed",
+    "private_bus": "real zbus negotiation and Unix FD transfer, synthetic /dev/null remote only",
+    "logs": [
+      "/tmp/screencast-tests.log",
+      "/tmp/screencast-http-diagnostic.log",
+      "/tmp/screencast-clippy-final.log",
+      "/tmp/screencast-doc.log"
+    ]
+  },
+  "failed_prior_runs": [
+    {
+      "log": "/tmp/screencast-all-tests.log",
+      "test": "media_http::tests::unavailable_owner_returns_not_found_and_shutdown_closes_listener",
+      "result": "post-shutdown TCP connect unexpectedly succeeded"
+    },
+    {
+      "log": "/tmp/screencast-all-tests-final.log",
+      "test": "media_http::tests::unavailable_owner_returns_not_found_and_shutdown_closes_listener",
+      "result": "same failure; isolated recheck passed"
+    }
+  ],
+  "unresolved": "HTTP shutdown test intermittent failure not explained or fixed; assertion retains strict behavior and now reports local/peer addresses if it recurs",
+  "implemented": [
+    "one advertised monitor/window source, no persistence",
+    "CreateSession/SelectSources/Start/OpenPipeWireRemote",
+    "owned remote FD and session Close/Drop fallback",
+    "v6 stable serial requirement",
+    "pre-call response subscription",
+    "cancel/error cleanup and Session::Closed during selection"
+  ],
+  "limits": [
+    "Recorder/timeline/controls/review/UI not yet connected",
+    "No real PipeWire connection or desktop capture",
+    "Negotiation fault/version matrix remains incomplete",
+    "No new frontend/native/workspace/release/hardware qualification"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/screencast.rs": "9d514c992341b5f39f7cd4c73eca93e0fa7cad1deb21dd7a0d95f3e49a447a73",
+    "desktop/src-tauri/src/screencast_tests.rs": "e99633119201c331c37f4aca2f7b44052a1a958b37baaf6b87fc055fa6d3c1f8",
+    "desktop/src-tauri/src/lib.rs": "f76c71f565662aff2f68c06ee9b419561170e7a695e76213ab329a60344b70c8",
+    "desktop/src-tauri/src/media_http.rs": "c2640506d4744bcc566d484d7d8adf4f2b3040489a364768711b55740d40953f"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-12",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Optional native video adjustments for upload and leased gallery source",
+  "contract": {
+    "commands": [
+      "media_begin",
+      "media_source_prepare"
+    ],
+    "optional_field": "adjustments",
+    "fields": "contrast/brightness integer0..255, default0; unknown fields rejected",
+    "ownership": "Immutable EditOptions captured at admission, transferred with input to worker"
+  },
+  "verification": {
+    "library_tests": 38,
+    "binary_tests": 2,
+    "all_features_targets": true,
+    "strict_clippy": "passed",
+    "warning_denied_docs": "passed",
+    "fmt": "passed",
+    "real_codec": "Upload and cropped gallery source produce6 white frames at brightness255; gallery preview revocation retains leased input/effects. Existing neutral admission and cancel/publication tests pass.",
+    "logs": [
+      "/tmp/video-effects-admission-tests.log",
+      "/tmp/video-effects-admission-clippy.log",
+      "/tmp/video-effects-admission-doc.log"
+    ]
+  },
+  "limitations": [
+    "UI controls/preview not connected",
+    "No actual Tauri invoke from a running native window",
+    "No hardware run"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/media_import.rs": "160154bfa4625191ac50f2f7b6f9b4939df0029ec57576a8e4d7d857d0d35ec0",
+    "desktop/src-tauri/src/media_source.rs": "115774be1d8908948f1ca194fac29c01ca2799ea52e3b7293df2f5d82aafa282",
+    "desktop/src-tauri/src/main.rs": "05741ed5e2aa9711b37d1de26c13bbac45b1f3137a58dbf2a774da4cf32d9241",
+    "desktop/src-tauri/src/video_adjustments.rs": "c11901b46063562815eebe8e4d1a6647d2c78aa2cdf4779425249aacdf32f21b"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "scope": "Paused visual recording region; retained results reconciled during plan audit",
+  "dirty": true,
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "verification": {
+    "browser_client_passed": 33,
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "native_build": "passed",
+    "native_acceptance": {
+      "capture_regions": true,
+      "close_while_recording": true,
+      "collection_membership": true,
+      "explicit_save": true,
+      "ok": true,
+      "operation_choice": true,
+      "prepared_decode": true,
+      "resumed_frames": true,
+      "review_reedit": true,
+      "saved_key": "bc98713e7b9f4ed88ea8d6c109b3bac7",
+      "source_dimensions": [
+        320,
+        240
+      ],
+      "source_seek": true,
+      "source_snapshot": true,
+      "visual_region_preview": true,
+      "normal_close_exit": 0
+    }
+  },
+  "limitations": [
+    "Synthetic source and private bus only; no physical LCD or real desktop capture",
+    "Native keyboard uses DOM events; native OS keyboard/pointer and accessibility matrix remain open",
+    "Pre-recording region setup missing; snapshot is last frame before pause",
+    "No new full-workspace test run during documentation audit"
+  ],
+  "sha256": {
+    "desktop/src/lib/RecordingRegionPreview.svelte": "7f8511585b7038e00a243aa45ee2130e1f6b9c67aed75c8f70c77fcdae0f11a5",
+    "desktop/src/lib/ScreenRecorder.svelte": "b1b3fbb8dab122bc54e4f495376347e18f36210e44767d05ce4eef73e9a0282f",
+    "desktop/src/lib/screen-record.ts": "513e2bc5e14122356c78c81a81c94c45a592e5ab0dc6692460cdbb8c24a6072e",
+    "desktop/tests/screen-record-ui.spec.ts": "601947b47aa788ba6a2e0221e72d83b4bbfe6c04cdbe1a87acc87a49de028fe1",
+    "desktop/tests/screen-record-client.spec.ts": "cc5ed3c3f7f93d1a02c162180923101daadedd14948b4274d6d2d3bfe19fc0cd",
+    "desktop/scripts/native-recording.js": "710dbdcf223aa89129992186039457ab70121ea09a4a2ff29789fb6aa47f0a31"
+  }
+}

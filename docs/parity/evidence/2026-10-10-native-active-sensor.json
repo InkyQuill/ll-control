@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Native existing pump curve loses bound sensor and recovers same identity",
+  "native_evidence": "/tmp/lconnect-native-rk3b4tl1/acceptance.json",
+  "verification": {
+    "python_compile": "passed",
+    "javascript_syntax": "passed",
+    "mock_and_native_build": "passed",
+    "native_smoke": "passed",
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_all_target_tests": 546,
+    "rust_docs": "passed",
+    "review": "No findings on addition; pre-existing synchronous fixture stats I/O noted separately"
+  },
+  "faults": [
+    "Sensor request:missing",
+    "Sensor request:restore"
+  ],
+  "assertions": [
+    "Synthetic fixture:cpu removed from real SensorCache snapshot; alternate CPU reading stays present",
+    "Pump enters fallback and applied_percent equals configured fallback_percent",
+    "GUI shows fallback and unavailable original ID; unsaved curve point retained",
+    "Requested policy and LCD theme bindings remain identical",
+    "Restored same ID exits fallback and drives non-fallback curve output without draft Apply",
+    "Full existing native font/dependency/control/reconnect and restart suite passes"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "03d7e976610e12cca6592e52236f0b9d68ff04bab35f8e58c789dbfceb2ecda5",
+    "desktop/scripts/native-smoke.py": "376218ab076b08916fd86981e8526a5d129ce4b5767ad76d5062a1387f90878f",
+    "desktop/scripts/native-smoke.js": "abfa2635c2cb63491bafb4bf5f2faed1de89dbc14e9bdef6c3db33f4c979c070"
+  },
+  "limitations": [
+    "Pump missing-source scenario; not stale values or simultaneous fan/thermal/RGB loss",
+    "No physical PWM/RPM or LCD verification"
+  ],
+  "logs": [
+    "/tmp/sensor-loss-review-fmt.log",
+    "/tmp/sensor-loss-review-clippy.log",
+    "/tmp/sensor-loss-review-test.log",
+    "/tmp/sensor-loss-review-doc.log"
+  ]
+}

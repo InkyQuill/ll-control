@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-12",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Desktop export receiver and dedicated-client lifetime; not wired to gallery",
+  "verification": {
+    "tests_by_log": {
+      "/tmp/download-gui-all.log": 30,
+      "/tmp/download-ipc.log": 57,
+      "/tmp/download-daemon.log": 1
+    },
+    "checks": [
+      "strict all-target GUI/IPC Clippy",
+      "warning-denied GUI/IPC docs",
+      "workspace check",
+      "fmt",
+      "git diff --check"
+    ],
+    "scenarios": [
+      "Real12frame H264 AU identity and MP4 remux count",
+      "Incomplete totals, out-of-order/duplicate index, wrong stream, invalid NAL, explicit Failed rejected",
+      "IpcClient drop closes wire despite full notification queue",
+      "Daemon586unit transfer and corruption/disconnect regression"
+    ]
+  },
+  "limitations": [
+    "No native webview or hardware",
+    "Gallery job/commands/source preview and replacement UI remain",
+    "Cancellation during filesystem write relies on blocking-owner lifetime; no disk-stall injection in this slice"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/media_download.rs": "37d91879e78d477fdddf086a77f5ce9089b76576fbcda7bee0f39dc3cb341281",
+    "desktop/src-tauri/src/media_prepare.rs": "5b11d67a856dac7bbe9cfd77e9c9ec4bf21f304ed0d0a5b53198ab7c13c8f6f6",
+    "desktop/src-tauri/src/lib.rs": "e6c1140e7990cec178d3c685c6203414e6f1a936fdc343b2228a3d8bd564f0fd",
+    "crates/lconnect-ipc/src/client.rs": "61ad4cc34ac344c3fcedd4e7904467678175b117e70a47aeef481a74490576fa",
+    "crates/lconnect-ipc/tests/client_lifetime.rs": "b64c6c135d9f22892744e58d6ec9b89d4fc128d5912a2e5316cfb3f248b465d2"
+  }
+}

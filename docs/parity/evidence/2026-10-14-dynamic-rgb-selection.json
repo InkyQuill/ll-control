@@ -1,0 +1,370 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Persisted per-mode Static/Dynamic choice and explicit restoration of last source via GUI/IPC/sole RGB owner/settings/restart",
+  "reference": [
+    {
+      "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionScreenLEDPage.cs",
+      "sha256": "b30045152b070851c8626d31272a94c41a9b6e54229e5f20f7ea63b6ea1218ea"
+    },
+    {
+      "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionProfile.cs",
+      "sha256": "21a2c714f528cd3dca70972d0b99db7e6714244d3d9ef0cbb6633b8a84c83efe"
+    },
+    {
+      "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect.Core/LConnectCore/Products/Galahad2Vision/ScreenLEDLightingSetting.cs",
+      "sha256": "fc67b08ddf298f8371ef679435cc80970d58bf038fd649d89bd530f3e7c88b8e"
+    }
+  ],
+  "files_sha256": {
+    "crates/lconnect-ipc/src/types.rs": "a3c020025a788b96d8c189fca0bf8a6b9d5b5145f2fe56ab27325726e21e1741",
+    "crates/lconnect-ipc/src/dynamic_rgb.rs": "bbf1fb9d8f165a10eca3b1cd3d1d387fae8833c5ffed97fd6a704c8a4ca02769",
+    "crates/lconnect-ipc/tests/dynamic_profiles.rs": "6ea9a8cb2bed499b383eba0aed53d69741bece2b75b556cf94bb186d34620e35",
+    "crates/lconnect-daemon/src/actor/mod.rs": "07d2d067502b13fe3cb6d890a44db08a184f8529328fde8fa0a3a57b97612f80",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "a6be22ff47d07730292fa50eb91f6a49bdafb39def8f5ffabfe1c2031ab9f00f",
+    "crates/lconnect-daemon/src/actor/lighting_keeper.rs": "9ebaccecb8ef1b3315e60837a988833ada2af07f00135c3bf35fba43a87bb55d",
+    "crates/lconnect-daemon/src/ipc_server.rs": "4028436bc0b48e36a4e76b1dc7ae024c06d5cb4a3df410d05f303a3322a2f89b",
+    "crates/lconnect-daemon/tests/thermal.rs": "deebbf99805e36614cbdb526f8a1ecae034f8ce9c1f7de01ad981a4b97cc12be",
+    "crates/lconnect-daemon/tests/dynamic_rgb_ipc.rs": "b40dac2831325355491a12def524547498d611131e06e30c22888dc56964515d",
+    "desktop/src/lib/Lighting.svelte": "e970f5d37cc761056cf1492f22cb15eec8a1c7d08700d6326dc1c45a502a0b09",
+    "desktop/src/lib/DynamicRgb.svelte": "b62dc36fb0639c5c8f2240df27e0ae96a6384bef29f3706a813d63cf6569a8bc",
+    "desktop/tests/lighting-dynamic-selection.spec.ts": "641bab01d140894c1e25a3879ce4db65b87147ecdcb1006e597ac609865c702b",
+    "desktop/scripts/native-lighting-palette.js": "8b406dc6c63176c47bfd4cf4af37cb8b5c218f7372a7aaa8192ca216dbd9cfb0",
+    "desktop/scripts/native-lighting-palette.py": "71da370272b813dbdbb5018aa9a11a93c7550b1468d2048fe6fa44bd42144adb"
+  },
+  "contract": {
+    "selection": "dynamic_rgb_profiles.modes[].enabled preserves inactive mode choice; set_dynamic_rgb enables/disables current mode without deleting bindings",
+    "restore": "LightingConfig.dynamic_mode=true restores last saved source of target pump mode; false/omitted remains manual. No saved source or mismatched known unit rejects before writes. Missing source retains intent and exposes degraded/manual fallback.",
+    "atomic": "LightingPumpDynamic settings update commits manual base, active policy and mode registry together; only successful base write changes committed mode. Subsequent dynamic error remains visible/retryable.",
+    "gui": "Capability-gated selection, independent mode drafts and explicit Apply/Load; dynamic child enable/disable updates matching parent mode choice with device/generation ownership",
+    "legacy": "Missing enabled defaults false; legacy active config seeds enabled mode at startup. Legacy clients apply manual by omission; old daemon hides unsupported restore."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 927,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-dynamic-selection-workspace.log"
+    },
+    "focused": "/tmp/lconnect-dynamic-selection-focused.log",
+    "strict_clippy": "/tmp/lconnect-dynamic-selection-clippy.log",
+    "rustdoc": "/tmp/lconnect-dynamic-selection-doc.log",
+    "format": "/tmp/lconnect-dynamic-selection-fmt.log",
+    "svelte": {
+      "errors": 0,
+      "warnings": 0,
+      "log": "/tmp/lconnect-dynamic-selection-ui.log"
+    },
+    "browser": {
+      "passed": 43,
+      "log": "/tmp/lconnect-dynamic-selection-browser.log",
+      "final_notice_guard_recheck": {
+        "passed": 4,
+        "log": "/tmp/lconnect-dynamic-selection-browser-final.log"
+      }
+    },
+    "frontend_build": "/tmp/lconnect-dynamic-selection-build.log",
+    "native": {
+      "artifact": "/tmp/lconnect-native-lighting-palette-_fr0l7ko/acceptance.json",
+      "result": {
+        "applied_mode_profiles": true,
+        "dev": "galahad2-lcdv2:0001",
+        "dynamic_profiles": {
+          "modes": [
+            {
+              "bindings": [
+                {
+                  "brightness_percent": 75,
+                  "direction": "forward",
+                  "high_colors": [
+                    {
+                      "b": 0,
+                      "g": 0,
+                      "r": 255
+                    },
+                    {
+                      "b": 255,
+                      "g": 0,
+                      "r": 0
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 0
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 255
+                    }
+                  ],
+                  "high_speed_percent": 75,
+                  "high_value": 80,
+                  "low_colors": [
+                    {
+                      "b": 0,
+                      "g": 0,
+                      "r": 255
+                    },
+                    {
+                      "b": 255,
+                      "g": 0,
+                      "r": 0
+                    },
+                    {
+                      "b": 102,
+                      "g": 85,
+                      "r": 68
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 255
+                    }
+                  ],
+                  "low_speed_percent": 75,
+                  "low_value": 35,
+                  "sensor_id": "amdgpu:2f61:utilization",
+                  "unit": "percent"
+                },
+                {
+                  "brightness_percent": 50,
+                  "direction": "reverse",
+                  "high_colors": [
+                    {
+                      "b": 0,
+                      "g": 0,
+                      "r": 255
+                    },
+                    {
+                      "b": 255,
+                      "g": 0,
+                      "r": 0
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 0
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 255
+                    }
+                  ],
+                  "high_speed_percent": 80,
+                  "high_value": 60,
+                  "low_colors": [
+                    {
+                      "b": 0,
+                      "g": 0,
+                      "r": 255
+                    },
+                    {
+                      "b": 51,
+                      "g": 34,
+                      "r": 17
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 0
+                    },
+                    {
+                      "b": 0,
+                      "g": 255,
+                      "r": 255
+                    }
+                  ],
+                  "low_speed_percent": 20,
+                  "low_value": 45,
+                  "sensor_id": "fixture:cpu",
+                  "unit": "celsius"
+                }
+              ],
+              "enabled": false,
+              "mode": "meteor"
+            },
+            {
+              "bindings": [
+                {
+                  "brightness_percent": 100,
+                  "direction": "forward",
+                  "high_colors": [
+                    {
+                      "b": 0,
+                      "g": 0,
+                      "r": 255
+                    }
+                  ],
+                  "high_speed_percent": null,
+                  "high_value": 1600,
+                  "low_colors": [
+                    {
+                      "b": 153,
+                      "g": 136,
+                      "r": 119
+                    }
+                  ],
+                  "low_speed_percent": null,
+                  "low_value": 900,
+                  "sensor_id": "hwmon:2f64:nct6775:fan1",
+                  "unit": "rpm"
+                }
+              ],
+              "enabled": true,
+              "mode": "static"
+            }
+          ]
+        },
+        "fan_palette": true,
+        "native_base_load": true,
+        "native_dynamic_profiles": true,
+        "native_dynamic_selection": true,
+        "native_fan_topology": true,
+        "native_mode_catalog": true,
+        "native_mode_defaults": true,
+        "native_mode_drafts": true,
+        "ok": true,
+        "pump_palette": true,
+        "selected_rgb": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6
+          ],
+          [
+            7,
+            8,
+            9
+          ],
+          [
+            10,
+            11,
+            12
+          ]
+        ],
+        "restart_replay": true,
+        "settings_palettes": {
+          "fan_topology": {
+            "sync_to_pump": true,
+            "size": "280",
+            "manual_led_count": 31
+          },
+          "fan_modes": {
+            "meteor": {
+              "mode": "meteor",
+              "brightness": 100,
+              "speed": 75,
+              "direction": "forward",
+              "color": "#010203",
+              "additional_colors": [
+                "#040506",
+                "#070809",
+                "#0a0b0c"
+              ],
+              "disabled": false
+            },
+            "runway": {
+              "mode": "runway",
+              "brightness": 100,
+              "speed": 50,
+              "direction": "forward",
+              "color": "#112233",
+              "additional_colors": [
+                "#445566"
+              ],
+              "disabled": false
+            }
+          },
+          "pump_modes": {
+            "meteor": {
+              "scope": "inner",
+              "mode": "meteor",
+              "brightness": 100,
+              "speed": 75,
+              "direction": "forward",
+              "color": "#010203",
+              "additional_colors": [
+                "#040506",
+                "#070809",
+                "#0a0b0c"
+              ],
+              "disabled": false
+            },
+            "runway": {
+              "scope": "inner",
+              "mode": "runway",
+              "brightness": 100,
+              "speed": 50,
+              "direction": "forward",
+              "color": "#112233",
+              "additional_colors": [
+                "#445566"
+              ],
+              "disabled": false
+            },
+            "static": {
+              "scope": "inner",
+              "mode": "static",
+              "brightness": 100,
+              "speed": 0,
+              "direction": "forward",
+              "color": "#ffffff",
+              "disabled": false
+            }
+          },
+          "fan": {
+            "mode": "meteor",
+            "brightness": 100,
+            "speed": 75,
+            "direction": "forward",
+            "color": "#010203",
+            "additional_colors": [
+              "#040506",
+              "#070809",
+              "#0a0b0c"
+            ],
+            "disabled": false
+          },
+          "pump": {
+            "scope": "inner",
+            "mode": "meteor",
+            "brightness": 100,
+            "speed": 75,
+            "direction": "forward",
+            "color": "#010203",
+            "additional_colors": [
+              "#040506",
+              "#070809",
+              "#0a0b0c"
+            ],
+            "disabled": false
+          }
+        },
+        "gui_exit": 0
+      },
+      "mock_backend": true,
+      "isolated_xvfb_dbus": true,
+      "gui_build": "/tmp/lconnect-dynamic-selection-native-gui-build.log",
+      "fixture_build": "/tmp/lconnect-dynamic-selection-native-build.log",
+      "log": "/tmp/lconnect-dynamic-selection-native-final.log"
+    }
+  },
+  "repairs": [
+    "Full workspace caught an unnecessary settings update for transient direct colors with no policy; restored no-persistence contract and reran focused plus full workspace.",
+    "First native attempt used a stale GUI binary because --example filtered out the GUI target; native selection assertion rejected it. Explicit --bin lconnect-gui rebuild and final isolated run passed."
+  ],
+  "remaining": [
+    "Physical RGB/sensor/wiring and joint media/cooling/RGB run deferred by user",
+    "Expanded native faults/reconnect/accessibility remain; happy path does not establish full parity",
+    "Windows archive interoperability and portable profiles/assets are separate remaining work"
+  ]
+}

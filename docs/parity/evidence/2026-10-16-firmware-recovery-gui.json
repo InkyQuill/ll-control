@@ -1,0 +1,195 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Moscow",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Main Settings saved firmware inspection EN/RU through existing global read-only daemon RPC. Private synthetic files, zero-device MockBackend, Unix IPC and isolated Xvfb/session D-Bus/Tauri/WebKit only. No production daemon, HID, flash, clear/quarantine resolution, replay, system install or host session changes.",
+  "implementation": [
+    "Explicit get_firmware_recovery({}) from a global Settings card; no DeviceId, periodic inspection or connected prerequisite. Bridge allowlist admits only the getter; existing maintenance deny test now covers it and denied update/clear/probe names.",
+    "Validated six recovery classifications and five saved stages. UTF-8/text/array/counter bounds and operation/guard/state consistency checked. Unknown/malformed responses fail closed; invalid response has bounded raw technical excerpt, no previous trusted fields.",
+    "UI labels saved operation/target/serial/previous path/settings binding/image hash/guards and durable counters/markers as historical evidence. It never treats absent markers, complete echoes or activation marker as live status, success, no effects or replay authority. Raw data remains untranslated escaped text.",
+    "Explicit read clears old snapshot first; failure/unsupported response cannot leave old values current. Busy activation is deduplicated. Leaving Settings or observed ordinary availability changes destroys epoch; late replies/finalizers cannot alter a new card. Inspection stays available while ordinary admission is sealed.",
+    "Native fixture seeds actual journal/settings guard through arm/effects_possible with no transport; supports absent, guarded, orphan guard and unreadable journal. It compares every saved settings-file byte before/after GUI reads and close and verifies zero HID/query/update/activation writes."
+  ],
+  "checks": {
+    "rust": {
+      "gui-tests": {
+        "passed": 126,
+        "failed": 0,
+        "ignored": 1,
+        "groups": 3,
+        "exit_code": 0
+      },
+      "daemon-tests": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "groups": 1,
+        "exit_code": 0
+      },
+      "cli-tests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "groups": 1,
+        "exit_code": 0
+      }
+    },
+    "rust_total_passed": 132,
+    "scope_note": "Affected GUI package all-features including expanded bridge boundary test; existing daemon and real CLI/IPC recovery suites. No fresh full-workspace test claim. Rust production/test sources unchanged after these runs; later Russian resource/native assertion refinement was rebuilt and tested through final frontend/native flows.",
+    "browser": {
+      "passed": 22,
+      "failed": 0,
+      "new_recovery_tests": 15,
+      "existing_firmware_info_tests": 7
+    },
+    "svelte": "0 errors/0 warnings",
+    "frontend_build": "passed",
+    "strict_locales": {
+      "present": 846,
+      "required": 846,
+      "missing": 0,
+      "dynamic_outputs_remaining": 68
+    },
+    "fmt": "passed",
+    "strict_workspace_all_targets_all_features_locked_clippy": "passed",
+    "warnings_denied_gui_all_features_locked_rustdoc": "passed",
+    "native_and_mock_debug_builds": "passed",
+    "frozen_source_manifest_files_unchanged_at_final_checks": 462,
+    "native": {
+      "exit_code": 0,
+      "artifacts": "/tmp/lconnect-native-recovery-8esjmw_9",
+      "acceptance": {
+        "ok": true,
+        "cases": [
+          {
+            "explicit_read": true,
+            "guard_count": 0,
+            "language": "en-US",
+            "mode": "none",
+            "no_device": true,
+            "ok": true,
+            "raw_readback": true,
+            "read_only": true,
+            "sealed": true,
+            "state": "no_saved_operation",
+            "hid_writes": 0,
+            "firmware_queries": 0,
+            "saved_files_unchanged": true,
+            "normal_close": true
+          },
+          {
+            "explicit_read": true,
+            "guard_count": 1,
+            "language": "en-US",
+            "mode": "guarded",
+            "no_device": true,
+            "ok": true,
+            "raw_readback": true,
+            "read_only": true,
+            "sealed": true,
+            "state": "guarded",
+            "hid_writes": 0,
+            "firmware_queries": 0,
+            "saved_files_unchanged": true,
+            "normal_close": true
+          },
+          {
+            "explicit_read": true,
+            "guard_count": 1,
+            "language": "ru-RU",
+            "mode": "guard_only",
+            "no_device": true,
+            "ok": true,
+            "raw_readback": true,
+            "read_only": true,
+            "sealed": false,
+            "state": "guard_only",
+            "hid_writes": 0,
+            "firmware_queries": 0,
+            "saved_files_unchanged": true,
+            "normal_close": true
+          },
+          {
+            "explicit_read": true,
+            "guard_count": 0,
+            "language": "ru-RU",
+            "mode": "unreadable",
+            "no_device": true,
+            "ok": true,
+            "raw_readback": true,
+            "read_only": true,
+            "sealed": false,
+            "state": "unreadable",
+            "hid_writes": 0,
+            "firmware_queries": 0,
+            "saved_files_unchanged": true,
+            "normal_close": true
+          }
+        ],
+        "no_hardware": true
+      },
+      "matrix": "EN no_saved_operation/guarded with real sealed ordinary admission; RU guard_only/unreadable with open ordinary admission. Every case has zero devices.",
+      "all_worker_join_markers": true,
+      "unchanged_files_on_read_and_close": true,
+      "no_hardware": true,
+      "runner_exit_code": 0,
+      "activation_services_private_xdg": true,
+      "host_system_bus_disabled": true,
+      "private_document_mount_cleanup": true
+    },
+    "static_review": "Rust verifier static audit found no concrete Critical/High/Medium issues; parent ran checks. Svelte lifecycle and IPC subscription self-reviewed; no polling effect added."
+  },
+  "coverage": [
+    "All six states and five stages, including null saved progress and NotStarted0/619-budget markers, preserved raw serial/target/diagnostics without HTML interpretation.",
+    "No implicit read on Settings open; exact empty params, no firmware identity query, mutation, transfer/clear/probe or success action. Explicit re-read and unsupported/failed read clear previous snapshot.",
+    "Unknown state/stage, guard mismatch, fractional counters and excessive guard array rejected without trusted summary.",
+    "Duplicate busy activation, leaving/returning Settings, pending old reply and ordinary connection loss cannot restore old state. A new read while ordinary commands remain sealed still succeeds.",
+    "Actual saved private files -> global daemon inspection -> Unix IPC -> allowlisted Tauri -> WebKit controls/read-only JSON. Normal Close joins; original journal/guard bytes remain unchanged and HID/query/flash counters remain0."
+  ],
+  "initial_verification_notes": [
+    "Initial browser pass found two fixture assertion issues: Playwright waits on aria-disabled buttons, so rapid duplicate activation is tested with direct DOM activation; unsupported raw diagnostic text may include IDs, so trusted snapshot clearing is checked through absence of summary fields. Production behavior was already guarded. Final22 cases pass.",
+    "Wrong-working-directory translation script failed before edits; rerun in authoritative worktree. Final Rust fixture language enum names use actual English/Russian variants.",
+    "Final Russian product copy uses translated firmware/state wording; technical backend diagnostics remain raw data.",
+    "Runner activation-service isolation was strengthened with private outer XDG and disabled host system bus. First such run passed all4 GUI cases but exited1 on an asynchronous Document Portal FUSE ENOTCONN during TemporaryDirectory cleanup. Cleanup now releases only its own random runtime doc mount and handles concurrent portal unmount; final complete runner exits0 with no residual private mounts."
+  ],
+  "limits": [
+    "This is saved-artifact inspection only. Files may coexist with a live job, markers can lag effects, and NoSavedOperation does not prove admission open or no live operation.",
+    "No image/target qualification, public Apply/live job status, restart reconstruction, serial-less/missed-reset recovery, qualified resolution, clear/replay or restoration.",
+    "No physical hardware, firmware flash, real screen-reader speech, Wayland/scaling or full desktop session qualification. Native controls use scripted DOM activation in private WebKit.",
+    "Mini remains Plasma widget/GNOME Shell extension; English default/Russian required, extra languages/effects and other environments/devices remain deferred."
+  ],
+  "changed_source_sha256": {
+    "desktop/src/lib/FirmwareRecovery.svelte": "190519ce6a8066221799c60dc0cf706cc6216f531affbca1cfdff16aa6c6c875",
+    "desktop/src/lib/firmware-recovery.ts": "a5c81c083c76c9d75c4e1e876032ba6893280de44ad0a81681e92dc9bcecb76c",
+    "desktop/tests/firmware-recovery.spec.ts": "9af99e2e7b0816c14e58c53451703a87a5c4a822692477a493b84173ea8a1a9e",
+    "desktop/scripts/native-firmware-recovery.js": "98737d8bba00164b99f1337c064b32fadd57e96944fd113cfbbdc8a063d2b3bd",
+    "desktop/scripts/native-firmware-recovery.py": "b2e6e6cee3a2a15615d0acb3e7b09af7cca518519e63ae9d37282e50222fd348",
+    "desktop/src/lib/locales/en-US.json": "eea0a3a9e834bc129f6254443dcb7811670d130f21bb9318986861d8d57ba7e4",
+    "desktop/src/routes/+page.svelte": "1f475880f5f521d138bd589cfbeabc514089934aba50d2aaf4e947bd0836c124",
+    "desktop/src-tauri/src/main.rs": "f2f948cbfe204d93f6f88395a77c7f9728a38e6158d0df476cd926860b7aecab",
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "b752750285574300c22d231286fb8b124d8b79908360844152270910295df362",
+    "crates/lconnect-daemon/examples/desktop-mock/firmware_recovery.rs": "b99c2c026f23f70d3a6a25722c777c0e7f2bbd902b9708963e92ca8fbe5e64c1"
+  },
+  "logs_sha256": {
+    "gui-tests": "9fba839bc7460c9f81547310e851c6d85a21d79e04512e547a4cb3e30e99c1a7",
+    "daemon-tests": "17846f01e97a5d9dfade6a80eeba27220659479919fb910241bc3e97e282534a",
+    "cli-tests": "247e317adec41afd1fbf43d4589082d71ec9a494b88dae6640e4d06a039de51f",
+    "clippy-final": "3a1973aa39f4d592a4b27961e6285cf030a1aaea92c8105a63f0988e00a7c54c",
+    "doc": "8831bc67b0d08ba5b9512f5334d1c0bb5d2da50c7002dd31a3fe86c1906ec341",
+    "svelte-final": "94a395bccb82bf95aed59371f84e174b440639011101f0270d271f4a07fd81c6",
+    "browser-final": "be4241b214d01ea0abd41de873213f4cb55fb20d81a7e0990740e333f4b06b60",
+    "build-final": "c6cb058889a6ba9eb603ea362effdb24987f31dea5fdffebd88b4612faba3e4b",
+    "locales-final": "5e73a585ef88c303b7af152b66a7c3ad3edc935e5dda86c0b28115ddafd01652",
+    "native-build-final": "6611dd060184374c2daa6e8d67374e8d7507eee11cef91a45df952157742b880",
+    "mock-build": "3435d59cd9b430c6c3c5e7927bf2289f59a646907be327434c2e1f90a4895172",
+    "native-final": "4374b327a370db059e2620fba9a4da8a73517ad9a6a8e6c8188304430fdadea9"
+  },
+  "plans": {
+    "basic-parity.md": 5,
+    "2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "2026-09-09-m2-sensors-and-cooling.md": 6,
+    "deleted": []
+  }
+}

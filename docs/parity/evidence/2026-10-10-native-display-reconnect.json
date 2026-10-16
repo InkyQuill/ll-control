@@ -1,0 +1,366 @@
+{
+  "asset": "1ce63d19aee2c667f1ca8eee49f9434a",
+  "controls": {
+    "base_mode": "breathing",
+    "dynamic": {
+      "high_colors": [
+        {
+          "b": 0,
+          "g": 0,
+          "r": 255
+        }
+      ],
+      "high_speed_percent": 100,
+      "high_value": 60,
+      "low_colors": [
+        {
+          "b": 255,
+          "g": 0,
+          "r": 0
+        }
+      ],
+      "low_speed_percent": 0,
+      "low_value": 30,
+      "sensor_id": "fixture:cpu",
+      "unit": "celsius"
+    },
+    "fan": {
+      "mode": "fixed",
+      "percent": 55
+    },
+    "lcd": {
+      "brightness_percent": 65,
+      "mode": "LocalUI",
+      "rotation_degrees": 180
+    },
+    "pump": {
+      "fallback_percent": 100,
+      "hysteresis_c": 2,
+      "mode": "curve_rpm",
+      "points": [
+        {
+          "celsius": 35,
+          "rpm": 2000
+        },
+        {
+          "celsius": 45,
+          "rpm": 2200
+        },
+        {
+          "celsius": 60,
+          "rpm": 2400
+        },
+        {
+          "celsius": 70,
+          "rpm": 2600
+        },
+        {
+          "celsius": 80,
+          "rpm": 2800
+        },
+        {
+          "celsius": 85,
+          "rpm": 3000
+        }
+      ],
+      "sensor_id": "fixture:cpu"
+    },
+    "thermal": {
+      "cpu": {
+        "color": {
+          "b": 76,
+          "g": 76,
+          "r": 255
+        },
+        "sensor_id": "fixture:cpu",
+        "threshold_c": 80
+      },
+      "gpu": null
+    }
+  },
+  "dev": "galahad2-lcdv2:0001",
+  "missing_asset_rejection": true,
+  "missing_sensor_profile_recovery": true,
+  "native_display_reconnect": true,
+  "ok": true,
+  "preview_bytes": 12331,
+  "profile_conflict_recovery": true,
+  "profiles": {
+    "profiles": [
+      {
+        "content": {
+          "kind": "screen",
+          "value": {
+            "background": [
+              0,
+              0,
+              0
+            ],
+            "layers": [
+              {
+                "asset": "1ce63d19aee2c667f1ca8eee49f9434a",
+                "fit": "contain_native",
+                "height": 480,
+                "kind": "image",
+                "opacity": 255,
+                "shadow": {
+                  "blur": 2,
+                  "color": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "opacity": 60,
+                  "x": 2,
+                  "y": 2
+                },
+                "watermark_position": {
+                  "horizontal": 75,
+                  "vertical": 50
+                },
+                "width": 480,
+                "x": 0,
+                "y": 0
+              },
+              {
+                "format": "date",
+                "kind": "clock",
+                "show_seconds": false,
+                "style": {
+                  "align": "center",
+                  "color": [
+                    0,
+                    0,
+                    255
+                  ],
+                  "size": 24,
+                  "x": 240,
+                  "y": 120
+                },
+                "twenty_four_hour": false
+              },
+              {
+                "decimals": 1,
+                "kind": "sensor",
+                "label": "CPU",
+                "parts": {
+                  "label": {
+                    "align": "center",
+                    "color": [
+                      255,
+                      0,
+                      0
+                    ],
+                    "size": 22,
+                    "x": 240,
+                    "y": 150
+                  },
+                  "unit": {
+                    "align": "center",
+                    "color": [
+                      0,
+                      255,
+                      0
+                    ],
+                    "size": 22,
+                    "x": 240,
+                    "y": 270
+                  }
+                },
+                "sensor_id": "fixture:cpu",
+                "style": {
+                  "align": "center",
+                  "color": [
+                    255,
+                    0,
+                    0
+                  ],
+                  "font": "mono",
+                  "line_height": 58,
+                  "max_width": 300,
+                  "size": 40,
+                  "vertical_align": "center",
+                  "x": 240,
+                  "y": 200
+                },
+                "temperature_unit": "celsius",
+                "unit": "celsius"
+              }
+            ],
+            "name": "Native DOM applied",
+            "version": 1
+          }
+        },
+        "name": "Native retained screen",
+        "slot": 0
+      },
+      {
+        "content": {
+          "kind": "pump",
+          "value": {
+            "fallback_percent": 100,
+            "hysteresis_c": 2,
+            "mode": "curve_rpm",
+            "points": [
+              {
+                "celsius": 35,
+                "rpm": 2000
+              },
+              {
+                "celsius": 45,
+                "rpm": 2200
+              },
+              {
+                "celsius": 60,
+                "rpm": 2400
+              },
+              {
+                "celsius": 70,
+                "rpm": 2600
+              },
+              {
+                "celsius": 80,
+                "rpm": 2800
+              },
+              {
+                "celsius": 85,
+                "rpm": 3000
+              }
+            ],
+            "sensor_id": "fixture:cpu"
+          }
+        },
+        "name": "Native pump retained",
+        "slot": 0
+      },
+      {
+        "content": {
+          "kind": "fan",
+          "value": {
+            "mode": "fixed",
+            "percent": 55
+          }
+        },
+        "name": "Native fan retained",
+        "slot": 0
+      }
+    ],
+    "revision": 12,
+    "version": 1
+  },
+  "theme": {
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "layers": [
+      {
+        "asset": "1ce63d19aee2c667f1ca8eee49f9434a",
+        "fit": "contain_native",
+        "height": 480,
+        "kind": "image",
+        "opacity": 255,
+        "shadow": {
+          "blur": 2,
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "opacity": 60,
+          "x": 2,
+          "y": 2
+        },
+        "watermark_position": {
+          "horizontal": 75,
+          "vertical": 50
+        },
+        "width": 480,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "format": "date",
+        "kind": "clock",
+        "show_seconds": false,
+        "style": {
+          "align": "center",
+          "color": [
+            0,
+            0,
+            255
+          ],
+          "size": 24,
+          "x": 240,
+          "y": 120
+        },
+        "twenty_four_hour": false
+      },
+      {
+        "decimals": 1,
+        "kind": "sensor",
+        "label": "CPU",
+        "parts": {
+          "label": {
+            "align": "center",
+            "color": [
+              255,
+              0,
+              0
+            ],
+            "size": 22,
+            "x": 240,
+            "y": 150
+          },
+          "unit": {
+            "align": "center",
+            "color": [
+              0,
+              255,
+              0
+            ],
+            "size": 22,
+            "x": 240,
+            "y": 270
+          }
+        },
+        "sensor_id": "fixture:cpu",
+        "style": {
+          "align": "center",
+          "color": [
+            255,
+            0,
+            0
+          ],
+          "font": "mono",
+          "line_height": 58,
+          "max_width": 300,
+          "size": 40,
+          "vertical_align": "center",
+          "x": 240,
+          "y": 200
+        },
+        "temperature_unit": "celsius",
+        "unit": "celsius"
+      }
+    ],
+    "name": "Native DOM applied",
+    "version": 1
+  },
+  "gui_closed_jpeg_frames": 2,
+  "restart_replay": true,
+  "controls_restart_replay": true,
+  "controls_restart_applied": true,
+  "profiles_restart_replay": true,
+  "verification": {
+    "date": "2026-10-10",
+    "fixture": "/tmp/lconnect-native-q6pukark",
+    "hardware": false,
+    "scope": "Native Display reconnect and existing native suite; other-page reconnect and in-flight mutation interruption not covered",
+    "sha256": {
+      "desktop/scripts/native-smoke.js": "f71c505ee71f23c00aee61ef68b9a227da72218ff6ef0966fcfbb1b684b73fbb",
+      "desktop/scripts/native-smoke.py": "267341f3bc3ccddf7286de564fb42c6df5cb6ab16c2fc42d5fc00562747922da"
+    }
+  }
+}

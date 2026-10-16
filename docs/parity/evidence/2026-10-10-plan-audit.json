@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-10",
+  "scope": "Plan audit; source/assets and saved evidence inspection only",
+  "hardware": false,
+  "tests_rerun": false,
+  "checkpoints": {
+    "display-fonts": {
+      "evidence": "docs/parity/evidence/2026-10-10-display-fonts.json",
+      "matching_paths": [
+        "crates/lconnect-ipc/src/theme.rs",
+        "desktop/src/lib/api.ts",
+        "desktop/src/lib/FontSelect.svelte",
+        "desktop/src/lib/FontImport.svelte",
+        "desktop/scripts/preset-contract.ts",
+        "desktop/scripts/native-smoke.py",
+        "crates/lconnect-image/assets/DisplayFonts-provenance.json"
+      ],
+      "changed_or_missing_paths": [
+        "crates/lconnect-image/src/theme.rs",
+        "crates/lconnect-image/tests/theme.rs",
+        "desktop/scripts/native-smoke.js",
+        "desktop/static/font-licenses.txt"
+      ],
+      "saved_verification": {
+        "rust_all_target_tests": 549,
+        "fmt": "passed",
+        "strict_clippy": "passed",
+        "rust_docs": "passed",
+        "svelte_check": "0 errors, 0 warnings",
+        "frontend_build": "passed",
+        "theme_contracts": 26,
+        "browser_before_license_ui_fix": 43,
+        "focused_browser_after_fix": 6,
+        "native_smoke": "passed",
+        "rust_review": "No remaining findings"
+      },
+      "native_artifact_exists": true
+    },
+    "native-saved-dependencies": {
+      "evidence": "docs/parity/evidence/2026-10-10-native-saved-dependencies.json",
+      "matching_paths": [
+        "desktop/scripts/native-fault-proxy.py",
+        "desktop/src/routes/+page.svelte",
+        "crates/lconnect-daemon/src/theme_assets.rs"
+      ],
+      "changed_or_missing_paths": [
+        "desktop/scripts/native-smoke.py",
+        "desktop/scripts/native-smoke.js",
+        "crates/lconnect-daemon/src/theme_fonts.rs"
+      ],
+      "saved_verification": {
+        "python_compile": "passed",
+        "javascript_syntax": "passed",
+        "native_build": "passed",
+        "native_smoke": "passed",
+        "git_diff_check": "passed"
+      },
+      "native_artifact_exists": true
+    },
+    "native-active-sensor": {
+      "evidence": "docs/parity/evidence/2026-10-10-native-active-sensor.json",
+      "matching_paths": [
+        "crates/lconnect-daemon/examples/desktop-mock.rs"
+      ],
+      "changed_or_missing_paths": [
+        "desktop/scripts/native-smoke.py",
+        "desktop/scripts/native-smoke.js"
+      ],
+      "saved_verification": {
+        "python_compile": "passed",
+        "javascript_syntax": "passed",
+        "mock_and_native_build": "passed",
+        "native_smoke": "passed",
+        "fmt": "passed",
+        "strict_clippy": "passed",
+        "rust_all_target_tests": 546,
+        "rust_docs": "passed",
+        "review": "No findings on addition; pre-existing synchronous fixture stats I/O noted separately"
+      },
+      "native_artifact_exists": true
+    },
+    "font-cleanup-races": {
+      "evidence": "docs/parity/evidence/2026-10-10-font-cleanup-races.json",
+      "matching_paths": [
+        "crates/lconnect-daemon/src/theme_fonts.rs",
+        "desktop/tests/font-cleanup.spec.ts"
+      ],
+      "changed_or_missing_paths": [],
+      "saved_verification": {
+        "focused_store_tests": 3,
+        "rust_all_target_tests": 548,
+        "focused_browser_tests": 2,
+        "fmt": "passed",
+        "strict_clippy": "passed",
+        "rust_docs": "passed",
+        "review": "No findings"
+      }
+    }
+  },
+  "noto_work_in_progress": {
+    "NotoSansTC-Regular.otf": {
+      "manifest_hash_matches": true,
+      "cmap_count": 20748,
+      "three_codepoints_present": true
+    },
+    "NotoSansTC-Bold.otf": {
+      "manifest_hash_matches": true,
+      "cmap_count": 20748,
+      "three_codepoints_present": true
+    },
+    "saved_focused_test_log": "/tmp/noto-coverage-test.log",
+    "integration_acceptance": "pending after OTF replacement"
+  }
+}

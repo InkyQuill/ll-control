@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-12",
+  "scope": "Temporal source-frame selection through recording admission/preparation",
+  "verification": {
+    "all_features_results": [
+      "test result: ok. 78 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.08s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rustdoc": "passed with warnings denied",
+    "read_only_review": "No actionable issues; independent source decode oracle verifies expected frame sequence",
+    "logs": [
+      "/tmp/recording-temporal-test.log",
+      "/tmp/recording-temporal-clippy.log",
+      "/tmp/recording-temporal-full-tests.log",
+      "/tmp/recording-temporal-doc.log"
+    ]
+  },
+  "oracle": "Decode changing SMPTE lower-right noise from original recording without trim/concat. Each prepared output frame must uniquely match expected source frame:12..23 then0..11. Exact24 frame output required.",
+  "limits": [
+    "24fps and500/1000ms boundaries only; not VFR/arbitrary fractional boundaries/Windows SDK equivalence",
+    "No real portal, native GUI, or hardware run"
+  ],
+  "sha256": {
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "ab959b039dbf543ce4c908fa5539fe11bc7ee0093607db17fed2a399c7b5e153",
+    "desktop/src-tauri/src/screen_record.rs": "5a0c30ac71a2a1c96ed2297e07215faeb6b53712dda63b6785cd2fb262243538",
+    "desktop/src-tauri/src/media_prepare.rs": "b2ea135ec010c676b428d3f37b25e1e8f8e32fbc4e742e30dac7c2a9f4e4acae"
+  }
+}

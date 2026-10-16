@@ -57,6 +57,14 @@ pub enum Error {
         timeout: u32,
         expected_cmd: u8,
     },
+    /// A frame transaction failed after this many reports completed successfully.
+    /// All reports may have been written even when its diagnostic read failed.
+    #[error("frame batch failed after {written_reports} written reports: {source}")]
+    FrameBatchFailed {
+        written_reports: usize,
+        #[source]
+        source: Box<Error>,
+    },
     #[error("blocking task failed: {0}")]
     BlockingTaskFailed(String),
 }

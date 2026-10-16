@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "CSS normal Unicode line wrap; legacy false preserved",
+  "sha256": {
+    "Cargo.lock": "f6cda8437099fcb117bf7015e70c4c9304c62f1193888045d0468402636c43c2",
+    "crates/lconnect-image/Cargo.toml": "a1ad556fc76446495b0d5e1ce4b86413cecd5e15530352f3077143b57dc521b8",
+    "crates/lconnect-image/src/theme.rs": "6e8e9623a2a2c415147765dbcabdf924f6ab628d1133286b3c9d0a5aa727928e",
+    "desktop/scripts/text-wrapping-oracle.mjs": "3aa0264b63cf0a563dcc0a6d2e490796359a77602f814207f489d2ec02d72834"
+  },
+  "oracle": {
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+    "cases": [
+      {
+        "text": "A B",
+        "width": 300,
+        "lines": [
+          "A B"
+        ]
+      },
+      {
+        "text": "A\rB",
+        "width": 300,
+        "lines": [
+          "A\rB"
+        ]
+      },
+      {
+        "text": "AB",
+        "width": 300,
+        "lines": [
+          "AB"
+        ]
+      },
+      {
+        "text": "溫度，正常",
+        "width": 80,
+        "lines": [
+          "溫",
+          "度，",
+          "正常"
+        ]
+      },
+      {
+        "text": "溫（正常）度",
+        "width": 120,
+        "lines": [
+          "溫（正",
+          "常）度"
+        ]
+      },
+      {
+        "text": "ABCD",
+        "width": 40,
+        "lines": [
+          "ABCD"
+        ]
+      },
+      {
+        "text": "A B C",
+        "width": 60,
+        "lines": [
+          "A B ",
+          "C"
+        ]
+      },
+      {
+        "text": "AA BB",
+        "width": 65,
+        "lines": [
+          "AA ",
+          "BB"
+        ]
+      },
+      {
+        "text": "‮AB CD‬",
+        "width": 65,
+        "lines": [
+          "‮AB ",
+          "CD‬"
+        ]
+      }
+    ]
+  },
+  "image_test_results": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+    "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s",
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.07s",
+    "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.62s",
+    "test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "limits": [
+    "No hardware/native validation",
+    "Locale tailoring, tab stops, soft hyphens, hanging-space alignment and Windows raster remain"
+  ],
+  "reference_css": {
+    "path": "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/css/app.430a4e44.css",
+    "sha256": "c0f1d6d5bb1febfe0503b78a8ee23c3416cee0c044a3d4513e4f9342fa4357ec",
+    "rule": ".text_wrap white-space:pre-wrap; no word-break/overflow-wrap/word-wrap declarations"
+  },
+  "workspace_checks": {
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "tests": {
+      "passed": 597,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "pass",
+    "review": "no unresolved findings in wrapping change",
+    "logs": "/tmp/css-wrap-review-{fmt,clippy,test,doc}.log"
+  }
+}

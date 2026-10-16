@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Software LCD theme controls acceptance mapping plus image fit/overlap regressions",
+  "source_sha256": {
+    "crates/lconnect-image/tests/theme.rs": "942afc8392baeb3f2731470d5a5d008a1060fef731c24d4389d67de053d33ab9",
+    "crates/lconnect-image/src/theme.rs": "98727201bc9488e1648c2ee3bef74f99a6d2308f139bf2ee7ee947152c3bcc6d",
+    "crates/lconnect-ipc/tests/theme.rs": "6d9302003a07ed96ef48f81a5200a72d11aeec8bfdfc080c02e98ca6392d1979",
+    "desktop/tests/display.spec.ts": "9dc224a3661f3075845f9e583dee36c5a7a5d57add7ecf7909ac5a4c154536ee",
+    "desktop/tests/background.spec.ts": "393c51aa6deaf805591fef32708ee4b519be77c02ab3e31c7365d8217b9f0e21",
+    "desktop/tests/presets.spec.ts": "c2e9aa85b3d49456f490c8019e8c9c4214667822e6146ce80c6bba94720ce682",
+    "desktop/tests/layer-keyboard.spec.ts": "a301918750fd55051f8687409f33891b0224693e358eda34d9e2240babb2814d",
+    "desktop/tests/live-preview.spec.ts": "b3c8d8a7ae507284bd76f257c09c442fe30240ca9fe15f343b94a50358aefc82"
+  },
+  "verification": {
+    "focused_image_theme": 22,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "tests": {
+      "passed": 612,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "passed",
+    "browser": {
+      "passed": 10,
+      "log": "/tmp/theme-controls-browser.log"
+    },
+    "review": "no actionable findings"
+  },
+  "logs": [
+    "/tmp/theme-controls-review-fmt.log",
+    "/tmp/theme-controls-review-clippy.log",
+    "/tmp/theme-controls-review-test.log",
+    "/tmp/theme-controls-review-doc.log"
+  ],
+  "initial_failure": "Unsupported ordinary out-of-canvas rectangle fixture; corrected to watermark_position. Initial log /tmp/theme-controls-review-test-initial-snapshot.log",
+  "production_changed": false,
+  "hardware_run": false,
+  "native_gui_rerun": false,
+  "limitations": [
+    "Solid fit fixture tests geometry only; existing crop/downscale tests are separate",
+    "Windows locale/fallback/raster remain open",
+    "Full GUI accessibility, dialogs/compositors remain separate",
+    "M4 effects/media are outside completed base renderer",
+    "Not every possible combination or physical output is covered"
+  ]
+}

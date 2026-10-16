@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-12",
+  "scope": "Public composition Apply and manager replay; preview/GUI pending",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "validation": {
+    "daemon_tests": 341,
+    "daemon_targets": 43,
+    "exit_code": 0,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "daemon_docs": "passed",
+    "production_gui_check": "passed",
+    "hardware_gui_native": "NOT RUN"
+  },
+  "scenarios": [
+    "Version2 set_lcd_theme → bounded preparation → SetComposition → H264 batches",
+    "Four successive Apply operations release preparation slots after first committed frame",
+    "Missing video Apply fails without replacing active theme",
+    "Persisted composition restarts through manager replay",
+    "Sleep joins workers before acknowledgement; no writes until wake; new attachment restores theme",
+    "Missing stored media produces restore error while preserving requested theme; restoring asset recovers next startup",
+    "Clear removes saved reference and allows deletion after manager flush",
+    "Dropped worker retains shared preparation lease until both stalled codec processes are reaped; explicit stop also releases slot"
+  ],
+  "review": "No findings",
+  "initial_test_failure": "Expected lowercase source enum in new fixture; actual contract uses Theme/Idle. Corrected assertions; repeated focused test and full daemon suite passed.",
+  "limitations": [
+    "Static preview still rejects video themes until decoded snapshot integration",
+    "GUI video background selection not yet implemented",
+    "Full IPC disconnect/reply-loss/cancel fault matrix not run",
+    "Performance CPU/RSS/latency and hardware acceptance deferred"
+  ],
+  "source_sha256": {
+    "crates/lconnect-daemon/src/media_composition.rs": "f22f89a4d56c4bde91981400862df8e703fe88a4563d418f60975703c5524c53",
+    "crates/lconnect-daemon/src/ipc_server.rs": "2e20d6bc2ba101c354096b0a6928786b6d7f32c4c98fb48bdf69deb7197ef73c",
+    "crates/lconnect-daemon/src/manager.rs": "0bd8ed1218f1a9cb3710496eb6cf688fedc0ac452d65589e898057e877bbc8e8",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "a93c55d16972c965583d209e0e111146e9692fe694a8dae0874dcb5eb28025cd",
+    "crates/lconnect-daemon/tests/composition_ipc.rs": "306c7c60dd0594d6d68c23893548c685444fb56c83222a63328e7f9004519534"
+  },
+  "logs": [
+    "/tmp/composition-ipc-test-v2.log",
+    "/tmp/composition-permit-test.log",
+    "/tmp/composition-ipc-clippy.log",
+    "/tmp/composition-ipc-daemon.log",
+    "/tmp/composition-ipc-doc.log",
+    "/tmp/composition-ipc-production.log"
+  ]
+}

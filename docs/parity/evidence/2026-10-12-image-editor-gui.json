@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-12",
+  "scope": "GA2LCD image geometry import editor, Tauri preparation and explicit managed publication",
+  "verification": {
+    "frontend_check": "PASS 0 errors/warnings /tmp/image-editor-check.log",
+    "frontend_build": "PASS /tmp/image-editor-build.log",
+    "browser": "166 passed (3.9m) /tmp/image-editor-browser-all.log",
+    "gui_rust": "22 passed /tmp/image-editor-gui-rust.log",
+    "clippy": "PASS /tmp/image-editor-gui-clippy.log",
+    "docs": "PASS warnings denied /tmp/image-editor-gui-doc.log",
+    "fmt": "PASS",
+    "review": "Rust and Svelte read-only review; capacity and stale publication outcome findings fixed with regressions",
+    "hardware": "NOT RUN",
+    "native_webkit": "NOT RUN for this editor"
+  },
+  "coverage": [
+    "raw oriented source dimensions preserved separately from normalized preview",
+    "single preparation worker, no admission queue",
+    "crop + ordered transforms with explicit preview; edits invalidate preview",
+    "close during delayed preparation discards response and restores trigger focus",
+    "explicit publication; no automatic LCD Apply",
+    "lost import reply disables blind retry",
+    "delayed publication rechecks 32-layer limit",
+    "connection loss produces saved-only notice instead of claiming draft addition"
+  ],
+  "limits": [
+    "existing gallery image re-edit remains open",
+    "color filters/video editor/capture remain open",
+    "native geometry editor qualification remains open",
+    "worker cancellation permit lifetime reviewed statically; not a forced-running-worker regression",
+    "extended pointer/keyboard/scaling acceptance remains open"
+  ],
+  "sha256": {
+    "desktop/src/lib/ImageEditor.svelte": "2a158f554578142fd0300df6a287917757407865e67224b5e7f27dc7ff8eee15",
+    "desktop/src/routes/+page.svelte": "78d86d7983850043fdbe51a8670b9b9774ec4194b401c81603ef4fce0bf8f8c3",
+    "desktop/src-tauri/src/image_editor.rs": "9520873d1728e416699eefa9fb7506a856b6c444c3a2a917ea7561d4bb718c44",
+    "desktop/src-tauri/src/main.rs": "2c13f663a680f7d4e331f1669597262a48651329f6b1ec5adefb0d8f20a3914f",
+    "desktop/src-tauri/src/lib.rs": "1af4925c621475d2b5b8b51f92237a2947a26695c48b376ad9f08959366e02a1",
+    "desktop/src-tauri/build.rs": "01f6ce399351dcacf9858bf0c50fa336377fed524c6c6ea35a62e83d314bc9ae",
+    "desktop/src-tauri/capabilities/main.json": "3b4fd99956068aa310c2a178bd2d2370d04d55c94cf19b0b13f7ed71f500e889",
+    "desktop/src-tauri/tests/fixtures/editor-wide.png": "ef3e4baa55b39e1a548cf3425303cd1bfa5e08ae747eb82a0bbd7b1ac56d627e",
+    "desktop/tests/image-editor.spec.ts": "807d38678fb79c72035d6e61217b067621877e12131dac286cd14ab1bd973f56"
+  }
+}

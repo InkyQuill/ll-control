@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-12",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Clock latest source frame during responsive delivery gaps; recover new frames; reject explicit EOS",
+  "reference": "https://gstreamer.freedesktop.org/documentation/imagefreeze/index.html",
+  "gstreamer_version": "1.28.8",
+  "verification": {
+    "library_passed": 89,
+    "binary_passed": 2,
+    "ordinary_ignored": 1,
+    "full_production_limit": {
+      "passed": true,
+      "decoded_frames": 4320,
+      "duration_seconds": 180,
+      "active_millis": 180000,
+      "bytes": 35335378,
+      "elapsed_seconds": 180.9,
+      "prior_attempt": "Process exited143/SIGTERM after90s; cause unknown; not accepted. Confirmed terminal before retry."
+    },
+    "fmt": "passed",
+    "strict_clippy_all_targets_native_smoke": "passed",
+    "rustdoc": "passed",
+    "native_build": "passed",
+    "native_acceptance": {
+      "capture_regions": true,
+      "close_while_recording": true,
+      "collection_membership": true,
+      "explicit_save": true,
+      "initial_region_setup": true,
+      "ok": true,
+      "operation_choice": true,
+      "prepared_decode": true,
+      "resumed_frames": true,
+      "review_reedit": true,
+      "saved_key": "a5ddd2f5fb6b44ca8ad9a43761616dca",
+      "source_dimensions": [
+        320,
+        240
+      ],
+      "source_seek": true,
+      "source_snapshot": true,
+      "visual_region_preview": true,
+      "normal_close_exit": 0
+    },
+    "review": "static final review, no actionable findings"
+  },
+  "acceptance": [
+    "Responsive stopped delivery holds last decoded image through two-second budget",
+    "Resumed source replaces held image",
+    "Finite source EOS remains error",
+    "Pause excludes admitted frames and saved duration",
+    "Setup, crop, encoded ordering, ownership and budget regressions passed"
+  ],
+  "limitations": [
+    "No live desktop capture or physical LCD tests",
+    "Deadlocked native plugins not made interruptible by imagefreeze",
+    "Real portal FD/serial, source resizing and segment/timestamp qualification pending",
+    "180s run uses continuous synthetic source; stalled/recovering tests use shorter budgets"
+  ],
+  "sha256": {
+    "desktop/src-tauri/src/screen_record.rs": "d7aaf3073e4dd158504e8d27171479c793488a7a1f6dbdb0db3ecbb336197337",
+    "desktop/src-tauri/src/screen_record/tests.rs": "92ddbeb7a18cb74489a06e466815be8860b08bad322faf57a8b204c9afa065eb",
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "fdda5ac2ad4933e5664ccc3b0839035fc52bda63f1d5dca9354837fc33ea83d5"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-10",
+  "scope": "Documentation-only plan reconciliation after Intel memory and xe engine implementation",
+  "workspace": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "tests_rerun": false,
+  "active_plans_open_top_level_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 6,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 11
+  },
+  "new_fully_closed_plans": [],
+  "new_plan_files_deleted": [],
+  "previous_obsolete_plan_removals_preserved": true,
+  "checkpoints": {
+    "xe-pmu": {
+      "evidence": "docs/parity/evidence/2026-10-10-xe-pmu.json",
+      "matching_paths": [
+        "crates/lconnect-intel-memory/src/lib.rs",
+        "crates/lconnect-intel-memory/src/ioctl.rs",
+        "crates/lconnect-intel-memory/src/engines.rs",
+        "crates/lconnect-daemon/src/main.rs",
+        "crates/lconnect-daemon/src/sensors.rs",
+        "crates/lconnect-daemon/src/sensors/intel.rs",
+        "crates/lconnect-daemon/src/sensors/intel_memory.rs",
+        "crates/lconnect-daemon/src/sensors/query_process.rs",
+        "crates/lconnect-daemon/src/sensors/xe.rs",
+        "crates/lconnect-daemon/src/sensor_selection.rs",
+        "crates/lconnect-daemon/tests/sensor_selection.rs",
+        "tools/verify-intel-memory-abi.c"
+      ],
+      "changed_or_missing_paths": [],
+      "saved_verification": {
+        "xe_tests": 6,
+        "source_selection_tests": 7,
+        "query_crate_tests": 7,
+        "rust_all_target_tests": 585,
+        "fmt": "passed",
+        "strict_clippy": "passed",
+        "rust_docs": "passed",
+        "review": "No findings",
+        "c_uapi_probe": "x86_64 engine size32/header8/GT offset4 passed",
+        "frontend_native_rerun": false
+      }
+    },
+    "intel-memory": {
+      "evidence": "docs/parity/evidence/2026-10-10-intel-memory.json",
+      "matching_paths": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "crates/lconnect-daemon/Cargo.toml",
+        "crates/lconnect-intel-memory/Cargo.toml",
+        "crates/lconnect-intel-memory/src/regions.rs"
+      ],
+      "changed_or_missing_paths": [
+        "crates/lconnect-daemon/src/main.rs",
+        "crates/lconnect-daemon/src/sensor_selection.rs",
+        "crates/lconnect-daemon/src/sensors.rs",
+        "crates/lconnect-daemon/src/sensors/intel_memory.rs",
+        "crates/lconnect-intel-memory/src/ioctl.rs",
+        "crates/lconnect-intel-memory/src/lib.rs",
+        "tools/verify-intel-memory-abi.c"
+      ],
+      "saved_verification": {
+        "query_crate_tests": 6,
+        "focused_collector_tests": 5,
+        "rust_all_target_tests": 577,
+        "fmt": "passed",
+        "strict_clippy": "passed",
+        "rust_docs": "passed",
+        "review": "No remaining findings",
+        "c_uapi_layout_probe": "passed on x86_64 against v6.17 headers",
+        "frontend_native_rerun": false
+      }
+    },
+    "theme-preparation-order": {
+      "evidence": "docs/parity/evidence/2026-10-10-theme-preparation-order.json",
+      "matching_paths": [
+        "crates/lconnect-daemon/src/actor/mod.rs",
+        "crates/lconnect-daemon/src/actor/lcd_keeper.rs",
+        "crates/lconnect-daemon/src/ipc_server.rs",
+        "crates/lconnect-daemon/src/manager.rs",
+        "crates/lconnect-daemon/tests/theme_runtime.rs"
+      ],
+      "changed_or_missing_paths": [],
+      "saved_verification": {
+        "fmt": "passed",
+        "strict_clippy": "passed",
+        "rust_all_target_tests": 565,
+        "rust_docs": "passed",
+        "review": "No remaining findings; strengthened ordering regression after review",
+        "native_smoke": "passed",
+        "mock_build": "passed"
+      }
+    },
+    "display-interrupted": {
+      "evidence": "docs/parity/evidence/2026-10-10-display-interrupted.json",
+      "matching_paths": [
+        "desktop/src/routes/+page.svelte",
+        "desktop/tests/display-interrupted.spec.ts"
+      ],
+      "changed_or_missing_paths": [
+        "desktop/scripts/native-smoke.py",
+        "desktop/scripts/native-smoke.js"
+      ],
+      "saved_verification": {
+        "svelte_check": "0 errors, 0 warnings",
+        "frontend_build": "passed",
+        "theme_contracts": 26,
+        "browser_tests": 13,
+        "new_interrupted_browser_cases": 6,
+        "mock_and_native_build": "passed",
+        "native_smoke": "passed",
+        "rust_suite_rerun": false,
+        "static_review": "Generation checks cover success and errors; draft edits remain separate from submitted snapshot; no auto-retry added",
+        "lint": "No project lint script configured"
+      }
+    }
+  },
+  "native_gap_evidence": {
+    "fixture": "crates/lconnect-daemon/examples/desktop-mock.rs",
+    "script": "desktop/scripts/native-smoke.js",
+    "finding": "Native source fixture contains AMDGPU A/B only; no Intel engine or Intel VRAM source selection acceptance."
+  },
+  "limits": [
+    "Checkpoint hash matches establish unchanged listed files, not whole-tree acceptance",
+    "Historical tests were not rerun in this documentation audit",
+    "Original checkout contains stale plans and deferred ENE work; not modified",
+    "Physical hardware acceptance remains deferred"
+  ]
+}

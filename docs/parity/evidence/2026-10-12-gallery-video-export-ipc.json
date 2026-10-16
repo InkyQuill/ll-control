@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Finite media export via dedicated IPC connection",
+  "verification": {
+    "ipc_tests": 56,
+    "focused_daemon_tests": 3,
+    "checks": [
+      "workspace cargo check",
+      "strict all-target Clippy daemon/ipc",
+      "warning-denied docs daemon/ipc",
+      "fmt",
+      "git diff --check"
+    ],
+    "scenarios": [
+      "586 ordered units and explicit Complete through IpcClient",
+      "invalid stream_id and second export rejected",
+      "slow wire holds deletion pin",
+      "disconnect releases pin",
+      "late truncation yields Failed, never Complete"
+    ],
+    "logs": [
+      "/tmp/export-ipc-tests.log",
+      "/tmp/export-ipc-tests-final.log",
+      "/tmp/export-ipc-contracts.log",
+      "/tmp/export-ipc-clippy.log",
+      "/tmp/export-ipc-doc.log",
+      "/tmp/export-ipc-workspace.log"
+    ]
+  },
+  "limits": [
+    "Framing fixtures, not codec qualification",
+    "Native staging and gallery UI not connected",
+    "No hardware/native GUI run",
+    "No complete workspace test run"
+  ],
+  "source_sha256": {
+    "crates/lconnect-ipc/src/media_export.rs": "f02941dcba0a091ff45ac438ea94cf347841413a872119e1862923801e081e68",
+    "crates/lconnect-ipc/src/server.rs": "3ec8af6074b880cd379d6186d2f34f772110ffa66c4383242df8bfa4e3ab79ab",
+    "crates/lconnect-ipc/src/trait_def.rs": "7695209cd406cf4a6352c877854972d8dccadca462d26d6c3e7134316dc7fb61",
+    "crates/lconnect-daemon/src/ipc_server.rs": "2b78885a3f754aac832f504ec6c971f64e1fe4a1ea65b36f959f2dd6e6f1e625",
+    "crates/lconnect-daemon/tests/media_export_ipc.rs": "55d5f265379d6c7fad1163f99fea03b1438c74f66adabfec775f1343bcaae479"
+  }
+}

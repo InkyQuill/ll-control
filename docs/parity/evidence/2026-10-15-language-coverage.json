@@ -1,0 +1,5474 @@
+{
+  "supported": [
+    "ru-RU",
+    "en-US"
+  ],
+  "englishStatus": "partial",
+  "staticKeys": 768,
+  "translatedStaticKeys": 212,
+  "missingStaticKeys": 556,
+  "englishEntries": 284,
+  "missing": [
+    {
+      "key": "Очистка неиспользуемых",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "key": "шрифтов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "key": "изображений",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "key": "Сохранённые профили, текущий черновик и",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "key": "шрифты",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 24
+        },
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 25
+        },
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "key": "изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 24
+        },
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 25
+        },
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "key": ", использованные в этом запуске daemon, сохраняются. Последние можно очистить после перезапуска, если они больше не используются.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "key": "Проверить неиспользуемые",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "key": "Удалено: {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "key": "Можно удалить: {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "key": "· В профилях/настройках:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "key": "· В этом запуске:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "key": "· В черновике:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "key": "Удалить неиспользуемые",
+      "locations": [
+        {
+          "file": "desktop/src/lib/AssetCleanup.svelte",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "key": "Фон LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "key": "Тип фона",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "key": "Изображение из библиотеки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "key": "Видео из библиотеки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "key": "Сплошной цвет",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "key": "Горизонтальный градиент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "key": "Вертикальный градиент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "key": "Радиальный градиент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 25
+        }
+      ]
+    },
+    {
+      "key": "Видео выбрано фоном темы. Для замены используйте библиотеку роликов. Preview показывает первый кадр с текущими показаниями; движение начнётся после применения к LCD.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "key": "Изображение выбрано фоном темы. Замените его в библиотеке изображений, выбрав назначение «Фон».",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "key": "Размещение фона",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "key": "Вписать без увеличения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "key": "Первый цвет фона",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "key": "Второй цвет фона",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "key": "Обратить градиент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "key": "Фон",
+      "locations": [
+        {
+          "file": "desktop/src/lib/BackgroundEditor.svelte",
+          "line": 41
+        },
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "key": "Подсветка помпы по датчику",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 128
+        }
+      ]
+    },
+    {
+      "key": "Выберите и примените обычный режим помпы выше. Здесь настраиваются цвета, скорость и фиксированные параметры выбранного источника. Настройки других источников и режимов сохраняются. Ручная настройка помпы отменяет этот режим.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 129
+        }
+      ]
+    },
+    {
+      "key": "Режим помпы:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "key": "· По датчику:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "key": "включён",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "key": "выключен",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "key": "Применённое значение:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 132
+        }
+      ]
+    },
+    {
+      "key": "Датчик недоступен; режим по датчику ожидает восстановления.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 133
+        }
+      ]
+    },
+    {
+      "key": "Датчик недоступен — используется обычная подсветка.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 133
+        }
+      ]
+    },
+    {
+      "key": "Подсветка временно перекрыта температурным оповещением.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 134
+        }
+      ]
+    },
+    {
+      "key": "Загрузить настройки режима по датчику",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 137
+        }
+      ]
+    },
+    {
+      "key": "Устройство или режим помпы изменились. Загрузите настройки заново перед применением.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 139
+        }
+      ]
+    },
+    {
+      "key": "Чтение источника CPU Load…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 141
+        },
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 96
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "key": "Датчик подсветки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "key": "Нижний порог (",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 143
+        }
+      ]
+    },
+    {
+      "key": "Верхний порог (",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 146
+        }
+      ]
+    },
+    {
+      "key": "Нижний цвет",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 150
+        },
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 89
+        }
+      ]
+    },
+    {
+      "key": "Верхний цвет",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 150
+        },
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "key": "Нижняя скорость, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 151
+        }
+      ]
+    },
+    {
+      "key": "Верхняя скорость, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 153
+        }
+      ]
+    },
+    {
+      "key": "Яркость обычного режима",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 157
+        }
+      ]
+    },
+    {
+      "key": "Яркость по датчику, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 158
+        }
+      ]
+    },
+    {
+      "key": "Направление по датчику",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 161
+        }
+      ]
+    },
+    {
+      "key": "Как в обычном режиме",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 161
+        }
+      ]
+    },
+    {
+      "key": "Вперёд",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 161
+        },
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Назад",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 161
+        },
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Применить режим по датчику",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 164
+        }
+      ]
+    },
+    {
+      "key": "Отключить режим по датчику",
+      "locations": [
+        {
+          "file": "desktop/src/lib/DynamicRgb.svelte",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "key": "Пользовательские шрифты",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontImport.svelte",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "key": "TTF/OTF, до 16 MiB. Загрузка не меняет тему и экран. Коллекции TTC и веб-шрифты не поддерживаются.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontImport.svelte",
+          "line": 46
+        }
+      ]
+    },
+    {
+      "key": "Лицензии встроенных шрифтов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontImport.svelte",
+          "line": 47
+        }
+      ]
+    },
+    {
+      "key": "Загрузить шрифт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontImport.svelte",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "key": "Загрузка шрифта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontImport.svelte",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "key": "Отменить загрузку шрифта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontImport.svelte",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "key": "Шрифт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontSelect.svelte",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "key": "Пользовательский (",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FontSelect.svelte",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "key": "Резервная копия группы настроек",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 72
+        }
+      ]
+    },
+    {
+      "key": "Архив L-Connect Linux (.lcg) сохраняет всю выбранную группу и её слоты. «Экран» включает изображения, видео и шрифты. Формат Windows ZIP пока не поддерживается.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 73
+        }
+      ]
+    },
+    {
+      "key": "Группа настроек",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 74
+        },
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "key": "Экран",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "key": "Вентиляторы и подсветка",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "key": "Устройство:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "key": "Температурный датчик CPU для сброса",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 77
+        },
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "key": "Выберите датчик температуры CPU",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "key": "· недоступен",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "key": "Полный сброс вернёт Fan Standard, Pump Quiet RPM, Rainbow, topology 360 мм/24 LED и все восемь fan/pump-слотов. Screen, файлы и общая thermal policy сохранятся. При недоступном датчике действует fallback 100%.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "key": "Подготовить полный сброс охлаждения и подсветки…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "key": "Экспортировать группу…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "key": "Выбрать архив группы…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "key": "Существующие файлы при экспорте не заменяются. Выбор и проверка архива не применяют настройки.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "key": "Сброс подготовлен, ожидает подтверждения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 88
+        }
+      ]
+    },
+    {
+      "key": "байт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 89
+        },
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "key": "Содержимое группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 91
+        }
+      ]
+    },
+    {
+      "key": "Слотов:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "Тема:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "key": "Источник: видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "key": "Вентиляторы:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Помпа:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Политика вентиляторов:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 99
+        }
+      ]
+    },
+    {
+      "key": "Политика помпы:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 99
+        }
+      ]
+    },
+    {
+      "key": "Динамическая подсветка:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "key": "Подсветка вентиляторов:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 101
+        }
+      ]
+    },
+    {
+      "key": "Подсветка помпы:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 102
+        }
+      ]
+    },
+    {
+      "key": "Сброс",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "key": "Восстановление",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "key": "заменит сохранённые настройки всей группы и её слоты и сразу применит их к указанному устройству. Другая группа сохранится. Открытые черновики редакторов сохранятся.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить полный сброс и применить",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "key": "Восстановить и применить группу",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "key": "Ответ на сброс не подтверждён. Повтор использует тот же ID, датчик и исходную версию настроек; новый сброс автоматически не запускается.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 106
+        }
+      ]
+    },
+    {
+      "key": "Повторить запрос сброса с тем же ID",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 106
+        }
+      ]
+    },
+    {
+      "key": "Применение уже началось. Дождитесь результата; после потери связи прочитайте его по ID операции.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "key": "Архив группы сохранён в файл.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "key": "Сохранение группы подтверждено.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "key": "Сохранённое содержимое группы соответствует этой операции.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "key": "После операции настройки уже изменились.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "key": "Runtime требует восстановления. Перезапустите daemon и прочитайте результат заново.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "key": "Настройки сохранены, при применении возникла ошибка:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 112
+        }
+      ]
+    },
+    {
+      "key": "Повторить применение сохранённой группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 113
+        }
+      ]
+    },
+    {
+      "key": "Отменить подготовку сброса",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "key": "Отменить передачу группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "key": "ID операции группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "key": "Устройство для чтения результата",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 119
+        }
+      ]
+    },
+    {
+      "key": "Тип операции",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 120
+        },
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 120
+        }
+      ]
+    },
+    {
+      "key": "Импорт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 120
+        }
+      ]
+    },
+    {
+      "key": "Экспорт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 120
+        }
+      ]
+    },
+    {
+      "key": "Полный сброс Fan + Lighting",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 120
+        }
+      ]
+    },
+    {
+      "key": "Прочитать результат группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 122
+        }
+      ]
+    },
+    {
+      "key": "Закрыть сведения о группе",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 123
+        }
+      ]
+    },
+    {
+      "key": "Отменить сохранённую передачу",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "key": "ID сохранён для восстановления:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 126
+        }
+      ]
+    },
+    {
+      "key": ". Закрытие сведений не отменяет уже принятую операцию.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/FullGroupArchive.svelte",
+          "line": 126
+        }
+      ]
+    },
+    {
+      "key": "Редактор сохранённого ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "key": "Редактирование «",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 35
+        },
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "key": "Изменения ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "key": "Исходник не загружен.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "key": "Загрузка отменена.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "key": "Подготовка исходника для редактирования…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "key": "Закрыть редактор ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/GalleryVideoEditor.svelte",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "key": "Редактировать {0}…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 135
+        }
+      ]
+    },
+    {
+      "key": "Импорт с редактированием…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 135
+        }
+      ]
+    },
+    {
+      "key": "Редактор изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 137
+        },
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 138
+        }
+      ]
+    },
+    {
+      "key": "Выберите квадратную область и преобразования. Исходный файл сохранится. На LCD ничего не отправляется до применения темы.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 139
+        }
+      ]
+    },
+    {
+      "key": "Результат заменит запись выбранной коллекции. Прежний файл останется доступен сохранённым темам.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 140
+        }
+      ]
+    },
+    {
+      "key": "Файл для редактирования",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 140
+        }
+      ]
+    },
+    {
+      "key": "Снять экран…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "key": "Выберите область или экран в системном окне.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 143
+        }
+      ]
+    },
+    {
+      "key": "Отменить снимок",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 143
+        }
+      ]
+    },
+    {
+      "key": "Область и преобразования",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "key": "Обрезать квадрат",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "key": "Сторона crop",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 153
+        }
+      ]
+    },
+    {
+      "key": "Всё изображение будет растянуто до 480 × 480.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 154
+        }
+      ]
+    },
+    {
+      "key": "Переместить область crop указателем; точные координаты доступны в полях выше",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 155
+        }
+      ]
+    },
+    {
+      "key": "Исходное изображение для crop",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 156
+        }
+      ]
+    },
+    {
+      "key": "Повернуть влево",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 160
+        }
+      ]
+    },
+    {
+      "key": "Повернуть вправо",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 161
+        }
+      ]
+    },
+    {
+      "key": "Отразить по горизонтали",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "key": "Отразить по вертикали",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 163
+        }
+      ]
+    },
+    {
+      "key": "Отменить преобразование",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 164
+        }
+      ]
+    },
+    {
+      "key": "Сбросить правки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 165
+        }
+      ]
+    },
+    {
+      "key": "Преобразований:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 167
+        }
+      ]
+    },
+    {
+      "key": "Фильтры изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 168
+        }
+      ]
+    },
+    {
+      "key": "Ползунок:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "key": "Область должна быть целой, непустой и находиться внутри изображения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Заполните параметры фильтров в указанных диапазонах.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 176
+        }
+      ]
+    },
+    {
+      "key": "Подготовить preview изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "key": "Результат редактирования 480 на 480",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 178
+        }
+      ]
+    },
+    {
+      "key": "Сохранить изображение в галерею",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "key": "Подготовка изображения…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 181
+        }
+      ]
+    },
+    {
+      "key": "Сохранение изображения…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 182
+        }
+      ]
+    },
+    {
+      "key": "Закрыть редактор изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageEditor.svelte",
+          "line": 185
+        }
+      ]
+    },
+    {
+      "key": "Библиотека изображений",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 103
+        }
+      ]
+    },
+    {
+      "key": "Добавьте сохранённое изображение в черновик. Вывод на LCD изменится после применения темы.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "key": "Библиотека недоступна без связи с daemon.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 105
+        },
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 137
+        }
+      ]
+    },
+    {
+      "key": "Показать все файлы изображений для управления",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "key": "Назначение изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "key": "Слой изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "key": "Водяной знак",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "key": "Выбранное изображение заменит фон, сохранив все слои. Видео для фона доступно в библиотеке роликов.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "key": "Водяной знак добавится поверх остальных слоёв. Размер, положение и прозрачность можно изменить в редакторе.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "key": "Изображение добавится отдельным слоем.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "key": "Обновить изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 112
+        }
+      ]
+    },
+    {
+      "key": "Не удалось загрузить изображения:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 113
+        }
+      ]
+    },
+    {
+      "key": "Загрузка изображений…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 114
+        }
+      ]
+    },
+    {
+      "key": "Сохранённых изображений пока нет. Импортируйте файл кнопкой «+ Изображение».",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 115
+        }
+      ]
+    },
+    {
+      "key": "Файл вне выбранной коллекции. Добавьте его через «Коллекции LCD» для выбора в тему.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 120
+        }
+      ]
+    },
+    {
+      "key": "Встроенное изображение",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 121
+        }
+      ]
+    },
+    {
+      "key": "Миниатюра недоступна:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 123
+        },
+        {
+          "file": "desktop/src/lib/MediaThumbnail.svelte",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "key": "Подготовка миниатюры…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 124
+        },
+        {
+          "file": "desktop/src/lib/MediaThumbnail.svelte",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "key": "Сделать фоном {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 125
+        }
+      ]
+    },
+    {
+      "key": "Добавить водяной знак {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 125
+        }
+      ]
+    },
+    {
+      "key": "Добавить в тему {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 125
+        }
+      ]
+    },
+    {
+      "key": "Переименовать",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 129
+        }
+      ]
+    },
+    {
+      "key": "Удалить",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 130
+        }
+      ]
+    },
+    {
+      "key": "Изображение используется в черновике темы.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "key": "Удалить «",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 136
+        },
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "key": "» из библиотеки? Исходный файл останется на диске.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 136
+        },
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить удаление изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 137
+        }
+      ]
+    },
+    {
+      "key": "Отмена удаления изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 138
+        }
+      ]
+    },
+    {
+      "key": "Имя изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 142
+        }
+      ]
+    },
+    {
+      "key": "Сохранить имя изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 143
+        }
+      ]
+    },
+    {
+      "key": "Отмена переименования",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 144
+        }
+      ]
+    },
+    {
+      "key": "Страницы изображений",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 147
+        }
+      ]
+    },
+    {
+      "key": "Предыдущие изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "key": "Страница",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 149
+        },
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "key": "из",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 149
+        },
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "key": "Следующие изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ImageGallery.svelte",
+          "line": 150
+        }
+      ]
+    },
+    {
+      "key": "Черновик настройки RGB",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "key": "Загрузить настройки подсветки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 163
+        }
+      ]
+    },
+    {
+      "key": "Настройки выбранной зоны",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 165
+        }
+      ]
+    },
+    {
+      "key": "Зона",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "key": "Кольцо помпы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "key": "Эффект",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "key": "Управление подсветкой",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 168
+        }
+      ]
+    },
+    {
+      "key": "Обычная настройка",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "key": "По сохранённому датчику",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "key": "При применении восстановятся последний датчик и его параметры для выбранного эффекта. Сначала настройте привязку в разделе «Подсветка помпы по датчику».",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "key": "Цвет RGB",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 173
+        },
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 174
+        }
+      ]
+    },
+    {
+      "key": "Яркость RGB:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 174
+        }
+      ]
+    },
+    {
+      "key": "Скорость:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 174
+        }
+      ]
+    },
+    {
+      "key": "Направление",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Контур",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Внешний",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Внутренний",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Все",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Выключить подсветку",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Синхронизация и число LED",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "key": "Синхронизировать вентиляторы с помпой",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 178
+        }
+      ]
+    },
+    {
+      "key": "Размер комплекта вентиляторов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "key": "280 мм",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "key": "360 мм",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "key": "Число LED в ручном режиме",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 180
+        }
+      ]
+    },
+    {
+      "key": "При синхронизации используются",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 183
+        }
+      ]
+    },
+    {
+      "key": "LED. Ручное значение сохранится для отключения синхронизации.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 183
+        }
+      ]
+    },
+    {
+      "key": "Введите целое число LED от 8 до 50 перед применением.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 184
+        }
+      ]
+    },
+    {
+      "key": "Значения режима по умолчанию",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 187
+        }
+      ]
+    },
+    {
+      "key": "Применить подсветку",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 188
+        }
+      ]
+    },
+    {
+      "key": "Температурные оповещения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 190
+        }
+      ]
+    },
+    {
+      "key": "Перед включением примените обычную подсветку в обеих зонах — помпы и вентиляторов LCDV2. Daemon восстановит эти настройки после оповещения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 191
+        }
+      ]
+    },
+    {
+      "key": "Активный источник:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 192
+        }
+      ]
+    },
+    {
+      "key": "s. Недоступные источники:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 192
+        }
+      ]
+    },
+    {
+      "key": "Загрузить текущие оповещения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 194
+        }
+      ]
+    },
+    {
+      "key": "Черновик оповещений относится к другому устройству. Загрузите настройки выбранного устройства перед применением.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 195
+        }
+      ]
+    },
+    {
+      "key": "Включить",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 196
+        }
+      ]
+    },
+    {
+      "key": "Датчик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 196
+        },
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "key": "Порог",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 196
+        }
+      ]
+    },
+    {
+      "key": "Цвет оповещения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "key": "Загрузите текущие правила перед редактированием. Оповещения временно перекрывают обе RGB-зоны и затем восстанавливают сохранённую подсветку.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "key": "Применить оповещения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Lighting.svelte",
+          "line": 198
+        }
+      ]
+    },
+    {
+      "key": "Карточки роликов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "key": "Выбор карточки не запускает LCD. Примените выбранный ролик отдельной кнопкой.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "key": "Встроенный ролик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "key": "с ·",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 30
+        }
+      ]
+    },
+    {
+      "key": "Страницы роликов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "key": "Предыдущие ролики",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "key": "Следующие ролики",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaGallery.svelte",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "key": "Импорт ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 247
+        }
+      ]
+    },
+    {
+      "key": "». Исходный файл останется доступен другим темам и профилям.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "key": "GIF или MP4 до 1 часа и 256 MiB. Подготовленный ролик также должен укладываться в 256 MiB. Импорт сохраняет ролик; запуск на LCD выбирается отдельно.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "key": "Размещение видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 249
+        }
+      ]
+    },
+    {
+      "key": "Целиком, с чёрными полями",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 251
+        }
+      ]
+    },
+    {
+      "key": "Заполнить экран, обрезать края",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 252
+        }
+      ]
+    },
+    {
+      "key": "AutoFill — растянуть весь кадр",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 253
+        }
+      ]
+    },
+    {
+      "key": "AutoFill заполняет экран всем кадром без обрезки; пропорции могут измениться.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 256
+        }
+      ]
+    },
+    {
+      "key": "Цветокоррекция видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 257
+        }
+      ]
+    },
+    {
+      "key": "Цветокоррекция всего ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 260
+        }
+      ]
+    },
+    {
+      "key": "Контраст видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 261
+        }
+      ]
+    },
+    {
+      "key": "Контраст видео — значение",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 262
+        }
+      ]
+    },
+    {
+      "key": "Яркость видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 263
+        }
+      ]
+    },
+    {
+      "key": "Яркость видео — значение",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 264
+        }
+      ]
+    },
+    {
+      "key": "Сбросить цветокоррекцию",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 265
+        }
+      ]
+    },
+    {
+      "key": "0 — без изменения. Яркость осветляет изображение до белого. Настройки применяются ко всем выбранным фрагментам.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 266
+        }
+      ]
+    },
+    {
+      "key": "Укажите целые значения яркости и контраста от 0 до 255.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 267
+        }
+      ]
+    },
+    {
+      "key": "Выбрать фрагменты видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 270
+        }
+      ]
+    },
+    {
+      "key": "Один диапазон VideoEdit",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 271
+        }
+      ]
+    },
+    {
+      "key": "Начало и конец одного диапазона. Новый файл сначала загружается для проверки длительности и частоты кадров; кодирование начнётся по отдельной кнопке.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 273
+        }
+      ]
+    },
+    {
+      "key": "Диапазон VideoEdit",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 276
+        }
+      ]
+    },
+    {
+      "key": "Частота:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 277
+        }
+      ]
+    },
+    {
+      "key": "FPS. Конец — до",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 277
+        }
+      ]
+    },
+    {
+      "key": "с; минимальная длина —",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 277
+        }
+      ]
+    },
+    {
+      "key": "с.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 277
+        },
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 334
+        },
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 185
+        },
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 189
+        }
+      ]
+    },
+    {
+      "key": "Начало VideoEdit",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 278
+        }
+      ]
+    },
+    {
+      "key": "Начало VideoEdit, с",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 279
+        }
+      ]
+    },
+    {
+      "key": "Конец VideoEdit",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 280
+        }
+      ]
+    },
+    {
+      "key": "Конец VideoEdit, с",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 281
+        }
+      ]
+    },
+    {
+      "key": "Начало диапазона по текущему кадру",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 282
+        }
+      ]
+    },
+    {
+      "key": "Конец диапазона по текущему кадру",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 283
+        }
+      ]
+    },
+    {
+      "key": "Весь доступный диапазон VideoEdit",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 284
+        }
+      ]
+    },
+    {
+      "key": "Диапазон должен быть не короче двух исходных кадров и не выходить за указанный конец.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 285
+        }
+      ]
+    },
+    {
+      "key": "Нет допустимой длительности или частоты кадров для VideoEdit, либо ролик слишком короткий. Для нового файла отмените импорт перед выбором другого режима.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 287
+        }
+      ]
+    },
+    {
+      "key": "Выберите GIF/MP4 для проверки исходника.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 288
+        }
+      ]
+    },
+    {
+      "key": "Выбор файла открывает просмотр. После подготовки можно посмотреть готовый ролик; сохранение в библиотеку потребует подтверждения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 291
+        }
+      ]
+    },
+    {
+      "key": "Способ выбора фрагментов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 292
+        }
+      ]
+    },
+    {
+      "key": "Время вручную",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "key": "Запись при просмотре",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "key": "Область следующей записи, % исходника",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 297
+        }
+      ]
+    },
+    {
+      "key": ", % — запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 299
+        }
+      ]
+    },
+    {
+      "key": "Область записи должна быть непустой и помещаться внутри исходника.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 302
+        }
+      ]
+    },
+    {
+      "key": "«Записать фрагмент» начинает просмотр с текущей позиции; «Пауза записи» добавляет выбранный интервал. Между записями можно перемотать видео и изменить область. Ручной список сохраняется отдельно. При достижении 180 секунд подготовка результата начнётся автоматически; сохранение в библиотеку потребует подтверждения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 303
+        }
+      ]
+    },
+    {
+      "key": "Область для фрагмента",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 305
+        }
+      ]
+    },
+    {
+      "key": ". Выберите её указателем под видео или задайте проценты в полях фрагмента.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 305
+        }
+      ]
+    },
+    {
+      "key": "Фрагменты в порядке воспроизведения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 307
+        }
+      ]
+    },
+    {
+      "key": "Укажите начало и конец в секундах. Фрагменты соединяются по порядку без звука, суммарно до 3 минут. До 64 фрагментов за импорт. Конец каждого фрагмента проверяется по длительности выбранного файла.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 308
+        }
+      ]
+    },
+    {
+      "key": "Фрагмент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 312
+        },
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 238
+        }
+      ]
+    },
+    {
+      "key": "с. Область:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 312
+        }
+      ]
+    },
+    {
+      "key": "весь кадр",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 312
+        }
+      ]
+    },
+    {
+      "key": "Начало фрагмента",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 314
+        }
+      ]
+    },
+    {
+      "key": ", с",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 314
+        },
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 315
+        }
+      ]
+    },
+    {
+      "key": "Конец фрагмента",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 315
+        }
+      ]
+    },
+    {
+      "key": "Начало по текущему кадру",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 316
+        },
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 245
+        }
+      ]
+    },
+    {
+      "key": "Конец по текущему кадру",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 317
+        },
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 247
+        }
+      ]
+    },
+    {
+      "key": "Выбрать область фрагмента",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 318
+        }
+      ]
+    },
+    {
+      "key": "Область фрагмента",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 321
+        }
+      ]
+    },
+    {
+      "key": ", % исходника",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 321
+        }
+      ]
+    },
+    {
+      "key": ", % — фрагмент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 323
+        }
+      ]
+    },
+    {
+      "key": "Область должна иметь положительный размер и помещаться внутри исходника.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 325
+        }
+      ]
+    },
+    {
+      "key": "Весь кадр — фрагмент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 326
+        }
+      ]
+    },
+    {
+      "key": "Удалить фрагмент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 330
+        }
+      ]
+    },
+    {
+      "key": "Добавить фрагмент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 333
+        }
+      ]
+    },
+    {
+      "key": "Выбрано:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 334
+        }
+      ]
+    },
+    {
+      "key": "Пока нет записанных фрагментов.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 335
+        }
+      ]
+    },
+    {
+      "key": "Укажите начало меньше конца, в пределах часа. Общая длительность — до 180 секунд; конец не должен превышать длительность выбранного видео.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 336
+        }
+      ]
+    },
+    {
+      "key": "Импортировать GIF/MP4",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 346
+        }
+      ]
+    },
+    {
+      "key": "Подготовить изменения ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 351
+        }
+      ]
+    },
+    {
+      "key": "Подготовить диапазон VideoEdit",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 353
+        }
+      ]
+    },
+    {
+      "key": "Подготовить выбранные фрагменты",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 355
+        }
+      ]
+    },
+    {
+      "key": "Подготовить ролик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 355
+        }
+      ]
+    },
+    {
+      "key": "Загрузка файла",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 359
+        }
+      ]
+    },
+    {
+      "key": "Сохранить готовый ролик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 362
+        }
+      ]
+    },
+    {
+      "key": "Сохранение уже началось. Дождитесь результата перед повторным импортом.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 365
+        }
+      ]
+    },
+    {
+      "key": "Отменить импорт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 367
+        }
+      ]
+    },
+    {
+      "key": "Проверить импорт",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaImport.svelte",
+          "line": 368
+        }
+      ]
+    },
+    {
+      "key": "Библиотека роликов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 135
+        }
+      ]
+    },
+    {
+      "key": "Выбранный ролик повторяется и восстанавливается после перезапуска. Применение темы или возврат LocalUI снимает выбор.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 136
+        }
+      ]
+    },
+    {
+      "key": "Записать экран…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 146
+        }
+      ]
+    },
+    {
+      "key": "Обновить ролики",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "key": "Загрузка роликов…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "key": "Не удалось загрузить ролики:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 150
+        }
+      ]
+    },
+    {
+      "key": "Сохранённых роликов пока нет.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 151
+        }
+      ]
+    },
+    {
+      "key": "Показать все файлы видео для управления",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 152
+        }
+      ]
+    },
+    {
+      "key": "Сохранённый ролик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 154
+        }
+      ]
+    },
+    {
+      "key": "с",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 156
+        },
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 205
+        }
+      ]
+    },
+    {
+      "key": "Показать карточки роликов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 159
+        }
+      ]
+    },
+    {
+      "key": "Файл вне фоновой коллекции. Добавьте его через «Коллекции LCD» для воспроизведения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 162
+        }
+      ]
+    },
+    {
+      "key": "Использовать фоном темы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 163
+        }
+      ]
+    },
+    {
+      "key": "Выбрать ролик для LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 164
+        }
+      ]
+    },
+    {
+      "key": "Редактировать выбранный ролик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 165
+        }
+      ]
+    },
+    {
+      "key": "Встроенный ролик нельзя удалить или редактировать.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "key": "Удалить ролик…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 167
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить удаление ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 170
+        }
+      ]
+    },
+    {
+      "key": "Отмена удаления",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "key": "Ролик используется в черновике страницы LCD. Замените его фон перед удалением.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 173
+        }
+      ]
+    },
+    {
+      "key": "Сначала остановите ролик, чтобы снять сохранённый выбор.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 174
+        }
+      ]
+    },
+    {
+      "key": "Сохранённый выбор: {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 178
+        }
+      ]
+    },
+    {
+      "key": "Ролик для автовосстановления не выбран.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 178
+        }
+      ]
+    },
+    {
+      "key": "Остановить ролик и вернуть LocalUI",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 179
+        }
+      ]
+    },
+    {
+      "key": "Выберите доступное устройство для воспроизведения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaLibrary.svelte",
+          "line": 180
+        }
+      ]
+    },
+    {
+      "key": "Повторить миниатюру: {0}",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaThumbnail.svelte",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "key": "Обновить миниатюру",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaThumbnail.svelte",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "key": "Первый кадр ролика. Предпросмотр не запускает LCD.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/MediaThumbnail.svelte",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "key": "Фейерверк",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 66
+        }
+      ]
+    },
+    {
+      "key": "Метеоры",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 66
+        }
+      ]
+    },
+    {
+      "key": "Текст, часы и изображения остаются поверх анимации.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 67
+        }
+      ]
+    },
+    {
+      "key": "Статические настройки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 68
+        }
+      ]
+    },
+    {
+      "key": "Скорость метеоров",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 69
+        }
+      ]
+    },
+    {
+      "key": "Интенсивность Fireworks",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 69
+        }
+      ]
+    },
+    {
+      "key": "Управлять эффектом от датчика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 75
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "key": "Источник эффекта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 78
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Выберите датчик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 79
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 99
+        }
+      ]
+    },
+    {
+      "key": "Пороги в исходных единицах:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": ". Диапазон: 0–",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": "Нижний порог эффекта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 85
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "key": "Верхний порог эффекта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 86
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 106
+        }
+      ]
+    },
+    {
+      "key": "На равном пороге используются нижняя интенсивность и палитра; выше порога — верхние.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "Источник CPU Load не прочитан: {0}. Выберите датчик вручную.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 96
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "key": "Выберите источник эффекта: CPU Load недоступен или неоднозначен.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 96
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 110
+        }
+      ]
+    },
+    {
+      "key": "Источник недоступен: используются сохранённые статические настройки и цвета.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Задайте целые пороги; нижний не должен превышать верхний.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 98
+        },
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 113
+        }
+      ]
+    },
+    {
+      "key": "Сохранено 64 источника: можно выбирать уже настроенные.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PaletteEditor.svelte",
+          "line": 99
+        }
+      ]
+    },
+    {
+      "key": "Проверка готового ролика",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PreparedVideoPreview.svelte",
+          "line": 14
+        }
+      ]
+    },
+    {
+      "key": "Готовый ролик после обрезки и склейки. Проверьте результат и подтвердите сохранение в библиотеку.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PreparedVideoPreview.svelte",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "key": "Готовый ролик",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PreparedVideoPreview.svelte",
+          "line": 17
+        }
+      ]
+    },
+    {
+      "key": "Не удалось воспроизвести готовый ролик в этом окне. Можно сохранить подготовленный файл или отменить импорт.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/PreparedVideoPreview.svelte",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "key": "Импорт и экспорт профиля",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Архив L-Connect Linux (.lcp) содержит один слот и его изображения, видео и шрифты. Импорт заменит выбранный слот. Применение к устройству остаётся отдельным действием.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 99
+        }
+      ]
+    },
+    {
+      "key": "Экспортировать слот в архив…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 101
+        }
+      ]
+    },
+    {
+      "key": "Импортировать архив в слот…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 102
+        }
+      ]
+    },
+    {
+      "key": "При экспорте выберите новое имя: существующие файлы не заменяются.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "key": "· слот",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 106
+        }
+      ]
+    },
+    {
+      "key": "Передача архива",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "key": "Отменить передачу архива",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "key": "Сохранение уже началось. Дождитесь результата; при потере связи его можно прочитать по ID операции.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "key": "Сохранён ID незавершённой операции:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 112
+        }
+      ]
+    },
+    {
+      "key": ". Перед новой операцией прочитайте результат и обновите список профилей.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 112
+        }
+      ]
+    },
+    {
+      "key": "ID операции для восстановления",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 113
+        }
+      ]
+    },
+    {
+      "key": "Прочитать результат архива",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 115
+        }
+      ]
+    },
+    {
+      "key": "Завершить загруженный архив",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 116
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить отмену передачи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 117
+        }
+      ]
+    },
+    {
+      "key": "Закрыть сведения об архиве",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ProfileArchive.svelte",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "key": "Сохранённые профили",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "key": "Загрузите профиль в редактор, затем примените его обычной кнопкой.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 72
+        }
+      ]
+    },
+    {
+      "key": "Обновить список профилей",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 73
+        }
+      ]
+    },
+    {
+      "key": "Слот профиля",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "key": "Имя профиля",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "key": "Загрузить профиль в редактор",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "key": "Заменить профиль черновиком",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "key": "Сохранить черновик в слот",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "key": "Заменить профиль выбранным роликом",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": "Сохранить выбранный ролик в слот",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": "Переименовать профиль",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "key": "Удалить профиль",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "key": "Сбросить слот к базовым настройкам",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 87
+        }
+      ]
+    },
+    {
+      "key": "Сбросить все слоты группы…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 88
+        }
+      ]
+    },
+    {
+      "key": "Подтверждение сброса группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 91
+        }
+      ]
+    },
+    {
+      "key": "Будут заменены имена и содержимое всех",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "слотов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "экрана",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "вентиляторов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "помпы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "В каждом слоте будет базовая тема с часами.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "В каждом слоте будет кривая Quiet с датчиком {0}.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "Активные настройки устройства, другие группы и файлы библиотеки сохранятся.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить сброс всех слотов",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "key": "Отмена сброса группы",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "key": "Сброс заменит имя и содержимое слота базовой темой с часами.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Сброс заменит слот кривой Quiet с выбранным в редакторе датчиком.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Для устройства изменения вступят в силу только после загрузки и применения.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Обновите список перед повтором.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/Profiles.svelte",
+          "line": 102
+        }
+      ]
+    },
+    {
+      "key": "Кадр для выбора области захвата",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 81
+        }
+      ]
+    },
+    {
+      "key": "Последний доступный полный кадр источника. Потяните от угла к углу; стрелки перемещают область на 1%, Shift — на 10%. Размеры можно уточнить в полях ниже.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "key": "Загрузка кадра источника…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "key": "Выбор области захвата на кадре",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "key": "Выбранная область, растянутая до размера записи:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 89
+        }
+      ]
+    },
+    {
+      "key": "Предпросмотр области захвата",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "key": "Обновить кадр источника",
+      "locations": [
+        {
+          "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "Коллекции LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": "Состав списков для этого устройства. Удаление из списка сохраняет файл в каталоге и не изменяет текущую тему.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "key": "Обновить коллекции",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "key": "Чтение коллекций…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 87
+        }
+      ]
+    },
+    {
+      "key": "Состав ожидает записи.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "key": "Обновите коллекции для проверки.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "key": "Используется общий каталог. Перенос сохранит доступные изображения и видео в отдельных списках.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "key": "Перенести каталог в коллекции",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "key": "Коллекция",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "key": "Изображения",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "key": "Фоны",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "key": "Водяные знаки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "key": "Убрать из списка",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "key": "Встроенный элемент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "key": "Добавить из каталога",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Выберите файл",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Изображение",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Добавить в список",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "key": "Сохранить коллекции",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 99
+        }
+      ]
+    },
+    {
+      "key": "Состав изменён в черновике. Сохраните или обновите коллекции для отмены.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenCollections.svelte",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "key": "Достигнут лимит записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 195
+        }
+      ]
+    },
+    {
+      "key": "Что сделать с записью?",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 195
+        }
+      ]
+    },
+    {
+      "key": "Записано 180 секунд.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 196
+        }
+      ]
+    },
+    {
+      "key": "Запись приостановлена. Можно отредактировать её или подготовить целиком для LCD.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 196
+        }
+      ]
+    },
+    {
+      "key": "Редактировать запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "key": "Подготовить запись целиком",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 198
+        }
+      ]
+    },
+    {
+      "key": "Вернуться к записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 199
+        }
+      ]
+    },
+    {
+      "key": "Запись экрана",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 201
+        },
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 202
+        }
+      ]
+    },
+    {
+      "key": "Выберите экран или окно в системном диалоге. Звук не записывается. Паузы не входят в лимит 180 секунд.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 203
+        }
+      ]
+    },
+    {
+      "key": "До начала записи выберите область или оставьте весь источник. На паузе область можно изменить для следующих кадров.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 204
+        }
+      ]
+    },
+    {
+      "key": "Выбрать экран или окно",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 206
+        }
+      ]
+    },
+    {
+      "key": "Начать запись экрана",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 207
+        }
+      ]
+    },
+    {
+      "key": "Приостановить запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 208
+        }
+      ]
+    },
+    {
+      "key": "Продолжить запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 209
+        }
+      ]
+    },
+    {
+      "key": "Применённая область захвата",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 211
+        }
+      ]
+    },
+    {
+      "key": "Область: X",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 211
+        }
+      ]
+    },
+    {
+      "key": "%, ширина",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 211
+        }
+      ]
+    },
+    {
+      "key": "%, высота",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 211
+        }
+      ]
+    },
+    {
+      "key": "Область записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 216
+        }
+      ]
+    },
+    {
+      "key": "Область следующего интервала",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 216
+        }
+      ]
+    },
+    {
+      "key": "Координаты — в процентах от выбранного экрана или окна. Область растягивается до постоянного размера записи.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "key": "Захват X, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 218
+        }
+      ]
+    },
+    {
+      "key": "Захват Y, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 219
+        }
+      ]
+    },
+    {
+      "key": "Ширина захвата, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 220
+        }
+      ]
+    },
+    {
+      "key": "Высота захвата, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 221
+        }
+      ]
+    },
+    {
+      "key": "Область должна быть непустой и находиться внутри источника.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 222
+        }
+      ]
+    },
+    {
+      "key": "Примените область или верните подтверждённые значения перед началом или продолжением записи.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 223
+        }
+      ]
+    },
+    {
+      "key": "Применить область захвата",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 224
+        }
+      ]
+    },
+    {
+      "key": "Весь источник",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 225
+        }
+      ]
+    },
+    {
+      "key": "Вернуть применённую область",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 226
+        }
+      ]
+    },
+    {
+      "key": "Завершить и просмотреть запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 229
+        }
+      ]
+    },
+    {
+      "key": "Редактирование записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 235
+        }
+      ]
+    },
+    {
+      "key": "Обрезать готовую запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 236
+        }
+      ]
+    },
+    {
+      "key": "Фрагмент записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 238
+        }
+      ]
+    },
+    {
+      "key": "Добавить фрагмент записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 239
+        }
+      ]
+    },
+    {
+      "key": "Удалить фрагмент записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 240
+        }
+      ]
+    },
+    {
+      "key": "Фрагмент раньше",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 241
+        }
+      ]
+    },
+    {
+      "key": "Фрагмент позже",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 242
+        }
+      ]
+    },
+    {
+      "key": "Фрагменты склеиваются в указанном порядке. Общая длина:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 243
+        }
+      ]
+    },
+    {
+      "key": "с / 180 с.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 243
+        }
+      ]
+    },
+    {
+      "key": "Начало записи, с",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 244
+        }
+      ]
+    },
+    {
+      "key": "Конец записи, с",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 246
+        }
+      ]
+    },
+    {
+      "key": "Область X, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "key": "Область Y, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 249
+        }
+      ]
+    },
+    {
+      "key": "Ширина области, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 250
+        }
+      ]
+    },
+    {
+      "key": "Высота области, %",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 251
+        }
+      ]
+    },
+    {
+      "key": "Проверьте все фрагменты: непустые интервалы внутри записи, области внутри кадра и общая длина не более 180 секунд.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 252
+        }
+      ]
+    },
+    {
+      "key": "Название записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 255
+        }
+      ]
+    },
+    {
+      "key": "Размещение записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 256
+        }
+      ]
+    },
+    {
+      "key": "Подготовить запись для LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 257
+        }
+      ]
+    },
+    {
+      "key": "Сохранить запись в библиотеку",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 262
+        }
+      ]
+    },
+    {
+      "key": "Запись сохранена в библиотеке.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 263
+        }
+      ]
+    },
+    {
+      "key": "Вернуться к редактированию записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 265
+        }
+      ]
+    },
+    {
+      "key": "Очистить запись…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 268
+        }
+      ]
+    },
+    {
+      "key": "Удалить текущую несохранённую запись?",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 269
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить очистку записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 269
+        }
+      ]
+    },
+    {
+      "key": "Сохранить текущую запись",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 269
+        }
+      ]
+    },
+    {
+      "key": "Закрыть запись экрана",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenRecorder.svelte",
+          "line": 270
+        }
+      ]
+    },
+    {
+      "key": "Сброс экрана LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 74
+        }
+      ]
+    },
+    {
+      "key": "Восстановить базовую тему, яркость 50%, поворот 0°, встроенный состав коллекций этого устройства и все восемь общих Screen-слотов. Общие слоты изменятся для всех устройств.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 75
+        }
+      ]
+    },
+    {
+      "key": "Файлы изображений, видео и шрифтов, охлаждение и подсветка сохранятся. Локальный черновик темы не изменится; базовую тему можно загрузить кнопкой «Загрузить активную тему».",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 76
+        }
+      ]
+    },
+    {
+      "key": "Проверить результат сброса",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "key": "Чтение состояния сброса…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "key": "Настройки ожидают записи. Обновите состояние.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 81
+        }
+      ]
+    },
+    {
+      "key": "Ошибка LCD:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "key": "Результат запроса ещё не подтверждён. Повтор использует ту же операцию и не сбросит настройки второй раз.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": "Повторить запрос сброса",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "key": "Есть неподтверждённый сброс другого устройства. Вернитесь к нему для проверки.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 87
+        }
+      ]
+    },
+    {
+      "key": "Сбросить экран и восемь общих слотов?",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 89
+        }
+      ]
+    },
+    {
+      "key": "Подтвердить сброс экрана",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "key": "Отмена сброса",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 91
+        }
+      ]
+    },
+    {
+      "key": "Сбросить экран…",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "key": "Сброс сохранён. Можно повторить только отправку базовой темы на LCD.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "key": "Повторно применить к LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/ScreenReset.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Просмотр исходного видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "key": "Исходник:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 172
+        }
+      ]
+    },
+    {
+      "key": ". Просмотр без звука; размещение на LCD применяется при импорте.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 172
+        }
+      ]
+    },
+    {
+      "key": "Исходное видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "key": "Позиция в исходном видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 182
+        }
+      ]
+    },
+    {
+      "key": "Позиция:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 185
+        }
+      ]
+    },
+    {
+      "key": "с /",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 185
+        }
+      ]
+    },
+    {
+      "key": "Пауза записи",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 188
+        }
+      ]
+    },
+    {
+      "key": "Записать фрагмент",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 188
+        }
+      ]
+    },
+    {
+      "key": "Идёт запись фрагмента.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 189
+        }
+      ]
+    },
+    {
+      "key": "Записано:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 189
+        }
+      ]
+    },
+    {
+      "key": "Потяните от одного угла области к другому. Стрелки перемещают область; точные размеры доступны в полях фрагмента.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 193
+        }
+      ]
+    },
+    {
+      "key": "Выбор области видео",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 194
+        }
+      ]
+    },
+    {
+      "key": "Кадр после цветокоррекции, обрезки и размещения. Это локальный просмотр; итоговый ролик подготавливается при импорте.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 199
+        }
+      ]
+    },
+    {
+      "key": "Кадр после обрезки",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "key": "Просмотр этого файла недоступен. Можно указать время вручную; при импорте файл проверяется отдельно.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/VideoSourcePreview.svelte",
+          "line": 204
+        }
+      ]
+    },
+    {
+      "key": "Анимация LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "key": "Эффект LCD",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "key": "Без эффекта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 81
+        }
+      ]
+    },
+    {
+      "key": "Rain — дождь",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "key": "Snow — снег",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 83
+        }
+      ]
+    },
+    {
+      "key": "Snow3D — объёмный снег",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "key": "Fireworks — фейерверк",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 85
+        }
+      ]
+    },
+    {
+      "key": "MeteorShower — метеоры",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "key": "Интенсивность Snow3D",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 89
+        }
+      ]
+    },
+    {
+      "key": "Интенсивность меняет скорость и плотность объёмного снега. Текст и изображения остаются поверх эффекта.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "key": "Эффект движется на фоне; текст, часы и изображения остаются поверх него.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "key": "Интенсивность эффекта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "key": "Низкая",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "key": "Средняя",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "key": "Высокая",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 94
+        }
+      ]
+    },
+    {
+      "key": "Датчик эффекта",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 97
+        }
+      ]
+    },
+    {
+      "key": "Единицы порогов:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "key": ". Диапазон:",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "key": "При точном совпадении показания с порогом Snow использует минимальную скорость.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "key": "Сохранено 64 диапазона: можно выбирать уже настроенные источники.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 111
+        }
+      ]
+    },
+    {
+      "key": "Источник недоступен: используется сохранённая интенсивность.",
+      "locations": [
+        {
+          "file": "desktop/src/lib/WeatherEditor.svelte",
+          "line": 112
+        }
+      ]
+    }
+  ],
+  "dynamicCalls": [
+    {
+      "file": "desktop/src/lib/AssetCleanup.svelte",
+      "line": 31,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 106,
+      "expression": "current.last_error"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 124,
+      "expression": "pollError"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 125,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 125,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 41,
+      "expression": "snapshot.trayError"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 42,
+      "expression": "snapshot.registration.problem"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 43,
+      "expression": "snapshot.integrationError"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 49,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 50,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/DisplaySettings.svelte",
+      "line": 36,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/DisplaySettings.svelte",
+      "line": 37,
+      "expression": "writeError"
+    },
+    {
+      "file": "desktop/src/lib/DisplaySettings.svelte",
+      "line": 40,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 135,
+      "expression": "current.last_error"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 167,
+      "expression": "pollError"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 168,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 168,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/FontImport.svelte",
+      "line": 51,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/FullGroupArchive.svelte",
+      "line": 112,
+      "expression": "job.readback.runtime.last_error"
+    },
+    {
+      "file": "desktop/src/lib/FullGroupArchive.svelte",
+      "line": 127,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ImageEditor.svelte",
+      "line": 183,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/ImageEditor.svelte",
+      "line": 184,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ImageGallery.svelte",
+      "line": 113,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Lighting.svelte",
+      "line": 199,
+      "expression": "pollError"
+    },
+    {
+      "file": "desktop/src/lib/Lighting.svelte",
+      "line": 200,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Lighting.svelte",
+      "line": 200,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/MediaLibrary.svelte",
+      "line": 150,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/MediaThumbnail.svelte",
+      "line": 33,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ProfileArchive.svelte",
+      "line": 120,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ProfileArchive.svelte",
+      "line": 121,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/Profiles.svelte",
+      "line": 102,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Profiles.svelte",
+      "line": 103,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+      "line": 84,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ScreenCollections.svelte",
+      "line": 88,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ScreenCollections.svelte",
+      "line": 89,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/ScreenReset.svelte",
+      "line": 79,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ScreenReset.svelte",
+      "line": 80,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/ScreenReset.svelte",
+      "line": 82,
+      "expression": "readback.lcd.last_error"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 73,
+      "expression": "readError"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 74,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 75,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 85,
+      "expression": "field.label"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 102,
+      "expression": "field.label"
+    },
+    {
+      "file": "desktop/src/lib/Settings.svelte",
+      "line": 27,
+      "expression": "lcd.last_error"
+    },
+    {
+      "file": "desktop/src/lib/Settings.svelte",
+      "line": 28,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Settings.svelte",
+      "line": 28,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/SystemSpec.svelte",
+      "line": 46,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/SystemSpec.svelte",
+      "line": 50,
+      "expression": "category.label"
+    },
+    {
+      "file": "desktop/src/lib/SystemSpec.svelte",
+      "line": 57,
+      "expression": "labels[field.key]??field.key"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 307,
+      "expression": "lcd.persistence.last_error"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 308,
+      "expression": "connectionError"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 309,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 311,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 332,
+      "expression": "previewError"
+    }
+  ],
+  "remainingWindowsLocales": [
+    "de-DE",
+    "es-ES",
+    "fr-FR",
+    "ko-KR",
+    "zh-CN",
+    "zh-TW"
+  ],
+  "notes": [
+    "User names, device labels and LCD text bypass translation.",
+    "Dynamic messages/labels and native tray/menu require separate qualification.",
+    "Static resource completeness alone does not prove runtime or Windows parity."
+  ]
+}

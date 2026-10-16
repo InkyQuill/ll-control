@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-12",
+  "scope": "Frontend review ownership; no Svelte integration yet",
+  "verification": {
+    "mock_ipc_tests": 10,
+    "frontend_check": "0 errors, 0 warnings",
+    "logs": [
+      "/tmp/recording-review-client-check.log",
+      "/tmp/recording-review-client-tests.log"
+    ]
+  },
+  "covered": [
+    "Close during admission waits before cancellation and suppresses prepare",
+    "Lost admission recovered by matching ID",
+    "Cancellation interrupts pending preparation",
+    "Foreign import protected",
+    "Explicit confirm only; dispatched publication preserved"
+  ],
+  "remaining": [
+    "Svelte capture controls/source preview/edit/review/gallery workflow",
+    "Real native portal and device acceptance deferred"
+  ],
+  "sha256": {
+    "desktop/src/lib/screen-record.ts": "fa2bfb855905a87bc54098599a610cd809fb5b973cc71de98be166192b9026b1",
+    "desktop/tests/screen-record-client.spec.ts": "99b67470f6bb1b8ff7497b804f4a2574d2849f08baddad9b4a8e7aafdc917a0c"
+  }
+}

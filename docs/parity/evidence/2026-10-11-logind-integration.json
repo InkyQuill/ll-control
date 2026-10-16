@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "Cargo.lock": "f355bda3ecd271bcca53b233a7bb3d7b379faa83ab9e8c9ccadc8a0009edc981",
+    "crates/lconnect-daemon/Cargo.toml": "42fa8225e23bd99a942fcba1a6b02f8818c4e0255bb60a3647ca18301165818e",
+    "crates/lconnect-daemon/src/lib.rs": "8a8b4b133cf4bd023ea2f8d6cb06c3e6055796164a8d42745c988d8dd47123e1",
+    "crates/lconnect-daemon/src/main.rs": "0fc9a2ba6e2079003801cf6a8a9b79a27f38db53ce4bbf196fc1a78f2bf38f26",
+    "crates/lconnect-daemon/src/power.rs": "5f61d82bc0ed4b1fd8b9a09a2c078ae5a75cb730b8f8d7189ec33539b8f40989",
+    "crates/lconnect-daemon/src/power_tests.rs": "574848edfa5525f4626b70733e19f8e40bc64f4508c23a98df819c9ce6cee2fb",
+    "crates/lconnect-daemon/src/manager.rs": "dd6b514c80874cd67be82f5a423322db511a15f7f5e6915abe998912164425b1",
+    "crates/lconnect-daemon/src/sensors.rs": "567e2edf11a195035c9c64246b628496d581adb4c42f0d8d41d8a6505ac9ce1f"
+  },
+  "scope": "Production logind observer and host sensor cache sleep boundaries; private-bus software acceptance",
+  "checks": {
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "workspace_tests_passed": 622,
+    "targets": 92,
+    "docs": "pass",
+    "daemon_lib_tests": 88,
+    "rust_review": "no remaining blocking findings"
+  },
+  "cases": [
+    "private-bus sleep/wake releases inhibitor after joined teardown and reacquires on wake",
+    "initial PreparingForSleep=true and denied inhibitor still prepare",
+    "owner loss ends old observer; new state reconciles",
+    "blocked HID write retains inhibitor until join",
+    "handling budget expiration releases inhibitor without cancelling device join",
+    "queued true/false preserved even when property already false",
+    "supervisor automatically detects new owner while awake and forces reopen",
+    "shutdown watcher releases inhibitor FD",
+    "cache invalidation rejects a pre-boundary in-flight collection"
+  ],
+  "logs": [
+    "/tmp/logind-final-lib-tests.log",
+    "/tmp/logind-review-fmt.log",
+    "/tmp/logind-review-clippy.log",
+    "/tmp/logind-review-test.log",
+    "/tmp/logind-review-doc.log"
+  ],
+  "limitations": [
+    "No actual suspend/hibernate or system bus access, hardware or host sensors.",
+    "Handling-relative timeout is not an absolute guarantee of logind emission deadline.",
+    "Full bus daemon restart, stalled health RPC and combined post-wake rate providers remain acceptance items.",
+    "Rust1.82 toolchain was not run; chosen zbus4.4 declares Rust1.75.",
+    "Frontend/native suite not rerun; no frontend source changes."
+  ],
+  "reference": "https://github.com/systemd/systemd/blob/main/man/org.freedesktop.login1.xml"
+}

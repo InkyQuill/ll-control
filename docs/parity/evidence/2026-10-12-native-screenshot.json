@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-12",
+  "scope": "Native screenshot IPC/editor/Save and portal cancellation using synthetic private portal",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "fixture": "/tmp/lconnect-native-screenshot-cdjmi82p",
+  "acceptance": {
+    "close_pending": true,
+    "editor_cancel": true,
+    "ok": true,
+    "portal_cancel": true,
+    "preview_pixels": {
+      "left": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "right": [
+        0,
+        0,
+        255,
+        255
+      ]
+    },
+    "raw_bytes": true,
+    "saved_key": "831d2edf3340160220f810fef6c46bbc",
+    "portal": {
+      "requests": [
+        {
+          "path": "/org/freedesktop/portal/desktop/request/1_9/lconnect_87b6bc6b64814ecb8bc043ec405c6836",
+          "parent": "",
+          "interactive": true
+        },
+        {
+          "path": "/org/freedesktop/portal/desktop/request/1_10/lconnect_cc84423c8c0d4f0b9861f5b54386cabd",
+          "parent": "",
+          "interactive": true
+        },
+        {
+          "path": "/org/freedesktop/portal/desktop/request/1_11/lconnect_84c17a4854314ae5809f940543d9de20",
+          "parent": "",
+          "interactive": true
+        },
+        {
+          "path": "/org/freedesktop/portal/desktop/request/1_12/lconnect_50650494ce78462c9c82fa5ea5d745bf",
+          "parent": "",
+          "interactive": true
+        }
+      ],
+      "closed": [
+        "/org/freedesktop/portal/desktop/request/1_11/lconnect_84c17a4854314ae5809f940543d9de20",
+        "/org/freedesktop/portal/desktop/request/1_12/lconnect_50650494ce78462c9c82fa5ea5d745bf"
+      ]
+    },
+    "saved_png_bytes": 5897,
+    "normal_close_exit": 0
+  },
+  "verification": {
+    "native_build": "passed native-smoke/custom-protocol",
+    "native_workflow": "passed",
+    "syntax": "node --check and Python py_compile passed",
+    "environment": "private Xvfb/Openbox, dbus-run-session, synthetic Gio portal, MockBackend",
+    "logs": [
+      "/tmp/native-screenshot-build.log",
+      "/tmp/native-screenshot-run.log"
+    ],
+    "browser_or_full_workspace_rerun": false
+  },
+  "accepted": [
+    "64x32 synthetic screenshot bytes crossed real Tauri raw IPC into WebKitGTK editor",
+    "native 480x480 preview red/blue pixels confirmed",
+    "explicit Save published 480x480 PNG to real mock daemon store without LCD Apply",
+    "portal cancel preserved source",
+    "editor Close sent Request.Close and restored focus",
+    "WM close joined pending portal request and exited0"
+  ],
+  "limits": [
+    "Synthetic portal does not establish real X11/Wayland compositor selection or permissions",
+    "Parent window identifiers, backend/version capability differences, delayed reply/disconnect faults remain",
+    "No active desktop captured, no physical HID accessed",
+    "No full workspace/release/install qualification"
+  ],
+  "source_sha256": {
+    "desktop/scripts/native-screenshot.py": "2c8bd1f97c4595e00c0e409f3b0e9a66281c4717323c6f88fb4a16c783540c42",
+    "desktop/scripts/native-screenshot-portal.py": "69842205d6894322c6a7ae16b20964e0b2c5eebf290fcf01292993884426839d",
+    "desktop/scripts/native-screenshot.js": "ca5d1d112f70c33edf493f914d922c7ee4c408a1d9f3204a1125c6d9f680219e",
+    "desktop/src-tauri/src/main.rs": "17638e64df6d7be280e83d30f4824b8351292ae305e4328e3ff1bdbdc8474cc8",
+    "desktop/src-tauri/src/screenshot.rs": "41c4c56e501cefeda572b5383380d9eca4b8cfa55048b9b919c18a05de7f4581",
+    "desktop/src/lib/ImageEditor.svelte": "71ee198d546c7cc3c8baacd021e08b69dfde022ea5db02a642927ead703eef4a"
+  }
+}

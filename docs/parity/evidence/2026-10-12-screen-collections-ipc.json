@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-12",
+  "scope": "Collection get/set JSON-RPC and owner-consistent persistence readback",
+  "verification": {
+    "workspace": {
+      "passed": 749,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 109
+    },
+    "log": "/tmp/collections-ipc-workspace.log",
+    "clippy": "PASS /tmp/collections-ipc-clippy.log",
+    "docs": "PASS /tmp/collections-ipc-doc.log",
+    "fmt": "PASS",
+    "review": "Static Rust review: no actionable findings",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN; GUI not connected"
+  },
+  "remaining": [
+    "Legacy catalog migration with concurrent import protection",
+    "GUI collection membership",
+    "Full Screen reset external IPC/readback/reapply and native acceptance"
+  ],
+  "sha256": {
+    "crates/lconnect-ipc/src/screen_collections.rs": "52ceb79b0e4f1b62e5ff9591605c53549c7816f63208da80c73f188346d7b5b6",
+    "crates/lconnect-ipc/src/server.rs": "ba8bc6eed69ba011e8cb45a57cf772afb266c32d3d10173581404420d3a904bd",
+    "crates/lconnect-ipc/src/trait_def.rs": "862b0932cb33cc967cae4d128f806fac2c43f93300274ad506ac59004644fb09",
+    "crates/lconnect-daemon/src/ipc_server.rs": "7c5b899c47db1d33b6850e192940b883649f3138362ba756a57da9a1f516367d",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "f34458f95965b132a91b19f8214c8c17cb94e0e59f7e859ee860db7238af75ce",
+    "crates/lconnect-daemon/tests/screen_collections_ipc.rs": "1e736b5aaa0f1fdbb3fab6a04457389b623bee6177eb91445e02b48282e61e7a"
+  }
+}

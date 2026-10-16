@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Full screen group internal LCD actor commit/Apply/explicit reapply with prepared JPEG/media/composition and current sensor caches; fan+lighting runtime and group transport still pending",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/actor/mod.rs": "8cf47242ddc9f4552a18e912a4a8c0e7eb916b7bea272e2f30eeed9f36c37354",
+    "crates/lconnect-daemon/src/actor/screen_group.rs": "ee4a3afa6d7f3a456478879a1d79fd790cee7e68ce840e4f896c351f411a2af0",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "4882c126c233e42cabefcc91a85127df33e90233168f40c360a7cb610d61efb9",
+    "crates/lconnect-daemon/src/actor/lcd_keeper/group.rs": "71aa0c0f9fdf5762b54de684e66669d8b2ff2bfa531ba4ce80966e8ff769a860",
+    "crates/lconnect-daemon/src/actor/lcd_render_tests.rs": "f68c7bb1183c08dc45be1d07e1f81680e1ad45f17fb9d6b4b17496a63d677814",
+    "crates/lconnect-daemon/tests/screen_group_actor.rs": "e454493af01829a73d451cd931e5bd0323737783827eaa158014d5ef785d7bc5"
+  },
+  "reference_rotation": {
+    "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect-Service/LConnectService/Products/Galahad2Vision/Galahad2VisionController.cs",
+    "sha256": "62b9dadd2d7d2065e9b0cffb2815cd70e1935ee0ac3843e6cb8d205e3b8114d7",
+    "source_lines": [
+      "758-765 setScreenRotation assigns bitmap RotateFlip",
+      "1178-1184 browserTempBitmap.RotateFlip precedes screenLibAV.EncodeImage"
+    ],
+    "conclusion": "Nonzero H264 rotation remains an explicit parity gap; Windows rotates the final bitmap before encoding, so hardware rotation alone cannot be assumed equivalent."
+  },
+  "contract": {
+    "prepare": "PreparedScreenGroup loads/pins images/fonts and media, renders first JPEG or composition AU before LCD mutation; source variants Idle/JPEG theme/media/composition. Source identity/config retained for reapply validation. Future transport must bound runtime job admission.",
+    "serialize": "CommitScreenGroup executes in sole LCD owner. Receipt/parameters/ticket and streaming firmware checked before owner commit. Durable receipt precedes joined old-source replacement, LCD config and first frame. Replace invalidates older renders/preparation. Apply emits no redundant settings deltas.",
+    "repeat": "Readback/repeat acknowledges current state without Apply. Unneeded prepared composition workers stop/join on repeat/rejection.",
+    "failure": "Config/frame failures return committed storage receipt with independent lcd.last_error. Unknown storage outcome stops source and blocks mutations until restart/recovery; read-only state remains available. No stale source settings are written over import.",
+    "reapply": "Prepare from current durable settings, including a fresh actor after restart. ReapplyScreenGroup checks kind/current contents, generation, ticket and exact active-source/config identity; no settings/profile revision mutation or replay of later deleted slots.",
+    "teardown": "Queued group composition workers stop/join. Shutdown checked after old-source stop and again after config acknowledgement; committed intent is deferred for replay without starting the first frame after observed shutdown.",
+    "limits": "JPEG respects brightness/rotation. Existing streaming path requires rotation0 and known firmware>=1.5; unsupported cases reject before group commit. Nonzero streaming rotation stays required/unimplemented."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 988,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-screen-group-workspace-final.log"
+    },
+    "strict_clippy": "/tmp/lconnect-screen-group-clippy-final-current.log",
+    "rustdoc": "/tmp/lconnect-screen-group-doc-final.log",
+    "fmt": "/tmp/lconnect-screen-group-fmt-final.log",
+    "screen_actor": {
+      "count": 11,
+      "source": "crates/lconnect-daemon/tests/screen_group_actor.rs",
+      "coverage": [
+        "JPEG config/frame after durable receipt; brightness73/rotation90 retained; sensor-only JPEG bytes change after live cache update.",
+        "Lost reply/repeat after Clear gives current state without writes; pre-import ticket cannot start a delayed second import.",
+        "Injected config and frame failures retain receipt; repeated import does not Apply again; explicit reapply retries without profile revision increment.",
+        "New brightness makes prepared old reapply stale; current state remains unchanged.",
+        "Managed media framing and actual FFmpeg procedural composition first AU apply with known firmware. No actual H264 hardware decode claimed.",
+        "Nonzero streaming rotation rejected during preparation, firmware1.4 rejected before storage/output writes; extra prepared composition reaped.",
+        "Queued composition import on shutdown joined without commit or writes.",
+        "Fresh actor/settings store can prepare/reapply receipt after restart without former runtime cache.",
+        "Broken journal halts mutations, retains read-only state and preserves journal without output writes.",
+        "Shutdown during held config acknowledgement retains committed receipt, emits no first frame and reports deferred replay.",
+        "Media group replaced by JPEG group joins old reader; no old video payload appears after the new JPEG frame."
+      ]
+    },
+    "regressions": {
+      "log": "/tmp/lconnect-screen-group-regression.log",
+      "scope": "Existing lcd_keeper and screen_reset_actor tests passed before final workspace; also included in final full suite."
+    },
+    "frontend_native": "NOT RUN: internal Rust API only, no group IPC/CLI/GUI yet",
+    "hardware": "NOT RUN: temporary files, synthetic SensorCache and private fake HID channel; FFmpeg used for composition preparation only"
+  },
+  "remaining": [
+    "FanAndLighting actor freeze/barriers and coordinated cooling/RGB/dynamic Apply/recovery",
+    "Software final-frame rotation90/180/270 for H264 plus qualification",
+    "Bound runtime preparation/admission and group transfer IPC/CLI/native GUI",
+    "Expanded caller cancellation/preparation/enqueue, detach/sleep/contended commit and stalled backend matrix",
+    "Windows ZIP interoperability and physical acceptance; extra LCD effects/Style Express last"
+  ]
+}

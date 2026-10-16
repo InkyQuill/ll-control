@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "desktop/src-tauri/src/media_import.rs": "4f05ce8c869e9851993f8df19f765eab660bc64b00e999d701de36d332cacab3",
+    "desktop/src-tauri/src/lib.rs": "51ab9ab46e2095762f19b6fe7519593368e89fbf999ab0c61456e31b91dc0e7b",
+    "desktop/src-tauri/src/main.rs": "d1f5614a34f02ee6de0ba74ec32d465cba097d553716ca2713ebd5adb1450d25",
+    "desktop/src-tauri/build.rs": "60f2de3217edf0349ce57b5af4f480815c4701a1087afd509f842b0dec5c9c8e",
+    "desktop/src-tauri/capabilities/main.json": "12af0a21027c58dbbac0a6644c86196d177b697be2e4d009c7f063005f659ff4",
+    "desktop/src-tauri/Cargo.toml": "e8d1e1163da089632f120b92e1f83d00702cf1a26716573d6b4e25dbc91e1692",
+    "desktop/src/lib/MediaImport.svelte": "411cf04087d833da365daefa149e543f9b3bd4f561bb08fd802951af562ce967",
+    "desktop/src/lib/MediaLibrary.svelte": "220fa3031052bedaa52a9cf590d988d62306100fff633b295fbd15e662303370",
+    "desktop/tests/media-import.spec.ts": "e25bf788c9b56a4826d44168125742964d4934d75ebce09b36f6f3b46b5d47e1",
+    "desktop/tests/media-library.spec.ts": "1f799f7a27bd480fc71a0da91b774146519931c5a23672d9d7e3c1939390f8e7"
+  },
+  "log_sha256": {
+    "/tmp/media-import-ui-check.log": "90a6093d8b8ccb0ac2603dc2a487929f8eb4b3b20081068eccc8790452a77620",
+    "/tmp/media-import-ui-build.log": "142a77b8a1ee1a4bdacea8ac73b8e5c22af468c3aaccd888db27d0fe6fde3769",
+    "/tmp/media-import-browser.log": "3c96ca318a05f705b4d6b5b4d20157e3076ee0ca43385c4ee9dc9b05ff72ce73",
+    "/tmp/media-import-browser-all.log": "f85c4279c040641898471b78d5fe22a326821e1a20e8b847aa8bc31599d4c7d5",
+    "/tmp/media-import-production-check.log": "1d09914523ccc1e48a0f9d3cb7acbe7bf9eb5e740aafb4020fbd21fcf6ee68f0",
+    "/tmp/media-import-review-publication-test.log": "9d13dae39ef5c5609ad2e7af9502bd39808096d197996c666a811f383c6135bb",
+    "/tmp/media-import-review-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/media-import-review-clippy.log": "49e6043214bfc80137a1da8c8d9b552a3e4fd955c66ba8363dd3b8d2b3a21eac",
+    "/tmp/media-import-review-test.log": "8f49c886dc3e9e45d72feac419f4a3cd0d72dd8155492e617530ffe888fc3fc0",
+    "/tmp/media-import-review-doc.log": "f1d6f0704d3c45a3fed006705abd9261d9e68dc954b57582641c71f9e5f65bc3"
+  },
+  "checks": {
+    "workspace_tests": 655,
+    "targets": 96,
+    "subsequently_added_publication_shutdown_test": 1,
+    "failed": 0,
+    "ignored": 0,
+    "focused_browser": 6,
+    "full_browser": 125,
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "pass",
+    "production_feature_check": "pass",
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "docs": "pass",
+    "rust_review": "no outstanding findings"
+  },
+  "coverage": [
+    "One native import with 256KiB chunks, exact offsets and 256MiB total bound",
+    "Real synthetic MP4 upload->preparation and staging cleanup",
+    "Cancellation retains admission until worker returns; cancelled preparation never publishes",
+    "Publishing rejects cancellation and is never automatically retried",
+    "Shutdown blocks new admission, waits for worker or publication; ambiguous error remains explicit",
+    "Browser bounded chunks, phase status, library refresh without Apply, validation/cancel/retry",
+    "Panel unmount cancels a begin that replies after unmount",
+    "Normal window close wiring reviewed and compiled"
+  ],
+  "limits": [
+    "Full Rust suite ran before a test-only addition; added test ran separately on final source",
+    "Browser mocks Tauri invoke; no combined native WebKit/FFmpeg/private daemon run yet",
+    "No physical LCD/HID/host sensors/production daemon access",
+    "Normal-window close not exercised in native GUI; forced process exit, crash and OS logout unqualified",
+    "Long-video runtime, thumbnails/delete and named media profiles remain open",
+    "Uninterruptible kernel I/O can delay shutdown while waiting for child reap"
+  ]
+}

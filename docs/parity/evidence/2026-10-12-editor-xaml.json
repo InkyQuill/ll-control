@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-12",
+  "classification": "Source-derived, not Windows runtime observation",
+  "baseline": "2.1.28.0 GA2LCD",
+  "assembly_sha256": "37a7e0bdf91f8c72a37bdc2b6a3613422a223c04ec779cb059d57171ba280782",
+  "xaml_root": "/home/inky/Development/lian-li/scratch/xaml-editor-2.1.28-2026-10-12",
+  "decompilation": {
+    "success": 6,
+    "failure": 0,
+    "original_baml_unchanged": true,
+    "tool": "existing Baml2Xaml / ICSharpCode.BamlDecompiler",
+    "tool_sha256": "3f3855e499c1d37293b14fec60e4b5c5fe24fe12a882509132cbbb979dd47046"
+  },
+  "controls": {
+    "imageedittool": {
+      "hueNumberTextBox": {
+        "MinValue": "0",
+        "MaxValue": "360",
+        "Value": "0"
+      },
+      "saturationNumberTextBox": {
+        "MinValue": "-25",
+        "MaxValue": "75",
+        "Value": "0"
+      },
+      "brightnessNumberTextBox": {
+        "MinValue": "-100",
+        "MaxValue": "100",
+        "Value": "0"
+      },
+      "contrastNumberTextBox": {
+        "MinValue": "-100",
+        "MaxValue": "100",
+        "Value": "0"
+      },
+      "sharpenNumberTextBox": {
+        "MinValue": "0",
+        "MaxValue": "10",
+        "Value": "0"
+      },
+      "blurNumberTextBox": {
+        "MinValue": "0",
+        "MaxValue": "10",
+        "Value": "0"
+      }
+    },
+    "videoedittool": {
+      "brightnessNumberTextBox": {
+        "MinValue": "0",
+        "MaxValue": "255",
+        "Value": "0"
+      },
+      "contrastNumberTextBox": {
+        "MinValue": "0",
+        "MaxValue": "255",
+        "Value": "0"
+      }
+    }
+  },
+  "xaml_sha256": {
+    "videoedittool.xaml": "9d9ef22b4b49fc4faa97bc884b7d4f7cf343e58591180bc0ded7c7ecb9e2beb3",
+    "screenrecordtool.xaml": "a57f44e6cd5bc57a8821be1c54a1aa6026775be3a5472e636defda499cacb08e",
+    "imageedittool.xaml": "382c7585bbf13cb4a468bac6cef02a32bd9eb5d989adba49a82e4681d7d5efef",
+    "screencapturetool.xaml": "0c1ed07d190417ee2aaa081a34a351d22cbf9ce7d796841fdc6cf946ca4d2f4a",
+    "videocuttool.xaml": "4d536a4ce47018b29879ed808bd2cec968b09cc95be46134151fea91f3adc6c0",
+    "imagecroptool.xaml": "67a1bf1b2f9c1c372208e8d331010bd79bb9fd98d462e6003d707f7def83d00a"
+  },
+  "baml_sha256": {
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/views/tools/videoedittool.baml": "f36b03c2ea4b7bf9d6de31c5aa65160efd6cb623f2c7c0c80489e445daa0c67c",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/views/tools/screenrecordtool.baml": "b9a04239e32b8aef0635a142c5dbeff3d21c60cd6a540ed77a4df3d08feed7e4",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/views/tools/imageedittool.baml": "50e8e1a4bf947272c881a860baadec91368ec2791ed7eda9e13b5420103a90ee",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/views/tools/screencapturetool.baml": "8e0bb2f98a8745a6652f1fa1d5f6c5d97b7792e9b10b5473b2287ddef3bc8f66",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/views/tools/videocuttool.baml": "754d859cc0a60cefca0ac8aae4f338509ea1a5d40ba3d026737d13e9825ccd5f",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/views/tools/imagecroptool.baml": "3c4577562cbd4ae994203446927798467f869c30a887119dbbc3d5247f41456a"
+  },
+  "limits": [
+    "Telerik pixel algorithms not yet validated",
+    "NumberTextBox coercion and rounding not yet inspected",
+    "Video values are not image values; no shared filter ranges inferred"
+  ]
+}

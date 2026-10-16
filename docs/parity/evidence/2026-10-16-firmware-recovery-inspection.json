@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Moscow",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Saved firmware operation recovery inspection, strict global Unix IPC and CLI. Private-file/MockBackend only. No HID query, real device, production daemon launch, native GUI, host D-Bus, replay, flash or quarantine resolution.",
+  "implementation": [
+    "Typed saved states: no_saved_operation, journal_only, guarded, guard_only, inconsistent, unreadable. Reconstruct saved operation/stage/target/image/progress and guards from original journal/device TOML; no new persistent format.",
+    "Shared state mutex acquired via separate readonly_access: pending profile/settings transaction refuses inspection without redo. No directory creation or repair. Journal raw snapshots compared before/after device guard scan; schema/no-follow file checks and existing file bounds retained. Device directory capped at256entries.",
+    "get_firmware_recovery accepts exactly an empty JSON object, has no DeviceId/external-path/action parameters and remains available with closed ordinary admission. Two separate semaphore permits are held by actual blocking readers if caller is lost.",
+    "lconnectctl [--json] firmware-recovery connects once without resolving a device. Human output is English and labels the result as saved artifacts, not live status, success or retry permission.",
+    "No write token reconstruction, automatic retry, probe, restore, guard clearing or replay. Saved inspection can coexist with live job; absence of journal before arm is not evidence that no job exists."
+  ],
+  "checks": {
+    "workspace": {
+      "passed": 1204,
+      "failed": 0,
+      "ignored": 7,
+      "groups": 162
+    },
+    "new_normal_tests": 6,
+    "daemon_private_file_tests": 5,
+    "real_cli_unix_ipc_test": 1,
+    "fmt": "passed",
+    "strict_workspace_all_targets_clippy": "passed",
+    "strict_native_smoke_custom_protocol_all_targets_clippy": "passed",
+    "warnings_denied_workspace_rustdoc": "passed",
+    "frozen_rust_manifest_files_unchanged": 386,
+    "hardware": "not run; user deferred",
+    "native_gui": "not run; no frontend/native app source change",
+    "external_pinned_transfer_fixture": "not rerun; no transfer protocol/actor changes in this checkpoint"
+  },
+  "coverage": [
+    "Missing store produces no_saved_operation without creating files.",
+    "All five saved stages survive reopening the store; raw journal/settings files unchanged. AwaitingReconnect preserves619echoes without success claim.",
+    "Missing journal ->guard_only; missing guarded settings/effects marker ->inconsistent; mismatched operation ID or extra guard ->inconsistent; markers not repaired or retargeted.",
+    "Corrupt/oversized/symlink journal, malformed settings, valid pending redo transaction and excessive directory entries ->unreadable, preserving original artifacts.",
+    "Real CLI ->private Unix socket ->IpcServerImpl works with zero devices and sealed admission while ordinary list_devices is refused. JSON status equals direct RPC; English output explains verification/saved-only limitations.",
+    "RPC rejects device/path/clear fields and arrays. Initial regression exposed serde accepting an empty array as a zero-field struct; endpoint now explicitly requires empty JSON object.",
+    "Journal loss remains visible through the same global RPC; original settings guard persists and ordinary admission count stayszero."
+  ],
+  "limits": [
+    "Saved reconstruction does not resume a pre-crash worker or prove old actor teardown/fresh reset.",
+    "No product live-status/Tauri EN/RU recovery UI or Apply/probe/clear endpoint yet.",
+    "Owned reconnect probe integration, qualified resolution/restoration and serial-less/missed reset/restart policy remain.",
+    "Extended lifecycle/power/blocked-I/O fault/deadline matrix and hardware image/revision/cooling qualification remain."
+  ],
+  "logs": {
+    "workspace": "/tmp/lconnect-recovery-workspace.log",
+    "targeted": "/tmp/lconnect-recovery-targeted.log",
+    "cli": "/tmp/lconnect-recovery-cli.log",
+    "fmt": "/tmp/lconnect-recovery-fmt.log",
+    "clippy": "/tmp/lconnect-recovery-clippy.log",
+    "native-clippy": "/tmp/lconnect-recovery-native-clippy.log",
+    "doc": "/tmp/lconnect-recovery-doc.log"
+  },
+  "log_sha256": {
+    "workspace": "9ab5584cfd5358177daf3e41ff045df121639f91f636db58a92ff82762569ece",
+    "targeted": "1c5673a66f79a14f1812d23e92e5e4d6e9be694ddfff7d946d1e618497c3bf82",
+    "cli": "18f2169780dc6172958b6d7df379c171d307201ad947425b9f8ffd763a10fa26",
+    "fmt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clippy": "3082d29229be471194c0b4c7067318993718ce42183414a2f268aeb6f0ca554c",
+    "native-clippy": "eb85268dec6d25896df803f9efbd34c6c0d0ae0c3cf64a716e56a0bd6c580584",
+    "doc": "fbc69fae757f3a7963160b6809c2d098234c6201a725f43e2f05614610774ff4"
+  },
+  "changed_source_sha256": {
+    "crates/lconnect-ipc/src/firmware_recovery.rs": "6162b5eead03fee0cc13de2355580481f261d6ff74905752b2745efeaf9716a8",
+    "crates/lconnect-ipc/src/lib.rs": "29d9403d4dd222ea3d7c730f41e49e2013615e8d2858d3583a4bca6022fc361f",
+    "crates/lconnect-ipc/src/trait_def.rs": "592a76a8e2a05192a6600fc9c5dae04db1b36df3c17e3417ad3cc9bb14073de3",
+    "crates/lconnect-ipc/src/server.rs": "58fbcf2fe33b9e1439e8d35e49674c2f5c416d5a6ac981de3c7d480ee704d47a",
+    "crates/lconnect-daemon/src/firmware_operation.rs": "8714761f40fa7479f7e52b83b3c58510a8a7cc00c0e99ec1a33d6aa4ff8a99dc",
+    "crates/lconnect-daemon/src/state_transaction.rs": "a1c4f2b373589a79aa32166f8bb50f4770502db486031fef057e4d5fc3ee7f8a",
+    "crates/lconnect-daemon/src/persistence.rs": "e4a7cbe0935fba3ee374472eb31bfe2da7ad2f67cc60770bad77965f0e5396da",
+    "crates/lconnect-daemon/src/ipc_server.rs": "77f82407798714fb7f28b34e14cd3d651590838b358bb1c4bca8886ffb6250ff",
+    "crates/lconnect-cli/src/main.rs": "d492658d87cb6d70c9b2f4db5be78c4cd418ed0f61526aa43b2f789cd45d5b29",
+    "crates/lconnect-cli/src/commands/devices.rs": "59b1e9239618635e45f777f4c68fd470ada80cb3b59bb27fa4c4a0b64e2e966f",
+    "crates/lconnect-daemon/tests/firmware_recovery.rs": "d8f1f7b7e7e213e061198b3a7ce60288df0486c1cd13f1f938b153bcb853be34",
+    "crates/lconnect-cli/tests/firmware_recovery.rs": "4f4c19a58e92aed218f7bb3b889a0a84df1eb388511154ab446b8e4d8da9281d"
+  },
+  "plans": {
+    "basic-parity.md": 5,
+    "2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "2026-09-09-m2-sensors-and-cooling.md": 6,
+    "deleted": []
+  }
+}

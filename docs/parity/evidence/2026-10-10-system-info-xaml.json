@@ -1,0 +1,160 @@
+{
+  "date": "2026-10-10",
+  "baseline": "Windows L-Connect3 2.1.28.0",
+  "classification": "Source-derived BAML\u2192XAML plus C# caller/visibility audit, not Windows runtime observation",
+  "reference_root": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08",
+  "xaml_root": "/home/inky/Development/lian-li/scratch/xaml-2.1.28-system-2026-10-10",
+  "assembly": "/home/inky/Development/lian-li/winver/L-Connect 3/L-Connect 3.exe",
+  "assembly_sha256": "2cdfa7ae3717dd773417cabb3338957f15ca29f5de46b5a77788b5e680cf4080",
+  "decompilation": {
+    "copied_baml": 448,
+    "success": 448,
+    "failure": 0,
+    "original_baml_unchanged": true,
+    "tool": "ICSharpCode.BamlDecompiler10.0.0.8330 via existing Baml2Xaml helper",
+    "tool_sha256": "3f3855e499c1d37293b14fec60e4b5c5fe24fe12a882509132cbbb979dd47046"
+  },
+  "sources": {
+    "views/pages/systeminfo/resourcepage": {
+      "baml_sha256": "2dde6e53f5d11c2e8812bf87a082603686d5e32048b37a2b419eba723c919edd",
+      "xaml_sha256": "48130a4f9033926b14df4029ff5854a0ec63506d214fdc9994274b371b3a7639"
+    },
+    "views/pages/systeminfo/mainpage": {
+      "baml_sha256": "8bbdda2926828dd17a9b31f580059c1c9a761d580009ea9194775a8be2b8e114",
+      "xaml_sha256": "a6aaae4da6a166b1e901839068436fb127ddb62af71b0ea649fee015d129c7da"
+    },
+    "views/pages/systeminfo/specpage": {
+      "baml_sha256": "6cf1c8c44a96b7aa9a8e36d33920a674dc29fc91484fae26c9b61e755894764d",
+      "xaml_sha256": "c53e410ae594bec87c51b8cf68282c6b69ccf02030494809c633242d386727a9"
+    },
+    "views/pages/settings/mainpage": {
+      "baml_sha256": "5ccee0807f842f5e9ce95c5c42e54dc2f632db14993f5611bc4c25a2ba990f37",
+      "xaml_sha256": "cbd88156f817b8fd604a1ee02b183fd1a0a31b6f365eeae6c466e21399fba233"
+    },
+    "views/pages/settings/sensorsettingpage": {
+      "baml_sha256": "2c3bf4abf0ff4b748f607aa61dfd72203f0808eae5c52d91fa33c2e703028988",
+      "xaml_sha256": "4532e5abeb2ec6778347cdd284c68582759ad2f13dfc472868df0e0357aa3882"
+    },
+    "themes/generic": {
+      "baml_sha256": "b60b3ca731127e42622ac638762ab6f59274c6437dab189cd610350e4d0d011a",
+      "xaml_sha256": "0a1238c2aec1214969d9adecbb6afa9b41ba58dfd3cabd5e3c669995370e8a3e"
+    },
+    "views/usercontrols/systemresource/cpuload": {
+      "baml_sha256": "b08d9f58e149f61bdf5921d78bfb788d44e901c2fefb462b1cecb4d394f42d2b",
+      "xaml_sha256": "cb5eba3b08192455ed6ec9ef0be407e95db55a3c837a080dd636e32d14f86fb7"
+    },
+    "views/usercontrols/systemresource/gpuload": {
+      "baml_sha256": "65ab3aae37c061aae211d1f15d2b29fea80a7fc4ae6152cdeb24a7a088210467",
+      "xaml_sha256": "bf1da3b3ed2b35f0e5bdc3f1fe04ba7e6e4d4887a03db0b31a7f272cbde76617"
+    },
+    "views/usercontrols/systemresource/ramload": {
+      "baml_sha256": "56e5abf054031ce3341b2c8a7566aeb3f4523ca8f851239be4bb93c86f3912fc",
+      "xaml_sha256": "3368cede414c265a887512764669e9d7b3daa52302ffac6052938da23cea513e"
+    },
+    "views/usercontrols/systemresource/cpuvoltagetile": {
+      "baml_sha256": "f9b356cbd4c5d587599ada6fda47b4de01dda7646d8206f11cd52ad23263b886",
+      "xaml_sha256": "f5b95c13c12ac51675ad0c4748a00a37b188448eecbeb094e2ecad71f795f2cc"
+    },
+    "views/usercontrols/systemresource/gpuvoltagetile": {
+      "baml_sha256": "5c12d30b33fe8964eca680eb83782b913765f73cb8b53c169871a4562199f077",
+      "xaml_sha256": "14fa7765b4992ae74b58dd6c1f24cd6b90b7796686611a744293b927d257257b"
+    },
+    "views/usercontrols/systemresource/cpupowertile": {
+      "baml_sha256": "5625857092274b9dec48af11833c65e6518bb1a1c5346508635e2480d37f2729",
+      "xaml_sha256": "6ae86ade95ba7d9b6097f624321ec5681aeba7dc9b45f66652a8da8161db8204"
+    },
+    "views/usercontrols/systemresource/gpupowertile": {
+      "baml_sha256": "5e83a260f034868df2fd974fd1769ac36021ae0bd93a2792c2c6b232131d30bc",
+      "xaml_sha256": "1e03abf182e1a3875c38034124e281c7fc81a3af1d2cc2cce9d3be862332e693"
+    },
+    "views/usercontrols/systemresource/network": {
+      "baml_sha256": "1ba78264530353321510c6c67ebe069118a43701e3b404bef1f6cec2c3f8861a",
+      "xaml_sha256": "892fe6f9de524f266787315dda5cb4491069b63675ad4d6c0cde89a8b3121419"
+    },
+    "LConnect3cs/Views/Pages/SystemInfo/ResourcePage.cs": {
+      "sha256": "1058884d92843a33c7444609717e2f0ac62c84e6cb88e4221eca37dd562561e0"
+    },
+    "LConnect3cs/Views/Pages/SystemInfo/ClockRateValueConverter.cs": {
+      "sha256": "95e81d72ec74c136667cad8f4a8ee66406e08f04ea57d8cb1cc9db776384eb70"
+    },
+    "LConnect3cs/Views/Pages/SystemInfo/DoubleValueToProgressValueConverter.cs": {
+      "sha256": "18ee81994c852070dd6da47abc0512d3c94401761ce87324c866b205f0918995"
+    },
+    "LConnect3cs/Views/Pages/Settings/MainPage.cs": {
+      "sha256": "7a60501f59b6e5efdb481d625beff68a8c250efbd7f2cdd311f8fff42a85a460"
+    },
+    "LConnect3cs/Views/Pages/Settings/SensorSettingPage.cs": {
+      "sha256": "b4faf1ddb398d5ad2547a76682da6f8ebaa3e54cb9590ae5c3df3ece6bea4ded"
+    },
+    "LConnect3cs/Views/UserControls/MainMenu.cs": {
+      "sha256": "9a714523475a811fafb9fd8851a1bcf23c646afb28abec71a52856b8d074fd9a"
+    },
+    "LConnect3cs/Views/CustomControls/TabItemRadioButton.cs": {
+      "sha256": "9152ebc5c68194454d6d2173134e020b508537e74e23631c1ae3b74091c1a750"
+    },
+    "LConnect3cs/Views/CustomControls/CustomTabItem.cs": {
+      "sha256": "7bddfbe953975ddf421681ba6c8edb061ad27a6bd878f93768f0ba1477b00ed3"
+    },
+    "LConnect3cs/Views/CustomControls/HWiNFOPresentMonToggleSwitch.cs": {
+      "sha256": "4f268dfa2f3c09e0b0476a9757d6ca606a25d4bf304559994c95ae03ca6ba83d"
+    },
+    "LConnect3cs/ValueConverters/SystemResources/VoltageValueConverter.cs": {
+      "sha256": "6cff7f54f45126eefd5b4eeb52d8ccf5d9cd734d4f1b37ee8db600c996c6afa9"
+    },
+    "LConnect3cs/ValueConverters/SystemResources/PowerValueConverter.cs": {
+      "sha256": "35d9e91a5e11acd52d3202e550d9111b20c1a716724e1e55cf36b2dfc64efd46"
+    },
+    "LConnect3cs/MainWindow.cs": {
+      "sha256": "eba747185f7032cfeb84fac7a7294fef66c769f6abcb0701c23960d7426d1b4c"
+    }
+  },
+  "resource_controls": [
+    "CPU load",
+    "CPU temperature",
+    "CPU clock",
+    "CPU power",
+    "CPU voltage",
+    "GPU load",
+    "GPU temperature",
+    "GPU clock",
+    "GPU power",
+    "GPU voltage",
+    "RAM load/used/total",
+    "Network upload/download",
+    "Storage used/total/percent"
+  ],
+  "settings_cpu_roles": [
+    "CPUTemperature",
+    "CPUClock",
+    "CPULoad",
+    "CPUPower",
+    "CPUFanSpeed",
+    "CPUVoltage"
+  ],
+  "settings_gpu_control": "One graphics card selector; no separate per-metric GPU pickers",
+  "excluded_from_resource_page": [
+    "CPU fan",
+    "GPU fan",
+    "VRAM",
+    "DriveTemperature",
+    "DriveUsage",
+    "FPS tile"
+  ],
+  "additional_systeminfo_controls": [
+    "FPS monitor toggle",
+    "Mini System Information toggle",
+    "Specs tab"
+  ],
+  "linux_remaining": [
+    "CPU fan provider and trusted CPU-fan mapping",
+    "CPU/NVIDIA/Intel voltage providers where reliable Linux ABI exists",
+    "Intel utilization semantics/xe and VRAM provider coverage",
+    "Mini/FPS/Spec remain full desktop scope"
+  ],
+  "limits": [
+    "Source visibility applies to audited Resource/Settings navigation and styles; no Windows GUI run",
+    "No claim every product-specific page lacks GPU fan/VRAM/drive controls",
+    "UI membership does not establish Linux ABI availability",
+    "Windows progress zero for missing reading is presentation fallback, not a valid sensor sample"
+  ]
+}

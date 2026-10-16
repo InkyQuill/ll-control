@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "NVIDIA current graphics/memory clock fixture parsing/query/cache/LCD text",
+  "workspace_tests": 497,
+  "failed": 0,
+  "ignored": 0,
+  "fmt": "passed",
+  "strict_clippy": "passed",
+  "docs": "passed",
+  "post_review_change": "Added exact f64 conversion-overflow boundary to existing regression; focused test and fmt passed, production unchanged",
+  "source": "https://docs.nvidia.com/deploy/nvidia-smi/index.html#clocks",
+  "logs": [
+    "/tmp/nvidia-clocks-review-fmt.log",
+    "/tmp/nvidia-clocks-review-clippy.log",
+    "/tmp/nvidia-clocks-review-test.log",
+    "/tmp/nvidia-clocks-review-doc.log",
+    "/tmp/nvidia-clocks-boundary.log"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/src/sensors/nvidia.rs": "e31aac525d8b0662d4b48165f0aa962f15e9598da74610516d085551ec900e84",
+    "crates/lconnect-daemon/src/sensors.rs": "3a2d0ea8c9bcc7b8418b17d20d8e4324c2446b801d1b00c42853ab82f93ff4d4"
+  }
+}

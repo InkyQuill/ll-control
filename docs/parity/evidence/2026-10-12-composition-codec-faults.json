@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-12",
+  "scope": "Composition codec fault propagation and cleanup regressions; test-only Rust change",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "source_sha256": {
+    "crates/lconnect-daemon/src/media_composition.rs": "3a6154662a56bcb0455904a248409051ad92c30d875a7c5d17a834fef876e688"
+  },
+  "verification": {
+    "focused_codec_tests": 8,
+    "fmt": "passed",
+    "strict_daemon_clippy_all_targets_all_features": "passed",
+    "review": "No remaining findings after isolating decoder EOF",
+    "hardware": "NOT RUN"
+  },
+  "cases": [
+    "Partial RGB frame then decoder stdout EOF while stdin remains open",
+    "Malformed encoder AUD prefix",
+    "Encoded AU exceeds byte budget",
+    "Encoder stdout closes unexpectedly",
+    "Real FFmpeg fills PREFETCH queue; Stop drains and joins without receiving frames; idempotent Stop"
+  ],
+  "assertions": [
+    "Fault surfaces before normal 10s receive timeout",
+    "Both scripted codec child PIDs absent after Stop",
+    "Preparation lease released",
+    "Source deletion succeeds after cleanup",
+    "Stopped worker rejects subsequent receive"
+  ],
+  "review_fix": "Keep scripted decoder stdin open after stdout EOF to avoid competing feeder BrokenPipe; final focused rerun passed",
+  "limitations": [
+    "Queue saturation does not prove a third send was deterministically blocked",
+    "No full IPC disconnect/reply-loss or every blocked IO barrier matrix",
+    "No playback CPU/RSS/latency qualification",
+    "No physical device access"
+  ],
+  "logs": [
+    "/tmp/composition-fault-tests-final.log",
+    "/tmp/composition-fault-clippy-final.log"
+  ]
+}

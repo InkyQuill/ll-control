@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-11",
+  "scope": "Browser external control updates preserve drafts and require explicit reload",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "production_changed": false,
+  "sha256": {
+    "desktop/tests/external-controls.spec.ts": "acd1125b02e8e8a8600d2f94007e1c41e78d3608f50e546f5f3b989ce5dc79f7",
+    "desktop/src/lib/Cooling.svelte": "547e86b92e597f6cc4771c5cd0945b53a8d24ec8601bfa8e8a471508d5c57241",
+    "desktop/src/lib/Lighting.svelte": "44146f413bfe49c0cf049dc657d5c3479d6e2d3435a7d77efef061a8999a847e",
+    "desktop/src/lib/DynamicRgb.svelte": "692436ec09ba04d5b2d63ab811347ba5bb9b6ab27d0f3505a1818eb113100677"
+  },
+  "verification": {
+    "command": "pnpm --dir desktop exec playwright test external-controls.spec.ts control-drafts.spec.ts dynamic-rgb-reconnect.spec.ts",
+    "tests_passed": 9,
+    "svelte_check": "0 errors, 0 warnings",
+    "rust_rerun": false,
+    "native_rerun": false
+  },
+  "assertions": [
+    "External cooling policy updates applied state without clobbering local PWM",
+    "External thermal rule updates current status without clobbering threshold",
+    "External dynamic config preserves thresholds until explicit load",
+    "External base mode change blocks incompatible draft Apply until reload",
+    "No set RPC from polling or explicit loading"
+  ],
+  "limits": [
+    "Browser mocked transport only",
+    "No claim of two-client transactional conflict resolution",
+    "Remaining display/settings external mutations and manual/thermal interrupted scenarios open"
+  ]
+}

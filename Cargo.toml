@@ -1,10 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
+    "desktop/src-tauri",
     "crates/lconnect-cli",
     "crates/lconnect-daemon",
     "crates/lconnect-hid",
     "crates/lconnect-image",
+    "crates/lconnect-intel-memory",
     "crates/lconnect-ipc",
     "crates/protocol",
     "tools/verify-galahad",

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-12",
+  "scope": "VideoEdit color controls and source preview, whole-video and gallery re-edit",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "behavior": [
+    "Independent color-correction toggle; contrast/brightness0..255 with sliders/numeric fields/reset",
+    "Invalid fields block preparation; controls locked during import/recording",
+    "Source-resolution f32 LUT before crop/resize, black padding unaffected",
+    "Effects-only whole video uses explicit prepared review before publication",
+    "Upload and gallery source commands receive admitted adjustments",
+    "Source preload auto provides first canvas frame; record pauses before capturing end timestamp"
+  ],
+  "verification": {
+    "frontend_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "browser_tests": 35,
+    "browser_log": "/tmp/video-effects-ui-browser-final.log",
+    "oracle": "All131072 installed SDK vectors and16 composed LUT tables match JavaScript implementation",
+    "review": "Svelte derived state for validation/LUT; effects restricted to external canvas/busy callback; native admission ownership unchanged",
+    "prior_attempt": "Earlier expanded run terminated SIGTERM; owned orphan Vite stopped and absence verified before edits. Final run exited0 with35pass.",
+    "logs": [
+      "/tmp/video-effects-ui-check.log",
+      "/tmp/video-effects-ui-build.log"
+    ]
+  },
+  "limitations": [
+    "Browser uses mocked Tauri commands; Rust effects pipeline verified in separate admission checkpoint",
+    "No native WebKitGTK or hardware run",
+    "Windows full pipeline/colorspace/scalar-tail and frame-selection semantics remain open",
+    "Large4096x4096 canvas CPU/RSS still requires qualification"
+  ],
+  "source_sha256": {
+    "desktop/src/lib/MediaImport.svelte": "52823ca80dbe4813d40bf541118b73e56e2266f0329c4e9ff5a62aba9c6de4c0",
+    "desktop/src/lib/VideoSourcePreview.svelte": "18f6dac05cef932cf9cd1a9351f2c47a8bbca53e5514bffd5a6f2959760ef7b2",
+    "desktop/src/lib/video-adjustments.ts": "7b2021b5264ae3b2b1b93462988d5a8d1488c10a4d0397cd707838331706ec0b",
+    "desktop/tests/media-import.spec.ts": "088ee18deba061103c78f496a762c9bc70a646af444fe06235455b5faf6693fb",
+    "desktop/tests/video-adjustments.spec.ts": "2647639e05052554d36ca8afd04c1c2c26d79235d34547aceb5547b00caf61f4"
+  }
+}

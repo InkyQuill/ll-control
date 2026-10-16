@@ -35,13 +35,15 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
+use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
 use tokio::net::UnixStream;
 use tokio::sync::{mpsc, oneshot, Mutex};
 
 /// JSON-RPC client connected to the daemon over a Unix socket.
 pub struct IpcClient {
     next_id: AtomicU64,
+    reader_task: tokio::task::JoinHandle<()>,
+    writer_task: tokio::task::JoinHandle<()>,
     tx: mpsc::Sender<ClientMsg>,
     /// The `hello` notification the server pushed on connect (carries
     /// version + capability info). Exposed so callers can sanity-check
@@ -60,6 +62,7 @@ enum ClientMsg {
         method: String,
         sink: mpsc::Sender<Notification>,
     },
+    ReaderClosed,
 }
 
 impl IpcClient {
@@ -96,10 +99,13 @@ impl IpcClient {
         // Read the hello line synchronously before spawning the reader
         // task — the caller gets back a fully usable client.
         let mut hello_line = String::new();
-        let n = reader
-            .read_line(&mut hello_line)
-            .await
-            .map_err(|e| IpcError::Transport(e.to_string()))?;
+        let n = crate::framing::read_bounded_line(
+            &mut reader,
+            &mut hello_line,
+            crate::framing::MAX_JSON_RPC_LINE_BYTES,
+        )
+        .await
+        .map_err(|e| IpcError::Transport(e.to_string()))?;
         if n == 0 {
             return Err(IpcError::Transport("connection closed before hello".into()));
         }
@@ -111,16 +117,24 @@ impl IpcClient {
             Arc::new(Mutex::new(HashMap::new()));
         let subs: Arc<Mutex<HashMap<String, Vec<mpsc::Sender<Notification>>>>> =
             Arc::new(Mutex::new(HashMap::new()));
+        let (tx, mut rx) = mpsc::channel::<ClientMsg>(64);
 
         // Reader task: distribute responses (by id) and notifications
         // (by method) to their respective consumers.
         let pending_r = pending.clone();
         let subs_r = subs.clone();
-        tokio::spawn(async move {
+        let tx_r = tx.clone();
+        let reader_task = tokio::spawn(async move {
             let mut line = String::new();
             loop {
                 line.clear();
-                match reader.read_line(&mut line).await {
+                match crate::framing::read_bounded_line(
+                    &mut reader,
+                    &mut line,
+                    crate::framing::MAX_JSON_RPC_LINE_BYTES,
+                )
+                .await
+                {
                     Ok(0) => break, // EOF
                     Ok(_) => {}
                     Err(e) => {
@@ -167,7 +181,8 @@ impl IpcClient {
                         }
                     }
                 } else {
-                    // Response path.
+                    // Keep the id so malformed envelopes fail their caller promptly.
+                    let response_id = raw.get("id").and_then(Value::as_u64);
                     match serde_json::from_value::<Response>(raw) {
                         Ok(resp) => {
                             if let Some(id_val) = resp.id.as_ref().and_then(Value::as_u64) {
@@ -179,21 +194,23 @@ impl IpcClient {
                         }
                         Err(e) => {
                             tracing::debug!("ipc client response decode failed: {e}");
+                            if let Some(id) = response_id {
+                                pending_r.lock().await.remove(&id);
+                            }
                         }
                     }
                 }
             }
-            // Connection closed: fail any in-flight calls so they don't
-            // hang on `reply_rx.await`.
-            let mut pending = pending_r.lock().await;
-            pending.clear();
+            // Tell the writer to stop accepting work and drop every pending
+            // reply sender. This also covers calls queued concurrently with
+            // the reader failure.
+            let _ = tx_r.send(ClientMsg::ReaderClosed).await;
         });
 
         // Writer / dispatch task.
-        let (tx, mut rx) = mpsc::channel::<ClientMsg>(64);
         let pending_w = pending.clone();
         let subs_w = subs.clone();
-        tokio::spawn(async move {
+        let writer_task = tokio::spawn(async move {
             while let Some(msg) = rx.recv().await {
                 match msg {
                     ClientMsg::Call { id, line, reply } => {
@@ -202,14 +219,16 @@ impl IpcClient {
                         pending_w.lock().await.insert(id, reply);
                         if let Err(e) = write_half.write_all(line.as_bytes()).await {
                             tracing::error!("ipc client write failed: {e}");
-                            // Drop the pending entry so reply_rx.await
-                            // returns an error promptly.
-                            pending_w.lock().await.remove(&id);
+                            pending_w.lock().await.clear();
                             break;
                         }
                     }
                     ClientMsg::Subscribe { method, sink } => {
                         subs_w.lock().await.entry(method).or_default().push(sink);
+                    }
+                    ClientMsg::ReaderClosed => {
+                        pending_w.lock().await.clear();
+                        break;
                     }
                 }
             }
@@ -217,6 +236,8 @@ impl IpcClient {
 
         Ok(IpcClient {
             next_id: AtomicU64::new(1),
+            reader_task,
+            writer_task,
             tx,
             hello,
         })
@@ -277,6 +298,16 @@ impl IpcClient {
             })
             .await;
         rx
+    }
+}
+
+impl Drop for IpcClient {
+    fn drop(&mut self) {
+        // Reader retains a sender to notify writer on EOF, so dropping tx alone
+        // cannot close the connection. Abort both owners, including a reader
+        // blocked on a full notification queue. Accepted server work is separate.
+        self.reader_task.abort();
+        self.writer_task.abort();
     }
 }
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "L-Connect Implementation"
+  short_description: "Implement and verify scoped L-Connect changes"
+  default_prompt: "Use $lconnect-implement to complete the requested change against the current roadmap and verify the affected behavior."

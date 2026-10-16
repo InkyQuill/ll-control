@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "ASUS EC source-confirmed CPU core voltage, source candidates and LCD consumer",
+  "verification": {
+    "focused_host_sensor_tests": 25,
+    "rust_all_target_tests": 566,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No findings",
+    "gui_native_rerun": false
+  },
+  "sha256": {
+    "crates/lconnect-daemon/src/sensors.rs": "c7c00dfa1d7efb31cf4c0cd8e6b89918ecb443240b1dc21a973d9ed1ddc36814",
+    "crates/lconnect-daemon/src/sensor_selection.rs": "eb5c5efb7624edcd464e39866c3604887295e7f524e0de2f25e8b37fccc03a82",
+    "crates/lconnect-daemon/tests/host_sensors.rs": "d67153f48503b6357a450f86745bc99445b0e012425eac75791416dfe771d148"
+  },
+  "source": {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.17/drivers/hwmon/asus-ec-sensors.c",
+    "sha256": "a72adc33c5d3f4e6db52b814b724401fcd3bd6eb4e7c39216e598a00aa3dde69",
+    "symbols": [
+      "ec_sensor_in_cpu_core",
+      "find_ec_sensor_index",
+      "scale_sensor_value",
+      "asus_ec_probe"
+    ]
+  },
+  "assertions": [
+    "Only asusec in0, mV to Volts; CPU role has no GPU membership",
+    "Recommendation and manual selection validate CPU role",
+    "Physical identity survives hwmon renumber and label change",
+    "Missing source is removed, unchanged binding retained but new unavailable binding rejected; same ID recovers",
+    "Zero valid, disabled unavailable, malformed/negative invalid, stale revoked",
+    "Published fixture values traverse cached RPC and LCD text/JPEG preview"
+  ],
+  "limits": [
+    "No live driver or physical accuracy/latency measurement",
+    "Other motherboard voltage and board-specific scaling remain open",
+    "No new GUI/native run; existing generic source editor receives typed candidates"
+  ]
+}

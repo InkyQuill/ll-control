@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Per-device serialized FanAndLighting coordinator connected to actor tree; durable commit/receipt before both silent installs and first Apply. Explicit reapply and transfer IPC/CLI/GUI remain pending.",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/actor/control_group.rs": "b3739912715304003c57b28dc6a9f74c09b7028249b9827260ffa92718a01106",
+    "crates/lconnect-daemon/src/actor/mod.rs": "2fceb0c67528d832db372c31e53e766c8de7930a888e83b8c4444bc319068e5b",
+    "crates/lconnect-daemon/src/actor/group_barrier.rs": "eb358ca5c876c38618332e873aa67cdae186d6ca15fc0dbced27901f42323ed9",
+    "crates/lconnect-daemon/src/actor/cooling.rs": "5df9f973f2c9472b29b68072afd5e40d5107d91b127d17f2fba1fd9cf7d02877",
+    "crates/lconnect-daemon/src/actor/lighting_keeper.rs": "f018db209a5abdcabf1ee379f799ea6cf8e4928dbe0ae5993bfeeee7263c7842",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "5d9d1898df9e73930b53da253c856ddc4b5014933ea21ff7d64dd684ca6fdc5e",
+    "crates/lconnect-daemon/tests/control_group_commit.rs": "0539122e60c96cad2f021047f705906714908b56007fabed73aa2536a4f25b76"
+  },
+  "contract": {
+    "order": "Both freeze ACKs -> owner receipt admission -> both preflight ACKs -> sealed durable owner commit -> both install ACKs -> both Apply responses -> release. Settings owner outlives coordinator teardown. No settings deltas produced by install/Apply.",
+    "idempotency": "Repeated operation ID verifies kind/original source SHA/original expected revision and returns receipt/current state without import/Apply. Later manual/RGB edits remain intact. Stale CAS known rejection releases previous runtime; reuse of committed ID with different expected parameters rejected.",
+    "outcome": "Storage acknowledgement separated from runtime errors. Known HID failures preserve committed desired intent and per-channel/zone errors; release permits new corrections. Lost client reply does not cancel accepted operation. Lost owner reply/RecoveryRequired/partial install admission ambiguity seals both actors and blocks coordinator mutations until whole device-tree/daemon recovery/restart.",
+    "shutdown": "Before commit no import. Accepted owner commit joined even if caller disappears/shutdown arrives; observed shutdown after receipt defers Apply. Queued imports drained with errors, no second receipt.",
+    "limits": "No public group transfer IPC/CLI/GUI or explicit reapply yet. Extended partial install, lifecycle/contended/cancel, restart qualification and legacy manual0 semantics remain open."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 1012,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-control-group-workspace.log",
+      "exit_code": 0
+    },
+    "strict_clippy": {
+      "log": "/tmp/lconnect-control-group-clippy.log",
+      "exit_code": 0,
+      "flags": "--all-targets -- -D warnings",
+      "packages": [
+        "lconnect-daemon",
+        "lconnect-image",
+        "lconnect-ipc",
+        "lconnect-cli",
+        "lconnect-protocol"
+      ]
+    },
+    "strict_rustdoc": {
+      "log": "/tmp/lconnect-control-group-doc.log",
+      "exit_code": 0,
+      "flags": "RUSTDOCFLAGS=-D warnings; --no-deps"
+    },
+    "fmt": {
+      "log": "/tmp/lconnect-control-group-fmt.log",
+      "exit_code": 0
+    },
+    "regression": {
+      "log": "/tmp/lconnect-control-group-regression.log",
+      "passed": 9,
+      "source": "crates/lconnect-daemon/tests/control_group_commit.rs",
+      "tests": [
+        "group_commit_receipt_precedes_every_apply_preserves_neighbors_and_full_profile_slots",
+        "lost_commit_reply_completes_and_duplicate_never_overwrites_newer_manual_intent",
+        "preflight_rejects_incompatible_retained_global_alert_without_commit_or_output_and_releases_actors",
+        "apply_failure_is_distinct_from_committed_receipt_and_new_commands_can_reconcile_known_intent",
+        "unknown_storage_outcome_blocks_both_actors_and_stops_old_settings_flush",
+        "first_apply_waits_for_both_install_acknowledgements_after_durable_receipt",
+        "lost_owner_commit_acknowledgement_keeps_both_frozen_without_apply_or_old_flush",
+        "stale_target_rejection_resumes_previous_runtime_and_allows_retry_with_fresh_revision",
+        "shutdown_after_commit_defers_apply_and_drains_queued_import_without_second_receipt"
+      ],
+      "coverage": "Actual group codec, settings owner/durable stores and sole cooling/RGB actors; private fake HID. All4 initial config writes observe stored receipt. Held RGB install ACK proves zero Apply beforehand. Client reply drop still finishes. Lost real-owner commit ACK leaves durable65/73 and receipt while both actors reject setters and no Apply; shutdown flush retains committed snapshot. Corrupt journal remains untouched and original device.toml bytes unchanged after teardown. Later manual42/green preserved on duplicate, stale CAS resumes old44 then fresh retry65; changed parameters rejected. Global thermal/neighbor LCD81/sparse Fan2 and Pump1 slots preserved. HID errors return independently of durable success. Shutdown after owner commit with queued import yields one receipt/revision and zero writes."
+    },
+    "plans": {
+      "basic-parity.md": 5,
+      "M1": 5,
+      "M2": 6,
+      "deleted": "none: all active plans still contain open requirements"
+    },
+    "native_gui": "NOT RUN: no frontend changes",
+    "hardware": "NOT RUN: user explicitly deferred; private fake HID and temp stores only"
+  },
+  "remaining": [
+    "Explicit FanAndLighting reapply from current receipt with runtime intent/generation guard",
+    "Extended partial install/reconciliation, sleep/detach/restart/contended/cancel/fault matrix",
+    "Group transfer IPC/CLI/GUI and Windows archive mapping",
+    "Legacy unset versus explicit manual PWM0, full fan+lighting reset, desktop/platform/packaging/checklist items",
+    "Additional LCD effects and Style Express last; hardware acceptance deferred"
+  ]
+}

@@ -1,3 +1,5 @@
+> Historical design reference. Current scope/order: [roadmap](../../../roadmap.md); current execution: [plan index](../plans/README.md). Older phase status and architecture must be reconciled with the M1/M2 daemon contracts before implementation.
+
 # Phase 1 — Daemon design
 
 - **Status:** approved (brainstorming complete) — ready for Phase 0e + Phase 1 plans

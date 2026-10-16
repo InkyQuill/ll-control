@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Full screen/fan+lighting group storage snapshots and shared-journal atomic restore foundation; no group archive transport/runtime workflow yet",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/profile_group.rs": "8ced38246291fa5579e54ef0e6963f2bd2616bee8691c4822c60ea45bf47baed",
+    "crates/lconnect-daemon/src/persistence.rs": "5b49cd5a20ab48b0eb3e9006ff7bd417213f63caa0f6f6aec93de0bf9bfa10e2",
+    "crates/lconnect-daemon/src/state_transaction.rs": "3e93cc4b1224cb0aa405ea32d0161051084d0f160af5a52eb3b56fb6a77f82d0",
+    "crates/lconnect-daemon/src/lib.rs": "c3c6af52e6ff27e4a1b6ed3b73b398db43b15be604c8fd7aabb85153b93fbe45",
+    "crates/lconnect-daemon/tests/profile_group.rs": "9c526d7b538de7ad7786de1f53841b709b14393dc11d197d52ba091d033f8b97"
+  },
+  "reference": {
+    "root": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs",
+    "files_sha256": {
+      "Utils/ProfileManager.cs": "3abb68a93b855011e8fe20ad2707d652874a078aa2138d35b3b520c0ed1dd381",
+      "Products/Galahad2Vision/Galahad2VisionController.cs": "9fdeaa5f184f0d9b7da3f373981a3a3585b4658327b023aef1604533fb3753be",
+      "Products/Galahad2Vision/Galahad2VisionProfile.cs": "21a2c714f528cd3dca70972d0b99db7e6714244d3d9ef0cbb6633b8a84c83efe"
+    },
+    "source_findings": [
+      "Windows exports ZIP backup metadata plus serialized complete controller profile; imports selected group rather than one named slot.",
+      "Screen import owns active config/brightness/rotation, eight slots and three galleries; WMSQ export includes all uploaded files.",
+      "FanAndLighting import owns Fan/Pump settings, topology/sync, selected modes and all RGB mode profiles; applies four requests and attempts rollback on save failure.",
+      "Controller import matches TypeID in this loop, not device Metadata path. Linux target must be explicit."
+    ]
+  },
+  "contract": {
+    "content": "Version1 typed Screen/FanAndLighting snapshots; exact slot indices and sensor IDs; active/cached scene, collections, inactive manual/dynamic mode registry. No source identity or receipts.",
+    "concurrency": "Target-side SHA256 snapshot and profile-library revision; direct latest-owner snapshot simulates queued deltas. No production SettingsUpdate/IPC caller connected yet.",
+    "restore": "Replaces only selected group and its slots; preserves other group/global thermal; target collection revision increments; screen reset receipt cleared; shared two-file journal handles recovery.",
+    "assets": "Primitive does not copy or prepare assets; future caller must validate/stage/pin them before publication. Legacy gallery materialization required before replacing versioned collections.",
+    "recovery": "No durable group-import ID receipt yet. Post-journal errors require recovery/readback; stale target token cannot blindly repeat import."
+  },
+  "checks": {
+    "daemon": {
+      "passed": 434,
+      "failed": 0,
+      "ignored": 1,
+      "log": "/tmp/lconnect-profile-group-daemon-current.log"
+    },
+    "strict_clippy": "/tmp/lconnect-profile-group-clippy-final.log",
+    "rustdoc": "/tmp/lconnect-profile-group-doc-current.log",
+    "fmt": "/tmp/lconnect-profile-group-fmt-current.log",
+    "group_storage_tests": {
+      "count": 6,
+      "source": "crates/lconnect-daemon/tests/profile_group.rs",
+      "coverage": [
+        "Screen roundtrip into another store replaces sparse slots and retains cooling/lighting/global thermal; restart reads exact state.",
+        "FanAndLighting roundtrip includes both slot groups, inactive Meteor mode, dynamic source/unit registry and exact sensor bindings; screen remains intact.",
+        "Queued same-group changes and global library changes reject stale tokens; queued neighbor changes survive.",
+        "Unknown version/fields, foreign/duplicate slots, unsafe LCD modes, invalid cooling, corrupt target reject without partial publication.",
+        "Legacy collections require materialization before replacing versioned catalog; Screen restore clears old reset receipt."
+      ]
+    },
+    "journal_fault_test": {
+      "source": "crates/lconnect-daemon/src/state_transaction.rs",
+      "name": "profile_group_import_recovers_whole_group_at_each_journal_boundary",
+      "cases": 6,
+      "coverage": "Both groups at journal/device/profiles publication failures; fresh store recovers exact settings+library and preserves neighboring group."
+    },
+    "gui_native": "NOT RUN: frontend untouched, group RPC/GUI not implemented",
+    "hardware": "NOT RUN: user deferred; file-backed storage only"
+  },
+  "remaining": [
+    "Group archive codec and active/cached/slot/gallery/legacy payloads with typed remap and pins",
+    "Owner message integration, durable group import receipt/readback, runtime preparation and reconciliation",
+    "Group Unix IPC/CLI/native GUI and browser/native fault/accessibility acceptance",
+    "Windows ZIP decoding/profile mapping and interoperability",
+    "Hardware acceptance deferred; additional LCD effects/Style Express remain last"
+  ]
+}

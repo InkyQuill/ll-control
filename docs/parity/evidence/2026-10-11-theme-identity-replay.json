@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-11",
+  "scope": "Serial-bound theme persistence and live mock reattachment",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "source": {
+    "crates/lconnect-daemon/tests/manager_lifecycle.rs": "133aa4994478cdd12d8a10861f7139f72fd9421883f82555ef6a6e0fc595e519"
+  },
+  "scenario": "Apply original theme with sensor binding; joined detach; different serial at same path stays Idle with no new JPEG; distinct replacement theme saved; original serial at new path replays exact original theme and full JPEG batch; both durable themes preserved",
+  "initial_failure": "Test counted old MockBackend packets retained by path. Corrected observation baseline after joined teardown; no production fix required.",
+  "focused_tests": {
+    "passed": 5,
+    "failed": 0
+  },
+  "verification": {
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "tests": {
+      "passed": 602,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "pass",
+    "review_findings": []
+  },
+  "logs": {
+    "fmt": {
+      "path": "/tmp/serial-reconnect-review-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clippy": {
+      "path": "/tmp/serial-reconnect-review-clippy.log",
+      "sha256": "478297b8b63c61e80a89e3f1ffb51a2e8e0f2c6d9db8b4f92887bf0475406035"
+    },
+    "test": {
+      "path": "/tmp/serial-reconnect-review-test.log",
+      "sha256": "b200db24d915ff79f71f32a630298345f15655c82991ea9cfc0213c2305368f9"
+    },
+    "doc": {
+      "path": "/tmp/serial-reconnect-review-doc.log",
+      "sha256": "c84112d96b7ba085ad92ed3b80c7bf62d4b1a75ce9805c30ae3f391a122ac97d"
+    }
+  },
+  "hardware_run": false,
+  "limitations": [
+    "Synthetic HID and temporary persistence only",
+    "No claim of physical serial uniqueness, sensor accuracy, USB resync or reconnect acceptance"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Native profile save commit with dropped reply and explicit recovery",
+  "native_evidence": "/tmp/lconnect-native-1p2f4wps/acceptance.json",
+  "verification": {
+    "python_compile": "passed",
+    "javascript_syntax": "passed",
+    "native_build": "passed",
+    "native_smoke": "passed",
+    "production_code_changed": false,
+    "rust_suite_rerun": false
+  },
+  "profile_reply_proxy": {
+    "requests": 1,
+    "dropped_responses": 1
+  },
+  "sha256": {
+    "desktop/scripts/native-fault-proxy.py": "9fb40ff71a1362b6679dde6ce905b6bb0a076c18fc6ed9aeb5cf13e1c81730ab",
+    "desktop/scripts/native-smoke.py": "811d5875b81305f3e65e38ef6b19dd77db5dfc7d661d20e29a1f9b9d092f8c8a",
+    "desktop/scripts/native-smoke.js": "f027b927337f77fea36add31e71382e64c976bd5e6d807f97ef40802f4979648"
+  },
+  "assertions": [
+    "Proxy drops only successful edit_profile save reply, after daemon commit",
+    "Exactly one target request and one dropped response; library revision increases once",
+    "Saved full theme matches submitted snapshot, not subsequent draft edits",
+    "GUI reports error, never false success; active LCD theme unchanged",
+    "Explicit library refresh preserves both drafts and does not replay write",
+    "Explicit load recovers saved snapshot; explicit save restores original complete theme",
+    "Full native restart and GUI-close persistence regression still passes"
+  ],
+  "limits": [
+    "MockBackend only; no HID or host sensor execution",
+    "Only screen save reply after successful commit injected; rename/delete/reset and interruption before commit remain",
+    "No production implementation changed; existing profile behavior passed"
+  ]
+}

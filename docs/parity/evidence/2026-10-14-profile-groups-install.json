@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Prepared, silent installed, and explicit applied FanAndLighting runtime stages within sole cooling/RGB actors. Durable coordinator/receipt/reapply and user-facing transport not connected yet.",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/actor/group_barrier.rs": "eb358ca5c876c38618332e873aa67cdae186d6ca15fc0dbced27901f42323ed9",
+    "crates/lconnect-daemon/src/actor/mod.rs": "d9af62fd7a6a5484c49fa8508d520930bf1c0c769a46a07739c99a317c2c3745",
+    "crates/lconnect-daemon/src/actor/cooling.rs": "5df9f973f2c9472b29b68072afd5e40d5107d91b127d17f2fba1fd9cf7d02877",
+    "crates/lconnect-daemon/src/actor/lighting_keeper.rs": "f018db209a5abdcabf1ee379f799ea6cf8e4928dbe0ae5993bfeeee7263c7842",
+    "crates/lconnect-daemon/src/actor/thermal.rs": "c03c7deb8b43280a4c8d73191f0e9fa48c18b20846cec4821ec04fd6086fd0ba",
+    "crates/lconnect-daemon/src/profile_group.rs": "b0957e32d977afc977ede2bd172c16ab84a3dea05e0c6f2dc5dbe96d9a5c60d7",
+    "crates/lconnect-daemon/tests/control_group_barrier.rs": "72b949a46e216eec11c3fedf062cfd37873c7b1eae4f8eb7b6aee5719aeba1dc"
+  },
+  "reference": {
+    "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionController.cs",
+    "sha256": "9fdeaa5f184f0d9b7da3f373981a3a3585b4658327b023aef1604533fb3753be",
+    "lines": [
+      "214-231 replace only fan/pump/lighting fields, then requests/save/rollback",
+      "269-275 fan PWM, fan RGB, pump PWM, pump RGB requests"
+    ]
+  },
+  "contract": {
+    "prepare": "Validate full typed group, known matching sensor units, prospective RGB bases, inactive modes and Dynamic registry against retained global thermal. Missing sensors allowed with existing fallback/degraded behavior. No active mutation/HID/settings. Failed new preparation invalidates old candidate.",
+    "ownership": "Prepare/install/apply require current held ticket. Candidate bound to same token; stale/foreign/released tickets cannot install/apply. An installed transaction cannot restage different content under the same ticket.",
+    "install": "Silent desired-state installation: no HID/settings deltas. Reset applied claims and cooling anchors for new policies; retain global thermal configuration, warning history and existing grace. Coordinator must durable-commit and install both actors before invoking apply. Actor APIs do not themselves prove a receipt.",
+    "apply": "Reuse existing PWM/RPM/manual motherboard, thermal/base/dynamic RGB packet paths. Remain frozen until coordinator release. State exposes per-channel/zone write failures while desired intent remains installed; explicit retry needs no new settings deltas/install/revision.",
+    "legacy_manual_zero": "Zero manual PWM retains existing attach-replay unset semantics and is skipped. Distinguishing legacy unset from explicit manual0 remains an open parity/checklist item; Fixed0 policy is a different path."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 1003,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-group-install-workspace.log",
+      "exit_code": 0
+    },
+    "strict_clippy": {
+      "log": "/tmp/lconnect-group-install-clippy.log",
+      "exit_code": 0,
+      "flags": "--all-targets -- -D warnings",
+      "packages": [
+        "lconnect-daemon",
+        "lconnect-image",
+        "lconnect-ipc",
+        "lconnect-cli",
+        "lconnect-protocol"
+      ]
+    },
+    "strict_rustdoc": {
+      "log": "/tmp/lconnect-group-install-doc.log",
+      "exit_code": 0,
+      "flags": "RUSTDOCFLAGS=-D warnings; --no-deps"
+    },
+    "fmt": {
+      "log": "/tmp/lconnect-group-install-fmt.log",
+      "exit_code": 0
+    },
+    "regression": {
+      "log": "/tmp/lconnect-group-install-regression.log",
+      "passed": 7,
+      "new_tests": [
+        "staged_group_install_is_silent_and_apply_keeps_dynamic_sensor_policy_inactive_modes_and_manual_source",
+        "group_preflight_rejects_wrong_units_and_stale_owners_before_install_or_output",
+        "group_apply_errors_preserve_installed_intent_and_retry_without_new_settings_or_install",
+        "group_replacement_retains_global_thermal_history_on_missing_samples_and_checks_new_bases"
+      ],
+      "coverage": "Real cooling/lighting actors with private synthetic cache, fake HID ACK/error and settings queue. No output/state mutation in prepare; no HID on install; actual apply state manual motherboard73, curve40->80, Dynamic40->80, inactive breathing RGB profile. Wrong units, failed retry invalidation and stale/foreign owner cannot install/output. HID errors retain requested intent and retry without deltas. Retained global CPU alert survives missing data after replacement; cooling falls back100 and Dynamic remains suppressed."
+    },
+    "native_gui": "NOT RUN: no frontend changes",
+    "hardware": "NOT RUN: user deferred; private queues/caches only"
+  },
+  "remaining": [
+    "Connect both actors through a durable coordinator/receipt commit/reapply with no late deltas",
+    "Ambiguous storage outcome and partial install/apply recovery; shutdown/sleep/detach/contended/cancel matrix",
+    "Legacy unset versus explicit manual PWM0 persistence/restart/group import",
+    "Group transfer IPC/CLI/GUI and Windows archive mapping",
+    "Physical acceptance deferred; additional LCD effects/Style Express last"
+  ]
+}

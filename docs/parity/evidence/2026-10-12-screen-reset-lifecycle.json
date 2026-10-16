@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-12",
+  "scope": "Settled Screen reset followed by manager sleep/wake, changed-path reattach and fresh-store restart; failed reset followed by sleep/wake",
+  "verification": {
+    "focused_tests": {
+      "passed": 12,
+      "failed": 0,
+      "log": "/tmp/reset-lifecycle-final.log"
+    },
+    "daemon_clippy": "PASS /tmp/reset-lifecycle-clippy.log",
+    "fmt": "PASS",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN",
+    "review": "Focused Rust static review: applied config and failed-reset retry lifecycle evidence confirmed; no remaining findings"
+  },
+  "coverage": [
+    "Real manager and DaemonRpc implementation with MockBackend and temporary files",
+    "Successful reset replay across sleep/wake, same-serial changed-path reattach and new PersistenceStore/manager",
+    "Applied and requested config 50 percent, zero degrees, Application; default theme restored",
+    "Receipt preserved; duplicate operation does not advance LCD generation",
+    "Eight default Screen slots, unchanged fan slot and neighboring device settings, retained user image",
+    "Injected reset config failure exposes retry; sleep/wake restores theme and discards old attachment retry capability"
+  ],
+  "limits": [
+    "No physical USB, system sleep or host sensors",
+    "Lifecycle triggered after reset reply, not during an in-flight reset transaction",
+    "Trait RPC calls do not exercise JSON-RPC framing; separate existing screen_collections_ipc test covers framing",
+    "Initial fixture omitted pump source and compared against pre-normalization empty string; corrected to explicit mcu"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/tests/screen_reset_lifecycle.rs": "0a5d3b846bf790279387175dc3e260831876b17140cd9eb02a5c403f03080605"
+  }
+}

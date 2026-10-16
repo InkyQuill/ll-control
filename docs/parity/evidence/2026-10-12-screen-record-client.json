@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-12",
+  "scope": "Frontend recording lease for upcoming ScreenRecord editor",
+  "verification": {
+    "tests": "6 mocked IPC lifecycle tests passed",
+    "frontend_check": "0 errors, 0 warnings",
+    "logs": [
+      "/tmp/recording-client-tests.log",
+      "/tmp/recording-client-check.log"
+    ]
+  },
+  "limits": [
+    "Not yet wired to Svelte GUI",
+    "Media admission/review and publication ownership remain to integrate",
+    "No portal, native UI or hardware tests"
+  ],
+  "sha256": {
+    "desktop/src/lib/screen-record.ts": "93c89ed658c0f19b2b0eaf27384cdec65daee397efde0ed69293ed9367a0b46b",
+    "desktop/tests/screen-record-client.spec.ts": "8c2dd90b6976f3cc169ebaed3c4a439b53d833b5454813d1e107cd27a828f858"
+  }
+}

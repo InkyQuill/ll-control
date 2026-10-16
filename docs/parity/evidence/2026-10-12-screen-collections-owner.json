@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-12",
+  "scope": "Prepared membership asset leases and owner-serialized read/edit",
+  "verification": {
+    "workspace": {
+      "passed": 748,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 108
+    },
+    "workspace_log": "/tmp/collection-owner-workspace.log",
+    "clippy": "PASS /tmp/collection-owner-clippy.log",
+    "docs": "PASS /tmp/collection-owner-doc.log",
+    "fmt": "PASS",
+    "review": "Static Rust review: no actionable findings",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN; external workflow not connected"
+  },
+  "regressions": [
+    "Lightweight image pin clone/drop deletion lifetime",
+    "Missing/corrupt preparation releases acquired pins",
+    "Queued neighbor preservation and lost reply readback",
+    "Stale collection revision rejected",
+    "Failed save keeps intent/pins and retries; durable references after owner shutdown"
+  ],
+  "initial_test_failure": "Tests assumed revision1 for unnamed image imports (revision0); fixtures changed to named imports with actual revision1",
+  "remaining": [
+    "External IPC must distinguish accepted intent and durable saved/error",
+    "Legacy shared catalog migration without silent loss",
+    "GUI membership/reset workflows and native acceptance"
+  ],
+  "source_sha256": {
+    "crates/lconnect-daemon/src/theme_assets.rs": "adb9c629ebed84890f0aff9ef14019666d7da041e6d59b5a330ade3aa0c2c8a1",
+    "crates/lconnect-daemon/src/screen_collections.rs": "26d473ff929e9c755fa8b199fd0ee31787e2486285d35bcf9b502c3df3501ca9",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "c46f01896d9fd45ba59f45c7cccc2f6d683be71026dd5264fd2e31ca0d975ce4",
+    "crates/lconnect-daemon/tests/screen_collections.rs": "3b60e96304afd22a4923c795da07bf231bfb98324e3109353f6a385b09f63684"
+  }
+}

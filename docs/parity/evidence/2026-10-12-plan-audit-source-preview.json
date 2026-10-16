@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-12",
+  "scope": "Remaining plans audit against current implementation and versioned 2.1.28 LCDV2 contracts",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "plans": [
+    {
+      "path": "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md",
+      "open": 5,
+      "completed": 0
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md",
+      "open": 6,
+      "completed": 0
+    },
+    {
+      "path": "docs/superpowers/plans/README.md",
+      "open": 0,
+      "completed": 0
+    },
+    {
+      "path": "docs/superpowers/plans/basic-parity.md",
+      "open": 5,
+      "completed": 0
+    }
+  ],
+  "new_fully_completed_plans": [],
+  "changes": [
+    "Removed completed image editor checklist entries; retained implementation descriptions/evidence",
+    "Removed completed-work narrative from active roadmap",
+    "Removed stale image filters / temporal cut / source preview implementation tasks",
+    "Retained three incomplete plans and all outstanding reference/native/hardware gates"
+  ],
+  "fresh_verification": "10 media-import browser tests passed; local links validated",
+  "boundaries": [
+    "No full workspace qualification",
+    "No native/hardware run",
+    "Only Galahad II LCDV2 baseline 2.1.28.0",
+    "Original checkout is historical; active worktree lconnect-linux-m1"
+  ],
+  "document_sha256": {
+    "roadmap.md": "6d8213e42a5ba808b197b3cb4dda2cd9cfe1bdbfc01ddeb5c1bbfba24132bc6b",
+    "docs/superpowers/plans/README.md": "22c19c4a76527ebaa59746e2e7b7b322d57ac7feda0d72300aa84bfa108ce8b6",
+    "docs/parity/ga2lcd-editor.md": "9559fbc3792ef15ac9e15cb35aa401273839817f1ac84d2185eaa12f4ba8cee6",
+    "docs/parity/video-editor.md": "2d7f9a87f0af11765c51703d7f4060b5bd35ee54534ab76b78635dbbfe0a239d",
+    "docs/parity/basic-parity-checklist.md": "9867d9bcb78859842ae69a79f47145fff37b41d763669431b87eeea7129b1b26",
+    "docs/parity/lcdv2-2.1.28-matrix.md": "6cb435c7963c2c0668d212b183fa6dfaa4f0f69ad5bd6a316d6b1bf9d1b3793b",
+    "docs/parity/lcdv2-baseline-gaps.md": "ac0c215b6702c1c8e2f9451bfc3edf3e813c289a5b6d0f189cb8bad66dafbbbe",
+    "docs/parity/implementation-status.md": "2a2dbe714755a6d98f99a3c677ba933f5b99ccee9f3ef359d448a1ffbc12e516"
+  }
+}

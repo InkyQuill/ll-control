@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Moscow",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Saved runtime FPS read intent in main GUI EN/RU, CLI and IPC; FPS-only invalidation and manager completion race repair. Private files/Unix IPC, MockBackend and isolated Xvfb/session D-Bus/WebKit only. No production daemon, host D-Bus, game logging activation, physical HID or installation.",
+  "implementation": [
+    "Global version1/revision/enabled/log_path record, explicit get/set IPC and CLI with CAS; atomic no-follow bounded persistence, interprocess lock and retained bounded admission workers. Saved disabled overrides legacy environment fallback after restart.",
+    "Runtime watch switches the reader on the next host collection. Publishing a changed record immediately invalidates FPS, including delayed pre-change samples; CPU/GPU values are untouched. Each new attachment skips historical log rows.",
+    "Main Settings card is usable without a device; explicit Save/Load, EN default/RU, absolute UTF-8 path <=384bytes. Disable retains path. Conflict and lost-write reply require explicit readback; polling and late unmounted replies do not replace drafts.",
+    "Manager command queue/reply wait now also observes manager completion. This covers both power transitions and firmware handoff without cancelling manager-owned teardown."
+  ],
+  "checks": {
+    "workspace": {
+      "passed": 1221,
+      "failed": 0,
+      "ignored": 7,
+      "groups": 163,
+      "exit_code": 0
+    },
+    "new_rust_tests": 6,
+    "fps_store_tests": 4,
+    "real_cli_private_ipc_test": 1,
+    "deterministic_manager_completion_regression": 1,
+    "sleep_lifecycle_repetitions": 16,
+    "browser": {
+      "passed": 13,
+      "new_fps_tests": 3,
+      "failed": 0
+    },
+    "frontend_svelte_checks": "npx svelte-check --threshold error and npm run check: 0 errors/0 warnings",
+    "frontend_lint": "no lint script configured; npm run lint --if-present exits0; no dependency added",
+    "frontend_build": "passed; frontend source unchanged through final native run",
+    "theme_contracts": 39,
+    "english_static_resources": {
+      "present": 800,
+      "required": 800,
+      "missing": 0,
+      "dynamic_outputs_to_qualify": 68
+    },
+    "fmt": "passed",
+    "strict_workspace_all_targets_clippy": "passed",
+    "strict_native_smoke_custom_protocol_all_targets_clippy": "passed",
+    "warnings_denied_workspace_rustdoc": "passed",
+    "final_native_and_mock_debug_builds": "passed",
+    "frozen_source_files_unchanged": 453,
+    "native": {
+      "exit_code": 0,
+      "acceptance": {
+        "ok": true,
+        "phases": [
+          {
+            "language": {
+              "interface_language": "ru-RU",
+              "revision": 1,
+              "temperature_unit": "celsius",
+              "version": 1
+            },
+            "noDevices": true,
+            "ok": true,
+            "recovery": false,
+            "settings": {
+              "enabled": false,
+              "log_path": "/tmp/lconnect-native-fps-7c4dustt/Настройки game.csv",
+              "revision": 2,
+              "version": 1
+            }
+          },
+          {
+            "language": {
+              "interface_language": "ru-RU",
+              "revision": 1,
+              "temperature_unit": "celsius",
+              "version": 1
+            },
+            "noDevices": true,
+            "ok": true,
+            "recovery": true,
+            "settings": {
+              "enabled": false,
+              "log_path": "/tmp/lconnect-native-fps-7c4dustt/Настройки game.csv",
+              "revision": 2,
+              "version": 1
+            }
+          }
+        ],
+        "no_hardware": true,
+        "no_external_log_writes": true
+      },
+      "artifacts": "/tmp/lconnect-native-fps-7c4dustt",
+      "flow": "Actual DOM controls through Tauri IPC and private Unix fixture; EN fresh disabled -> enable Cyrillic path rev1 -> RU -> disable retains path rev2 -> GUI+fixture daemon restart -> same RU/disabled/path/revision. Zero devices/HID writes and source CSV unchanged. GUI closes and fixture processes join.",
+      "limits": "No pointer/keyboard/screen-reader/full desktop session or real game qualification."
+    }
+  },
+  "initial_failed_verification": {
+    "workspace_exit": 101,
+    "reason": "Manually terminated own hung manager_lifecycle process after preserving debugger evidence; this run is not counted as passing.",
+    "test": "sleep_ack_waits_for_old_batch_and_wake_reopens_still_present_device",
+    "observation": "Root future was in final prepare_for_sleep(false) after shutdown. done watch=true with sender gone; power receiver closed, queue tail5/index4, reply sender still retained, all runtime threads parked and no blocked HID worker.",
+    "repair": "Observe manager completion across queue admission and reply waiting; deterministic test retains the reply sender deliberately, then publishes completion and requires pending/new request failure. Existing integration now bounds the post-shutdown check.",
+    "final_result": "Full workspace passes; original lifecycle case passes16 consecutive runs.",
+    "debugger_logs": [
+      "/tmp/lconnect-fps-config-hang-state2.log",
+      "/tmp/lconnect-fps-config-hang-manager.log",
+      "/tmp/lconnect-fps-config-hang-channel.log"
+    ]
+  },
+  "limits": [
+    "Logged frame mean remains distinct from Windows HWiNFO PresentedAvg/application identity.",
+    "No activation/configuration of MangoHud logging or automatic active application selection. Producer must supply supported per-frame schema/log_interval=0.",
+    "Real games, permissions/filesystem-stall/performance/platform matrix, full Plasma/GNOME Shell and hardware acceptance remain pending.",
+    "Mini remains Plasma widget/GNOME Shell extension; no standalone window. Sway/other environments deferred; supported shell versions remain undecided.",
+    "English default and Russian mandatory; additional languages/effects deferred to polishing."
+  ],
+  "changed_source_sha256": {
+    "crates/lconnect-ipc/src/fps_source.rs": "94bac7888bb4f58bef0c59e8254bea13ffb52a7268dbc049079d058641b7f685",
+    "crates/lconnect-ipc/src/lib.rs": "d1fc411f3b8c250113f6059972d98902d81c43abebc5e6fc8e414f3a21821095",
+    "crates/lconnect-ipc/src/server.rs": "c76824e8713fceedf8a833d467f47ee4efa5315647765385833c0527ed46a3d2",
+    "crates/lconnect-daemon/src/fps_source.rs": "80beebf5d80e71e8f6fc0ccde26f58e2374a987e86e6eecc2e4731937e875f5d",
+    "crates/lconnect-daemon/src/persistence.rs": "9f5ad1f84604b8727b2817da8f259c2d9c26b72a5d4df213118dbd694475ff81",
+    "crates/lconnect-daemon/src/sensors.rs": "e9b61c8c7771d4dfe00a1d04038a44f967dc94cb46ddda0b8234b442a8b14c91",
+    "crates/lconnect-daemon/src/main.rs": "abf984e79f66bbfddff4d0dae35bca106bca9e0225396b3e8ecf8f79928ff1c4",
+    "crates/lconnect-daemon/src/lib.rs": "3cf3da7e43037e0c882d0daa54259718eb150568903b4d5996af0ec41600637d",
+    "crates/lconnect-daemon/src/ipc_server.rs": "e3cbb7828c9df97ac5dccab93f0bec71f0b8470f01426d2566997c424784a931",
+    "crates/lconnect-daemon/src/manager.rs": "2439f066b26d6e9bb759f32cf51938679d2f0aa6f78128ae02cc0fba61d990a5",
+    "crates/lconnect-daemon/tests/manager_lifecycle.rs": "550d073811dc48594c2510ca1fcd5b554dc39eb99fd02db6a8fc350757f7a906",
+    "crates/lconnect-cli/src/commands/fps.rs": "266d72f3a383d1bf3f733d20a2a96155fd3c86ec00591a1616caf40a701a618c",
+    "crates/lconnect-cli/src/main.rs": "62bdfe2a04953e3cfc64edd0b34a8548d8e3378c70eaf5626a3602766669d1e5",
+    "crates/lconnect-cli/tests/fps_settings.rs": "3dcc1b991192a3c78ff88bf09dfca0bbbdde1dc13d071127050d7b133ff9da7a",
+    "desktop/src/lib/FpsSettings.svelte": "fa76eb77aa6bd88bc800edc29ad9e4ecc4cf35909cc222ca07d49e56d9286417",
+    "desktop/src/lib/api.ts": "2d8e892cbeae75eb309fb73fe391ca5fd1e6340f19f6f5fb836993a8b5fe112d",
+    "desktop/src/lib/locales/en-US.json": "5a9587abc3aebe86f88ed0d09e9b31e35f3d2cfac8b7700a382a28d681067138",
+    "desktop/src/routes/+page.svelte": "d11fc51049405e237b8b9ece93f868c12eeade9ddcc7ddc9d3fb391e9472b9ab",
+    "desktop/src-tauri/src/main.rs": "6c488c8a4f77741880f3aa63dc0c276332d866f1bff3be408306a622355d6331",
+    "desktop/tests/fps-settings.spec.ts": "381a57fa085b7d043a5f761e54da2dbd18fca44f2090031b749257c36c072227",
+    "desktop/scripts/native-fps-settings.js": "2044878bc2ceea3d3147777003b7a8edb9061dfd7d1f08773b20e8d536121efe",
+    "desktop/scripts/native-fps-settings.py": "ad5c99a6df29f0f785df047ddc855329d42c95361a910e4c47c835a6bb97cb2b"
+  },
+  "logs_sha256": {
+    "targeted": "778933193e8126d18384477ed14b6798107139f30b2658b9cf574a18eb9d247c",
+    "cli": "930f03d6a00db2c62552783b788c22c6ad634fd0b3e871d71fde18fa55d25a35",
+    "browser": "349c89bda5043debdbc1aaf55e287ac1d38ee41f55c1bbcdb3577a53caf9ad0b",
+    "locales": "51beba9e17f94c0d9e815836e9b59af2b3d422ed2381bac33ad3dc88a825c404",
+    "contracts": "78f2e1ece21302f108905db5f28fe6e271fa99e840a3e6e46d391dbb39b9a3fe",
+    "svelte-final": "b3bf5e98a3981bc5192b6f48cb84a9c8d6e5849f0e92c6e598397d4f205bdbed",
+    "check-final": "94a395bccb82bf95aed59371f84e174b440639011101f0270d271f4a07fd81c6",
+    "clippy-final": "17fb96bcc496a54996e372121a7a02df4cee5d818f757c989fabf30a915a4530",
+    "native-clippy-final": "1ebd4941f2b5b17cd3b8025aadc2383bb4a4f640755bd5b1f942fa26a671a3f6",
+    "doc-final": "7089cd2d53f4938b82446ae45e761c3375f2f2bb0edc27b4e3d212e47d143e2d",
+    "workspace-final": "df21afdde3d018e214c020849ce73b165a34e6736c0dbdb5a5c31ffede3b4302",
+    "lifecycle-repeat": "6e5f6ba270da1ca1634828245cf0117204e068aba757827341a726026a98ab57",
+    "native-final": "e7384db5fc72b8de453dc7d23c967c471ad3874685f4948bf730afb8d9ef21d4",
+    "native-build-manager-final": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889",
+    "mock-build-manager-final": "096f34c41716f7a2a04cf38bc8c5c874335b9dc40c28534e2010183793ab2539"
+  },
+  "plans": {
+    "basic-parity.md": 5,
+    "2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "2026-09-09-m2-sensors-and-cooling.md": 6,
+    "deleted": []
+  },
+  "environment": {
+    "rustc": "1.96.0 (ac68faa20 2026-05-25)",
+    "node": "v26.2.0",
+    "gtk3": "3.24.52",
+    "webkit2gtk41": "2.54.1"
+  }
+}

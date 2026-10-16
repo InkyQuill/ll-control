@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Own portable profile archive storage foundation; application IPC/CLI/GUI not yet connected",
+  "files_sha256": {
+    "crates/lconnect-daemon/Cargo.toml": "7c2a8bdeb98cc5afa3561b5f320b35e3cbde799410ed252c6a7cf647b1bc3e1b",
+    "Cargo.lock": "a56c62bdcd9a6d928a6aad4d1b50e5ab1327eacb5f93c7135ffe53ad63975ed8",
+    "crates/lconnect-daemon/src/lib.rs": "3f863e5db5592a4391c481fbf72c1a163913d9b2d84950752ecbf40b8c9b6cee",
+    "crates/lconnect-daemon/src/profile_archive.rs": "d98c7ba296a15b504ecf01614e37d3aac0183c45b12175eb2fc159a2cb2dc4ed",
+    "crates/lconnect-daemon/src/media_assets.rs": "500e671f9a699feb3a680cc1f7808eb64e9e44820655cec57c615e4a26c3fbee",
+    "crates/lconnect-daemon/src/theme_assets.rs": "75222319c9745fee4e34df495a23d527076d2082225981ed5fcb48e7fee0b8c5",
+    "crates/lconnect-daemon/tests/profile_archive.rs": "74ad8183b7876bea04a85cdc9d13038eeb75a4ae86a7143e0f5efaadd562968b"
+  },
+  "contract": {
+    "format": "LCPROF01 + u32 little-endian manifest length +32 raw SHA256 bytes +strict JSON manifest +typed binary payloads, each with length and SHA256",
+    "contents": "One NamedProfile: Screen, ScreenMedia, Fan or Pump. Exact full active/cached image/font/video dependency set, including builtin image/video bytes; deduplicated by kind/key.",
+    "import": "Validate all metadata, checksums and typed payloads in numbered private staging before publishing assets. New keys, typed remap only, preserve exact sensor IDs/text and image/media names. No HID or active settings application.",
+    "atomicity": "No-clobber atomic export_file; import ProfileStore expected_revision CAS replaces only target slot. Concurrent edits are retained. Post-validation publication failure/CAS conflict may leave valid unreferenced imported assets for ordinary cleanup; incomplete profile never published.",
+    "bounds": "Manifest1MiB,1024 dependencies,payload8GiB,image/font16MiB each,normalized images960x960,font aggregate64MiB,existing media256MiB/86400frames/8MiB index; copy64KiB with one image/font/AU in memory"
+  },
+  "checks": {
+    "workspace": {
+      "passed": 935,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-profile-archive-workspace.log"
+    },
+    "archive_scenarios": {
+      "passed": 8,
+      "file": "crates/lconnect-daemon/tests/profile_archive.rs",
+      "coverage": [
+        "empty-store roundtrip: Basic/cached Rain,shared images/fonts/video,independent sensor label/unit fonts,typed key remap leaves colliding sensor/text strings intact",
+        "image/video names and raw font bytes preserved; library restart and neighboring group retained",
+        "truncation,manifest/payload corruption,missing/duplicate/extra dependencies,bad key/version/length/trailing data reject before asset publication",
+        "valid checksums with invalid image/font/media data also reject before asset publication",
+        "ScreenMedia,Fan,Pump slots; no-overwrite export_file; missing source and writer failure",
+        "stale revision rejects before read; invalid target rejects before payload; concurrent edit during read wins final CAS",
+        "indexed video600frames/>1MiB transfers with read/write calls<=64KiB and preserves final access unit"
+      ]
+    },
+    "strict_clippy": "/tmp/lconnect-profile-archive-clippy.log",
+    "rustdoc": "/tmp/lconnect-profile-archive-doc.log",
+    "format": "/tmp/lconnect-profile-archive-fmt.log",
+    "ui_native": "NOT RUN: no archive application endpoints or frontend changed in this slice",
+    "hardware": "NOT RUN: user deferred; no production daemon or HID commands"
+  },
+  "remaining": [
+    "Bounded IPC export/upload sessions, admission/global disk quota/expiry/cancel/status and idempotent Finish after lost response",
+    "CLI and GUI import/export workflows with progress, explicit target slot and errors/readback",
+    "Unix IPC/browser/isolated-native roundtrip and transport/fault/cleanup qualification",
+    "Applicable Windows archive workflow/format interoperability; this own named-slot container is not a full device backup"
+  ]
+}

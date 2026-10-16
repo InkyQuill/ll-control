@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-12",
+  "scope": "Reconcile all active plans with completed native gallery checkpoint; documentation only",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "plans": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": {
+      "open": 5,
+      "completed": 0
+    },
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": {
+      "open": 6,
+      "completed": 0
+    },
+    "docs/superpowers/plans/basic-parity.md": {
+      "open": 5,
+      "completed": 0
+    }
+  },
+  "newly_deleted_plans": [],
+  "cleanup": "Three remaining plans all have open requirements. Previously removed plans stay removed; stale gallery re-edit/seek pending claims replaced with verified evidence. Historical checkpoints retained.",
+  "verification": {
+    "local_document_links": "passed",
+    "native_checkpoint_source_hashes": "all match current files",
+    "native_process": "session65351 exited0; acceptance ok and normal_close_exit0",
+    "new_test_runs_for_audit": false
+  },
+  "completed_removed_from_pending": [
+    "native gallery source/review HTTP decode and seek",
+    "single-range Save and collection replacement preserving source",
+    "focus recovery after save"
+  ],
+  "remaining_functionality": [
+    "X11/Wayland capture",
+    "23 effects and Style Express",
+    "Full RGB modes/sync/LED topology",
+    "Profile archives and full fan+lighting reset",
+    "Tray/autostart/global units and locale/Mini information/Spec",
+    "Firmware updater and packaging"
+  ],
+  "remaining_acceptance": [
+    "Editor native record/pause/crop and fault matrix",
+    "Windows SDK timing/colors/fonts/raster",
+    "Provider coverage and Intel aggregate mapping",
+    "Expanded native accessibility and resource workloads",
+    "Physical LCD/cooling/RGB/lifecycle",
+    "One final integrated snapshot qualification"
+  ],
+  "limits": [
+    "Hardware deferred",
+    "Other devices not available",
+    "Not a full Windows runtime or workspace retest",
+    "No implementation or installation performed for this audit"
+  ]
+}

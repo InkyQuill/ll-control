@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-12",
+  "scope": "Per-interval spatial crop backend only",
+  "source_sha256": {
+    "desktop/src-tauri/src/media_prepare.rs": "9ae2d4f832dd8d3159ce90f8c3510be2bc14c2e17127fb63c78661c4eed19e86"
+  },
+  "reference": "VideoCutTool.cs:591-605,824-842,865-890 in external 2.1.28 decompilation",
+  "tests": {
+    "results": [
+      "test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.12s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "log": "/tmp/video-crop-tests.log",
+    "clippy": "passed strict all-targets /tmp/video-crop-clippy.log",
+    "codec": "12 decoded blue then red frames from separate crops of same time interval"
+  },
+  "limitations": [
+    "GUI crop selection and result preview pending",
+    "Windows AdjustedResize/crop numerical equivalence not claimed",
+    "Autorotation/SAR/odd dimensions need fixtures",
+    "No native or hardware access"
+  ]
+}

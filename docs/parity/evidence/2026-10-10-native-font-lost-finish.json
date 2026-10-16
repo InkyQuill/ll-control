@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Native WebKitGTK font import recovers a committed Finish whose response is lost",
+  "native_evidence": "/tmp/lconnect-native-r6k02n7h/acceptance.json",
+  "verification": {
+    "python_compile": "passed",
+    "native_smoke": "passed",
+    "git_diff_check": "passed"
+  },
+  "proxy": {
+    "begins": 2,
+    "finishes": 2,
+    "dropped_responses": 1,
+    "status_reads": 1,
+    "asset": "c22ee1e26546c23758c45aaf65e26add"
+  },
+  "assertions": [
+    "Invalid font rejected; explicit valid-file retry",
+    "Successful Finish response dropped by socket shutdown",
+    "Status reads same upload session and recovers identical committed asset",
+    "Exactly two Begin/Finish calls total: rejected file and valid file; no automatic second upload",
+    "Exactly one stored font file after orphan cleanup",
+    "DOM import/selection remains draft until Apply",
+    "Full theme and profile equality after daemon restart; frames continue after GUI close"
+  ],
+  "sha256": {
+    "desktop/scripts/native-fault-proxy.py": "7403ea3051207eff283331b906ec317bdef7ce58fb686ae980cf5c2a7658d300",
+    "desktop/scripts/native-smoke.py": "28a9c994545ea40b1b91ffc807c702cc6de37a1f5b5a578cf3bc57e5610eb589",
+    "desktop/scripts/native-smoke.js": "3ce552964cf5ced562572b4cd82914046b73aee3eee2fe4bf5a3c20ab0c1eae1",
+    "desktop/src/lib/font-upload.ts": "15c6d754ad336fb1954b82a0eb8775d9c7eda8cee4d56559ff84ef73010d07a1"
+  },
+  "remaining": [
+    "Native disconnect during partial upload",
+    "Native missing/corrupt already saved dependencies",
+    "Cleanup concurrency and partial unlink failure acceptance",
+    "Remaining basic parity checklist and deferred hardware"
+  ]
+}

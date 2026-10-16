@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Intel i915/xe dedicated memory query with bounded isolated helper and cache/IPC/LCD integration",
+  "verification": {
+    "query_crate_tests": 6,
+    "focused_collector_tests": 5,
+    "rust_all_target_tests": 577,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No remaining findings",
+    "c_uapi_layout_probe": "passed on x86_64 against v6.17 headers",
+    "frontend_native_rerun": false
+  },
+  "sha256": {
+    "Cargo.lock": "bcf800c98db82c97274a2c7696c7af9f0ab9de08fae0da21e9ff55f17e335d17",
+    "Cargo.toml": "6378328edfcf5cbae428a908f2db58ed945d0d60740efb9fdccce54ad2576da7",
+    "crates/lconnect-daemon/Cargo.toml": "3bc880f73e65a575ce267c5512ad0f921a018ca269c97fdab02891be57f994da",
+    "crates/lconnect-daemon/src/main.rs": "34f028031b4fd78a82374e2b5471a76a1c138ae9200aa8c6168aa72a35259803",
+    "crates/lconnect-daemon/src/sensor_selection.rs": "dd7ee577d9147060675cc53f28c1916ff08b9d026e889435ab8fd6f0670294e3",
+    "crates/lconnect-daemon/src/sensors.rs": "0486c724c7fbb917e119588c3e64d621b84d97cc2064304fb9723357a527217f",
+    "crates/lconnect-daemon/src/sensors/intel_memory.rs": "de8437d1cca39bf6feee70ce723d209ef1e7d8c34e352209925ccd393455e735",
+    "crates/lconnect-intel-memory/Cargo.toml": "e55d227882fcb5e0b041cbd66ed3e17f8919fa08b239fba4b7770d5052368dbd",
+    "crates/lconnect-intel-memory/src/ioctl.rs": "fd3f3d489a7839e1f500f9ec505aff8eef81692cbff74a5bf3c078a250bf44a2",
+    "crates/lconnect-intel-memory/src/lib.rs": "8039cef325421451c52a2a25a43ac03c7507b2006041f4656da22b11fe14fcd9",
+    "crates/lconnect-intel-memory/src/regions.rs": "82cb246acf891cd555382284e3b379e4cc51ff835da731ad2e28c7a32eda543d",
+    "tools/verify-intel-memory-abi.c": "214856d3c0a5651f5003a092eaa33230933720a4943f25583d8f4da25c6a08b3"
+  },
+  "sources": {
+    "include/uapi/drm/i915_drm.h": {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.17/include/uapi/drm/i915_drm.h",
+      "sha256": "6a6c165125a03132fc6f616cd0dc7938b7d8a81b01073e19f8b9fd4bcbc19e0e"
+    },
+    "drivers/gpu/drm/i915/i915_query.c": {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.17/drivers/gpu/drm/i915/i915_query.c",
+      "sha256": "2d7198a1fd0fdfb67c56f30c21dbac0c81b1942521663f1b8c6a2453623af906"
+    },
+    "include/uapi/drm/xe_drm.h": {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.17/include/uapi/drm/xe_drm.h",
+      "sha256": "fc2d1a7bb23ea327910a4e276b89f6f142d22eb8a4fbc380e1112e8eb4584b44"
+    },
+    "drivers/gpu/drm/xe/xe_query.c": {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.17/drivers/gpu/drm/xe/xe_query.c",
+      "sha256": "1961bc3d2e8c7d2af8e282bb075c8082ff5f4380c1be37d1dbd40f2691f11bc3"
+    }
+  },
+  "logs": "/tmp/intel-memory-review-{fmt,clippy,test,doc}.log; /tmp/intel-memory-focused.log",
+  "assertions": [
+    "Only dedicated regions; no SYSMEM substitution for iGPU",
+    "Current nonzero accounting accepted; ambiguous zero used/load unavailable, total independent",
+    "Bounded two-pass ioctl allocation; native driver and render node identity checks",
+    "Physical identity survives render renumber; rebind during query revoked",
+    "750ms helper timeout, 100ms cleanup wait, unreaped child prevents respawn",
+    "Failure revokes old readings; same device recovers without rebinding",
+    "Fixture helper to collector/cache/IPC/JPEG; stale values revoked and preview changes"
+  ],
+  "limits": [
+    "No actual GPU, production helper, HID or host sensors were queried",
+    "Completely zero usage remains unavailable, including a genuinely idle dedicated memory heap",
+    "Native C ABI checked on x86_64 only; real kernel/driver support and permissions deferred",
+    "No frontend/native smoke for this provider slice; final same-tree acceptance remains open",
+    "Intel xe engine utilization and aggregate GPU load remain separate work"
+  ]
+}

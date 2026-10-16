@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "scope": "Atomic saved-profile group reset prerequisite for full Screen reset",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "source_sha256": {
+    "crates/lconnect-ipc/src/profiles.rs": "301e58c1c54da8d93c35292d73ccb7247b1615ccba07ca190bb12c2dddc36085",
+    "crates/lconnect-daemon/src/profiles.rs": "20d159124b32123275183e5cc0724cc6260b91fb24666a7f28cc0c72ed41ae68",
+    "crates/lconnect-daemon/tests/profiles.rs": "b8e22586e9bb6ce1876e0ccd006e0241aa4790fd4eea2d3135b95aa9f65ebf71",
+    "crates/lconnect-cli/src/commands/profiles.rs": "b2e13c9460581a73b6070738188a5e994f9673d291e3396f3324d4aa9a7db366",
+    "crates/lconnect-cli/tests/profiles.rs": "61b248538480deaebe337c04ed32e3579681096dbf4ad26ad4211c4f60094146",
+    "desktop/src/lib/Profiles.svelte": "db3da5c7185de1807d86611bd6ee0c7d5c258a5521aace45cdaa62e27e8bbc97",
+    "desktop/src/lib/api.ts": "bafd07c85d58d9af4a81165c275327fe152226ebd7c8497fc693aacf7b868256",
+    "desktop/tests/profiles.spec.ts": "0523150d658b6155f0f3436a32e1c36c82a690eefa19836c5170d8bd33e881d6"
+  },
+  "behavior": [
+    "One expected-revision check and atomic library write resets screen 8 slots or cooling 4 slots",
+    "Preserves neighboring groups and user files; no device Apply",
+    "Cooling requires explicit sensor; screen rejects sensor binding",
+    "GUI disclosure and confirmation; lost reply requires refresh without replaying mutation; focus moves to refresh"
+  ],
+  "verification": {
+    "workspace": {
+      "passed": 727,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 104,
+      "log": "/tmp/profile-group-workspace.log"
+    },
+    "focused_rust": "10 passed: daemon 7 + CLI 3",
+    "fmt": "PASS",
+    "strict_workspace_clippy": "PASS",
+    "cargo_doc": "PASS",
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "PASS",
+    "contracts": 31,
+    "browser": "2 passed: profiles save/load/rename/delete/reset, group cancel/lost reply/readback, cooling draft separation",
+    "reviews": "Rust no actionable findings; Svelte focus-on-disabled finding fixed and reviewed",
+    "native": "NOT RUN for new reset control",
+    "hardware": "NOT RUN; deferred"
+  },
+  "limits": [
+    "Not full Screen reset: brightness, rotation, active screen and gallery membership remain unchanged",
+    "Shared global profile library is not per-device; full reset scope and durable cross-store recovery remain required",
+    "Native keyboard/speech and physical qualification deferred"
+  ]
+}

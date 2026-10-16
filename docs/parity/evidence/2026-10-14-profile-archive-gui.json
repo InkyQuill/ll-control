@@ -1,0 +1,276 @@
+{
+  "date": "2026-10-14",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Own named-slot archive GUI/native file ownership, progress/cancel/recovery; private FileChooser fixture, no device Apply",
+  "files_sha256": {
+    "Cargo.lock": "ed0fca4c5215c6042c6f18f3ef4ce9160f68e65d73bb040a7ffe7a5ab596bc69",
+    "desktop/src-tauri/Cargo.toml": "d0fdebc6bbeef5aebbe57b9f21653cd10a33af645c17ddf56f8d11641ca4f2bc",
+    "desktop/src-tauri/src/lib.rs": "332518ab7be3e8d387bcb312119b42eb100e255224c38267cf2c9422a45931a0",
+    "desktop/src-tauri/src/main.rs": "01db2035563c808c28e106bbee6308be7c3ab4aa1cfa12e7f432331d25f75ebc",
+    "desktop/src-tauri/build.rs": "cd23436bdc5cffb1abdbc9509ca079cbc8ce8ea26beffd868ead8bafa8616399",
+    "desktop/src-tauri/capabilities/main.json": "8e5f13ded2708695cd59e667d212a9f1ccf1f5ffc23a3a93e2f7d4fa9ec486ff",
+    "desktop/src-tauri/src/archive_chooser.rs": "0fffd123aa86b95444623b89ee36fe4892507afd6835a502e291cbbd903564f4",
+    "desktop/src-tauri/src/archive_chooser_tests.rs": "564d4f059a6f7d6d6b9276315b91a889adfdfab6af7c4d810d975ca5b2903e78",
+    "desktop/src-tauri/src/archive_jobs.rs": "4256b789a5c9b238351f4150225b63112fd3742a7478090a830aa61611a9a2f0",
+    "desktop/src-tauri/src/archive_jobs_tests.rs": "4884d1c456c5f27439d8df564415cf30a6ea07a5ff2e65bde558d00e242e905f",
+    "desktop/src/lib/Profiles.svelte": "45e75d4631065f09b168154edf95bb95d92eacd24a40493197b77f96cdf79025",
+    "desktop/src/lib/ProfileArchive.svelte": "36987b10590f6b38b803b710231f952e6501dd622143cfd4b25712cbe976acd4",
+    "desktop/src/lib/profile-archive.ts": "94dac587c17010657be8a98febde868991cf197bf4d08df9a3dc60ffd00b5e7d",
+    "desktop/tests/profile-archive.spec.ts": "1163c286a853ae8e4b3b6aa09e390e86439904d4a30fa28794b1497e413a534d",
+    "desktop/scripts/native-archive.js": "7ba7b648797aa0849ae4db58cbf2a092dea2dc7e748f0f8c78185dfe7f26d928",
+    "desktop/scripts/native-archive.py": "41031099e8460307c3d7a2ded2f064b21b42ebf66bcf392adef2303022231307",
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "d1d081f81ae45103ec088c07f4300d718c6edb4d38f0d9727935b57486d8c2a2",
+    "crates/lconnect-daemon/examples/desktop-mock/archive_portal.rs": "f85ae9f1cf4df66a58ce91909d150b14164041642273c8deb52402e600312326"
+  },
+  "checks": {
+    "workspace": {
+      "passed": 953,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-archive-gui-workspace-current.log"
+    },
+    "browser": {
+      "passed": 40,
+      "log": "/tmp/lconnect-archive-gui-browser-full.log"
+    },
+    "svelte": {
+      "errors": 0,
+      "warnings": 0,
+      "log": "/tmp/lconnect-archive-gui-ui.log"
+    },
+    "strict_clippy": "/tmp/lconnect-archive-gui-clippy-current.log",
+    "rustdoc": "/tmp/lconnect-archive-gui-doc-current.log",
+    "fmt": "/tmp/lconnect-archive-gui-fmt-current.log",
+    "production_build": "/tmp/lconnect-archive-gui-build.log",
+    "native_jobs": {
+      "passed": 5,
+      "log": "/tmp/lconnect-archive-gui-jobs-current.log"
+    },
+    "private_bus_chooser": {
+      "passed": 2,
+      "log": "/tmp/lconnect-archive-gui-portal.log"
+    },
+    "native": {
+      "artifact": "/tmp/lconnect-native-archive-qse9syvq/acceptance.json",
+      "log": "/tmp/lconnect-archive-gui-native-assets.log",
+      "result": {
+        "after": {
+          "applied": null,
+          "generation": 0,
+          "last_error": null,
+          "persistence": {
+            "last_error": null,
+            "pending": false,
+            "saved": false
+          },
+          "requested": {
+            "brightness_percent": 100,
+            "mode": "LocalUI",
+            "rotation_degrees": 0
+          },
+          "source": "Idle"
+        },
+        "before": {
+          "applied": null,
+          "generation": 0,
+          "last_error": null,
+          "persistence": {
+            "last_error": null,
+            "pending": false,
+            "saved": false
+          },
+          "requested": {
+            "brightness_percent": 100,
+            "mode": "LocalUI",
+            "rotation_degrees": 0
+          },
+          "source": "Idle"
+        },
+        "dev": "galahad2-lcdv2:0001",
+        "library": {
+          "archive_imports": [
+            {
+              "committed_revision": 2,
+              "expected_revision": 1,
+              "group": "screen",
+              "id": "07a336e8d77b42fbace0ffe6ad0c9517",
+              "size": 1213085,
+              "slot": 7
+            }
+          ],
+          "profiles": [
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "builtin-midnight-v1",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "text",
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "font_asset": "0d47149e95d4d3ecf32563823df9fbd3",
+                        "size": 32,
+                        "x": 30,
+                        "y": 50
+                      },
+                      "text": "Native archive text"
+                    }
+                  ],
+                  "name": "Archive source theme",
+                  "page_cache": [
+                    {
+                      "page": "rain",
+                      "theme": {
+                        "background": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "background_video": "bcf5a102bf2a426286d34310cad4a001",
+                        "layers": [
+                          {
+                            "effect": {
+                              "dynamic": false,
+                              "intensity": 1,
+                              "kind": "rain",
+                              "seed": 42,
+                              "sensor": null
+                            },
+                            "kind": "weather"
+                          }
+                        ],
+                        "name": "Cached Rain",
+                        "version": 3
+                      }
+                    }
+                  ],
+                  "version": 1
+                }
+              },
+              "name": "Archive source",
+              "slot": 0
+            },
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "04008b0eff8fc5bd50e32ded615b3abe",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "text",
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "font_asset": "07782bbb93d7ca893286866908a45d0d",
+                        "size": 32,
+                        "x": 30,
+                        "y": 50
+                      },
+                      "text": "Native archive text"
+                    }
+                  ],
+                  "name": "Archive source theme",
+                  "page_cache": [
+                    {
+                      "page": "rain",
+                      "theme": {
+                        "background": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "background_video": "6a5dc0ccd523797eaa78441b389d0058",
+                        "layers": [
+                          {
+                            "effect": {
+                              "dynamic": false,
+                              "intensity": 1,
+                              "kind": "rain",
+                              "seed": 42,
+                              "sensor": null
+                            },
+                            "kind": "weather"
+                          }
+                        ],
+                        "name": "Cached Rain",
+                        "version": 3
+                      }
+                    }
+                  ],
+                  "version": 1
+                }
+              },
+              "name": "Archive source",
+              "slot": 7
+            }
+          ],
+          "revision": 2,
+          "version": 1
+        },
+        "native_archive_export": true,
+        "native_archive_import": true,
+        "native_archive_readback": true,
+        "native_file_chooser": true,
+        "no_implicit_apply": true,
+        "ok": true,
+        "operation": "07a336e8d77b42fbace0ffe6ad0c9517",
+        "preserved_editor": true,
+        "post_restart_preview_bytes": 15229,
+        "post_restart_preview_sha256": "739a9b4dbb17a8e813b8cd590a58f4355d00ad9e200efb88e3f36219d19aecb5",
+        "restart_replay": true,
+        "normal_close": true,
+        "portal_events": [
+          {
+            "method": "SaveFile",
+            "path": "/tmp/lconnect-native-archive-qse9syvq/exported archive.lcp"
+          },
+          {
+            "method": "OpenFile",
+            "path": "/tmp/lconnect-native-archive-qse9syvq/exported archive.lcp"
+          }
+        ],
+        "exported_bytes": 1213085,
+        "gui_exit": 0
+      }
+    },
+    "hardware": "NOT RUN: deferred; private MockBackend/Xvfb/D-Bus only"
+  },
+  "regressions_fixed": [
+    "Native run exposed GTK sync Tauri command spawning Tokio without runtime; start/recover now async and manager validates runtime before admission; regression test added.",
+    "Large Outcome enum uses boxed Reply; strict Clippy passes."
+  ],
+  "remaining": [
+    "Full screen/fan+lighting group archive and Windows format compatibility",
+    "Real installed X11/Wayland FileChooser, parent placement and accessibility",
+    "Expanded native cancellation/reconnect/fault matrix",
+    "Interactive cancellation during long blocking packing; committing Finish cannot undo"
+  ]
+}

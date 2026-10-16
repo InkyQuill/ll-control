@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-12",
+  "scope": "Sleep during committed Screen reset held in mocked config write, with cancelled RPC caller",
+  "verification": {
+    "lifecycle_tests": {
+      "passed": 3,
+      "failed": 0,
+      "log": "/tmp/reset-inflight-final.log"
+    },
+    "daemon_clippy": "PASS /tmp/reset-inflight-clippy.log",
+    "fmt": "PASS",
+    "review": "Static review requested a bounded negative wait; replaced instantaneous observation by timeout borrowing the same sleep handle",
+    "hardware": "NOT RUN",
+    "native_gui": "NOT RUN"
+  },
+  "coverage": [
+    "Receipt exists before held config write",
+    "Caller cancellation does not cancel accepted actor work",
+    "Manager removes registry entry but sleep cannot acknowledge during held write",
+    "Gate release permits joined teardown; old LCD command channel is closed",
+    "Wake replays committed default and receipt; original reset ID is a no-op"
+  ],
+  "limits": [
+    "MockBackend; no physical decoder or system sleep",
+    "Covers sleep after durable reset commit, not power loss or interrupted journal I/O",
+    "Detached/shutdown in-flight reset not directly exercised by this case"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/tests/screen_reset_lifecycle.rs": "d254520385cbe7acc22daa791fa801e8c9ef05ad5e5672e249513f0fa2fc5881"
+  }
+}

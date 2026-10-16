@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Native changed-gradient theme replacement and LocalUI clear with dropped successful replies",
+  "native_evidence": "/tmp/lconnect-native-jakendbl/acceptance.json",
+  "verification": {
+    "python_compile": "passed",
+    "javascript_syntax": "passed",
+    "native_build": "passed",
+    "native_smoke": "passed",
+    "production_code_changed": false,
+    "rust_and_browser_suites_rerun": false
+  },
+  "theme_reply_proxy": {
+    "requests": 1,
+    "dropped_responses": 1
+  },
+  "clear_reply_proxy": {
+    "requests": 1,
+    "dropped_responses": 1
+  },
+  "sha256": {
+    "desktop/scripts/native-fault-proxy.py": "7d6ee012f30b66b1549177fe5f6ce613aa7e3ca2cd04a3aec8d9aefa037c3dcd",
+    "desktop/scripts/native-smoke.py": "aba1d799e98ac98ee960c23eab6fd3128030aa9801ce1695330c707deb164946",
+    "desktop/scripts/native-smoke.js": "aeb6b1e2bd0b17ffb0319426528897fd6c0de5d388e186d6b8d04dad107cfc0b"
+  },
+  "assertions": [
+    "Each successful response dropped once after daemon acceptance, exactly one targeted write each",
+    "Replacement includes changed gradient color and complete remaining theme",
+    "New unsent title survives failed reply; GUI does not report success",
+    "Explicit load reads committed full replacement and gradient",
+    "Clear leaves null active theme and Idle; draft and saved profiles survive",
+    "Explicit Apply restores original complete composition",
+    "Existing profile faults, restart/replay and GUI-close frame delivery still pass"
+  ],
+  "limits": [
+    "MockBackend only, no physical LCD or firmware barrier claim",
+    "Post-success response loss does not exercise cancellation during preparation or in-flight frame delivery",
+    "First attempt stopped after discovering wrong navigation label; corrected final run passed"
+  ]
+}

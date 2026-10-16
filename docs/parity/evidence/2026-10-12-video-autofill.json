@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-12",
+  "baseline": "L-Connect3 2.1.28.0 / GA2LCD",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "AutoFill full-frame stretch geometry and placement UI",
+  "reference": {
+    "MainWindow.cs": "getAutoFillVideoResults 604-703, resize873-925: Scale(width,height), SAR1, GA2LCD VP9, no trim in this branch",
+    "Views/Tools/VideoEditTool.cs": "205-209 source-fps range,392-398 two-tick minimum; 499-529 SDK contrast/lightness/25fps/RotateNone; GA2LCD cover encode592-594 VP9"
+  },
+  "verification": {
+    "gui_tests": 36,
+    "browser": "21 passed",
+    "frontend": "check 0 errors/0 warnings; build passed",
+    "quality": "strict Clippy/docs/fmt and whitespace checks",
+    "scenarios": [
+      "MP4/GIF full-frame stretch preserves colored left/right edges, fills height",
+      "Cover removes colored edge stripes; contain pads black: geometry modes are distinct",
+      "Browser crop canvas shows full source stretched; native fit=stretch payload"
+    ],
+    "logs": [
+      "/tmp/autofill-rust.log",
+      "/tmp/autofill-browser.log",
+      "/tmp/autofill-check.log",
+      "/tmp/autofill-build.log",
+      "/tmp/autofill-clippy.log",
+      "/tmp/autofill-doc.log"
+    ]
+  },
+  "limitations": [
+    "Linux prepared storage remains H26424fps, not Windows VP9/GIF archive format",
+    "Native/hardware and Windows pixel/frame timing qualification remain",
+    "VideoEdit SDK brightness/contrast formulas still unresolved"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/media_prepare.rs": "f78240965b861e68f7736916ebdad82951d5e074217c9f30ea8afe218081fade",
+    "desktop/src/lib/MediaImport.svelte": "3bde852b1d1916657e438cb39498cb8bd491b2c450356b28b3850c3ae349c828",
+    "desktop/src/lib/VideoSourcePreview.svelte": "025161bc81e4d5f47a21089eb041f1c7660acb42d6487fed7c09b41511ea0459",
+    "desktop/tests/media-import.spec.ts": "b77c2ed06fab4719c898db1606c27d8df2d1f69df01da965e05f9b5fb52ab655"
+  },
+  "reference_sha256": {
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/LConnectEditor/MainWindow.cs": "9c0b351925a15e5e1917149ae65a16d9ffbbabe193142c2f363b7ad9071683eb",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect Editor/LConnectEditor/Views/Tools/VideoEditTool.cs": "e7939cae9b5ffb15792ddd42289e81c480db14b2078714d5322e10a9a50813f5"
+  }
+}

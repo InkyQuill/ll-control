@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-12",
+  "scope": "persistent image names and optimistic rename; no hardware",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "source_sha256": {
+    "crates/lconnect-daemon/src/theme_assets.rs": "42ff86c9e2d8d566ef186589e722c62246ea9a0cea93c37c56f60edab728dbbc",
+    "crates/lconnect-daemon/src/ipc_server.rs": "08be5cff39a15647aa825aaaf1e63692c4db78ce52738f8d7ea9aa140c7c2705",
+    "crates/lconnect-ipc/src/assets.rs": "4a7c3553316d07720dca7b9cab54ff87b5205a1e0efa28e195f92db7b8e7c4ec",
+    "crates/lconnect-ipc/src/trait_def.rs": "eeb81ec84a61de78a7a8e5f8a5a93ca1bf8a275a4c78d4291362c68f4e99507f",
+    "crates/lconnect-ipc/src/server.rs": "b2ca9e8d91ed2e1b13a3240071345ea4be0ac99b48496878ad1205db5643bb59",
+    "crates/lconnect-daemon/tests/theme_assets.rs": "039912e010395235c786124ac53b6f87a1843bcb4913d906d2a0042aff551076",
+    "crates/lconnect-daemon/tests/theme_ipc.rs": "6d484ae75cd46044d28d89a2ec06389bd646dc5340d930816f033c04d583649a",
+    "desktop/src-tauri/src/main.rs": "c8a3c2a7fa80a760ea315ab9d0dc35198a3b8b1114242673bcab4efacbec3c46",
+    "desktop/src/lib/api.ts": "05e135d22825021444fe0d934baa19c6c63fd283f4014b4694b108fbc99b10c9",
+    "desktop/src/lib/ImageGallery.svelte": "37c271005ecfac464c5124b6246847a4f40f03b48352e53de8eefd1084042fdd",
+    "desktop/tests/image-gallery.spec.ts": "bfe29cb31de4df29d1b033f3ee76618012bf8cb90c521c266b400cbc120821df",
+    "desktop/scripts/native-media.js": "26dc190e62b2af4a83d49846547fc02f6ca768726e402e5c20fc3135b38cb6cc"
+  },
+  "checks": {
+    "rust": "669tests/96targets,fmt,strictClippy,docs,production GUI check",
+    "frontend": "check0errors/0warnings,build,139browser tests",
+    "native": "named import, GUI rename revision2, restart metadata readback, video/profile/delete/cancel/close passed"
+  },
+  "logs_sha256": {
+    "/tmp/image-names-focused-rust.log": "77c4747f06233d68257d92da628d3841992ddb1cd095a59a01385f59206b8ebe",
+    "/tmp/image-names-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/image-names-clippy.log": "72c471c7ad03ca65a31e995058a93918483bc62536607fcb9d745e6f768209a9",
+    "/tmp/image-names-rust-all.log": "8e92c18e3be6ebe4b71288423ed9981f81925a99c5d1fe11e873143ff1bf4d17",
+    "/tmp/image-names-doc.log": "9e4ffc5ac4ad1cd640a090a65a09184f5ec46ec1221cc8845b665dc59634bd21",
+    "/tmp/image-names-production.log": "78ac50b130ae6c0af8e36af49820b9dc9c89fa97bfd7b6311d6f77ecfd914d29",
+    "/tmp/image-names-ui-check.log": "90a6093d8b8ccb0ac2603dc2a487929f8eb4b3b20081068eccc8790452a77620",
+    "/tmp/image-names-ui-build.log": "cfd22462f2fd0c0d48b7b203b2b02bdf8d5a868a030fa09b877b97257c1ee314",
+    "/tmp/image-names-browser-all.log": "1e856962a1875e7a7991d97a2152cb4016e7f1e85b57a0f15cd17247f11e9535",
+    "/tmp/image-names-native-build.log": "0db0d68aab9c8e5b764758644e043f9d43b47171b5b6d47880fd78bef4a6908e",
+    "/tmp/image-names-mock-build.log": "d010fd6c09d0a240758d29478d763a7b6fac7e7b73b3119dcab0349d54a3ae4f",
+    "/tmp/image-names-native.log": "6badfd608f70a077acee5c12970a57e50138c8e49a1d013b6a7d8b31ead3d02c",
+    "/tmp/image-names-native-retry.log": "9448fe09f9480f0541332d792f7cdd139764551b4280be5384a7dfe3f0ad1b08",
+    "/tmp/lconnect-native-media-gojjenaa/acceptance.json": "d3afaf1a36fbb9af7d4c0532afa062f6a6935a090cb9704dd2194c0517b01f80"
+  },
+  "initial_native_failure": {
+    "root": "/tmp/lconnect-native-media-6_lxyjnb",
+    "error": "Chooser path/Open not ready: [] at GIF picker; existing GTK/AT-SPI flakiness",
+    "resolution": "fresh isolated retry passed without code change; chooser defect remains unresolved"
+  },
+  "limits": [
+    "legacy imports have no recoverable original filename until manually renamed",
+    "image/video libraries remain separate; defaults and single-image deletion remain",
+    "new GUI requires named-asset RPCs; legacy key-list and unnamed import remain supported",
+    "native full accessibility/scaling and real hardware remain unqualified"
+  ],
+  "newly_deleted_plans": []
+}

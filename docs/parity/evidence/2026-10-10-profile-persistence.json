@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-10",
+  "scope": "Atomic profile persistence boundaries and acceptance mapping",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "crates/lconnect-daemon/src/profiles.rs": "1a748614ceb844b374ed134c03082737496fb31939ab0163bf96c2be1c944056",
+    "crates/lconnect-daemon/tests/profiles.rs": "723357b0892f6ea433d12cae31a152134c4ab2cb186783447fad0b1f4866c922",
+    "crates/lconnect-daemon/tests/theme_ipc.rs": "2445addb5c510e4ac196b3090f43689d00919cedf1d4755c1425b8bd27881926"
+  },
+  "verification": {
+    "rust_all_target_tests": 586,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No actionable findings",
+    "native_browser_rerun": false
+  },
+  "logs": "/tmp/profile-persistence-review-{fmt,clippy,test,doc}.log",
+  "assertions": [
+    "Write/fsync-before-rename failures preserve old library/revision upon reopening",
+    "After-rename returned error exposes committed library; stale mutation rejected",
+    "No leaked temporary file on returned error",
+    "Explicit recovery from readback revision persists across store reopen"
+  ],
+  "limits": [
+    "Observer injects returned errors at boundaries, not kernel syscall errors",
+    "No process kill or power-loss durability proof",
+    "Existing native/browser checkpoints are separate; final same-tree acceptance remains open"
+  ]
+}

@@ -1,0 +1,59 @@
+[
+  {
+    "name": "AbrilFatface-Regular.ttf",
+    "source": "https://raw.githubusercontent.com/google/fonts/3be1884c48c3e45b52ecc725676a08f87776373e/ofl/abrilfatface/AbrilFatface-Regular.ttf",
+    "sha256": "5971d4a3758a922a9fedc7f6fb825a96341a2e718c45a4b2c9a6b417c8c4dbe9",
+    "license_sha256": "aba8997e16b1e3888c6e855ba883c70d96bd4375bff8cb9c7ce0f097200f74b8",
+    "byte_identical": false,
+    "same_unicode_cmap": true,
+    "mapped_hmtx_differences": 0,
+    "different_tables": [
+      "GDEF",
+      "GPOS",
+      "GSUB",
+      "OS/2",
+      "cmap",
+      "glyf",
+      "head",
+      "hhea",
+      "hmtx",
+      "loca",
+      "maxp",
+      "name",
+      "post"
+    ],
+    "license_file": "AbrilFatface-Regular.OFL.txt"
+  },
+  {
+    "name": "Caprasimo-Regular.ttf",
+    "source": "https://raw.githubusercontent.com/google/fonts/3be1884c48c3e45b52ecc725676a08f87776373e/ofl/caprasimo/Caprasimo-Regular.ttf",
+    "sha256": "786ab84ee787d40df55be78cb4361e485a1c6687195cbcccf3538cb5e46ced90",
+    "license_sha256": "755d165efdbad1ad4a7840aa1f2484b0111627993e162bdcfb25fb2c277db955",
+    "byte_identical": false,
+    "same_unicode_cmap": true,
+    "mapped_hmtx_differences": 0,
+    "different_tables": [
+      "GPOS",
+      "cmap",
+      "head",
+      "hhea",
+      "hmtx",
+      "loca",
+      "maxp",
+      "name",
+      "post"
+    ],
+    "license_file": "Caprasimo-Regular.OFL.txt"
+  },
+  {
+    "name": "Cubic_11_1.013_R.ttf",
+    "source": "https://raw.githubusercontent.com/ACh-K/Cubic-11/6a74b71d78369961a73a187e4c73ff81d3f51a96/fonts/ttf/Cubic_11_1.013_R.ttf",
+    "sha256": "9e95369d90c7b7a5b4efc3fb9b71bb7bfb3bf83d1745c0ef7430d05d88fc66b2",
+    "license_sha256": "2b6e5938e5cffa0b9e183bd05f8c363e174e7ebed1a0556e2855fd1707fa2188",
+    "byte_identical": true,
+    "same_unicode_cmap": true,
+    "mapped_hmtx_differences": 0,
+    "different_tables": [],
+    "license_file": "Cubic11-OFL.txt"
+  }
+]

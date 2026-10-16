@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-11",
+  "scope": "Current documentation reconciliation after ASUS WMI, Cycle focus and software ordering acceptance",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "tests_run": false,
+  "active_plan_open_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 6,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 8
+  },
+  "plan_sha256": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": "556728178d94c9ef0353973c0dd91142864f58e2818477ae0dff5d4665e73303",
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": "281c7db5ee5ab4e250f4e603792f83a5b609fe49ba66849b8dc3945ee1611158",
+    "docs/superpowers/plans/README.md": "5fa826dcf0fa4bc836f04308621fbd71b2f810e5cf9ff99db19c52ade3f20e0e",
+    "docs/superpowers/plans/basic-parity.md": "f26e0a766c7ed939bdb14d5b10958e43fdbd73b10123782d862d3cc8f8de4d32"
+  },
+  "checkpoint_source_hash_matches": {
+    "docs/parity/evidence/2026-10-11-asus-wmi-voltage.json": {
+      "crates/lconnect-daemon/src/sensors.rs": true,
+      "crates/lconnect-daemon/src/sensor_selection.rs": true,
+      "crates/lconnect-daemon/tests/host_sensors.rs": true
+    },
+    "docs/parity/evidence/2026-10-11-cycle-keyboard.json": {
+      "desktop/src/routes/+page.svelte": true,
+      "desktop/tests/layer-keyboard.spec.ts": true
+    },
+    "docs/parity/evidence/2026-10-11-preparation-read-gate.json": {
+      "desktop/scripts/theme-read-gate.c": true,
+      "desktop/scripts/theme-preparation-smoke.py": true,
+      "crates/lconnect-daemon/src/ipc_server.rs": true,
+      "crates/lconnect-daemon/src/actor/lcd_keeper.rs": true,
+      "crates/lconnect-daemon/src/theme_assets.rs": true
+    },
+    "docs/parity/evidence/2026-10-11-native-lcd-pwm-transport.json": {
+      "crates/lconnect-daemon/examples/desktop-mock.rs": true,
+      "desktop/scripts/native-smoke.js": true,
+      "desktop/scripts/native-smoke.py": true
+    }
+  },
+  "deleted_this_audit": [],
+  "deletion_reason": "None of the three remaining plans is fully complete; retain earlier obsolete plan deletions. Original checkout untouched.",
+  "removed_stale_pending_claims": [
+    "Software transport independence",
+    "Software preparation/cancellation/replace",
+    "Aged stale consumer acceptance"
+  ],
+  "remaining": [
+    "CPU voltage beyond supported ASUS providers; NVIDIA voltage beyond available X session",
+    "Intel aggregate load semantics",
+    "Windows text layout/shaping/raster comparison",
+    "Native accessibility and remaining concurrent/interrupted mutations",
+    "Remaining checklist mapping and final same-tree verification, quickstart",
+    "M4 media/gallery/editor/effects/capture",
+    "M5 RGB controls, profile archives/reset, desktop integration",
+    "M1/M6 suspend/resume, firmware, packaging and deferred hardware acceptance"
+  ],
+  "limits": "Hash agreement confirms source correspondence only, not a fresh test run or whole-tree acceptance. Historical evidence remains unchanged."
+}

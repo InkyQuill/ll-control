@@ -1,0 +1,421 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Standalone MeteorShower model, numeric parameters and owned offline renderer; no theme/daemon/GUI integration yet",
+  "reference": [
+    {
+      "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionScreenSettingPage_MeteorShower.cs",
+      "sha256": "0136ab4b62175206af24644f1448082b0adb427c5ae44343fde41abd847f60c6"
+    },
+    {
+      "path": "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/js/app.8fc94db7.js",
+      "sha256": "f3691c15dbe62d1248abee444dc94c82a34c46e45697bda4ccad77825c6e878a"
+    }
+  ],
+  "xaml": "/home/inky/Development/lian-li/scratch/xaml-2.1.28-system-2026-10-10/products/galahad2vision/galahad2visionscreensettingpage_meteorshower.xaml",
+  "oracle": {
+    "method": "Execute extracted installed pure MeteorShower mapping and rgbToHsb functions offline under Node, outside repository. Capture numeric output only.",
+    "fixture": "crates/lconnect-ipc/tests/fixtures/meteor-2.1.28-parameters.json",
+    "sha256": "60a4e43378efddab2559f70b7874ce6c66757acf4f46fd507a6e664e91b118db",
+    "rows": [
+      {
+        "low": 30,
+        "high": 60,
+        "value": 0,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 29,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 30,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 42,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 46,
+        "speed": 3,
+        "hsb": [
+          [
+            72,
+            100,
+            100
+          ],
+          [
+            168,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 50,
+        "speed": 3,
+        "hsb": [
+          [
+            60,
+            100,
+            100
+          ],
+          [
+            150,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 58,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 60,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 100,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 30,
+        "high": 60,
+        "value": 40,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 0,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 29,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 30,
+        "speed": 2,
+        "hsb": [
+          [
+            120,
+            100,
+            100
+          ],
+          [
+            240,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 42,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 46,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 50,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 58,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 60,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 100,
+        "speed": 4,
+        "hsb": [
+          [
+            0,
+            100,
+            100
+          ],
+          [
+            60,
+            100,
+            100
+          ]
+        ]
+      },
+      {
+        "low": 40,
+        "high": 40,
+        "value": 40,
+        "speed": 3,
+        "hsb": [
+          [
+            null,
+            null,
+            null
+          ],
+          [
+            null,
+            null,
+            null
+          ]
+        ]
+      }
+    ],
+    "nonfinite_policy": "JSON null represents native NaN channels at exact equality. Linux explicitly chooses low speed/colors at/below equal threshold, high above."
+  },
+  "behavior": [
+    "Static slider1..3 default2, native speed=slider+1",
+    "Independent static RGB pair and low/high RGB pairs per active/retained sensor",
+    "ceil9-band thresholds and native ceil RGB-to-HSB/direct hue interpolation",
+    "Missing/stale/wrong-unit/nonfinite readings use retained static settings, never fake zero",
+    "Owned500-streak scene, seeded bounded cycles and no vendor assets",
+    "Integrate previous speed on monotonic time; same-time speed change preserves positions",
+    "Reject wrong canvas/rewind before mutation; u64::MAX time bounded"
+  ],
+  "checks": {
+    "affected_crates": {
+      "passed": 144,
+      "failed": 0,
+      "log": "/tmp/lconnect-meteor-crates.log"
+    },
+    "strict_clippy": "/tmp/lconnect-meteor-clippy.log",
+    "rustdoc": "/tmp/lconnect-meteor-doc.log",
+    "offline_preview": "/tmp/lconnect-meteor-preview.png",
+    "static_review": "No blocking findings; source palette oracle and scene bounds reviewed",
+    "workspace": {
+      "passed": 892,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-meteor-workspace.log"
+    },
+    "format": "/tmp/lconnect-meteor-fmt.log"
+  },
+  "remaining": [
+    "Theme layer/version/page-cache and asset ownership integration",
+    "Daemon live/H.264/video/preview/persistence/profile/restart",
+    "GUI speed/colors/per-source palettes/ranges/CPU Load/page switching",
+    "Native mock fault/unavailable/recovery qualification",
+    "Windows trail/acceleration/raster/defaults comparison",
+    "Hardware deferred by user"
+  ]
+}

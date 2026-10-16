@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-12",
+  "scope": "Collection-aware image/video selection, import membership and full catalog management",
+  "verification": {
+    "check": "PASS zero errors/warnings /tmp/collection-filter-check.log",
+    "build": "PASS /tmp/collection-filter-build.log",
+    "full_browser_before_catalog_mode": {
+      "passed": 151,
+      "duration": "3.8m",
+      "exec_session": 71437,
+      "source_sha256": {
+        "desktop/src/lib/collection-membership.ts": "a90e0fc30d94550a12cf3e36ef7d2ac8bcaceba8636e8c3122a5d96b87ffe254",
+        "desktop/src/lib/ImageGallery.svelte": "57186065ab3c37e439d3d44ce18d717b10915d71cb5ab613655b5eb033459799",
+        "desktop/src/lib/MediaLibrary.svelte": "d8ee18e1ccf712991478dceb63d82f4101c7c345c3eb7902ce44543b1b6cd391",
+        "desktop/src/lib/MediaImport.svelte": "962a5106bcfe5946d1eca3ebf001eddd6b841d9af025731b5a5a375c19779b51",
+        "desktop/src/routes/+page.svelte": "12e2cc0feed629cf328f1c87a0fb76eaed954f29ac3f17da58dda993fae3983b"
+      }
+    },
+    "final_targeted": "29 passed /tmp/collection-filter-final-browser.log; two new image-import tests initially failed due to premature fixture completion; corrected admission wait, all seven image-import tests PASS /tmp/collection-import-final.log",
+    "reviews": "Svelte static reviews: no actionable findings",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN"
+  },
+  "remaining": [
+    "Full Screen reset external readback/reapply/GUI",
+    "Native collection/gallery/import accessibility and lifecycle acceptance"
+  ],
+  "sha256": {
+    "desktop/src/lib/collection-membership.ts": "a90e0fc30d94550a12cf3e36ef7d2ac8bcaceba8636e8c3122a5d96b87ffe254",
+    "desktop/src/lib/ImageGallery.svelte": "1b5ff776cd11d3766f8af7f7a133ee71d4577ee19a416b0ac55b4feebed9cd9a",
+    "desktop/src/lib/MediaLibrary.svelte": "d9a42c3d62460b8022810e3e6a7f0209ceb2a6bbe8cff35569e40644a2b91337",
+    "desktop/src/lib/MediaImport.svelte": "962a5106bcfe5946d1eca3ebf001eddd6b841d9af025731b5a5a375c19779b51",
+    "desktop/src/lib/ScreenCollections.svelte": "7299b89d967e8e0777a8325caa6b88565c61598ed32c1d48fb29d24ff5fc1de9",
+    "desktop/src/routes/+page.svelte": "12e2cc0feed629cf328f1c87a0fb76eaed954f29ac3f17da58dda993fae3983b"
+  }
+}

@@ -9,7 +9,7 @@
 ///
 /// The socket path is resolved as follows:
 /// 1. If `LCONNECTCTL_SOCKET` is set, use that path verbatim.
-/// 2. Otherwise, use `$XDG_RUNTIME_DIR/lconnectd/lconnectd.sock`.
+/// 2. Otherwise, use `$XDG_RUNTIME_DIR/lconnectd.sock`.
 ///
 /// # Errors
 /// Returns an error if the runtime directory can't be resolved or the
@@ -18,8 +18,7 @@ pub async fn connect() -> anyhow::Result<lconnect_ipc::client::IpcClient> {
     let socket = if let Ok(s) = std::env::var("LCONNECTCTL_SOCKET") {
         std::path::PathBuf::from(s)
     } else {
-        let dirs = xdg::BaseDirectories::with_prefix("lconnectd")?;
-        dirs.get_runtime_directory()?.join("lconnectd.sock")
+        lconnect_ipc::socket::default_socket_path()?
     };
     Ok(lconnect_ipc::client::IpcClient::connect(&socket).await?)
 }

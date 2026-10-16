@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "desktop/src-tauri/src/lib.rs": "9594beb623a7faa2e8336925f64bcdacee259d86891dd69bc3921f66e84ecf2a",
+    "desktop/src-tauri/src/media_prepare.rs": "3608dad286d54d11870fbe9f6996b978de1e0084487010e9dc9820b34873f6c1",
+    "desktop/src-tauri/Cargo.toml": "c5ff603582a94fbad60968322994281349c9f25b69bb8f3a8d20b2615dbf5a1b",
+    "Cargo.lock": "89d7d45f401fd05f92cf2987ef1b495571aed669a28f957e0dafa69030e3f582"
+  },
+  "log_sha256": {
+    "/tmp/media-native-review-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/media-native-review-clippy.log": "6148be1cfb64fcb19a7855ab90a7ff63b7ff07fbd132db327fce5e700eb3d7ad",
+    "/tmp/media-native-review-test.log": "b546079c71d37af49d21d05d5a00f568e9aa9c8423c14d3e2f60551055447491",
+    "/tmp/media-native-review-doc.log": "57cd26fde09e67dd8980703dfad09a2e274a13b27ca7cfeafef6c76a7a87faa9"
+  },
+  "checks": {
+    "workspace_tests": 650,
+    "targets": 96,
+    "failed": 0,
+    "ignored": 0,
+    "new_preparation_tests": 5,
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "docs": "pass",
+    "rust_review": "no outstanding findings"
+  },
+  "coverage": [
+    "Real synthetic MP4 and looping GIF decoded to 480x480; contain and cover pixel checks",
+    "Source bytes unchanged",
+    "Duration and dimensions rejected before encoding",
+    "Malformed media and pre-cancelled requests rejected",
+    "Cancellation at encoding boundary produces no clip",
+    "Running child cancellation kills and reaps; PID absent including zombie"
+  ],
+  "limits": [
+    "Backend is not yet wired to GUI or daemon publication",
+    "No HID, host sensors, production daemon, or GUI accessed",
+    "Temporary cleanup uses TempDir RAII; no separate cleanup fault test",
+    "Cancellation waits for reap; uninterruptible kernel I/O can exceed 60s; future caller must retain admission",
+    "FFmpeg with ffprobe/libx264/reset_sar required; tests also require python3 and Linux proc",
+    "Prepared clip limits remain 240 frames,24fps,1MiB; no general long-video runtime"
+  ]
+}

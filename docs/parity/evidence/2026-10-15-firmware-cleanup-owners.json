@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Lifetime cleanup ownership and explicit staging close only; no product updater/IPC close route, native GUI or real HID run.",
+  "implementation": [
+    "Publication, named archive sessions, group upload/export entries and media upload sessions register lifetime lease before creator job ends; deferred Drop work cannot begin after those owners have been drained.",
+    "Owned blocking cleanup plus monitor retains child lease; panic/I/O failures persist in bounded sticky admission health. wait_checked rejects even after active0.",
+    "Unique begin_maintenance capability seals atomically and is bound to original admission channel. Scope mismatch rejected before effects. Cancellation leaves seal; no reopen API.",
+    "Internal IpcServerImpl.close_staging seals upload registries, disposes font/media staging, cancels/removes archive/group registry references and cancels idle finite exports. Active workers retain owners through completion/disposal.",
+    "Media export remains strictly lazy: one blocking read per consumer demand, shared cancellable reader owner, no prefetch. Drop/final frame/error releases idle source pin immediately, descriptor retirement is enrolled cleanup. Blocking reads retain source/lease until actual exit.",
+    "Catalog/settings/assets and durable receipts preserved; only unpublished session state/resources invalidated."
+  ],
+  "checks": {
+    "workspace": {
+      "passed": 1183,
+      "failed": 0,
+      "ignored": 5,
+      "groups": 158
+    },
+    "new_tests": 9,
+    "targeted_maintenance": {
+      "library_passed": 4,
+      "integration_passed": 1
+    },
+    "targeted_cleanup": {
+      "passed": 4
+    },
+    "media_export_unit": {
+      "passed": 3
+    },
+    "existing_media_export_integration": {
+      "passed": 2,
+      "assertions_unchanged": true
+    },
+    "fmt": "passed",
+    "strict_workspace_clippy": "passed",
+    "strict_native_feature_clippy": "passed",
+    "warnings_denied_workspace_rustdoc": "passed",
+    "hardware": "not run; user deferred",
+    "native_gui": "not run; no frontend/native app source change"
+  },
+  "coverage": [
+    "Cleanup after seal and dropped checked drain waiter, blocking cleanup ownership until release.",
+    "Sticky I/O/panic cleanup failure after zero count; unique/foreign maintenance scope checks.",
+    "Publication unknown Drop cleanup completes/retire, corrupt recovery report preserves manifest and blocks checked preflight.",
+    "Cancelled active import/export with removed registry entries; no false completion before blocking worker and final disposal finish.",
+    "Idle export cancellation without further consumer polling and detached blocked read ownership.",
+    "Real IPC private font/media/archive staging, anonymous descriptor closure, preserved baseline catalog, no HID or persistent settings reset.",
+    "Unchanged order/pin/final-frame and586frame late-corruption integration contracts."
+  ],
+  "intermediate_regression": {
+    "state": "Initial prefetch producer broke two existing media-export tests; run not counted as passing.",
+    "fix": "Replaced prefetch with lazy shared reader owner; restored original assertions unchanged, idle pin release and late corruption detection; reran full workspace on unchanged final source.",
+    "log": {
+      "path": "/tmp/lconnect-cleanup-workspace.log",
+      "sha256": "b36bec1f26ead6f1b50f65b919eb592921f766ae0d2699541ae7e3697db0095b"
+    }
+  },
+  "source_snapshot": {
+    "path": "/tmp/lconnect-cleanup-final-source.json",
+    "sha256": "618bcc6cb5e1249c76c94e458494056a49b9f1a16a5b23d159968726de6e668b",
+    "files": 370,
+    "unchanged_after_checks": true
+  },
+  "logs": {
+    "fmt": {
+      "path": "/tmp/lconnect-cleanup-final-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "workspace": {
+      "path": "/tmp/lconnect-cleanup-final-workspace.log",
+      "sha256": "2a1eee196b25aeaf8a4bdbec72bff100825ad3a5bf340e48d7b0e30c76ce2ba7"
+    },
+    "clippy": {
+      "path": "/tmp/lconnect-cleanup-final-clippy.log",
+      "sha256": "48acc542f7ee5382426f8bdd492d26004d4bce2756e4892b67ee64b3adc8101f"
+    },
+    "native-clippy": {
+      "path": "/tmp/lconnect-cleanup-final-native-clippy.log",
+      "sha256": "b4ad1995222150fff3e2d703952ff56561a75d9c2d8e4c9dffb321a99e29ee7b"
+    },
+    "doc": {
+      "path": "/tmp/lconnect-cleanup-final-doc.log",
+      "sha256": "a049e0f83dbb33c1ac1fb163305f4995c2e520c433d9c6bc41965b3a5c304d1f"
+    },
+    "maintenance": {
+      "path": "/tmp/lconnect-cleanup-maintenance-tests.log",
+      "sha256": "2516f3e1d2d04bc845faf682bf6c198e1cbda39ef267ec028a977780f4479b39"
+    },
+    "cleanup": {
+      "path": "/tmp/lconnect-cleanup-targeted.log",
+      "sha256": "429e5aea8baa4f352ea602efdf7f00b0c73925466ed2ac85895516b2e79451fc"
+    },
+    "export-unit": {
+      "path": "/tmp/lconnect-cleanup-export-tests.log",
+      "sha256": "d9f7f31c6bdf8b46586ef393c3fb2f80025698b9362f0f603027f0a47a22a2b2"
+    },
+    "export-integration": {
+      "path": "/tmp/lconnect-cleanup-export-integration.log",
+      "sha256": "9a03b2e1a6d794ba9a79b1eab12a6d0304d500aae793ab5aac4ffd90b18fa17c"
+    },
+    "intermediate-prefetch-regression": {
+      "path": "/tmp/lconnect-cleanup-workspace.log",
+      "sha256": "b36bec1f26ead6f1b50f65b919eb592921f766ae0d2699541ae7e3697db0095b"
+    }
+  },
+  "remaining": [
+    "Owned coordinator sequence: begin maintenance, close staging and quiesce/join keepers, then checked drain. Waiting first can retain registry/actor-owned publication refs.",
+    "Serialize manager target/HID ownership and any in-flight attach/replay; original handle transfer and joined teardown.",
+    "Bounded cancellation/shutdown/power policy, unresolved import/publication reconciliation and fresh serialized snapshot/asset pins.",
+    "Identity-bound probe, qualified journal/settings resolution including serial-less/missed reset recovery and EN/RU updater UI.",
+    "Admission is process-local; checked cleanup count does not prove actor/encoder/HID quiescence or hardware qualification."
+  ]
+}

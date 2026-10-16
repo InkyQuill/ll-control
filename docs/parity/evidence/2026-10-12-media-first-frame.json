@@ -1,0 +1,198 @@
+{
+  "date": "2026-10-12",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "scope": "Bounded v1/v2 first-frame RPC and native thumbnail qualification",
+  "native_fixture": "/tmp/lconnect-native-media-dnttgsuj",
+  "native_result": {
+    "cancelled": true,
+    "chooser_cancel": true,
+    "close_pending": true,
+    "delete_verified": true,
+    "gallery_verified": true,
+    "image_gallery_verified": true,
+    "image_names_verified": true,
+    "keys": [
+      "57dd45ce83ada3bce2a3d587924ac99c",
+      "37df977288420d6b9e107ed1e50e0c76"
+    ],
+    "malformed_rejected": true,
+    "media_slot_verified": true,
+    "ok": true,
+    "phases": [
+      "inspecting",
+      "encoding",
+      "validating",
+      "complete",
+      "inspecting",
+      "encoding",
+      "validating",
+      "complete"
+    ],
+    "restart_preserved": true,
+    "source_unchanged": true,
+    "thumbnails": [
+      {
+        "height": 144,
+        "name": "fixture.mp4",
+        "width": 144
+      },
+      {
+        "height": 144,
+        "name": "fixture.gif",
+        "width": 144
+      },
+      {
+        "after_restart": true,
+        "height": 144,
+        "width": 144
+      },
+      {
+        "frames": 586,
+        "height": 144,
+        "pixel": [
+          0,
+          254,
+          254,
+          255
+        ],
+        "v2": true,
+        "width": 144
+      }
+    ],
+    "dialogs": [
+      {
+        "action": "chooser_cancel",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n"
+      },
+      {
+        "action": "chooser_bad",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-dnttgsuj/broken.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_mp4",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-dnttgsuj/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-dnttgsuj/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-dnttgsuj/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-dnttgsuj/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-dnttgsuj/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      }
+    ],
+    "cancel_reaped": [
+      {
+        "pid": 2620215,
+        "source": "/tmp/lconnect-native-media-dnttgsuj/native-tmp/.tmppIoq0I/source.mp4",
+        "output": "/tmp/lconnect-native-media-dnttgsuj/native-tmp/.tmpShfAMo/clip.h264"
+      }
+    ],
+    "close_reaped": {
+      "pid": 2620576,
+      "source": "/tmp/lconnect-native-media-dnttgsuj/native-tmp/.tmpsgMzWr/source.mp4",
+      "output": "/tmp/lconnect-native-media-dnttgsuj/native-tmp/.tmpzrM8VT/clip.h264"
+    },
+    "decoded": [
+      {
+        "name": "fixture.gif",
+        "bytes": 691200,
+        "top_pixel": [
+          252,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "fixture.mp4",
+        "bytes": 691200,
+        "top_pixel": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "normal_close_exit": 0
+  },
+  "seed": {
+    "key": "dddddddddddddddddddddddddddddddd",
+    "frames": 586,
+    "first_au_bytes": 1337,
+    "receipt": {
+      "asset": {
+        "encoded_bytes": 783482,
+        "fps": 24,
+        "frames": 586,
+        "key": "dddddddddddddddddddddddddddddddd",
+        "name": "Long v2 cyan"
+      },
+      "encoded_bytes": 783482,
+      "error": null,
+      "frames": 586,
+      "id": "dddddddddddddddddddddddddddddddd",
+      "name": "Long v2 cyan",
+      "phase": "published",
+      "received_bytes": 783482,
+      "received_frames": 586
+    }
+  },
+  "validation": {
+    "rust_tests": 693,
+    "rust_targets": 101,
+    "browser_tests": 139,
+    "frontend_check_build": "passed",
+    "fmt_clippy_docs_production_check": "passed",
+    "native": "passed before subsequent prepare_file refactor",
+    "hardware": "NOT RUN"
+  },
+  "limitations": [
+    "Seed repeats one independently decodable cyan AU 586 times; this is native v2 thumbnail/deletion qualification, not native long-video import or physical playback.",
+    "Native long-video import still uses legacy prepare."
+  ]
+}

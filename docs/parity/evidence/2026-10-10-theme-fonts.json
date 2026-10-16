@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Managed theme font schema/preload/render/preview/apply/profile save/replay, MockBackend",
+  "verification": {
+    "full_all_target_tests": 543,
+    "failed": 0,
+    "ignored": 0,
+    "final_font_store_tests": 5,
+    "cjk_upload_preview_profile_tests": 1,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No open findings; boundary regression added and passed after full suite",
+    "frontend_native": "not run"
+  },
+  "limits": {
+    "per_font_bytes": 16777216,
+    "total_theme_font_bytes": 67108864
+  },
+  "tests": [
+    "Legacy JSON and strict managed keys including sensor parts",
+    "Bundled versus managed raster equality for text clock sensor cycle label and unit",
+    "Full CJK font chunk upload to preview JPEG equality and profile save/list via production RPC",
+    "Corrupt preview/apply/profile save rejected with active theme/library preserved",
+    "Restart with font restores; missing file retains intent and explicit repair/apply recovers",
+    "Runtime owns prepared fonts and renders after source file deletion",
+    "Exactly64MiB permitted with deduplication; fifth unique16MiB font rejected without file mutation"
+  ],
+  "logs": [
+    "/tmp/theme-font-review-clippy-final.log",
+    "/tmp/theme-font-review-clippy.log",
+    "/tmp/theme-font-review-doc.log",
+    "/tmp/theme-font-review-fmt-final.log",
+    "/tmp/theme-font-review-fmt.log",
+    "/tmp/theme-font-review-test.log",
+    "/tmp/theme-font-focused.log",
+    "/tmp/theme-font-limit.log",
+    "/tmp/theme-font-upload-e2e.log"
+  ],
+  "sha256": {
+    "crates/lconnect-ipc/src/theme.rs": "238c61777740c6210ecc640d6ef2cd7088256d711447891f5081a6b5125a0340",
+    "crates/lconnect-ipc/tests/theme.rs": "6d9302003a07ed96ef48f81a5200a72d11aeec8bfdfc080c02e98ca6392d1979",
+    "crates/lconnect-image/src/theme.rs": "ac89de77a57134ee90060e20d2dd2e8ed09b9b156f277dfea87fcba465059f7d",
+    "crates/lconnect-image/src/fonts.rs": "a5fa484f5db70275b995e7d788f1b25481ccd4465abdf1efd2007b940affd741",
+    "crates/lconnect-image/tests/theme.rs": "d3f2ec88682cc1041a8bbf22c9cd34469efce0a0bd3d8c7b04fbf325870309aa",
+    "crates/lconnect-daemon/src/theme_fonts.rs": "d2c6e99cb52aec3844c08c82de234e6fd98875dfee66e0725623604d51f2af6a",
+    "crates/lconnect-daemon/src/theme_runtime.rs": "116909bd77ac77096768b766f7f03832eb924af1e17a27b38280a97156077260",
+    "crates/lconnect-daemon/src/ipc_server.rs": "bebc2ab11ed009f0cadf0e083cde64dfcef7a6bf2f908cdaa467d6fa19a79a5f",
+    "crates/lconnect-daemon/src/manager.rs": "c51ee67bde77e960b3cf7e674bc3e403f589c515d995cab208be52b83e8dc5dd",
+    "crates/lconnect-daemon/tests/theme_fonts.rs": "ab0220e57bcef64df8533fd3868714718fba394eeb383788c3b65b5d2d10cb8d",
+    "crates/lconnect-daemon/tests/theme_ipc.rs": "2445addb5c510e4ac196b3090f43689d00919cedf1d4755c1425b8bd27881926",
+    "crates/lconnect-daemon/tests/font_upload_ipc.rs": "2aaf587ce50ea067c06514d3b15fa40c5173b4ff49fb52bc8d1c7411a044563b"
+  },
+  "remaining": [
+    "GUI import and font selection including sensor parts",
+    "font cleanup/retention/draft references",
+    "native desktop acceptance; hardware deferred"
+  ]
+}

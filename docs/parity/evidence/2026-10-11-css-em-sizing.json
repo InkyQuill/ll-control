@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-11",
+  "scope": "Correct CSS line-box font size from ascent-descent height to pixels per em",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "crates/lconnect-image/src/theme.rs": "2be84dd8244f460e25df5e3720e7b709a5c2f16b975e6f0ab89c94cf6c5590a0",
+    "crates/lconnect-image/tests/theme.rs": "218f85cdfbd226db2c7106995d4b4018c47ff6d1b48faebc986ac673b43b25eb",
+    "crates/lconnect-ipc/src/theme.rs": "280f13af53fa24146722667110200cdc1c073e10e76bfc78bd1f6d89408f3d71"
+  },
+  "reference": {
+    "file": "winver/L-Connect 3/Assets/ga2v/js/app.8fc94db7.js",
+    "sha256": "f3691c15dbe62d1248abee444dc94c82a34c46e45697bda4ccad77825c6e878a",
+    "contract": "FontSize passed as CSS px, default43px",
+    "standard": "https://www.w3.org/TR/css-fonts-4/#font-size-prop"
+  },
+  "red_green": {
+    "before": "Noto40px fullwidth pair incorrectly fit79px",
+    "after": "CSS mode breaks pair at79px, fits at80px; legacy remains unchanged"
+  },
+  "browser_oracle": {
+    "browser": "HeadlessChrome/156.0.8078.4 Linux",
+    "font": "bundled NotoSansTC-Regular.otf loaded via FontFace",
+    "text": "溫度",
+    "css_font_px": 40,
+    "canvas_advance_px": 80
+  },
+  "verification": {
+    "image_tests": 32,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_tests": 591,
+    "failed": 0,
+    "ignored": 0,
+    "targets": 91,
+    "rust_doc": "passed",
+    "review": "no actionable findings",
+    "logs": "/tmp/css-em-review-{fmt,clippy,test,doc}.log"
+  },
+  "limits": [
+    "line_box true saved themes intentionally change glyph sizes and wrapping",
+    "line_box false or omitted retains legacy sizing",
+    "No native GUI or physical LCD run",
+    "Shaping/bidi/letter-spacing/browser metric selection/raster equivalence still open"
+  ]
+}

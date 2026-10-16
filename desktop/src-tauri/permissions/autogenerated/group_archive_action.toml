@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-group-archive-action"
+description = "Enables the group_archive_action command without any pre-configured scope."
+commands.allow = ["group_archive_action"]
+
+[[permission]]
+identifier = "deny-group-archive-action"
+description = "Denies the group_archive_action command without any pre-configured scope."
+commands.deny = ["group_archive_action"]

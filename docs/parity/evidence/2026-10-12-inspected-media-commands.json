@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-12",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Tauri inspection and atomic inspected-source preparation",
+  "contract": [
+    "media_inspect returns metadata status via owned task/readback",
+    "media_prepare_inspected admits SourceReady with final options atomically and always prepares review",
+    "No filesystem path argument; existing main-window capability",
+    "Production/native-smoke registration and build ACL updated",
+    "Standalone configure_source removed; duplicate request cannot overwrite running options"
+  ],
+  "verification": {
+    "library_tests": 43,
+    "binary_tests": 2,
+    "all_features_targets": true,
+    "strict_clippy": "passed",
+    "warning_denied_docs": "passed",
+    "fmt": "passed",
+    "frontend_check": "0 errors/warnings",
+    "frontend_build": "passed",
+    "tests": [
+      "Real inspected upload final options encoded correctly",
+      "Uninspected request rejected without consuming input",
+      "Invalid range preserves inspected metadata/input",
+      "Competing request cannot change admitted fit/cut/effects",
+      "Existing cancel/shutdown/review tests pass"
+    ],
+    "logs": [
+      "/tmp/inspected-media-commands-tests.log",
+      "/tmp/inspected-media-commands-clippy.log",
+      "/tmp/inspected-media-commands-doc.log",
+      "/tmp/inspected-media-commands-check.log",
+      "/tmp/inspected-media-commands-build.log"
+    ]
+  },
+  "limitations": [
+    "Single-range UI/Windows guards not implemented",
+    "No browser or native window invocation in this checkpoint",
+    "No hardware run"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/media_import.rs": "b0e4366666aa3fa041b9569954dbdefb913698bc81cb61633342d4b3179e73e0",
+    "desktop/src-tauri/src/main.rs": "7853376bca69f21c26b7c573cc1819857d71772db8a8be7e287474bc167cab97",
+    "desktop/src-tauri/build.rs": "4fdc3ae4d62a6d461890bf9bcc71fc31be98b35eded6b4d79bb6292746117291",
+    "desktop/src-tauri/capabilities/main.json": "5393574910928127cfe192d7a05f6d92ffecb46ef2993e7ce487efc7da11f81b",
+    "desktop/src/lib/MediaImport.svelte": "b25cfcf3e93f51ff07aa9169d6d776b4e22589706d412527364395748992f9c6"
+  }
+}

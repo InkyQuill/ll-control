@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-11",
+  "scope": "Real PNG read held during accepted Clear/image replacement through independent Unix IPC clients and MockBackend",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/scripts/theme-read-gate.c": "41adeca66e70ba64585437c773a63934ed5db8ee9507c47aab9798c15f2b793c",
+    "desktop/scripts/theme-preparation-smoke.py": "60cfb5e6a149239cab76c7f0949e208f1c2600a06d5e3f4c9f461aa69cd9bfaf",
+    "crates/lconnect-daemon/src/ipc_server.rs": "ba2bef262a41034d7daf646dfcddc04c95f92d3d3a9fae80acd282f80c6809fc",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "e43152d82c17641aeb89d516be31d89481efa3f569d6e1d596de743be8b81270",
+    "crates/lconnect-daemon/src/theme_assets.rs": "6755ca79f78e384ece38baa607f6c4a04fcdd635b0c1dc8573378e8e8a042720"
+  },
+  "artifact": "/tmp/lconnect-preparation-dzn5tyg4/acceptance.json",
+  "artifact_sha256": "6f673cc4f474633851963063311d2f9167bc8adae71090ddc5867d58e547940b",
+  "verification": {
+    "command": "python3 desktop/scripts/theme-preparation-smoke.py",
+    "passed_scenarios": 2,
+    "c_compile": "-Wall -Wextra -Werror passed",
+    "python_syntax": "passed",
+    "production_changed": false,
+    "rust_rerun": false,
+    "gui_rerun": false
+  },
+  "results": {
+    "ok": true,
+    "hardware": false,
+    "scenarios": [
+      {
+        "replacement": "clear",
+        "read_gate_entered": true,
+        "stale_error": "{'code': -32001, 'message': 'device busy / IO error: theme preparation superseded by a newer display request'}",
+        "source_preserved": "Idle",
+        "generation_preserved": 2,
+        "no_stale_frame": true,
+        "no_stale_persistence": true,
+        "explicit_recovery": true
+      },
+      {
+        "replacement": "image",
+        "read_gate_entered": true,
+        "stale_error": "{'code': -32001, 'message': 'device busy / IO error: theme preparation superseded by a newer display request'}",
+        "source_preserved": "Jpeg",
+        "generation_preserved": 5,
+        "no_stale_frame": true,
+        "no_stale_persistence": true,
+        "explicit_recovery": true
+      }
+    ]
+  },
+  "limits": [
+    "Private libc read interception for exact seeded PNG path, bounded10s hold, isolated desktop-mock only",
+    "No physical HID or sensor access; no firmware decoder/pixel claim",
+    "Newer-theme-vs-older-theme and waiter cancellation retain existing deterministic actor/unit coverage; this real-I/O run covers Clear and JPEG replacement"
+  ]
+}

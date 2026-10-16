@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-12",
+  "scope": "User-requested documentation-only audit of all active plans and LCDV2 parity backlog",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "open_plan_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 5
+  },
+  "newly_completed_plans_removed": [],
+  "cleanup": "Ten obsolete plans were removed before this audit. All three remaining plans contain real open requirements. Removed completed chronological checkpoints and duplicate queues from active roadmap; historical evidence retained.",
+  "verified_code": [
+    "desktop/src-tauri/src/media_prepare.rs: native import still duration <= 10s",
+    "desktop/src-tauri/src/main.rs: thumbnail uses load_media_first_frame",
+    "crates/lconnect-daemon/src/ipc_server.rs: first AU under blocking job and source pin",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs and manager.rs: v2 reader/actor/replay integration"
+  ],
+  "corrections": [
+    "Separate implemented v2 storage/upload/actor/replay from missing native long-video import",
+    "Separate implemented first-frame RPC/native bridge from pending native v2 qualification",
+    "Keep hardware, platform/reference and missing product functions distinct",
+    "Retain existing image/video cards, named media slots, delete and rename as implemented"
+  ],
+  "validation": {
+    "broken_local_links": [],
+    "active_plan_counts_verified": true,
+    "code_changed_by_audit": false,
+    "tests_started_by_audit": false,
+    "hardware_run": false,
+    "previously_running_checks_observed_complete": {
+      "rust_chain_exit": 0,
+      "rust_tests": 693,
+      "rust_targets": 101,
+      "browser_exit": 0,
+      "browser_summary": "  139 passed (3.6m)"
+    },
+    "native_v2_thumbnail": "NOT RUN"
+  },
+  "documents": [
+    "roadmap.md",
+    "docs/superpowers/plans/README.md",
+    "docs/superpowers/plans/basic-parity.md",
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md",
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md",
+    "docs/parity/lcdv2-baseline-gaps.md",
+    "docs/parity/lcdv2-2.1.28-matrix.md",
+    "docs/parity/basic-parity-checklist.md",
+    "docs/parity/persistent-media-v2.md"
+  ]
+}

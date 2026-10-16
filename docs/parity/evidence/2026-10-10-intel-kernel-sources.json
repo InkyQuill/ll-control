@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-10",
+  "repository": "https://github.com/torvalds/linux",
+  "commit": "3857c2fe5449541e24afc5efdb0f81a8a8f9a3a0",
+  "files": {
+    "drivers/gpu/drm/i915/i915_pmu.c": "e5ae88b3bef48b685e6ccec8a8cfe327726ac9e07004fa28c6069bb84a4d2a8c",
+    "drivers/gpu/drm/xe/xe_pmu.c": "64c02c2acf2d5e6bdc6ac91bfd6521ed4239fb8821289e354277e31dc5ca785a",
+    "include/uapi/drm/i915_drm.h": "6a6c165125a03132fc6f616cd0dc7938b7d8a81b01073e19f8b9fd4bcbc19e0e",
+    "include/uapi/drm/xe_drm.h": "6f310670922ecdf38ff1db3ea6b3f045b029419bdb2fab62e97651c60c7694dc"
+  }
+}

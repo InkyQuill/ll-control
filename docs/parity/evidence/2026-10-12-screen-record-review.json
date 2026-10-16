@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-12",
+  "scope": "Native recording admission and preparation to explicit review, not GUI workflow",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "implemented": [
+    "Ready-only Arc recording lease with cached finalized length",
+    "InputStorage separates mutable disk uploads from immutable gallery/recording leases",
+    "Synchronous screen_record_admit performs no disk I/O or encoding; separate screen_record_prepare only accepts admitted ID",
+    "Owned preparation survives lost invoke and retains source after capture cancellation",
+    "Result reaches existing ReviewReady/HTTP preview path; explicit media_confirm is still required for publication"
+  ],
+  "verification": {
+    "recording_owner_and_bridge_tests": 8,
+    "all_features_results": [
+      "test result: ok. 75 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.77s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "strict_clippy": "all targets/all features passed",
+    "default_builder_check": "passed",
+    "rustdoc": "all features warnings denied passed",
+    "fmt": "passed",
+    "regressions": [
+      "Real synthetic capture -> admission -> capture cancel -> source retained -> encoded review with preserved frame count/no published key -> original file removed",
+      "Cancelled admission -> delayed prepare rejected without encoding; file released",
+      "Existing upload/gallery tests passed after storage refactor"
+    ],
+    "review": "Early background-admission race addressed with synchronous admission and two-step caller contract; no further review findings",
+    "logs": [
+      "/tmp/recording-review-tests.log",
+      "/tmp/recording-admission-tests.log",
+      "/tmp/recording-review-clippy-final.log",
+      "/tmp/recording-review-final-tests.log",
+      "/tmp/recording-review-default-final.log",
+      "/tmp/recording-review-doc-final.log"
+    ]
+  },
+  "limits": [
+    "UI must await admission or recover the known ID through media_status before preparing/cancelling",
+    "Original-source preview/edit and ScreenRecord GUI not yet connected",
+    "No actual portal, native GUI Save, daemon publication or hardware run in this slice",
+    "No full workspace/frontend qualification"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/media_import.rs": "8e0ec841126779bbd36a332c0e849a295b0f0e52589954270ccab3e7538355ef",
+    "desktop/src-tauri/src/screen_record.rs": "5a0c30ac71a2a1c96ed2297e07215faeb6b53712dda63b6785cd2fb262243538",
+    "desktop/src-tauri/src/screen_record_jobs.rs": "d7f6b15f9d1cdef9da05a4404e612ba06f26fb0d0e0754a5bbaa88ab5ec5f3c8",
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "8b8f7ccb19d9f3485cc406d1c26273edb332cf0f00aa745f73a7d6e02c6dfa0b",
+    "desktop/src-tauri/src/main.rs": "b83fd5b88f5a31d22fe22880ccf7280a4c37fe18d86ba17974e7b4d6e1c214d4",
+    "desktop/src-tauri/build.rs": "b43c744c905bf56e48341d3819e0883f21d6af9b44a9ab35046f0b8549790671",
+    "desktop/src-tauri/capabilities/main.json": "6c95792f8deeb7ad92e3aa57d44bd19a49216d465c5493cb132618ba42d3ce0f"
+  }
+}

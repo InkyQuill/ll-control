@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-10",
+  "scope": "Missing/stale consumer acceptance mapping and fan/LCD regressions",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "crates/lconnect-daemon/tests/cooling.rs": "0bfe0a4b0f4d4f61472ed9a1768e1aaf41c13d9f75061f7d166576bf57c4f0af",
+    "crates/lconnect-daemon/tests/theme_runtime.rs": "626235995e10e92554e778c63f7b6bad4825e35c35306ab4d417dae6fbc60384",
+    "crates/lconnect-daemon/tests/thermal.rs": "6b758d92084379ec2b411ddc867a8622b4ec0364ad7f45538ad6649cc3a6b128",
+    "crates/lconnect-daemon/tests/dynamic_rgb.rs": "cf343be7b71ae8ebe8b36f78c03caa023c6ae2c8aebc1db8c64d6e616ead11ce"
+  },
+  "verification": {
+    "focused_cooling_and_theme_tests": 17,
+    "rust_all_target_tests_before_timing_refinement": 587,
+    "final_cooling_regression": 1,
+    "final_fmt": "passed",
+    "final_strict_clippy": "passed",
+    "rust_docs": "passed before test-only timing refinement",
+    "review": "No remaining findings after replacing sleep with paused time + actor tick barrier",
+    "native_browser_rerun": false
+  },
+  "logs": [
+    "/tmp/consumer-focused.log",
+    "/tmp/consumer-review-{fmt,clippy,test,doc}.log",
+    "/tmp/consumer-review-final-{fmt,clippy,cooling}.log"
+  ],
+  "assertions": [
+    "Fan stale fallback remains for unrelated ID; same binding recovers reference PWM without Apply",
+    "LCD cache→JPEG: stale/invalid/unavailable/wrongunit/wrongID/missing match unavailable; genuine zero differs",
+    "Same prepared LCD runtime and binding restore valid frame when source returns"
+  ],
+  "limits": [
+    "Synthetic readings and fake HID only",
+    "Native combined consumer fault matrix remains open",
+    "Final full-suite run preceded test-only timing correction; final correction passed affected test/fmt/Clippy"
+  ]
+}

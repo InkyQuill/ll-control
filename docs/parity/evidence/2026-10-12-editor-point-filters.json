@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-12",
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2",
+  "scope": "Four image editor point filters; software only",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "software": {
+    "rust_passed": 79,
+    "browser_passed": 13,
+    "vectors": 140,
+    "fmt": "passed",
+    "clippy": "passed",
+    "docs": "passed",
+    "frontend_check": "0 errors 0 warnings",
+    "frontend_build": "passed",
+    "sessions_terminal_zero": [
+      75484,
+      34491
+    ]
+  },
+  "oracle_correction": {
+    "old_f64_expected_red": 92,
+    "f32_expected_red": 108,
+    "hue_premult": [
+      46,
+      60,
+      25,
+      80
+    ],
+    "saturation_premult": [
+      29,
+      85,
+      0,
+      80
+    ],
+    "contrast_premult": [
+      34,
+      104,
+      0,
+      80
+    ],
+    "seed": 7395,
+    "additional_vectors": 128,
+    "reproduce": "python3 /home/inky/Development/lian-li/scratch/shader-inspection/seeded_point_oracle.py"
+  },
+  "limitations": [
+    "No real WPF/GPU comparison; approximate f32 interpreter and scalar arithmetic differ in intermediate rounding",
+    "No native editor or hardware run",
+    "Sharpen/blur not implemented",
+    "Large-source 64-transform performance not measured",
+    "No full workspace/browser-suite rerun; focused affected checks only"
+  ],
+  "source_sha256": {
+    "crates/lconnect-image/src/editor_filters.rs": "7f93e4476ae4fa72d161a11dd1501c2125e2dbab34922cfd36af851b4a75b278",
+    "crates/lconnect-image/src/editor.rs": "bff50b429b1b75a8f6e8c36d139537712ef37cccd20af3accf5eda44a75c1da2",
+    "crates/lconnect-image/tests/editor_filters.rs": "5707d7a57ed19833320c2edcc6c7af8cfa14065ca5ac8f44399dd1d788ca785d",
+    "desktop/src-tauri/src/image_editor.rs": "a0bec3e53d9af04d47547dd5eea7f313b5823e4526d6673d941eebbf6c52b6f0",
+    "desktop/src/lib/ImageEditor.svelte": "a8c2bd36215c57098476599908d5072069d0b7e47662a2673ab1f6383138af00",
+    "desktop/tests/image-editor.spec.ts": "fc4fa61b3b3f56fb4db74e8ee965b0c7757cb3e6c2ca5c2f973b4d55553de60f"
+  },
+  "external_sha256": {
+    "/home/inky/Development/lian-li/scratch/shader-inspection/hueshift.asm": "b3e42fed85baa2698abb272a0cc0388cb2b98dd9952dfe6d1d542651f3d1e3dc",
+    "/home/inky/Development/lian-li/scratch/shader-inspection/saturation.asm": "95590f83a50c442999595074f0389c9718339f4bbb748dc68aa97a8bb322ae88",
+    "/home/inky/Development/lian-li/scratch/shader-inspection/contrastadjust.asm": "b212edd0fb98a09aa3e32c4e163ccb4416f8e91bc271d375a22e4d26f836703e",
+    "/home/inky/Development/lian-li/scratch/shader-inspection/point_oracle.py": "ae8993024a2d501eb6d67c543fceca8747df4d07366665141d0e5141da53940a",
+    "/home/inky/Development/lian-li/scratch/shader-inspection/seeded_point_oracle.py": "e4a21610c9d13ad91c23d6d98bb806c2b7150a7af0a4465182afbb541f25b26a",
+    "/home/inky/Development/lian-li/scratch/shader-inspection/point-vectors.json": "eb82cf8273ad5a9a99d3719e99017bf883fc5b5817effa6f1e2d2797c4a49cdc",
+    "/home/inky/Development/lian-li/scratch/shader-inspection/seeded-point-vectors.rs.txt": "cb0f2e8f809ae129a65c09e15e8f3ff7a41b1be1489e521300c57ba3bdfec5bd",
+    "/home/inky/Development/lian-li/winver/L-Connect 3/Telerik.Windows.Controls.ImageEditor.dll": "870a7e4c5c84cec4003bc284af67a11b632df2e180c091f841cb5085d9a58950"
+  },
+  "log_sha256": {
+    "/tmp/editor-points-clippy.log": "e3037e7a1a701a3a410ea4f90c0442df77ba5bac441ffe589ff437952ada6ef4",
+    "/tmp/editor-points-rust.log": "9e23ea2393d074caeee381d515cb6267c09e0e8341f74ffff16c93fc66c93162",
+    "/tmp/editor-points-doc.log": "676160b99fc0a97b0c7de08c62f642647ae0896b5aeb61cc7921e13a2d82dbb3",
+    "/tmp/editor-points-check.log": "90a6093d8b8ccb0ac2603dc2a487929f8eb4b3b20081068eccc8790452a77620",
+    "/tmp/editor-points-build.log": "82fbde002b6f560cce99749ba3771d589f0244fcfbf9763628bbae393fc8fc0b",
+    "/tmp/editor-points-browser.log": "51c4c150c54cc604c2aff9104ad83d988d20a5e381e58a20736f5dd2ad4fdd56"
+  },
+  "reviews": [
+    "Rust numeric review: no actionable finding; oracle recipe/hash and arithmetic qualifications retained",
+    "Svelte static review: no actionable finding"
+  ]
+}

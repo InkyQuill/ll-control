@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-12",
+  "scope": "ScreenRecord owned job lifecycle and Tauri commands, no UI or real portal run",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "implemented": [
+    "Caller-known ID reservation with10s expiry, idempotent begin/start readback",
+    "Single blocking capture/recorder/session owner with retained admission until join",
+    "Bounded typed controls and independent cancellation; dropped acknowledgements retain owned work",
+    "Ready file retained until cancel/shutdown; repeated Finish does not reencode",
+    "Five Tauri commands registered in default/native builders and main capability",
+    "Window Close joins local recording cleanup; remote Close errors retained in Failed status and logged"
+  ],
+  "verification": {
+    "owner_tests": 6,
+    "all_features_results": [
+      "test result: ok. 73 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.23s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "strict_clippy": "all targets/all features passed",
+    "default_builder_check": "passed",
+    "rustdoc": "all features warnings denied passed",
+    "fmt": "passed",
+    "review": "Read-only review; async Tauri admission wrappers and explicit remote cleanup error logging addressed",
+    "logs": [
+      "/tmp/recording-owner-tests.log",
+      "/tmp/recording-owner-clippy-final.log",
+      "/tmp/recording-owner-final-tests.log",
+      "/tmp/recording-owner-default-build.log",
+      "/tmp/recording-owner-doc.log"
+    ]
+  },
+  "limitations": [
+    "No actual portal, native GUI window-close, device or screen capture tests",
+    "No preview/prepare/publication bridge or UI yet",
+    "Remote Close failure and expanded selection-fault matrix pending",
+    "Existing engine native-plugin blocking-call limitation remains",
+    "No full workspace/frontend/hardware qualification"
+  ],
+  "source_sha256": {
+    "desktop/src-tauri/src/screen_record_jobs.rs": "1c2d0fc0a1f42ab2a3f7936c00095ebdd09e049d95c8c467db596c3224537a66",
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "2bc11f0bbf8cdbb0e77496c4f82f174ccd8d24a2a0bc6e69753557ac81bec65b",
+    "desktop/src-tauri/src/screen_record.rs": "c0c71bc05e0fa14f5ae09891ae77919211c86d65835cfbaeef51cbe1addcb672",
+    "desktop/src-tauri/src/lib.rs": "4fcb91f24600b43eed5f2e160836f2e2170447b203a506e5f0419570f8486fb8",
+    "desktop/src-tauri/src/main.rs": "2a994ac4283e943d211a23f77070b45bf8000be8fe5d5ff264e4145ce37c89f0",
+    "desktop/src-tauri/build.rs": "5dbd21fde0a600d814057b5e1e28d4f59c1a8f4121daaffdf1022dbbd132ffeb",
+    "desktop/src-tauri/capabilities/main.json": "636a8af8a917bb45e5f934bbe68b71d9fd405b2a96e1a73fbefd616200396c5c"
+  }
+}

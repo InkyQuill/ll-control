@@ -1,0 +1,23 @@
+[
+  {
+    "intensity": 1,
+    "exported_speed": 15,
+    "speed": 45,
+    "particle_level": 300,
+    "particles": 692
+  },
+  {
+    "intensity": 2,
+    "exported_speed": 25,
+    "speed": 55,
+    "particle_level": 450,
+    "particles": 1037
+  },
+  {
+    "intensity": 3,
+    "exported_speed": 35,
+    "speed": 75,
+    "particle_level": 650,
+    "particles": 1498
+  }
+]

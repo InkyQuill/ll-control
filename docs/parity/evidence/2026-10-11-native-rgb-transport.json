@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-11",
+  "scope": "Selective pump RGB short-write failure with independent LCD and cooling progress, native WebKitGTK to real IPC to MockBackend",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "6bdcf26b481fdb70e154d8d18febe0a145dae2211e54cdc609cdc9314cdf1387",
+    "desktop/scripts/native-smoke.js": "4423d2eb443bee6b115ceaf4a9c7d33821a9b524f7a52663e245857bcf3d60d4",
+    "desktop/scripts/native-smoke.py": "b2030273cc0e2382e3276b56b4c0d269f58ae3a04513583dbe1e3582a1c417ed"
+  },
+  "native_artifact": "/tmp/lconnect-native-__qtu3tt/acceptance.json",
+  "native_artifact_sha256": "c1052c99f2705ea4d0132d809caf2ba8d46221392c9b4f4d4902519d52cd4823",
+  "observations": {
+    "before": {
+      "devices_known": 1,
+      "fan_pwm_writes": 9,
+      "hid_decode_errors": 0,
+      "hid_read_errors": 0,
+      "hid_write_count": 428,
+      "ipc_request_count": 633,
+      "jpeg_starts": 15,
+      "pump_rgb_failures": 0,
+      "uptime_seconds": 15
+    },
+    "during": {
+      "devices_known": 1,
+      "fan_pwm_writes": 10,
+      "hid_decode_errors": 0,
+      "hid_read_errors": 0,
+      "hid_write_count": 510,
+      "ipc_request_count": 694,
+      "jpeg_starts": 18,
+      "pump_rgb_failures": 3,
+      "uptime_seconds": 18
+    }
+  },
+  "verification": {
+    "native_build": "passed",
+    "native_smoke": "passed",
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_tests": 587,
+    "rust_failed": 0,
+    "rust_ignored": 0,
+    "rust_doc": "passed",
+    "rust_review": "no actionable findings",
+    "logs": "/tmp/rgb-transport-review-{fmt,clippy,test,doc}.log"
+  },
+  "assertions": [
+    "Only report1 command131 rejected before mock forwarding with ShortWrite0",
+    "RGB last_error appears and requested binding is retained",
+    "Fan PWM61 applies without pump/fan error while RGB error persists",
+    "Successful JPEG start packets increase by3 while held fault rejects3 writes",
+    "Fault removal automatically recovers dynamic RGB without Apply",
+    "Fan55 restored; full native workflow and final restart/replay pass"
+  ],
+  "limits": [
+    "JPEG start count proves ongoing frame transmission, not physical display or timing quality",
+    "Only pump mode lighting command131 is faulted; direct RGB, LCD and PWM failures are separate cases",
+    "Zero-byte write rejection does not test partial-frame decoder resync or disconnect",
+    "Production code unchanged; synthetic sensors and private backend only"
+  ]
+}

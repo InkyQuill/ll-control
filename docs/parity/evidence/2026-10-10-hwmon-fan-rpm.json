@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Generic hwmon fan RPM collector only; CPU role mapping pending",
+  "abi": "https://docs.kernel.org/hwmon/sysfs-interface.html#fans",
+  "verification": {
+    "rust_all_target_tests": 553,
+    "new_fan_regressions": 4,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No findings"
+  },
+  "logs": [
+    "/tmp/hwmon-fan-review-fmt.log",
+    "/tmp/hwmon-fan-review-clippy.log",
+    "/tmp/hwmon-fan-review-test.log",
+    "/tmp/hwmon-fan-review-doc.log"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/src/sensors.rs": "0f4890c149d716e2fd1c677d34180ee8f564ef81e469a74511fc97517269e0de",
+    "crates/lconnect-daemon/tests/host_sensors.rs": "34c2dc44d77cb51953fc4466d89e1a3902a40e91ccd7b882e31fe406a29a81e8"
+  },
+  "assertions": [
+    "RPM is not rescaled by divisor/pulses; alarm does not invalidate reading",
+    "Unknown drivers provide fan channels only; temperature and voltage restrictions preserved",
+    "Zero is valid; fault/disabled unavailable; negative/malformed/overflow invalid",
+    "Physical ID survives hwmon renumber; missing disappears; recovery same ID; stale revokes value",
+    "Duplicate identities invalid; reading-count overflow rejects entire hwmon catalog",
+    "Label CPU Fan does not classify a channel as CPU fan"
+  ],
+  "limits": [
+    "No live sysfs/provider/HID access",
+    "No CPU fan assignment/UI or native acceptance yet",
+    "4096-entry scan bound reviewed statically; regression exercises reading capacity"
+  ]
+}

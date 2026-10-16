@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Mixed host/device readings -> ThemeRuntime -> JPEG with literal-text oracle; consolidation with separate provider/IPC identity tests",
+  "source_sha256": {
+    "crates/lconnect-daemon/tests/theme_runtime.rs": "82d1fbffc2bd809d4df2dd85fa5d6011a486a42cecd12ce196cd317c5b0cd902",
+    "crates/lconnect-daemon/tests/host_sensors.rs": "d159d5f09d04dedc72e7d680051c80838227517d1b97ed3b6c700616e99f2582",
+    "crates/lconnect-daemon/tests/sensor_selection.rs": "0f0935f86f2d7ac5637672295ab2d088d30a5e97c000e80204b319ab1bb658a4",
+    "crates/lconnect-daemon/src/theme_runtime.rs": "2f2b0703e18f40d45f5adc199a6b2a585a8fe9e2b72894fbcb1169dedcad1b7d",
+    "crates/lconnect-ipc/src/theme.rs": "280f13af53fa24146722667110200cdc1c073e10e76bfc78bd1f6d89408f3d71"
+  },
+  "verification": {
+    "focused_theme_runtime_tests": 7,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "tests": {
+      "passed": 610,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "passed",
+    "review": "no actionable findings"
+  },
+  "logs": [
+    "/tmp/mixed-sensors-review-fmt.log",
+    "/tmp/mixed-sensors-review-clippy.log",
+    "/tmp/mixed-sensors-review-test.log",
+    "/tmp/mixed-sensors-review-doc.log"
+  ],
+  "scenarios": [
+    "9 fresh host/device bindings and Fahrenheit/Celsius/Percent/Watts/RPM",
+    "valid zero fan RPM distinct from unavailable",
+    "host cache age4s does not revoke device readings",
+    "invalid coolant, wrong pump unit and wrong fan identity do not revoke host readings",
+    "same binding recovery restores exact original frame without Apply"
+  ],
+  "production_changed": false,
+  "hardware_run": false,
+  "limitations": [
+    "New test alone does not cover collectors IPC or physical LCD",
+    "Provider and IPC coverage is established by separately inspected tests rerun in the workspace suite",
+    "Intel aggregate and voltage platform coverage remain open",
+    "Hardware accuracy/wiring deferred"
+  ]
+}

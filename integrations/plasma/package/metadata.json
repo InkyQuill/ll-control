@@ -1,0 +1,10 @@
+{
+ "KPackageStructure":"Plasma/Applet",
+ "KPlugin":{
+  "Id":"net.inkyquill.lconnect.mini","Name":"L-Connect Mini","Name[ru]":"L-Connect Mini",
+  "Description":"Six cached L-Connect sensor readings","Description[ru]":"Шесть показаний из кеша L-Connect",
+  "Version":"0.1.0","License":"GPL-3.0-or-later","Category":"System Information","Icon":"utilities-system-monitor",
+  "Authors":[{"Name":"Pavel Obruchnikov","Email":"me@inkyquill.net"}]
+ },
+ "X-Plasma-API-Minimum-Version":"6.0"
+}

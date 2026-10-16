@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-11",
+  "scope": "Requested plan cleanup and full LCDV2 parity review after curve accessibility",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "active_plans": [
+    {
+      "path": "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md",
+      "open": 6,
+      "complete": 0
+    },
+    {
+      "path": "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md",
+      "open": 6,
+      "complete": 0
+    },
+    {
+      "path": "docs/superpowers/plans/basic-parity.md",
+      "open": 6,
+      "complete": 0
+    }
+  ],
+  "newly_deleted_plans": [],
+  "reason": "All remaining plans contain unresolved work; ten superseded plans were already removed in earlier cleanup. Historical specs/evidence retained.",
+  "corrections": [
+    "Removed completed whitespace/fallback and native Alt+Tab/AT-SPI/numeric work from remaining queue",
+    "Separated implementation, software acceptance, reference-dependent research and deferred hardware",
+    "Broad acceptance rows remain open; identified theme identity replay and slow frame encoding as coverage questions, not confirmed bugs"
+  ],
+  "new_test_run": false,
+  "hardware_run": false,
+  "other_checkout": "Historical lconnect-linux copies and out-of-scope ENE plan unchanged"
+}

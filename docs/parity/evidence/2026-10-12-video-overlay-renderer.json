@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-12",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "scope": "Shared video-frame layer rendering foundation; no actor/IPC/UI composition integration",
+  "source_hashes": {
+    "crates/lconnect-image/src/theme.rs": "5ffbdf80949962765dabe5aca84e0e3cef7891af57faa13afeda3794bcf9b889",
+    "crates/lconnect-daemon/src/theme_runtime.rs": "98b2f0de1d30c22225ad921594012aa03c98700b3ac4df01ead678fa502c618c",
+    "crates/lconnect-image/tests/theme.rs": "828becc8e9517f2375e3353f325be79f0ac71ef96c3947a01a9364511ff12705",
+    "crates/lconnect-daemon/tests/theme_runtime.rs": "b4682dcd23e021548090c56154a8035c77eaa92693d18a91ff9e17b0825991ed"
+  },
+  "validation": {
+    "rust_tests": 699,
+    "rust_targets": 101,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "docs": "passed",
+    "production_gui_check": "passed",
+    "image_theme_tests": 23,
+    "daemon_theme_runtime_tests": 8,
+    "read_only_review": "No findings",
+    "browser_native": "NOT RUN: no frontend change; image/daemon renderer and existing consumers covered by Rust tests",
+    "hardware": "NOT RUN"
+  },
+  "evidence": [
+    "Owned RGB480x480 input; fixed canvas rejection; existing theme delegates to same ordered layer renderer",
+    "Text/sensor/clock/alpha watermark over different frame backgrounds match normal layer semantics exactly",
+    "Real H264 four-frame motion decode; synthetic CPU40/80/missing/50 rendered against explicit text raster; untouched corner preserved",
+    "Composed raw frames re-encoded to H264 and decoder produces all four framemd5 records"
+  ],
+  "failed_attempt": "First codec test expected an extra space before Celsius suffix; corrected fixture to existing CPU40.0°C formatting and replaced full-image assertion dump with compact mismatch context. Repeated runtime suite passed.",
+  "remaining": [
+    "Bounded decoder/encoder worker and allocation/pipes/queues before RgbImage construction",
+    "Cancellation, process reap, pacing, actor barriers and full lifecycle",
+    "IPC/schema/persistence/profile identity and GUI preview/Apply",
+    "Physical hardware later"
+  ]
+}

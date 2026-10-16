@@ -1,0 +1,215 @@
+{
+  "date": "2026-10-12",
+  "scope": "GUI video background composition, explicit Apply and profile slots",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "source_sha256": {
+    "desktop/src/lib/api.ts": "25d47909b0d4e3d7deee63a5e496e07a8c27f66ff8bc63027750e5e0962793ea",
+    "desktop/src/lib/BackgroundEditor.svelte": "9ad24759113232d8bfc832a55537d612a563e956c35912291279d65aa1b0e3f0",
+    "desktop/src/lib/MediaLibrary.svelte": "bc51d571d3364afec8bc0e8d20014affe997fb6cda209197f229770fe9860195",
+    "desktop/src/routes/+page.svelte": "6e5f0099b1c00a6286440b852e06d1b90bb8a04f8754aaaa5d53651de4a023b9",
+    "desktop/tests/video-background.spec.ts": "7876469ab9529652b93492e62fe43cbd4347b7c26243b2911dc4d46f6ec0602c",
+    "desktop/scripts/preset-contract.ts": "af5f62175e2e2b86b12b7d1249a9fa3c1c72390b93dd129aa5342e0bf59539e7",
+    "desktop/scripts/native-media.js": "b917fbb6e13349744ac87294a9e932fbc534105bbf4d0fdd202c989982293848"
+  },
+  "verification": {
+    "svelte_check": "0 errors / 0 warnings",
+    "frontend_build": "passed",
+    "schema_contracts": 27,
+    "focused_browser": 5,
+    "full_browser": 142,
+    "mock_daemon_build": "passed",
+    "native_gui_build": "passed",
+    "native_media": "passed",
+    "review": "No actionable findings",
+    "hardware": "NOT RUN"
+  },
+  "native_fixture": "/tmp/lconnect-native-media-4ky2an0r",
+  "native_result": {
+    "cancelled": true,
+    "chooser_cancel": true,
+    "close_pending": true,
+    "composition_verified": true,
+    "delete_verified": true,
+    "gallery_verified": true,
+    "image_gallery_verified": true,
+    "image_names_verified": true,
+    "keys": [
+      "be1265240be24c19882a8d87e5ed9831",
+      "a9f6f8b32fd94bc6b64c6f715e48a54b"
+    ],
+    "malformed_rejected": true,
+    "media_slot_verified": true,
+    "ok": true,
+    "phases": [
+      "uploading",
+      "encoding",
+      "encoding",
+      "encoding",
+      "validating",
+      "transferring",
+      "transferring",
+      "transferring",
+      "complete",
+      "inspecting",
+      "encoding",
+      "validating",
+      "complete"
+    ],
+    "restart_preserved": true,
+    "source_unchanged": true,
+    "thumbnails": [
+      {
+        "height": 144,
+        "name": "fixture.mp4",
+        "width": 144
+      },
+      {
+        "height": 144,
+        "name": "fixture.gif",
+        "width": 144
+      },
+      {
+        "after_restart": true,
+        "height": 144,
+        "width": 144
+      },
+      {
+        "frames": 586,
+        "height": 144,
+        "pixel": [
+          0,
+          254,
+          254,
+          255
+        ],
+        "v2": true,
+        "width": 144
+      }
+    ],
+    "dialogs": [
+      {
+        "action": "chooser_cancel",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n"
+      },
+      {
+        "action": "chooser_bad",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-4ky2an0r/broken.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_mp4",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-4ky2an0r/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-4ky2an0r/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-4ky2an0r/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-4ky2an0r/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-4ky2an0r/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      }
+    ],
+    "cancel_reaped": [
+      {
+        "pid": 2842684,
+        "source": "/tmp/lconnect-native-media-4ky2an0r/native-tmp/.tmpyDuM8f/source.mp4",
+        "output": "/tmp/lconnect-native-media-4ky2an0r/native-tmp/.tmpEBc3Hh/clip.h264"
+      }
+    ],
+    "close_reaped": {
+      "pid": 2842847,
+      "source": "/tmp/lconnect-native-media-4ky2an0r/native-tmp/.tmpV7DBDZ/source.mp4",
+      "output": "/tmp/lconnect-native-media-4ky2an0r/native-tmp/.tmp746Wnd/clip.h264"
+    },
+    "decoded": [
+      {
+        "name": "fixture.gif",
+        "bytes": 691200,
+        "top_pixel": [
+          252,
+          0,
+          0
+        ],
+        "decoded_frames": 12,
+        "format": "v2"
+      },
+      {
+        "name": "fixture.mp4",
+        "bytes": 691200,
+        "top_pixel": [
+          0,
+          0,
+          0
+        ],
+        "decoded_frames": 586,
+        "format": "v2"
+      }
+    ],
+    "normal_close_exit": 0
+  },
+  "scenarios": [
+    "Video selection modifies only theme draft and preserves layers/gradient",
+    "Preview RPC uses composition; native decoded preview retains cyan video pixels",
+    "Full screen slot round-trip keeps version2 video key and layers",
+    "Explicit native Apply readback has version2 video and clock layer",
+    "Return to static background removes video key and uses version1",
+    "Missing video Apply errors without silent replacement",
+    "Native Clear waits for persisted state, then media can be deleted"
+  ],
+  "limitations": [
+    "First video frame preview only; no timeline or animated preview",
+    "Full native keyboard/speech/scaling remains",
+    "Extended composition fault/performance matrix remains",
+    "Physical tests deferred"
+  ],
+  "logs": [
+    "/tmp/video-background-build.log",
+    "/tmp/video-background-browser.log",
+    "/tmp/video-background-native.log"
+  ]
+}

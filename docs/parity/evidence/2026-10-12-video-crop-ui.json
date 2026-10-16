@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2",
+  "scope": "Per-interval crop GUI and local frame preview, not prepared-result playback",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "implementation": [
+    "Percent fields per stable segment ID; optional normalized native DTO",
+    "Pointer rectangle selection, keyboard move, reset focus",
+    "Invalid/empty crop blocks submit and hides preview; active upload disables editing",
+    "Current decoded frame crop plus contain/cover canvas, using one existing source player"
+  ],
+  "verification": {
+    "frontend_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "browser": "12 passed (11.5s), headless Chromium with mocked native IPC",
+    "logs": [
+      "/tmp/video-crop-ui-check.log",
+      "/tmp/video-crop-ui-build.log",
+      "/tmp/video-crop-ui-browser.log"
+    ],
+    "behavior": [
+      "Real split-color MP4 preview pixels for independent right/left crops",
+      "Contain black bars change to filled image in cover",
+      "Normalized per-interval payload; invalid and empty fields",
+      "Reverse pointer drag, keyboard movement, selected identity after sibling deletion",
+      "Reset removes crop from payload and restores keyboard focus",
+      "Prior source seek/CSP/cleanup and upload/cancel regressions remain green"
+    ]
+  },
+  "limitations": [
+    "Browser resampling is not pixel-exact FFmpeg output",
+    "Prepared/concatenated encoded video preview not implemented",
+    "Native WebKitGTK/AT-SPI/scaling and hardware not run",
+    "Rotation/SAR/odd-dimension and Windows raster qualification still open",
+    "No full workspace/browser run this turn"
+  ],
+  "source_sha256": {
+    "desktop/src/lib/MediaImport.svelte": "6653635e64531ca20981617268e4c3b755b484e848d6b54280ddeb220e3cef4e",
+    "desktop/src/lib/VideoSourcePreview.svelte": "e5390349c20bd3d641a92a1d5671bb3bc92eedd6b7a912eb4aa63c583fbfbcfa",
+    "desktop/src/lib/video-crop.ts": "54341f11e67902c5484647b90fe1116bd2893214f1c79aa3f8e346fed19cc93e",
+    "desktop/tests/media-import.spec.ts": "edb8ba53efa6513fab51b36329cebbf88b90b1c006b767d687bc0d78d23e2450",
+    "desktop/src-tauri/src/media_prepare.rs": "9ae2d4f832dd8d3159ce90f8c3510be2bc14c2e17127fb63c78661c4eed19e86"
+  }
+}

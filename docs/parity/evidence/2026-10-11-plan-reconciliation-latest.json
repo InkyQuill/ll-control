@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-11",
+  "scope": "Plans after Cycle, CSS em sizing, external controls, profile readback and EXIF checkpoints",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "tests_run_for_documentation_audit": false,
+  "active_plan_open_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 6,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 8
+  },
+  "plan_sha256": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": "556728178d94c9ef0353973c0dd91142864f58e2818477ae0dff5d4665e73303",
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": "281c7db5ee5ab4e250f4e603792f83a5b609fe49ba66849b8dc3945ee1611158",
+    "docs/superpowers/plans/README.md": "0a39557f2b781809213bd8962d78d998e680cfcdf065f934329424f3c39c3085",
+    "docs/superpowers/plans/basic-parity.md": "c9be126e9719d3cf224c8464e3cbd3ac083d0fd5a1798e77659901ac38bcd3b5"
+  },
+  "deleted_this_audit": [],
+  "reason": "All three remaining plans have open requirements. Earlier obsolete plan deletions retained. Research snapshots and evidence preserved.",
+  "completed_slices": [
+    "Cycle cache/recovery/restart",
+    "CSS pixels-per-em sizing (not full text parity)",
+    "Static image format and EXIF normalization",
+    "External cooling/thermal/dynamic draft preservation",
+    "Profile readback error or reconnect invalidation"
+  ],
+  "remaining": [
+    "CPU/NVIDIA voltage platform coverage and Intel aggregate load semantics",
+    "Text shaping/layout/raster comparison",
+    "External Display/Settings and interrupted manual/thermal mutations",
+    "Native accessibility and final same-tree software acceptance, quickstart",
+    "M4 media/gallery/editor/effects/capture",
+    "M5 RGB catalog/sync, archives/reset, tray/autostart/Mini/FPS/Spec",
+    "M1/M6 suspend/resume, firmware, delivery and deferred hardware acceptance"
+  ],
+  "latest_rust_checkpoint": "2026-10-11-image-orientation.json",
+  "limits": "593 Rust tests passed at latest image checkpoint; earlier frontend/native results are not a final same-tree acceptance."
+}

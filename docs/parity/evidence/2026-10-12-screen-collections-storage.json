@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-12",
+  "scope": "Screen collection schema, offline reference protection, atomic reset and revision propagation",
+  "verification": {
+    "workspace": {
+      "passed": 744,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 107,
+      "log": "/tmp/collections-workspace.log"
+    },
+    "fmt": "PASS",
+    "clippy": "PASS /tmp/collections-clippy.log",
+    "docs": "PASS /tmp/collections-doc.log",
+    "review": "Static Rust review: no actionable findings",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN; no GUI collection workflow yet"
+  },
+  "remaining": [
+    "Membership read/edit API and leases until commit",
+    "Legacy shared catalog migration",
+    "GUI collection workflows",
+    "Full Screen reset IPC/readback/reapply and native/lifecycle acceptance"
+  ],
+  "source_sha256": {
+    "crates/lconnect-ipc/src/screen_collections.rs": "ad4ed0239f069e9160c5c2cbc9a6769e350b0df0252aed69596034e42b09ba3f",
+    "crates/lconnect-ipc/tests/screen_collections.rs": "e65cfbe2b3addc72a6ecf83c6af40ea396f796d37586e4e97147bdee5586fe47",
+    "crates/lconnect-daemon/src/persistence.rs": "21495728953462f0a810033d2accee25fd237b014cc2b4d74c9cf9fcbf2e8fae",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "1a74bedf4f1f417e0cb80a90c62acbdfb8541ce717e3d752b6c3e99030cc7564",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "722ca27e3e3b951c262e3f8d062e8aaa22e8e909cd718806b9e09c42086a7f70",
+    "crates/lconnect-daemon/tests/screen_reset_storage.rs": "2557c4a4f7aefd3dba79e07b228536f758885f6dd2af98ff745347ea2317f8ab"
+  }
+}

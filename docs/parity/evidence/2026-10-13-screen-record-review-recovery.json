@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "ScreenRecord failed review preparation -> retained source editing -> fresh review -> explicit Save",
+  "environment": "Isolated Xvfb/private D-Bus; synthetic GStreamer capture; daemon MockBackend; native Tauri/WebKitGTK",
+  "reproduction": {
+    "log": "/tmp/lconnect-record-recovery-before.log",
+    "failed": 2,
+    "failure": "No return-to-edit button after admission rejection or failed encoding"
+  },
+  "changes": [
+    "Allow return to editing from failed/cancelled review and observable pre-publication errors",
+    "Join review disposal before reopening editor; cleanup errors keep retry path",
+    "Keep source recording, name, crop/trim draft; never automatically publish"
+  ],
+  "checks": {
+    "svelte": {
+      "errors": 0,
+      "warnings": 0,
+      "log": "/tmp/lconnect-record-recovery-check.log"
+    },
+    "browser": {
+      "passed": 37,
+      "log": "/tmp/lconnect-record-recovery-browser.log",
+      "scope": "ScreenRecord client and UI suites"
+    },
+    "build": "/tmp/lconnect-record-recovery-build.log",
+    "native_build": "/tmp/lconnect-record-recovery-native-build.log",
+    "native": {
+      "root": "/tmp/lconnect-native-recording-9wutqz5l",
+      "result": {
+        "admission_failure_recovery": true,
+        "capture_regions": true,
+        "close_while_recording": true,
+        "collection_membership": true,
+        "explicit_save": true,
+        "initial_region_setup": true,
+        "ok": true,
+        "operation_choice": true,
+        "prepare_failure_recovery": true,
+        "prepared_decode": true,
+        "resumed_frames": true,
+        "review_reedit": true,
+        "saved_key": "4cf836648c7f43cbbd2b209f3398fa70",
+        "source_dimensions": [
+          320,
+          240
+        ],
+        "source_seek": true,
+        "source_snapshot": true,
+        "visual_region_preview": true,
+        "normal_close_exit": 0
+      },
+      "fault_injection": "One-shot error responses at custom-protocol fetch for screen_record_admit and screen_record_prepare; actual capture, admitted review cancellation, successful reprepare and Save use native commands"
+    },
+    "js_syntax": "node --check desktop/scripts/native-recording.js passed",
+    "diff_whitespace": "git diff --check passed"
+  },
+  "qualification_limits": [
+    "Native rejected command responses injected; does not prove all decoder/plugin/transport failures",
+    "No real portal/PipeWire source or physical hardware test",
+    "No new full workspace or 180-second limit run; change limited to GUI review recovery and acceptance harness"
+  ],
+  "failed_harness_attempt": {
+    "root": "/tmp/lconnect-native-recording-nrg4878y",
+    "cause": "Attempted override of read-only Tauri invoke did not inject failure; replaced with custom-protocol response interception"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-11",
+  "scope": "ASUS WMI voltage collector-cache-IPC-LCD preview fresh/stale/recovery integration",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "crates/lconnect-daemon/tests/host_sensors.rs": "d159d5f09d04dedc72e7d680051c80838227517d1b97ed3b6c700616e99f2582"
+  },
+  "test": "catalog_roundtrip_without_any_usb_device_uses_cache",
+  "assertions": [
+    "Opt-in synthetic asus_wmi_sensors in4 with CPU Core Voltage label",
+    "900mV yields0.9V through list_sensors and0.90V text despite Fahrenheit preference",
+    "preview_lcd_theme produces JPEG",
+    "Cache age4s yields unavailable text and different JPEG",
+    "Fresh cache sample restores identical JPEG with unchanged theme binding"
+  ],
+  "verification": {
+    "focused_host_sensors": 26,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_tests": 588,
+    "failed": 0,
+    "ignored": 0,
+    "targets": 91,
+    "rust_doc": "passed",
+    "review": "no actionable findings",
+    "logs": "/tmp/wmi-integration-review-{fmt,clippy,test,doc}.log"
+  },
+  "limits": [
+    "No production code change",
+    "No real WMI/host sensors/HID or native GUI",
+    "Does not close other voltage providers, BIOS qualification or final whole-tree frontend/release acceptance"
+  ]
+}

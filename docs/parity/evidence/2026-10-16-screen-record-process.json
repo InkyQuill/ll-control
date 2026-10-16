@@ -1,0 +1,208 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Moscow",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Killable owned ScreenRecord process and EN/RU recovery. Private synthetic GStreamer, files, Unix sockets, test worker re-exec and Xvfb/session D-Bus/Tauri/MockBackend only. No real PipeWire source, production daemon, HID, host session or install.",
+  "implementation": [
+    "GUI re-execs its own executable in internal worker mode before Tauri/single-instance startup. The parent retains portal session and private staging; child alone executes GStreamer native/plugin operations.",
+    "Private typed length-prefixed Unix socket protocol with9MiB allocation bound,2MiB JPEG bound,15s startup/finish and5s command deadlines;25ms transfer interruption checks. Ordinary application errors allow snapshot retry; broken transport/protocol/deadline latches failure and reaps child.",
+    "Selected PipeWire FD and private control socket inherit as4/3; unrelated>=5 FDs are CLOEXEC via checked close_range. Missing syscall fails startup. Inherited FD checks precede from_raw_fd ownership. Parent-death SIGKILL plus parent identity check.",
+    "Cancel/Drop/GUI shutdown kill and reap child before TempDir/portal release. Final MP4 moves inside parent staging and requires successful child exit and regular-file/length/frame validation before Ready. Existing source/review/HTTP leases remain.",
+    "Common worker timeout/exit/protocol/source-close/startup failures have EN/RU UI messages; Clear allows a new selection without automatic save/restart. Recording harness now explicitly selects RU in private fixture settings instead of assuming the product default."
+  ],
+  "checks": {
+    "workspace_all_features_locked": {
+      "passed": 1230,
+      "failed": 0,
+      "ignored": 7,
+      "groups": 163,
+      "exit_code": 0
+    },
+    "new_rust_tests": {
+      "total": 9,
+      "behavioral": 8,
+      "test_worker_entrypoint": 1
+    },
+    "focused_recording": {
+      "passed": 37,
+      "failed": 0,
+      "ignored": 1,
+      "note": "Focused run preceded one constructor-use cleanup; final all-features workspace covers final code without that dead-code warning."
+    },
+    "browser": {
+      "passed": 40,
+      "failed": 0,
+      "new_cases": 2,
+      "scope": "Recording UI/client including EN/RU worker failure -> Clear -> fresh source selection; no media_confirm"
+    },
+    "frontend_svelte_check": "0 errors/0 warnings",
+    "frontend_build": "passed",
+    "strict_locales": {
+      "present": 806,
+      "required": 806,
+      "missing": 0,
+      "dynamic_outputs_remaining": 68
+    },
+    "fmt": "passed",
+    "strict_workspace_all_targets_all_features_locked_clippy": "passed",
+    "warnings_denied_workspace_all_features_locked_rustdoc": "passed",
+    "native_smoke_custom_protocol_build": "passed",
+    "frozen_source_manifest_files_unchanged_at_final_checks": 456,
+    "native_regular": {
+      "exit_code": 0,
+      "artifacts": "/tmp/lconnect-native-recording-1oqi0gzx",
+      "acceptance": {
+        "admission_failure_recovery": true,
+        "capture_regions": true,
+        "close_while_recording": true,
+        "collection_membership": true,
+        "explicit_save": true,
+        "initial_region_setup": true,
+        "ok": true,
+        "operation_choice": true,
+        "prepare_failure_recovery": true,
+        "prepared_decode": true,
+        "resumed_frames": true,
+        "review_reedit": true,
+        "saved_key": "45e0729571474db091bef2d93d567993",
+        "source_dimensions": [
+          320,
+          240
+        ],
+        "source_seek": true,
+        "source_snapshot": true,
+        "visual_region_preview": true,
+        "normal_close_exit": 0
+      },
+      "staging_empty_after_close": true,
+      "all_worker_join_marker": true
+    },
+    "native_full_limit": {
+      "exit_code": 0,
+      "artifacts": "/tmp/lconnect-native-recording-9vx0sq4y",
+      "acceptance": {
+        "automatic_dialog": true,
+        "cancel_retains_limit": true,
+        "collection_membership": true,
+        "explicit_save": true,
+        "final_seek": true,
+        "frames": 4320,
+        "full_limit": true,
+        "ok": true,
+        "recorded_millis": 180000,
+        "resume_rejected": true,
+        "review_duration": 180,
+        "saved_key": "0bf5f419236749d0be5f374a6605c086",
+        "normal_close_exit": 0
+      },
+      "staging_empty_after_close": true,
+      "all_worker_join_marker": true
+    },
+    "static_rust_review": "Verifier identified unrelated non-CLOEXEC FD inheritance; fixed with close_range and sentinel regression, then re-reviewed with no further concrete findings. Parent executed Cargo chain.",
+    "no_hardware": true
+  },
+  "coverage": [
+    "Real synthetic child setup/snapshot/crop/pause/resume -> decodable finalized MP4 -> child reaped while parent file lease remains -> file/staging removed on release.",
+    "Nonresponsive worker startup cancellation, command timeout, cancellation and portal-close during finish. Child PID absent after reap; incomplete file not admitted; new recording possible.",
+    "Actual recording-owner Cancel and Shutdown interrupt blocked child status request, join/reap and remove staging within2s fixture deadline; Cancel permits subsequent capture.",
+    "Child exit73 and oversized response header fail without Ready output. Selected readable FD contents arrive correctly; parent copy remains usable. Sentinel non-CLOEXEC fd>=200 is absent in child and remains open in parent.",
+    "Native normal source preview/crop/keyboard-region/record/pause/resume/review/re-edit/reprepare/explicit Save/gallery/Close flows, including one-shot admission/preparation errors.",
+    "Native production180s limit automatically pauses at4320 frames/180000ms, Cancel retains stable limit and focus, Resume rejected, full review duration180s and final-frame seek, explicit Save, gallery membership and normal joined Close."
+  ],
+  "initial_verification_failures": [
+    "Initial Clippy reported unneeded unit expression; removed. One intermediate test-only dead-code warning was fixed by passing cancellation into setup fixture.",
+    "Initial browser run failed two new fixture assertions (wrong English button selector and incorrect expectation that Clear closes the recorder) and one existing detached-Start assertion during concurrent frontend build. Corrected fixture actions/selectors, serialized frontend operations; final40 tests passed without a product change to that existing flow.",
+    "First native run stopped before recording because the historical RU-only harness assumed Russian on a fresh English-default installation. Harness now explicitly persists RU only in private fixture; same native product binary then passed normal and full-limit flows."
+  ],
+  "informational_resource_samples": [
+    {
+      "monotonic": 404879.063503162,
+      "scope": "synthetic320x240 recording; informational only, no performance threshold or hardware claim",
+      "processes": {
+        "gui": {
+          "VmRSS": "228544 kB",
+          "VmHWM": "274176 kB",
+          "Threads": "29",
+          "pid": 4117138,
+          "parent": 4117124,
+          "cpu_ticks": 165,
+          "clock_ticks_per_second": 100,
+          "command": "/home/inky/Development/lian-li/lconnect-linux-m1/target/debug/lconnect-gui"
+        },
+        "recorder": {
+          "VmRSS": "68760 kB",
+          "VmHWM": "68760 kB",
+          "Threads": "11",
+          "pid": 4117321,
+          "parent": 4117138,
+          "cpu_ticks": 118,
+          "clock_ticks_per_second": 100,
+          "command": "/home/inky/Development/lian-li/lconnect-linux-m1/target/debug/lconnect-gui --internal-screen-record-worker"
+        }
+      }
+    },
+    {
+      "monotonic": 404950.617799016,
+      "scope": "synthetic320x240 recording; informational only, no performance threshold or hardware claim",
+      "processes": {
+        "gui": {
+          "VmRSS": "228552 kB",
+          "VmHWM": "274176 kB",
+          "Threads": "29",
+          "pid": 4117138,
+          "cpu_ticks": 265,
+          "clock_ticks_per_second": 100
+        },
+        "recorder": {
+          "VmRSS": "68772 kB",
+          "VmHWM": "68772 kB",
+          "Threads": "11",
+          "pid": 4117321,
+          "cpu_ticks": 224,
+          "clock_ticks_per_second": 100
+        }
+      }
+    }
+  ],
+  "limits": [
+    "No real ScreenCast portal/PipeWire FD/serial capture, compositor timestamp/resend/resizing or particular native-plugin deadlock qualification.",
+    "SIGKILL cannot force uninterruptible kernel I/O; local wait/staging filesystem operations may still block. Actual permissions/kernel/resource/performance/platform matrix remains.",
+    "Requires Linux close_range CLOEXEC support (kernel5.11+); unavailable syscall fails recorder startup without stopping main GUI/LCD runtime.",
+    "Private native RU harness and browser EN/RU are not actual screen-reader speech, Wayland/fractional scaling or full desktop-session acceptance.",
+    "Process isolation owns lifetime/cancellation; it is not an untrusted-plugin sandbox. Extra effects/additional languages and other device families remain deferred; Mini remains Plasma widget/GNOME Shell extension."
+  ],
+  "changed_source_sha256": {
+    "desktop/src-tauri/src/screen_record_process.rs": "a73e02b20a2c783af5eccbb221f3bb9c468a4094e143a7d91a74cfb2ed1cac21",
+    "desktop/src-tauri/src/screen_record_process/tests.rs": "7071ce06ef026c9408586d51643a944c2bb371f99306ae68f9813575276ee327",
+    "desktop/src-tauri/src/screen_record.rs": "61cdc662b9881480fb1b395edc9568f4a624418969032269a2fe5317f1a8096d",
+    "desktop/src-tauri/src/screen_record_jobs.rs": "1e78e77cf6bdc422d4207698477e3f7d9337703e8a32bf20e047b557390b25bf",
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "4949c9b876f9060bc1e79f1ce912959172b011eb9ad3fb7020a44876cb7c184b",
+    "desktop/src-tauri/src/main.rs": "b03cb13c41ab6848736fddbba65f05f7496159fd93469d8ca64c869ff8bff0f3",
+    "desktop/src-tauri/src/lib.rs": "d97f07a43054546c09d514545d3251dc3f5cda22a8b9b2509e0142dfb1d4ef01",
+    "desktop/src/lib/ScreenRecorder.svelte": "656b9795f0d9f8ce9417cff77edc9fcfff0bf5c3233eed667e8935973c258f39",
+    "desktop/src/lib/locales/en-US.json": "68e3300eeed21adde1f90461547902bea44edfdb4a7fb482ea762af910d509c0",
+    "desktop/tests/screen-record-ui.spec.ts": "d9ba85f7a3f4b790f07cafad9c07ad5ec8b94d444d34358f404ed9a0cd5616ed",
+    "desktop/scripts/native-recording.py": "93b1c49f60cfa5febde90259aa9ed95021a595460ff483aa5279e7fb558623a4"
+  },
+  "logs_sha256": {
+    "recording-final": "9bde727460c5ec559a10aa6e4f3886ab3cab74d783fafd95aa4affee909fc1c5",
+    "workspace": "f4a45d2e61aff1006b80d0a80b67ce16e9b1faf10ba089413b198ed2be008bd3",
+    "clippy-final": "2cfb043918cd6485eab87ba076e14b0fd16aadeea799f704031dd55a2628f427",
+    "doc": "24217cbf3821b0b1d9ef2a508fadb19cec22e789c4f981c37528e74c114cfb6f",
+    "svelte-final": "94a395bccb82bf95aed59371f84e174b440639011101f0270d271f4a07fd81c6",
+    "browser-final": "c94d196b1a5a393de59ddd9c6f554ace7764012daf9eb78b8fbc6cf84c981b3e",
+    "frontend-build-final": "12f0a0bdcd742f758e6942dfa505cc82af2bb021523c02774a12cc084d5b4f26",
+    "locales": "68cd58adc59866ae28a169d2d8bd7c95258a03141471b7a7bc00e99c7debca1e",
+    "native-build": "c013962193ddad832389d805b9828551d708eed03498536df0f6d876e4a14d01",
+    "native-final": "a300e206461a403d6a6ebdc01c8197d84a696c7073fcf6ae88669de179e30516",
+    "native-full-limit": "73b27188ff1f1bc7010e622d7ae7e283cfdd9d17d314aedd488db685abc54213"
+  },
+  "plans": {
+    "basic-parity.md": 5,
+    "2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "2026-09-09-m2-sensors-and-cooling.md": 6,
+    "deleted": []
+  }
+}

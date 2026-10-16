@@ -39,3 +39,21 @@ fn ipc_error_codes() {
     assert_eq!(IpcError::InvalidArgument("y".into()).jsonrpc_code(), -32002);
     assert_eq!(IpcError::ConfirmationRequired.jsonrpc_code(), -32004);
 }
+
+#[test]
+fn lcd_state_roundtrip_preserves_requested_and_applied_state() {
+    let requested = LcdConfig::new("Application", 70, 90);
+    let state = LcdState {
+        persistence: None,
+        requested: requested.clone(),
+        applied: Some(requested),
+        source: LcdSourceKind::Jpeg,
+        generation: 3,
+        last_error: None,
+    };
+
+    let encoded = serde_json::to_string(&state).unwrap();
+    let decoded: LcdState = serde_json::from_str(&encoded).unwrap();
+
+    assert_eq!(decoded, state);
+}

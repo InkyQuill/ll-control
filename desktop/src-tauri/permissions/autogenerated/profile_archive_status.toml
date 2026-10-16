@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-profile-archive-status"
+description = "Enables the profile_archive_status command without any pre-configured scope."
+commands.allow = ["profile_archive_status"]
+
+[[permission]]
+identifier = "deny-profile-archive-status"
+description = "Denies the profile_archive_status command without any pre-configured scope."
+commands.deny = ["profile_archive_status"]

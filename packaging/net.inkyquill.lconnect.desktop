@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=L-Connect Linux
+Comment=Control Galahad II LCDV2 display, cooling and lighting
+Comment[ru]=Управление экраном, охлаждением и подсветкой Galahad II LCDV2
+Exec=lconnect-gui
+Icon=net.inkyquill.lconnect
+Terminal=false
+Categories=Settings;HardwareSettings;
+StartupWMClass=lconnect-gui

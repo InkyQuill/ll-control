@@ -1,0 +1,635 @@
+{
+  "date": "2026-10-11",
+  "scope": "Actual CPU raster/JPEG responsiveness with same-stream IPC, sensors, autonomous cooling and RGB",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "environment": "Linux-7.2.9-2-cachyos-x86_64-with-glibc2.44",
+  "binary_sha256": "c9f329e5574e8b0d160148b5b7969dc57c8563733663286aee81ed161d7093a7",
+  "source_hashes": {
+    "crates/lconnect-daemon/src/theme_runtime.rs": "2f2b0703e18f40d45f5adc199a6b2a585a8fe9e2b72894fbcb1169dedcad1b7d",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "b8ab65cd099034186a4e646855042bf4b7dbd5418fca3cae0fe0f3d524f549e1",
+    "crates/lconnect-daemon/src/ipc_server.rs": "be2fd3ca82a8e1ab8eed97f45ff2cd0bb80e9ca9302cff0021242d2366d5a0e8",
+    "crates/lconnect-ipc/src/server.rs": "861341bfbd47f9cce8276d906133886ac8241630308148ca1b149760959fa5de",
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "809620d5b5feda9c98d305fbfd7b5b2e4d0c905c4603bcbd564e02fd7801217d",
+    "desktop/scripts/theme-render-load-smoke.py": "ecbae81477778adb9c0c0af2a24f2324bc6bf5bc87378c69fe737a4bfe3a71ac"
+  },
+  "root": "/tmp/lconnect-render-load-yvmhq684",
+  "acceptance": {
+    "ok": true,
+    "hardware": false,
+    "build": "debug",
+    "theme": {
+      "version": 1,
+      "name": "Raster load",
+      "background": [
+        10,
+        20,
+        30
+      ],
+      "layers": [
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 0,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 1,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 2,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 3,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 4,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 5,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 6,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 7,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 0,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 1,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 2,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 3,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 4,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 5,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 6,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 7,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 0,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 1,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 2,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 3,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 4,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 5,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 6,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 7,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 0,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 1,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 2,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 3,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 4,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 5,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 6,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        },
+        {
+          "kind": "text",
+          "text": "CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop CPU 溫度 Привет سلام abcdefghijklmnop ",
+          "style": {
+            "x": 0,
+            "y": 7,
+            "size": 64,
+            "line_box": true,
+            "max_width": 480,
+            "color": [
+              230,
+              240,
+              250
+            ],
+            "align": "left"
+          }
+        }
+      ]
+    },
+    "scenarios": [
+      {
+        "method": "preview_lcd_theme",
+        "wall_seconds": 3.830985440999939,
+        "cpu_seconds": 3.59,
+        "cpu_after_clear": 2.78,
+        "latencies": {
+          "get_lcd_state": 7.198000093922019e-05,
+          "list_sensors": 0.00014279200331657194,
+          "set_fan_pwm": 0.0001694310012680944,
+          "set_lighting": 0.00015151099796639755,
+          "clear_lcd": 0.00011869099762407131
+        },
+        "autonomous_curve_percent": 100,
+        "hot_sensor_age_ms": 4,
+        "mock_pwm_rgb_writes": true,
+        "no_stale_jpeg": true
+      },
+      {
+        "method": "set_lcd_theme",
+        "wall_seconds": 3.6326160770004208,
+        "cpu_seconds": 3.56,
+        "cpu_after_clear": 2.9699999999999998,
+        "latencies": {
+          "get_lcd_state": 0.00011108100079582073,
+          "list_sensors": 0.00010641100016073324,
+          "set_fan_pwm": 0.00022496200108435005,
+          "set_lighting": 0.00021303199901012704,
+          "clear_lcd": 0.00012746100037475117
+        },
+        "autonomous_curve_percent": 100,
+        "hot_sensor_age_ms": 189,
+        "mock_pwm_rgb_writes": true,
+        "no_stale_jpeg": true
+      },
+      {
+        "periodic_clear_latency": 0.0009588779976184014,
+        "periodic_cpu_after_clear": 3.4399999999999995,
+        "recovery_apply": true,
+        "no_stale_periodic_jpeg": true,
+        "jpeg_after_recovery": 2,
+        "jpeg_before_clear": 1
+      }
+    ]
+  },
+  "checks": {
+    "python_syntax": "pass",
+    "diff_check": "pass",
+    "production_sources_match_previous_ipc_checkpoint": true
+  },
+  "rust_tests_rerun": false,
+  "hardware_run": false,
+  "limits": [
+    "Debug binary, one host; measured latency is not universal SLA",
+    "CPU counters read only for spawned fixture process",
+    "No GUI or real HID/sensor queries",
+    "Thermal overlay under render load not separately injected; existing thermal and transport matrices remain applicable"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Rain/Snow native-scale parameters and independent procedural renderer; application integration pending",
+  "verification": {
+    "targeted_tests_passed": 127,
+    "workspace_tests_passed": 871,
+    "workspace_ignored": 2,
+    "fmt": "passed",
+    "strict_clippy_ipc_image_all_targets": "passed",
+    "rustdoc_ipc_image": "passed",
+    "offline_preview": "generated and visually inspected /tmp/lconnect-weather-preview.png",
+    "review": "motion discontinuity finding fixed and re-reviewed; regression tests added"
+  },
+  "limits": [
+    "No theme schema/persistence/H264 worker or GUI integration yet",
+    "Own procedural visuals; Windows visual equivalence not established",
+    "Unavailable sensor uses stored static setting Linux policy; compare Windows retain-last-state behavior",
+    "No hardware/live sensors or real capture tests",
+    "Jev routing unavailable HTTP451; used project and Rust skills directly"
+  ],
+  "sha256": {
+    "crates/lconnect-ipc/src/effects.rs": "b892d85b0cd7f3ecb389ed09a16dc5e0085031d56cd4a3a712f70a38eaacfd6f",
+    "crates/lconnect-ipc/src/theme.rs": "17e812d03759e48ac9fb8b0bff938f1dbf3bae74443b664204955be4d0d0207d",
+    "crates/lconnect-ipc/src/lib.rs": "5c3a759eedc0b2ecffb27ed1e7c32f5f1d459b50e3580b9a61c90c183e004d78",
+    "crates/lconnect-image/src/effects.rs": "b8d002fe89e34e02b68f126244abe349969085bf246ecfbe22814a8db1a014d2",
+    "crates/lconnect-image/src/lib.rs": "961d7d428536d2bcb364d3c2cd3da86eb69b1f5107ff0a9360833b2cf0b0a8be",
+    "crates/lconnect-ipc/tests/effects.rs": "fda7d26c1eabac6aa49f7d176bda27fc67e5710588e7d057d6d4a7f35382bc39",
+    "crates/lconnect-image/tests/effects.rs": "b4894a8d4d7e481121b6fdc322772770ffe5bb0a39dc91fe3f3d878d7f47db95",
+    "crates/lconnect-image/examples/weather-preview.rs": "2d570b5b216882e300b7b9a76e9103dd3d4943df955a463577df147991fd8b4b"
+  },
+  "local_reference_sha256": {
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionScreenSettingPage_Rain.cs": "d101b177bd47c9817913bf97cc3c7426b1e02335007bc7a0bc9b0aa7565e539a",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionScreenSettingPage_Snow.cs": "a40f6a13d9d8d106bab9e7792ec32a957a6ed037513f12faff8603b274482c6c",
+    "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionScreenPage.cs": "fc96be79c20425d86bfb24209d2e6f542c4f0d977e2bc423d6c5aad45797eeca",
+    "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/Rain3D/js/index.min.js": "0f5c4877340cb7b889c3eaeb22964554e128e2ea49ff85c55b4d82f363052b9c",
+    "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/js/app.8fc94db7.js": "f3691c15dbe62d1248abee444dc94c82a34c46e45697bda4ccad77825c6e878a"
+  }
+}

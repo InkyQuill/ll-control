@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Preserve explicitly accepted Linux manual PWM0 through persistence, actual private IPC/DeviceManager replay and full-group codec/commit/reapply. Legacy unconfigured0 remains unset. Necessary data contract before public group transfer.",
+  "files_sha256": {
+    "crates/lconnect-daemon/src/persistence.rs": "203cbf17fe2357fa5e53330672eed059aad503b59a27a6150545bdc3de3d3ce9",
+    "crates/lconnect-daemon/src/actor/command_dispatch.rs": "0694972bcb9646b51a65d487a9af2467fafafbab05de585548cef398e02e78c1",
+    "crates/lconnect-daemon/src/actor/cooling.rs": "0046d7ca55e0a5d17aaf504b388707c741f9a17d385ecaeb540248dcc696c477",
+    "crates/lconnect-daemon/src/actor/control_group.rs": "36ffccfc907529a0070cabd1093f1e8b49eda86d2c0a9109d03cbab36103a414",
+    "crates/lconnect-daemon/src/manager.rs": "15ffa2451ffa6fd4060f03e11e4587fcb5fbff81ba92c90be87446023b7d6312",
+    "crates/lconnect-daemon/tests/cooling_ipc.rs": "efcff752f65400d9ddedecde5806649ddcce9fdabd096f49bd28bcd6efd0a508",
+    "crates/lconnect-daemon/tests/control_group_commit.rs": "1bca43d640e08d908250f04ed124e443ec0f85c9b4f39ee8c99f4bfaad8e5d49",
+    "crates/lconnect-daemon/tests/command_dispatch.rs": "803b667c7259edc76ad3b1a5f3b7f64fa347f2c9fb56ec7032ce3774a254cf70",
+    "crates/lconnect-daemon/tests/profile_group_import.rs": "73a55c0356732d3f2c2af06c815eb80be9a06f15c291e11720b8999a2f08e295",
+    "crates/lconnect-daemon/tests/profile_group_archive.rs": "934547455174bc84299a31feae4be2fcd754a5cdb7f2e1ac1fe8be9720f0d18e",
+    "crates/lconnect-daemon/tests/screen_collections.rs": "74f44879b4c7139be76b30aabb151c8316fa7b573e9081fb85cef0b41013fccf",
+    "crates/lconnect-daemon/tests/screen_reset_storage.rs": "7bed7526f000a775946b4ac9365ef8b2654d5c8f5e740859dd2b59de30280ef6"
+  },
+  "contract": {
+    "fan": "Successful manual0 sets manual_zero=true; subsequent nonzero clears marker. Missing/false marker omitted from serialization and treated as legacy unset0. Nonzero legacy PWM still configured. Contradictory marker/nonzero rejected before durable replacement.",
+    "pump": "Known saved mcu/application source distinguishes explicit0 from empty-source unset0; legacy Application recognized at attach. Nonzero existing behavior retained. No new pump marker or periodic Fixed policy substitution.",
+    "replay": "Manager and group Apply share has_manual_setting predicates. Explicit0 emits normal cmd139/138 and retains pump MCU/motherboard source. Active cooling policy still overrides cached manual preference.",
+    "compatibility": "Missing marker preserves exact prior fan portable JSON shape, so old group hashing is not perturbed. Existing section literals in tests add Default only to retain legacy absent-marker semantics. Historical ambiguous fan0 is not guessed as explicit.",
+    "scope_limit": "Preservation/wire-value evidence only; actual PWM0/RPM/mechanical behavior requires deferred hardware acceptance. Public group IPC/CLI/GUI still pending."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 1021,
+      "failed": 0,
+      "ignored": 2,
+      "log": "/tmp/lconnect-manual-zero-workspace.log",
+      "exit_code": 0
+    },
+    "strict_clippy": {
+      "log": "/tmp/lconnect-manual-zero-clippy.log",
+      "exit_code": 0,
+      "flags": "--all-targets -- -D warnings",
+      "packages": [
+        "lconnect-daemon",
+        "lconnect-image",
+        "lconnect-ipc",
+        "lconnect-cli",
+        "lconnect-protocol"
+      ]
+    },
+    "strict_rustdoc": {
+      "log": "/tmp/lconnect-manual-zero-doc.log",
+      "exit_code": 0,
+      "flags": "RUSTDOCFLAGS=-D warnings; --no-deps"
+    },
+    "fmt": {
+      "log": "/tmp/lconnect-manual-zero-fmt.log",
+      "exit_code": 0
+    },
+    "regression": {
+      "log": "/tmp/lconnect-manual-zero-regression.log",
+      "passed": 21,
+      "new_tests": [
+        "explicit_manual_zero_survives_real_ipc_and_manager_replay_without_turning_legacy_defaults_into_commands",
+        "legacy_zero_absence_keeps_portable_shape_and_invalid_zero_marker_is_protected",
+        "group_archive_commit_and_reapply_preserve_explicit_zero_but_never_guess_legacy_unset_zero"
+      ],
+      "coverage": "Four actual DeviceManager lifetimes/private IPC/MockBackend: unset0 no PWM startup -> explicit fan0 and pump motherboard0 -> restart -> pump MCU0 -> restart -> fan67 -> restart. Independent cmd139/138 histories verify source/duty0 and reported state; new nonzero clears fan marker. Legacy TOML/JSON fan0/64 shapes and bad-marker file protection. Actual group file codec/owner commit/Apply/reapply: explicit0 emits2 PWM writes, unset0 none, receipt-before-write and immutable device/profile bytes on reapply."
+    },
+    "ui": "Source inspection only: Cooling.svelte applied_percent uses nullish coalescing and displays0. No native/browser GUI run.",
+    "hardware": "NOT RUN: user deferred; mock backends/private queues only"
+  },
+  "remaining": [
+    "Public full-group IPC/CLI/GUI transfer/readback/reapply, cancellation and Windows archive mapping",
+    "Physical PWM0/source/RPM, restore nonzero and lifecycle/workload qualification",
+    "Extended recovery/lifecycle and remaining basic parity roadmap/checklist; extra effects/Style Express last"
+  ]
+}

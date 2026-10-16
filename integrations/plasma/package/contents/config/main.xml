@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+ <kcfgfile name=""/>
+ <group name="General">
+  <entry name="slotConfig" type="String"><default>{"version":1,"slots":[{"kind":"cpu_load","source":null},{"kind":"cpu_power","source":null},{"kind":"cpu_voltage","source":null},{"kind":"gpu_load","source":null},{"kind":"gpu_power","source":null},{"kind":"gpu_voltage","source":null}]}</default></entry>
+  <entry name="languageCache" type="String"><default>en-US</default></entry>
+ </group>
+</kcfg>

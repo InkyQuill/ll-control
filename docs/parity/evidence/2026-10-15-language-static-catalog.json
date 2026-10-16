@@ -1,0 +1,175 @@
+{
+  "date": "2026-10-15",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "scope": "English explicit static catalog and media workflows. Full language parity remains open; additional LCD effects and Style Express are deferred until last.",
+  "source_sha256": {
+    "desktop/src/lib/locales/en-US.json": "10068b14a0c0cefb7dc8ae3b20bb853352dba40e986b474f69ea2ec9af323f6b",
+    "desktop/src/lib/ImageEditor.svelte": "e11732b7166562f7625cb1ce577ef063268e664652e9d1ed40fc04eddb8b61aa",
+    "desktop/src/lib/ImageGallery.svelte": "8c20d30e76597114a43d82415c230ff6455d58200df2666de302affaf287b4de",
+    "desktop/src/lib/MediaImport.svelte": "28cc62232f519961f26f9dba0ab262a4dc4776d8ecefad4209070f6af84be352",
+    "desktop/src/lib/ScreenRecorder.svelte": "b8331a6a0c3588a258fc5a8b418c410e6445c9ffa26b2e0ab9fe7e6e05c59551",
+    "desktop/scripts/native-interface-language.js": "ded05303a648d91590712fe6f7a80f44045b52f59456ae77c4993f44bbba286b",
+    "desktop/scripts/native-interface-language.py": "4db20fd0a0d42bb29c057a7a4dd134599b35012a803f8953a66c368479b8fa88",
+    "desktop/scripts/check-locales.mjs": "504be0f3759793362400c4a0d617e33289ce62b1ce4de4cb0a9ba0bac4d01259",
+    "desktop/scripts/localization-test.mjs": "7f39369c23de00309c158d4fac1241be5b7801bf8880d8033422e548bfca0def",
+    "desktop/tests/interface-language-media.spec.ts": "21e73909c8e84ffd4e02fc2e79123ce74dc775ef3545fea8110fa7ad0f21ac11",
+    "desktop/tests/keyboard.spec.ts": "6fba236e236c16b00fa144c5cd99a01092dea68d90fa90a58c7d52f0d84b9268",
+    "desktop/tests/control-keyboard.spec.ts": "a35b940a4af3608a99dee771a86559a33dedd1bc51416c226263ccab5b826efc",
+    "desktop/tests/media-gallery.spec.ts": "1446c0ffbb58168579734339cf0c754f29db5a3015f944e24e529433c2039c55",
+    "desktop/tests/media-import.spec.ts": "35366bc30c73e3f33c18e68124988447546186bf91efedbca1a91a7dd9be0342",
+    "desktop/tests/media-thumbnail.spec.ts": "df91bc765432b90fe0acc35bc02d871671ea60e322009e6aa4471b75280474f5",
+    "desktop/tests/persistence-status.spec.ts": "d2dff1ea14027a702ba2d41da1a91748a614018d508bccaa1e1fb46a21214caf",
+    "desktop/tests/profiles-group-switch.spec.ts": "e6ebbd574b483e534621edb7635a0a983b900b68aca85ddefcfc4b426bfe71c8",
+    "desktop/tests/profiles-interrupted.spec.ts": "a96603a35ddce1af12b9cda68150415c2c4fe3fdb83bd2c114a15ca80fb4be5a",
+    "desktop/tests/profiles.spec.ts": "8b2d1dde3d9fdc86e3f379d61f08cbfe462c9c35af936c8bdc5e29892f7f24c4"
+  },
+  "coverage": {
+    "report": "2026-10-15-language-static-complete-coverage.json",
+    "static_keys": 768,
+    "translated_static_keys": 768,
+    "missing_static_keys": 0,
+    "english_entries": 882,
+    "dynamic_call_sites_to_qualify": 63,
+    "strict_gate": "pass",
+    "log": "/tmp/lconnect-language-static-strict-final.log"
+  },
+  "checks": {
+    "frontend": {
+      "diagnostics": "0 errors / 0 warnings",
+      "build": "pass",
+      "contracts": 39,
+      "logs": [
+        "/tmp/lconnect-language-static-frontend.log",
+        "/tmp/lconnect-language-static-build.log",
+        "/tmp/lconnect-language-static-contracts.log"
+      ]
+    },
+    "translator": {
+      "result": "pass: fallback, whitespace and explicit parameters",
+      "log": "/tmp/lconnect-language-static-parameters.log"
+    },
+    "english_media_browser": {
+      "passed": 3,
+      "log": "/tmp/lconnect-language-static-media-browser.log",
+      "limit": "Command/RPC fixtures validate workflow; fake video does not prove codec or playback."
+    },
+    "browser_all": {
+      "status": "pass",
+      "passed": 333,
+      "failed": 0,
+      "duration": "5.8m",
+      "log": "/tmp/lconnect-language-static-browser-all-final.log"
+    },
+    "native": {
+      "pass": true,
+      "fixture": "/tmp/lconnect-native-interface-language-3q1v55tk",
+      "log": "/tmp/lconnect-language-static-native-final.log",
+      "acceptance": {
+        "initial": {
+          "documentLanguage": "en",
+          "imageEditorPreview": false,
+          "initial": {
+            "revision": 0,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "noDevices": true,
+          "ok": true,
+          "recovery": false,
+          "settings": {
+            "interface_language": "en-US",
+            "revision": 1,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "userDraft": "Настройки"
+        },
+        "recovery": {
+          "documentLanguage": "ru",
+          "imageEditorPreview": false,
+          "initial": {
+            "interface_language": "en-US",
+            "revision": 1,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "noDevices": true,
+          "ok": true,
+          "recovery": true,
+          "settings": {
+            "revision": 2,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "userDraft": "Настройки"
+        },
+        "image_editor": {
+          "documentLanguage": "en",
+          "imageEditorPreview": true,
+          "initial": {
+            "revision": 2,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "noDevices": false,
+          "ok": true,
+          "recovery": false,
+          "settings": {
+            "interface_language": "en-US",
+            "revision": 3,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "userDraft": "Настройки"
+        },
+        "normal_close": true,
+        "daemon_restart": true,
+        "no_device_phase_zero_hid_writes": true,
+        "image_phase_mock_hid_writes": 1
+      },
+      "isolation": "Private Xvfb/session bus/XDG/MockBackend. First two phases no device/zero HID writes. Image phase one fake LCDV2 and one mock startup HID write. No physical device.",
+      "image_editor": "Real native image decode, rotate right and 480px PNG preview; close without publication."
+    },
+    "rust_workspace": {
+      "rerun": false,
+      "prior_checkpoint": "2026-10-15-interface-language.json",
+      "reason": "No Rust production source changed in this catalog/media binding slice. Native application rebuilt and exercised."
+    },
+    "documents": {
+      "local_links": "pass: six edited Markdown documents",
+      "active_plans_open_items": {
+        "M1": 5,
+        "M2": 6,
+        "basic_parity": 5
+      },
+      "deleted_this_slice": 0
+    }
+  },
+  "initial_browser_failure": {
+    "passed": 302,
+    "failed": 31,
+    "log": "/tmp/lconnect-language-static-browser-all.log",
+    "cause": "Old fixture unknown-method handlers counted new read-only get_display_settings as mutation; keyboard test assumed old tab order. Fixtures now explicitly return display settings; keyboard uses real Tab through group archive and preference controls."
+  },
+  "open": [
+    "Dynamic/TS-generated messages and grammar",
+    "Native dialogs/tray/menu/notifications",
+    "Other six Windows locales",
+    "Full language runtime/accessibility/layout and font qualification",
+    "Mini System Information implementation and real Linux FPS provider",
+    "Deferred physical/platform acceptance",
+    "Additional LCD effects and Style Express last"
+  ],
+  "log_sha256": {
+    "/tmp/lconnect-language-static-browser-all-final.log": "932ffc8503a57b6bb3054db360c66650896814ada96ab79483b588cfd6f678b3",
+    "/tmp/lconnect-language-static-strict-final.log": "bfb5e974c6e66404c6b7e74839bb8e660aac903e1e8be1bb6ca5c2268676252e",
+    "/tmp/lconnect-language-static-native-final.log": "14d95b3541387b41c10cad80503754f4d8c62fdcf401e57f266b7ce132d22b6f",
+    "/tmp/lconnect-language-static-frontend.log": "90a6093d8b8ccb0ac2603dc2a487929f8eb4b3b20081068eccc8790452a77620",
+    "/tmp/lconnect-language-static-build.log": "39bce66e2a2e4db94ad83addff6b57f6303d970a5b0dd40a0063560cf19701c1",
+    "/tmp/lconnect-language-static-parameters.log": "cf5af7551b2f7c1d695b6233102c5401ec5bb487cf391715892754398a03d322",
+    "/tmp/lconnect-language-static-contracts.log": "21236fb006b93d1b1e751f650f3bc5454dfb0f6eb4b500421294639055ce5f5c"
+  }
+}

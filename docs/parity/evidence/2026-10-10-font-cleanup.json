@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Shared font session retention and separate cleanup RPC/UI",
+  "verification": {
+    "rust_all_target_tests": 546,
+    "browser_tests": 42,
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "native": "passed",
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No open findings"
+  },
+  "native_evidence": "/tmp/lconnect-native-ce3trh7a/acceptance.json",
+  "native": {
+    "native_font_cleanup": true,
+    "native_font_import": true,
+    "native_font_retry": true,
+    "native_font_parts": true,
+    "restart_replay": true,
+    "profiles_restart_replay": true,
+    "gui_closed_jpeg_frames": 2
+  },
+  "tests": [
+    "Offline device and profile fonts retained after restart; orphan dry-run/delete",
+    "Corrupt profile or device settings abort deletion",
+    "Shared imports and successful load pin fonts; draft keys protected",
+    "Unknown filenames, symlinks and directories skipped; invalid draft key rejects before deletion",
+    "Production font upload/cleanup dispatch retains profile font and rejects bad keep",
+    "GUI keeps loaded draft, invalidates scan on font change, separate explicit delete",
+    "Native DOM dry-run/delete removes seeded prior-session orphan; full native suite passes"
+  ],
+  "logs": [
+    "/tmp/font-cleanup-browser.log",
+    "/tmp/font-cleanup-check.log",
+    "/tmp/font-cleanup-native-build.log",
+    "/tmp/font-cleanup-native.log",
+    "/tmp/font-cleanup-review-clippy.log",
+    "/tmp/font-cleanup-review-doc.log",
+    "/tmp/font-cleanup-review-fmt.log",
+    "/tmp/font-cleanup-review-test.log",
+    "/tmp/font-cleanup-tests.log",
+    "/tmp/font-cleanup-ui-build.log",
+    "/tmp/font-cleanup-ui-check.log"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/src/theme_fonts.rs": "fcf356971c15c0d362acae3b28b582e7f096f41b5259e0d4a9316d332b93142f",
+    "crates/lconnect-daemon/src/persistence.rs": "8f4c7fb496665c72a5a9fe92d63527cc95acc7423c7408f00253186c9ec9217b",
+    "crates/lconnect-daemon/src/ipc_server.rs": "a1c5baf1dd0cfd688c6d70a1fd39113d4bee5558af302d36b1064826bab81574",
+    "crates/lconnect-daemon/src/manager.rs": "e44b0462bf64901fd45fd2b1a791a6aecaa2eda8863acaaed3dbe6e2d63f0133",
+    "crates/lconnect-ipc/src/server.rs": "1a56df0b26b604a738c4aaa9988a873ff2cf502d6552a5a701d8d8e9b8c9120c",
+    "crates/lconnect-ipc/src/trait_def.rs": "6a4e6a2469e45babb033bd61eaae242d04818d07ed98602c9e95f0f600922f07",
+    "crates/lconnect-daemon/tests/font_cleanup.rs": "08059745e20772fc7bb7782ef365b5ecc2476d0d38c10dfe038e010442b3a0f7",
+    "crates/lconnect-daemon/tests/font_upload_ipc.rs": "714eb74eb488200afa7dd0a3933c3a08e8923181419e4c2572ec99a5e9fb115c",
+    "desktop/src/lib/AssetCleanup.svelte": "0ce606d04e95b29b9d4645787daa230237082743f75e293550a4ce006b48bce6",
+    "desktop/src/routes/+page.svelte": "29a7254d4448f955551956822b527470d55db13b734ad3ffb49a175d53b0a6c8",
+    "desktop/src-tauri/src/main.rs": "2415e4fbb757a9549346dfe8f74c199e29ae5f06a7f8d72535636442dcd8cbbe",
+    "desktop/tests/font-cleanup.spec.ts": "1030e6c7684b8b8ab9ca4b9286725f94a0b21d06a64a8bb296ea2710b77bdf6d",
+    "desktop/tests/font-recovery.spec.ts": "f3c0f1e755bb3b8a65fc1804b482e03a9e613fa650216ccd577c7f75d3fffe75",
+    "desktop/scripts/native-smoke.js": "3ce552964cf5ced562572b4cd82914046b73aee3eee2fe4bf5a3c20ab0c1eae1",
+    "desktop/scripts/native-smoke.py": "077a3d0e995a2aea513cdefbb762c8eb3529d3a27feded640d6b29792aed4549"
+  },
+  "remaining": [
+    "explicit import/load versus cleanup concurrency stress and unlink partial failure acceptance",
+    "native missing/corrupt saved-font recovery, partial upload/disconnect/lost Finish",
+    "full base parity checklist and deferred hardware acceptance"
+  ]
+}

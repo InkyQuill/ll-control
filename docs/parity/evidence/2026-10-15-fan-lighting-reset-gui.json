@@ -1,0 +1,888 @@
+{
+  "date": "2026-10-15",
+  "baseline": "Windows L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "scope": "Full FanAndLighting reset GUI using read-only daemon defaults/target preview and existing native group job ownership. Separate confirmation, cancellation before admission, receipt-first recovery, persisted ID, explicit same-ID retry after lost ACK, current reapply and joined Close. No FileChooser used for reset.",
+  "source_sha256": {
+    "crates/lconnect-ipc/src/group_import.rs": "457fd77d3f8f9a5fba0a473b460ce5270445d343ab649b8330958349f423c1f0",
+    "crates/lconnect-ipc/src/trait_def.rs": "111919e2c5f013422d5db4fa8b54a59f67c8dd6e492c687bd7f272cc71b17549",
+    "crates/lconnect-ipc/src/server.rs": "b1e42331314ad560865310d25f627a4f48568013d6c3647b4db11c06e18e665a",
+    "crates/lconnect-daemon/src/ipc_server.rs": "10342723719ac690a5400220cf1072148168d4e3c1dc3cddd5c3f2f985a52ea2",
+    "desktop/src-tauri/src/group_jobs.rs": "376525e08243e2402292e4c7a6908f94cd966185eab9540576ff2aee1e0fc81b",
+    "desktop/src-tauri/src/group_jobs_tests.rs": "4d442ca93f8b382713f8b77648838abe32cbb6b84bbdf76ee95f76175a70f3bb",
+    "desktop/src-tauri/src/main.rs": "03a87c41b2a0d82fe6952acb59c3c309e9b103124498724459a312adec40f63e",
+    "desktop/src/lib/group-archive.ts": "074560966a0c276f46438cf16375ede8ef0dea227b2eb54415d7bdbc28cde3ea",
+    "desktop/src/lib/FullGroupArchive.svelte": "c8d86b82b032671e783576dd1a6d61045ffebb678ebed5e1a84bc51ce3e45408",
+    "desktop/src/routes/+page.svelte": "0fff6797349d1322dfc9c1b5c29a8dfd3f489587c1cc40cd4e41d8823675108e",
+    "desktop/tests/group-archive.spec.ts": "5fd27a614d98cd4ed7f687336d832e560f13677a1d4a70377d4640d218dfffe5",
+    "desktop/scripts/native-control-reset.js": "e4dc01305a716d947efa95cf432ce6f6566de5b9596862705106c996a81e8497",
+    "desktop/scripts/native-control-reset.py": "393966909cbf4ff1ed94fd9b44578aae7b16b17dccaf1f9bc10def814b5177d7"
+  },
+  "checks": {
+    "workspace": {
+      "suites": 148,
+      "passed": 1073,
+      "failed": 0,
+      "ignored": 3,
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-workspace-final.log"
+    },
+    "group_native_workers": {
+      "passed": 7,
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-jobs-final.log"
+    },
+    "browser": {
+      "passed": 19,
+      "failed": 0,
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-browser-final3.log"
+    },
+    "frontend_check": {
+      "errors": 0,
+      "warnings": 0,
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-check-final.log"
+    },
+    "frontend_build": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-build-final.log"
+    },
+    "strict_clippy": {
+      "command": "cargo clippy -p lconnect-daemon -p lconnect-ipc -p lconnect-gui --all-targets -- -D warnings",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-clippy-final.log"
+    },
+    "strict_rustdoc": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-doc-final.log"
+    },
+    "fmt": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-fmt-final.log"
+    },
+    "native_build": {
+      "command": "cargo build -p lconnect-gui --features native-smoke,custom-protocol",
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-native-build-final.log"
+    },
+    "mock_build": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-mock-build-final.log"
+    },
+    "native_reset": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-native-final.log"
+    },
+    "native_archive_regression": {
+      "exit_code": 0,
+      "log": "/tmp/lconnect-control-reset-gui-native-fan-regression.log"
+    },
+    "documents": {
+      "files": 6,
+      "local_links": 181,
+      "missing": 0,
+      "fences_balanced": true
+    }
+  },
+  "native": {
+    "control_reset": {
+      "fixture": "/tmp/lconnect-native-control-reset-mq6alp5d",
+      "acceptance": {
+        "initial": {
+          "dev": "galahad2-lcdv2:0001",
+          "explicit_reset": true,
+          "lcd": {
+            "brightness_percent": 64,
+            "mode": "LocalUI",
+            "rotation_degrees": 90
+          },
+          "library": {
+            "profiles": [
+              {
+                "content": {
+                  "kind": "screen",
+                  "value": {
+                    "background": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "background_image": {
+                      "asset": "builtin-midnight-v1",
+                      "fit": "crop"
+                    },
+                    "layers": [],
+                    "name": "Keep reset screen",
+                    "version": 1
+                  }
+                },
+                "name": "Keep reset slot",
+                "slot": 7
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine1",
+                "slot": 0
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine2",
+                "slot": 1
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine3",
+                "slot": 2
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine4",
+                "slot": 3
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 1",
+                "slot": 0
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 2",
+                "slot": 1
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 3",
+                "slot": 2
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 4",
+                "slot": 3
+              }
+            ],
+            "revision": 2,
+            "version": 1
+          },
+          "newer_intent_preserved": true,
+          "ok": true,
+          "operation": "444dd090deca460a8f2e1cd2db2746cc",
+          "preserved_editor": true,
+          "preview_cancelled": true,
+          "preview_no_mutation": true,
+          "reapply_no_commit": true,
+          "screen": {
+            "background": [
+              0,
+              0,
+              0
+            ],
+            "background_image": {
+              "asset": "builtin-midnight-v1",
+              "fit": "crop"
+            },
+            "layers": [],
+            "name": "Keep reset screen",
+            "version": 1
+          }
+        },
+        "recovery": {
+          "desktop_restart_readback": true,
+          "dev": "galahad2-lcdv2:0001",
+          "library": {
+            "profiles": [
+              {
+                "content": {
+                  "kind": "screen",
+                  "value": {
+                    "background": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "background_image": {
+                      "asset": "builtin-midnight-v1",
+                      "fit": "crop"
+                    },
+                    "layers": [],
+                    "name": "Keep reset screen",
+                    "version": 1
+                  }
+                },
+                "name": "Keep reset slot",
+                "slot": 7
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine1",
+                "slot": 0
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine2",
+                "slot": 1
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine3",
+                "slot": 2
+              },
+              {
+                "content": {
+                  "kind": "fan",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "fan_curve",
+                    "points": [
+                      {
+                        "celsius": 25,
+                        "percent": 20
+                      },
+                      {
+                        "celsius": 45,
+                        "percent": 45
+                      },
+                      {
+                        "celsius": 65,
+                        "percent": 52
+                      },
+                      {
+                        "celsius": 80,
+                        "percent": 75
+                      },
+                      {
+                        "celsius": 90,
+                        "percent": 100
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "UserDefine4",
+                "slot": 3
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 1",
+                "slot": 0
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 2",
+                "slot": 1
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 3",
+                "slot": 2
+              },
+              {
+                "content": {
+                  "kind": "pump",
+                  "value": {
+                    "fallback_percent": 100,
+                    "hysteresis_c": 2,
+                    "mode": "curve_rpm",
+                    "points": [
+                      {
+                        "celsius": 30,
+                        "rpm": 2000
+                      },
+                      {
+                        "celsius": 45,
+                        "rpm": 2200
+                      },
+                      {
+                        "celsius": 60,
+                        "rpm": 2400
+                      },
+                      {
+                        "celsius": 70,
+                        "rpm": 2600
+                      },
+                      {
+                        "celsius": 80,
+                        "rpm": 2800
+                      },
+                      {
+                        "celsius": 85,
+                        "rpm": 3000
+                      }
+                    ],
+                    "sensor_id": "fixture:cpu"
+                  }
+                },
+                "name": "Pump 4",
+                "slot": 3
+              }
+            ],
+            "revision": 2,
+            "version": 1
+          },
+          "newer_intent_preserved": true,
+          "ok": true,
+          "operation": "444dd090deca460a8f2e1cd2db2746cc"
+        },
+        "normal_close": true,
+        "desktop_and_daemon_restart": true
+      }
+    },
+    "fan_archive_regression": {
+      "fixture": "/tmp/lconnect-native-group-archive-f3tdwxcw",
+      "acceptance": {
+        "dev": "galahad2-lcdv2:0001",
+        "explicit_apply": true,
+        "group": "fan_and_lighting",
+        "inspect_no_mutation": true,
+        "library": {
+          "profiles": [
+            {
+              "content": {
+                "kind": "screen",
+                "value": {
+                  "background": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "background_image": {
+                    "asset": "builtin-midnight-v1",
+                    "fit": "crop"
+                  },
+                  "layers": [
+                    {
+                      "kind": "clock",
+                      "show_seconds": true,
+                      "style": {
+                        "align": "left",
+                        "color": [
+                          255,
+                          255,
+                          255
+                        ],
+                        "size": 36,
+                        "x": 20,
+                        "y": 30
+                      },
+                      "twenty_four_hour": true
+                    }
+                  ],
+                  "name": "Native full group",
+                  "version": 1
+                }
+              },
+              "name": "Full-group slot",
+              "slot": 7
+            }
+          ],
+          "revision": 2,
+          "version": 1
+        },
+        "ok": true,
+        "operation": "c95d6c4052684bb995bac4a5756d0570",
+        "preserved_editor": true,
+        "reapply_no_commit": true,
+        "receipt": "{\"id\":\"c95d6c4052684bb995bac4a5756d0570\",\"kind\":\"fan_and_lighting\",\"source_sha256\":\"fdcc0fccf6da9baed00f08023645f29e06cb7c7a770ca657831c55907a2ef13d\",\"expected\":{\"profile_revision\":1,\"settings_sha256\":\"370d71a62319de221364c0a26936b9beb9ebae9538c29d2c9183ed60d39b5215\"},\"profile_revision\":2,\"collection_revision\":null,\"content_sha256\":\"b6a3145a9d36a8ae6ac59d335e04951b5bf86f3ce32a4d490cd1409f2136a6ba\"}",
+        "publication_journal_retired": true,
+        "post_restart_preview_bytes": 13365,
+        "post_restart_preview_sha256": "d9851d1d20d703703f760efa17cdbc3f1eb0065fdb20b3058c96fbb8526483dc",
+        "restart_replay": true,
+        "normal_close": true,
+        "close_method": "WM_DELETE_WINDOW via xdotool windowquit",
+        "portal_events": [
+          {
+            "method": "SaveFile",
+            "path": "/tmp/lconnect-native-group-archive-f3tdwxcw/exported group.lcg"
+          },
+          {
+            "method": "OpenFile",
+            "path": "/tmp/lconnect-native-group-archive-f3tdwxcw/exported group.lcg"
+          }
+        ],
+        "exported_bytes": 479,
+        "gui_exit": 0
+      }
+    }
+  },
+  "cases": [
+    "Read-only preview/cancel does not edit profiles/settings or apply hardware; no file chooser.",
+    "Native group worker validates reset target/sensor, owns original snapshot and source identity, shares job/busy admission with archives.",
+    "Prepared reset Close never commits; admitted Apply is joined by shutdown. Stale target retains newer data; unknown result cannot be claimed cancelled.",
+    "Real Unix proxy forwards to production daemon and drops first reset ACK after commit. Native worker becomes Uncertain; explicit retry with original ID/target/sensor returns receipt with unchanged profile and runtime revisions.",
+    "Browser requires a temperature selection and separate confirmation; cancels preview, persists/reset-mode ID through reload, recovers without implicit Finish, disables stale reapply, exposes explicit lost-ACK retry with unchanged target.",
+    "Real WebKitGTK UI: synthetic CPU, preview/Cancel/preview/Apply,8 control slots in one commit, Screen/theme/LCD/draft preserved, explicit reapply no commit, newer37% fan intent protected.",
+    "Normal WM_DELETE_WINDOW close requires all three native join markers; daemon restart then new desktop reads preserved operation ID and receipt without reset over newer fan settings.",
+    "Existing FanAndLighting file chooser/archive roundtrip and restart pass after the shared worker mode change."
+  ],
+  "intermediate_runs": [
+    {
+      "log": "/tmp/lconnect-control-reset-gui-jobs.log",
+      "note": "Initial preview helper mixed anyhow and IPC error Result; corrected before successful focused/workspace checks."
+    },
+    {
+      "log": "/tmp/lconnect-control-reset-gui-browser-final.log",
+      "note": "9 passed/2 failed: reset mock erroneously supplied archive filename and exact status failed; initial hydration exceeded5sec during concurrent compilation although snapshot was connected. Corrected mock and scoped initial wait15sec, then18 and final19 passed."
+    },
+    {
+      "log": "/tmp/lconnect-control-reset-gui-native.log",
+      "fixture": "/tmp/lconnect-native-control-reset-k7ed9b2c",
+      "note": "Initial native reset/restart passed; repeated at final source after explicit retry/cancel copy changes."
+    }
+  ],
+  "not_run": [
+    "Expanded native abrupt death/connection loss/accessibility/partial install/panic/shutdown matrix; current real ACK-loss proof is Unix native worker proxy plus browser.",
+    "Real production portal/Wayland/screen reader and physical hardware tests; hardware deferred by user.",
+    "No new LCD effects/Style Express."
+  ]
+}

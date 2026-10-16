@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-11",
+  "scope": "Manual/thermal interrupted mutation browser acceptance",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "production_changes": false,
+  "sha256": {
+    "desktop/tests/lighting-interrupted.spec.ts": "ed86986db332828d8ac5f3d5ae284fcf7c62a764e03e140c3eb18883f4bf26df",
+    "desktop/tests/lighting-serialization.spec.ts": "05b662ce7d4c94e1bd2fd1e7eb2500fc84a644f8c4a379fe7766084a53b911db",
+    "desktop/src/lib/Lighting.svelte": "44146f413bfe49c0cf049dc657d5c3479d6e2d3435a7d77efef061a8999a847e"
+  },
+  "verification": {
+    "svelte_check": "0 errors, 0 warnings",
+    "browser_tests": 14,
+    "new_scenarios": 12,
+    "log": "/tmp/lconnect-lighting-interrupted.log"
+  },
+  "active_plan_open_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 6,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 7
+  },
+  "limits": [
+    "Browser fixture, no real daemon commit or native fault injection",
+    "Manual readback verifies grace/status, not full RGB base or physical output",
+    "Full same-tree acceptance and native accessibility remain open"
+  ]
+}

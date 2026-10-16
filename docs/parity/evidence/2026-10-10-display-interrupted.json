@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Discard Display Apply/clear/load responses after observed disconnect or device selection generation changes",
+  "verification": {
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "theme_contracts": 26,
+    "browser_tests": 13,
+    "new_interrupted_browser_cases": 6,
+    "mock_and_native_build": "passed",
+    "native_smoke": "passed",
+    "rust_suite_rerun": false,
+    "static_review": "Generation checks cover success and errors; draft edits remain separate from submitted snapshot; no auto-retry added",
+    "lint": "No project lint script configured"
+  },
+  "native_evidence": "/tmp/lconnect-native-7pny8gbr/acceptance.json",
+  "logs": "/tmp/display-interrupted-{check,build,contracts,browser,mock-build,native-build,native}.log",
+  "sha256": {
+    "desktop/src/routes/+page.svelte": "a115165b773ed63b7f77e76966a6c65aa5caa1cd53e6cc81e05e5dece5c9c603",
+    "desktop/tests/display-interrupted.spec.ts": "4d169be5c5fa958a59ed3c87b0d30ff20a6149c8ce870808a0b90e2df0cca779",
+    "desktop/scripts/native-smoke.py": "2f85af38092377add9451f97a8d3cc95c6382e850d3553aafc3e25445b6fb050",
+    "desktop/scripts/native-smoke.js": "4d91e48cd5c50f38ea12aa2681bd3cd348828cd8498e2182936691abec4532c5"
+  },
+  "assertions": [
+    "Apply accepted before disconnect does not resend or apply subsequent unsent draft",
+    "Clear accepted before disconnect remains cleared despite late success/error",
+    "Load result from previous connection does not replace current draft",
+    "Late error/success does not publish obsolete status",
+    "Explicit readback obtains applied theme or reports no active theme after clear"
+  ],
+  "limits": [
+    "New fault cases use browser invoke fixture; native run is existing regression suite, not new Apply/clear/load interruption injection",
+    "No hardware used",
+    "Profile mutation interruptions and native replacement/cancellation barriers remain open"
+  ]
+}

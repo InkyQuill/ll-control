@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Rain/Snow theme v3, procedural/video H264 composition, cached sensor control, persistence and explicit GUI Apply",
+  "verification": {
+    "fmt": "passed",
+    "workspace_tests_passed": 877,
+    "workspace_ignored": 2,
+    "affected_crate_tests_passed": 525,
+    "affected_crate_ignored": 1,
+    "strict_clippy_daemon_image_ipc_all_targets": "passed",
+    "rustdoc_daemon_image_ipc": "passed",
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_contract_themes": 39,
+    "playwright_tests_passed": 245,
+    "production_frontend_build": "passed",
+    "private_ipc_mock_lifecycle": "Apply, preview without LCD mutation, H264 transport, restart, sleep/wake, Clear passed",
+    "codec_content": "procedural Snow density changes after cached sensor update; no decoder/media pin required",
+    "review": "Read-only Rust/Svelte review; procedural persistence bug fixed and regression passed"
+  },
+  "limits": [
+    "No real hardware, live sensors or production daemon used",
+    "No new native WebKit weather/slot/fault qualification in this checkpoint",
+    "Only selected sensor thresholds retained; independent per-source dictionaries remain open",
+    "Own procedural assets; Windows visual equivalence not established",
+    "Unavailable sensor fallback is explicit Linux policy; Windows comparison open",
+    "Other 19 applicable effects pages remain absent"
+  ],
+  "logs": [
+    "/tmp/weather-workspace-final.log",
+    "/tmp/weather-stream-tests-final.log",
+    "/tmp/weather-stream-clippy.log",
+    "/tmp/weather-stream-doc.log",
+    "/tmp/weather-ui-all.log",
+    "/tmp/weather-ui-check-final.log",
+    "/tmp/weather-ui-contracts-final.log",
+    "/tmp/weather-ui-build-final.log"
+  ],
+  "sha256": {
+    "crates/lconnect-ipc/src/effects.rs": "3b21d3f73f0464aa0e317426bfcf5e868d0c421811a06ed8c9e0bd037937b538",
+    "crates/lconnect-ipc/src/theme.rs": "bdfccb308505be05a79f288f58f97d408d7bfc12ba20ceea63441f16091a0ebc",
+    "crates/lconnect-image/src/effects.rs": "d5100110ce19ee9e6db8c18742f3299d3f45fb4bc8421c791c6379d8f1f4007d",
+    "crates/lconnect-image/src/theme.rs": "e596d74d79716f50f1f3ddc45a4cf2ae481541823c73789361b586cababf2b8b",
+    "crates/lconnect-daemon/src/theme_runtime.rs": "8994b0cbfd2f5d3dce573227277d8a8e7e00a83ffb0d59960fec3aeba466d0ef",
+    "crates/lconnect-daemon/src/media_composition.rs": "ed07bd010f0fd5630f2a9dedd8f478456f0e5cbc1a38df0864b59f574c7d50db",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "9e14dc23d0b2d533f24d560f11f9351496e25941245d331ee687e87df55a1c05",
+    "crates/lconnect-daemon/src/ipc_server.rs": "d74897b167f8f4c8a3bd35ef0b18be5f8fae8c2139b93e9ada7cf1aa0e3ddbce",
+    "crates/lconnect-daemon/src/manager.rs": "111b3c2fca283ee853983fdd7ba25442874af79e38b841e1a47b88e2f5d9fdd3",
+    "crates/lconnect-daemon/tests/composition_ipc.rs": "d1831a8ba0571d21155db6e15a06756e9cc8ec9a40cd21cc12808eebdd739c78",
+    "desktop/src/lib/WeatherEditor.svelte": "29191b6e7e903b80f7484da16ab2468c395ad4f3b16f92d71dc90ff50c5c72b2",
+    "desktop/src/lib/api.ts": "cf093e26faff4f2a904e48ddeaa0053c144d728f2b4ed96b778a5755ec6076a3",
+    "desktop/src/lib/BackgroundEditor.svelte": "713de75376f20353b86a6117c62c8487d507e2fa3871d001a06ede07c2b19f44",
+    "desktop/src/routes/+page.svelte": "3ac7028fd06cfb17860525691a8e6f482dcf38a245c4ba3a21adabbbb737008c",
+    "desktop/tests/weather.spec.ts": "5d462a879ed9fff7865dc4ff0a70a48bf132dce910027ec1036d066ff75c3c04",
+    "desktop/scripts/preset-contract.ts": "6f6868bade90f6d5cdbe665135e5c204c1f9e11b18da9b83bf69cd974209ad07"
+  }
+}

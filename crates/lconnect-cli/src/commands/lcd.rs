@@ -1,18 +1,4 @@
-//! LCD subcommands: availability probe, mode/brightness/rotation knobs,
-//! JPEG image upload, and clear.
-//!
-//! ## Wholesale config caveat
-//!
-//! The Phase 1 IPC surface (`set_lcd_config`) only accepts a full
-//! [`lconnect_ipc::LcdConfig`] (mode + brightness + rotation). There is
-//! no companion `get_lcd_config` to read the current state, so the
-//! `brightness`, `rotation`, and `mode` subcommands all overwrite the
-//! two siblings they don't take an argument for. We pick reasonable
-//! defaults (mode=Application, brightness=100, rotation=0) and surface
-//! a one-line warning on stderr so the user isn't surprised.
-//!
-//! A future `get_lcd_config` IPC method would let each knob be edited
-//! independently. Track that under the daemon-IPC plan.
+//! LCD configuration patches, source control and diagnostic playback.
 
 use crate::connection::{connect, resolve_device};
 use crate::{LcdArgs, LcdSubcommand};
@@ -21,7 +7,7 @@ use serde_json::json;
 /// Parse a `#RRGGBB` (or `RRGGBB`) hex string into an `[r, g, b]` triple.
 fn parse_hex_rgb(s: &str) -> anyhow::Result<[u8; 3]> {
     let stripped = s.strip_prefix('#').unwrap_or(s);
-    if stripped.len() != 6 {
+    if stripped.len() != 6 || !stripped.is_ascii() {
         anyhow::bail!("expected #RRGGBB, got {s:?}");
     }
     let r = u8::from_str_radix(&stripped[0..2], 16)
@@ -51,23 +37,25 @@ fn validate_mode(mode: &str) -> anyhow::Result<&'static str> {
     }
 }
 
-/// Build a JSON `LcdConfig` matching `lconnect_ipc::LcdConfig`.
-fn lcd_config_value(
-    mode: &str,
-    brightness_percent: u8,
-    rotation_degrees: u16,
-) -> serde_json::Value {
-    json!({
-        "mode": mode,
-        "brightness_percent": brightness_percent,
-        "rotation_degrees": rotation_degrees,
-    })
-}
-
 /// Top-level dispatch for `lconnectctl lcd ...`.
 pub async fn run(args: LcdArgs) -> anyhow::Result<()> {
     match args.command {
         LcdSubcommand::Available { device } => available(device).await,
+        LcdSubcommand::ImportClip { path, name } => import_clip(path, name).await,
+        LcdSubcommand::Clips => list_clips().await,
+        LcdSubcommand::DeleteClip { key } => {
+            let client = connect().await?;
+            client
+                .call("delete_prepared_clip", json!({"key":key}))
+                .await?;
+            println!("Deleted {key}");
+            Ok(())
+        }
+        LcdSubcommand::SelectClip { key, device } => select_clip(key, device).await,
+        LcdSubcommand::SelectedClip { device } => print_state("get_lcd_media", device).await,
+        LcdSubcommand::PlaySavedClip { key, loops, device } => {
+            play_saved_clip(key, loops, device).await
+        }
         LcdSubcommand::Brightness { percent, device } => brightness(percent, device).await,
         LcdSubcommand::Rotation { degrees, device } => rotation(degrees, device).await,
         LcdSubcommand::Mode { mode, device } => mode_cmd(mode, device).await,
@@ -79,6 +67,15 @@ pub async fn run(args: LcdArgs) -> anyhow::Result<()> {
             device,
         } => image(path, fit, letterbox_bg, quality, device).await,
         LcdSubcommand::Clear { device } => clear(device).await,
+        LcdSubcommand::State { device } => print_state("get_lcd_state", device).await,
+        LcdSubcommand::PlaybackStats { device } => {
+            print_state("get_lcd_playback_stats", device).await
+        }
+        LcdSubcommand::PlayClip {
+            path,
+            loops,
+            device,
+        } => play_clip(path, loops, device).await,
     }
 }
 
@@ -99,16 +96,13 @@ async fn brightness(percent: u8, device: Option<String>) -> anyhow::Result<()> {
     if percent > 100 {
         anyhow::bail!("lcd brightness out of range: {percent} (allowed 0..=100)");
     }
-    eprintln!(
-        "warning: `lcd brightness` overwrites mode (-> Application) and \
-         rotation (-> 0); a future `get_lcd_config` IPC will let knobs be \
-         edited independently"
-    );
     let client = connect().await?;
     let dev = resolve_device(&client, device).await?;
-    let cfg = lcd_config_value("Application", percent, 0);
     client
-        .call("set_lcd_config", json!({ "dev": dev, "cfg": cfg }))
+        .call(
+            "patch_lcd_config",
+            json!({ "dev": dev, "patch": { "brightness_percent": percent } }),
+        )
         .await?;
     println!("Set LCD brightness to {percent}%");
     Ok(())
@@ -118,16 +112,13 @@ async fn rotation(degrees: u16, device: Option<String>) -> anyhow::Result<()> {
     if !matches!(degrees, 0 | 90 | 180 | 270) {
         anyhow::bail!("lcd rotation invalid: {degrees} (allowed: 0, 90, 180, 270)");
     }
-    eprintln!(
-        "warning: `lcd rotation` overwrites mode (-> Application) and \
-         brightness (-> 100); a future `get_lcd_config` IPC will let knobs \
-         be edited independently"
-    );
     let client = connect().await?;
     let dev = resolve_device(&client, device).await?;
-    let cfg = lcd_config_value("Application", 100, degrees);
     client
-        .call("set_lcd_config", json!({ "dev": dev, "cfg": cfg }))
+        .call(
+            "patch_lcd_config",
+            json!({ "dev": dev, "patch": { "rotation_degrees": degrees } }),
+        )
         .await?;
     println!("Set LCD rotation to {degrees} degrees");
     Ok(())
@@ -135,16 +126,13 @@ async fn rotation(degrees: u16, device: Option<String>) -> anyhow::Result<()> {
 
 async fn mode_cmd(mode: String, device: Option<String>) -> anyhow::Result<()> {
     let canon = validate_mode(&mode)?;
-    eprintln!(
-        "warning: `lcd mode` overwrites brightness (-> 100) and rotation \
-         (-> 0); a future `get_lcd_config` IPC will let knobs be edited \
-         independently"
-    );
     let client = connect().await?;
     let dev = resolve_device(&client, device).await?;
-    let cfg = lcd_config_value(canon, 100, 0);
     client
-        .call("set_lcd_config", json!({ "dev": dev, "cfg": cfg }))
+        .call(
+            "patch_lcd_config",
+            json!({ "dev": dev, "patch": { "mode": canon } }),
+        )
         .await?;
     println!("Set LCD mode to {canon}");
     Ok(())
@@ -203,6 +191,113 @@ async fn clear(device: Option<String>) -> anyhow::Result<()> {
     let client = connect().await?;
     let dev = resolve_device(&client, device).await?;
     client.call("clear_lcd", json!({ "dev": dev })).await?;
-    println!("Cleared LCD (firmware reverts to LocalUI ~20s after)");
+    println!("Stopped LCD source and sent LocalUI");
+    Ok(())
+}
+
+async fn print_state(method: &str, device: Option<String>) -> anyhow::Result<()> {
+    let client = connect().await?;
+    let dev = resolve_device(&client, device).await?;
+    let state = client.call(method, json!({ "dev": dev })).await?;
+    println!("{}", serde_json::to_string_pretty(&state)?);
+    Ok(())
+}
+
+async fn play_clip(
+    path: std::path::PathBuf,
+    loops: u16,
+    device: Option<String>,
+) -> anyhow::Result<()> {
+    let clip = read_clip(path, loops).await?;
+    let client = connect().await?;
+    let dev = resolve_device(&client, device).await?;
+    let state = client
+        .call(
+            "play_lcd_clip",
+            json!({ "dev": dev, "clip": clip, "loops": loops }),
+        )
+        .await?;
+    println!("{}", serde_json::to_string_pretty(&state)?);
+    Ok(())
+}
+
+async fn read_clip(path: std::path::PathBuf, loops: u16) -> anyhow::Result<lconnect_ipc::H264Clip> {
+    tokio::task::spawn_blocking(move || -> anyhow::Result<lconnect_ipc::H264Clip> {
+        use std::io::Read;
+        const LIMIT: u64 = 8 * 1024 * 1024;
+        let mut bytes = Vec::new();
+        std::fs::File::open(&path)?
+            .take(LIMIT + 1)
+            .read_to_end(&mut bytes)?;
+        anyhow::ensure!(bytes.len() as u64 <= LIMIT, "clip JSON exceeds 8 MiB");
+        let clip = serde_json::from_slice(&bytes)?;
+        lconnect_ipc::validate_h264_clip(&clip, loops)?;
+        Ok(clip)
+    })
+    .await?
+}
+
+async fn import_clip(path: std::path::PathBuf, name: String) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        !name.trim().is_empty() && name.len() <= 256 && !name.chars().any(char::is_control),
+        "clip name must be nonblank, at most256 UTF-8 bytes and contain no control characters"
+    );
+    let clip = read_clip(path, 1).await?;
+    let client = connect().await?;
+    let saved: lconnect_ipc::PreparedClipInfo = serde_json::from_value(
+        client
+            .call("import_prepared_clip", json!({"name":name,"clip":clip}))
+            .await?,
+    )?;
+    println!("{}", serde_json::to_string_pretty(&saved)?);
+    Ok(())
+}
+async fn list_clips() -> anyhow::Result<()> {
+    let client = connect().await?;
+    let clips: Vec<lconnect_ipc::PreparedClipInfo> =
+        serde_json::from_value(client.call("list_prepared_clips", json!({})).await?)?;
+    println!("{}", serde_json::to_string_pretty(&clips)?);
+    Ok(())
+}
+async fn play_saved_clip(key: String, loops: u16, device: Option<String>) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        key.len() == 32
+            && key
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)),
+        "invalid prepared clip key"
+    );
+    let client = connect().await?;
+    let clip: lconnect_ipc::H264Clip = serde_json::from_value(
+        client
+            .call("load_prepared_clip", json!({"key":key}))
+            .await?,
+    )?;
+    lconnect_ipc::validate_h264_clip(&clip, loops)?;
+    let dev = resolve_device(&client, device).await?;
+    let state = client
+        .call(
+            "play_lcd_clip",
+            json!({"dev":dev,"clip":clip,"loops":loops}),
+        )
+        .await?;
+    println!("{}", serde_json::to_string_pretty(&state)?);
+    Ok(())
+}
+
+async fn select_clip(key: String, device: Option<String>) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        key.len() == 32
+            && key
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)),
+        "invalid prepared clip key"
+    );
+    let client = connect().await?;
+    let dev = resolve_device(&client, device).await?;
+    let state = client
+        .call("set_lcd_media", json!({"dev":dev,"key":key}))
+        .await?;
+    println!("{}", serde_json::to_string_pretty(&state)?);
     Ok(())
 }

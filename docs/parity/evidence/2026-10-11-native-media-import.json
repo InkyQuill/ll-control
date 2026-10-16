@@ -1,0 +1,163 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "source_sha256": {
+    "desktop/src-tauri/src/main.rs": "fe5a2b2b59425ddc3db48cd50577cb95459b408aeb97438ac0496919ef9656c0",
+    "desktop/src-tauri/build.rs": "47c088c0338d633bdd2a94808fd88e6b155810a30bae8a6f96037cf42ae4792d",
+    "desktop/scripts/native-media.py": "72cfd1dafcfb865f1fb22bf6d93aa6c859b3ae39caa321aa8cd2d1ce86039ba9",
+    "desktop/scripts/native-media.js": "f06949f4710a9b766e6c726e7d66a75380d5474d1a77fc6065597247272855fb",
+    "desktop/scripts/native-file-chooser.py": "a2b945fe597900d6739061222fe34bb89375f8001eec3d43e864a10cfe036822"
+  },
+  "log_sha256": {
+    "/tmp/native-media-final-run.log": "bcc0c8820d893dc74d1b0f8780d99cf1d3924c7601a9dc7fbc607b3f587910e0",
+    "/tmp/native-media-failure-cleanup.log": "a5766c0955ddb278084877ceead513775ecc80c5ecb31bf3b716e14a896c0a5b",
+    "/tmp/native-media-compat-smoke.log": "852921187d7005a32bc346a1dcf8b8cb8266f88eb75b00074d1912a54af204a4",
+    "/tmp/native-media-ui-build.log": "f4eccaaedc6a29d6945cbed2eb081fa9d985801dff904ea761f6db192f6b90d2",
+    "/tmp/native-media-mock-build.log": "476b84faa41d03c7def47f9fd25995888891da133b618d8da26398770bc2e4ed",
+    "/tmp/native-media-gui-build.log": "a0df7faa34f75442e5150f81f97a7629886bfba379eb777bffe5ca81060671c5",
+    "/tmp/native-media-review-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/native-media-review-clippy.log": "317cec20fca79168901677bf0737b34270d98846607fcd985f85835f9b9c5e17",
+    "/tmp/native-media-review-test.log": "8fd3974fadf2cbcc07da709a59bf78b8ffe4ea2e65e69ee6d62478fae8652cde",
+    "/tmp/native-media-review-doc.log": "4f098bc077c9b7281a19eae71dc8ec0793303597da6777e86f8b5ff8ba7d15a3"
+  },
+  "artifact_sha256": {
+    "/tmp/lconnect-native-media-5itz7hwh/acceptance.json": "591940ec7e6330250afc910c05ff0f0adc9f8e164d4fae6302fe64d0c5529666",
+    "/tmp/lconnect-native-media-c2xwmgj2/failure-cleanup.json": "962b4f9d0202574360bd011fad88f642a943c16f7f7a5a6272cdb820113215e1",
+    "/tmp/lconnect-native-arix2m5m/acceptance.json": "33b0dfa05b2acdf9572940097699af799a075e62b7949363cc354ce51df62648"
+  },
+  "checks": {
+    "workspace_tests": 656,
+    "targets": 96,
+    "failed": 0,
+    "ignored": 0,
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "docs": "pass",
+    "rust_review": "no outstanding findings",
+    "frontend_and_native_build": "pass",
+    "native_media_workflow": "pass",
+    "expected_harness_failure_cleanup": "pass",
+    "existing_native_smoke_compatibility": "pass"
+  },
+  "native": {
+    "dialog_actions": [
+      "chooser_cancel",
+      "chooser_bad",
+      "chooser_mp4",
+      "chooser_gif",
+      "chooser_slow",
+      "chooser_slow"
+    ],
+    "dialogs": [
+      {
+        "action": "chooser_cancel",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n"
+      },
+      {
+        "action": "chooser_bad",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-5itz7hwh/broken.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_mp4",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-5itz7hwh/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-5itz7hwh/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-5itz7hwh/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-5itz7hwh/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      }
+    ],
+    "source_unchanged": true,
+    "malformed_rejected": true,
+    "restart_preserved": true,
+    "decoded_saved_clips": [
+      {
+        "name": "fixture.mp4",
+        "bytes": 691200,
+        "top_pixel": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "fixture.gif",
+        "bytes": 691200,
+        "top_pixel": [
+          252,
+          0,
+          0
+        ]
+      }
+    ],
+    "cancel_child_reaped": [
+      {
+        "pid": 1932351,
+        "source": "/tmp/lconnect-native-media-5itz7hwh/native-tmp/.tmpuH8stU/source.mp4",
+        "output": "/tmp/lconnect-native-media-5itz7hwh/native-tmp/.tmp6QrEHM/clip.h264"
+      }
+    ],
+    "close_child_reaped": {
+      "pid": 1932658,
+      "source": "/tmp/lconnect-native-media-5itz7hwh/native-tmp/.tmpRD7Jgg/source.mp4",
+      "output": "/tmp/lconnect-native-media-5itz7hwh/native-tmp/.tmpUiGSfR/clip.h264"
+    },
+    "normal_close_exit": 0
+  },
+  "coverage": [
+    "Actual GTK chooser cancel and file selection through trusted private X11 input",
+    "AT-SPI verifies focused path and enabled Open",
+    "Real MP4/GIF chunk upload -> native FFmpeg -> daemon store -> GUI library without Apply",
+    "Saved key/bytes survive daemon restart; actual 480x480 decode and contain/cover pixel checks",
+    "Native cancellation and WM CloseRequested stop owned encoder and remove staging before harness teardown",
+    "Injected harness failure kills owned process groups and removes private staging",
+    "Existing native smoke validates backward compatibility of optional test-hook result argument"
+  ],
+  "limits": [
+    "Only Xvfb/X11 WebKitGTK/GTK; no Wayland or full media focus/reflow/speech qualification",
+    "Cancel/close uses an encoder wrapper delayed before exec for deterministic process ownership; not an uninterruptible codec/kernel simulation",
+    "Native publication reply-loss/disconnect and close while Publishing remain open",
+    "Forced application termination/crash/logout not qualified; injected failure tests harness cleanup only",
+    "No hardware/production daemon/host sensor queries",
+    "Initial rerun exposed GTK location readiness race in harness; fixed by waiting for focused location entry"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-12",
+  "scope": "Plan cleanup and current-tree parity audit; no implementation changes",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "L-Connect3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "plans": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": {
+      "open": 5,
+      "completed": 0
+    },
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": {
+      "open": 6,
+      "completed": 0
+    },
+    "docs/superpowers/plans/basic-parity.md": {
+      "open": 5,
+      "completed": 0
+    }
+  },
+  "cleanup": {
+    "newly_deleted_plans": [],
+    "reason": "All three remaining plans have open acceptance requirements; prior removed plans remain removed. Completed narrative removed from active M1/M2/basic plans; existing implementation history and evidence retained.",
+    "historical_roadmaps": "Explicitly historical, not an active queue"
+  },
+  "current_verification": {
+    "command": "pnpm --dir desktop check",
+    "exit_code": 1,
+    "errors": 2,
+    "warnings": 0,
+    "file": "desktop/src/lib/MediaImport.svelte:24",
+    "diagnostics": [
+      "Block-scoped variable sourceReady used before its declaration",
+      "Variable sourceReady is used before being assigned"
+    ],
+    "log": "/tmp/parity-plan-audit-check.log",
+    "browser_native_hardware": "Not run"
+  },
+  "source_sha256": {
+    "desktop/src/lib/MediaImport.svelte": "24e94badc6152bf862c336d1c9c173158bf07b83ad3d1bb4d087db0df0538d2b",
+    "desktop/src/lib/GalleryVideoEditor.svelte": "4c665e0814a657450d8573641cb59ecdbaf60475eca9f1dd43202d33c1ac88d5",
+    "desktop/src/lib/VideoSourcePreview.svelte": "7879110483446c39a88c1534b9d9a9cc21fe031b623d149bc4a603244eda1ed2",
+    "desktop/src/lib/video-range.ts": "e4e04a71865debb927e58c605978653b323786f0ffd3603ff8f1a81c2c4489f8"
+  },
+  "native_checkpoint_hashes_match": true,
+  "next": "Complete and verify range UI; then native editor acceptance and remaining capture/effects/RGB/profiles/desktop/firmware work in roadmap",
+  "limitations": [
+    "Read-only code/evidence reconciliation does not rerun all historical test suites",
+    "Current frontend is not passing",
+    "Historical LCD observations do not qualify current media path",
+    "Hardware remains deferred; other devices out of available test scope"
+  ]
+}

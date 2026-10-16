@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-10",
+  "scope": "Native i915/xe engine and VRAM source selection/restart acceptance",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "native_artifact": "/tmp/lconnect-native-hrwrjo_0/acceptance.json",
+  "native_artifact_sha256": "7c35c1d35696eeed0a97cfa308a7516b4b6983f3beb313dab15e4e5e77bc634f",
+  "sha256": {
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "3b37168469de6db1ddaac6c4f00985ac4fd0a562449288e1d77bb64c881370e1",
+    "desktop/scripts/native-smoke.js": "13a27463d4f3a6e30a038ec7d4b9382dd67d144ddcae8ff9b8edb1803fd7bbea",
+    "desktop/scripts/native-smoke.py": "81d918c44067d3ecf0442b4f1f435bf008a1ef53119b4916844cfbe924fd79a2"
+  },
+  "verification": {
+    "native_smoke": "passed",
+    "rust_all_target_tests": 585,
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "rust_docs": "passed",
+    "review": "No remaining findings",
+    "javascript_syntax": "passed",
+    "python_compile": "passed",
+    "mock_and_native_build": "passed"
+  },
+  "assertions": [
+    "Real native DOM: select i915 and xe engine plus same-GPU VRAM; readable engine labels",
+    "Resolved values 27.0%/47.0% and 1.0 GiB/2.0 GiB",
+    "Load and VRAM candidates isolated by physical GPU",
+    "Both i915 and xe bindings survive fixture restart and explicit UI readback",
+    "Recommended reset chooses Intel GPU but does not assign engine as aggregate; reset remains draft",
+    "Global selection preserves explicit LCD/cooling/thermal/dynamic policies",
+    "Five source writes including lost-reply scenario; no accidental retry",
+    "Six observed native reconnect markers plus dependency restart cases and post-GUI restart"
+  ],
+  "limits": [
+    "MockBackend and synthetic sensor readings only; no real HID/PMU/DRM/host sensor calls",
+    "This proves source editor integration, not hardware sensor accuracy or HWiNFO aggregate equivalence",
+    "Final whole-tree frontend/browser/release acceptance remains open"
+  ],
+  "logs": "/tmp/native-intel-review-{fmt,clippy,test,doc}.log"
+}

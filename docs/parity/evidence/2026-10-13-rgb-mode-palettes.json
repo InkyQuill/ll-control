@@ -1,0 +1,124 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Full manual 2/4-color fan/pump palettes across GUI/CLI/IPC/sole RGB owner/persistence/replay",
+  "reference": {
+    "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionProfile.cs",
+    "sha256": "21a2c714f528cd3dca70972d0b99db7e6714244d3d9ef0cbb6633b8a84c83efe",
+    "symbols": "defaultFanLEDProfiles, defaultScreenLEDSubSettings, FanLEDViewSettings, ScreenLEDViewSettings"
+  },
+  "contract": {
+    "primary": "Existing color field retained",
+    "remaining": "additional_colors defaults empty for old clients/settings; at most3 and exact selected mode slot count when supplied",
+    "wire": "Fan cmd133 RGB begins offset9; pump cmd131 begins offset10; unused slots remain black",
+    "persistence": "All color slots retained through write/read/replay; malformed palettes cannot replace saved settings",
+    "cli": "Repeated --additional-color preserves slots2..4 order"
+  },
+  "checks": {
+    "workspace": {
+      "passed": 913,
+      "ignored": 2,
+      "log": "/tmp/lconnect-rgb-palette-workspace.log",
+      "scope": "After palette integration; before subsequent CLI-only option/test and equivalent Clippy condition formatting"
+    },
+    "final_cli": {
+      "passed": 29,
+      "log": "/tmp/lconnect-rgb-palette-cli.log"
+    },
+    "final_rpc_persistence": {
+      "passed": 2,
+      "log": "/tmp/lconnect-rgb-palette-rpc.log"
+    },
+    "strict_clippy": "/tmp/lconnect-rgb-palette-clippy.log",
+    "rustdoc": "/tmp/lconnect-rgb-palette-doc.log",
+    "format": "/tmp/lconnect-rgb-palette-fmt.log",
+    "svelte": {
+      "errors": 0,
+      "warnings": 0,
+      "log": "/tmp/lconnect-rgb-palette-ui.log"
+    },
+    "browser": {
+      "passed": 21,
+      "log": "/tmp/lconnect-rgb-palette-browser-final.log"
+    },
+    "build": "/tmp/lconnect-rgb-palette-build.log",
+    "native": {
+      "root": "/tmp/lconnect-native-lighting-palette-t7foitef",
+      "result": {
+        "dev": "galahad2-lcdv2:0001",
+        "fan_palette": true,
+        "ok": true,
+        "pump_palette": true,
+        "selected_rgb": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            4,
+            5,
+            6
+          ],
+          [
+            7,
+            8,
+            9
+          ],
+          [
+            10,
+            11,
+            12
+          ]
+        ],
+        "restart_replay": true,
+        "settings_palettes": {
+          "fan": {
+            "mode": "meteor",
+            "brightness": 100,
+            "speed": 50,
+            "direction": "forward",
+            "color": "#010203",
+            "additional_colors": [
+              "#040506",
+              "#070809",
+              "#0a0b0c"
+            ],
+            "disabled": false
+          },
+          "pump": {
+            "scope": "outer",
+            "mode": "meteor",
+            "brightness": 100,
+            "speed": 50,
+            "direction": "forward",
+            "color": "#010203",
+            "additional_colors": [
+              "#040506",
+              "#070809",
+              "#0a0b0c"
+            ],
+            "disabled": false
+          }
+        },
+        "gui_exit": 0
+      },
+      "mock_backend": true,
+      "isolated_xvfb_dbus": true,
+      "log": "/tmp/lconnect-rgb-palette-native.log"
+    }
+  },
+  "limitations": [
+    "No physical LED or hardware qualification",
+    "Mode-specific speed/brightness/direction/defaults and per-mode saved GUI readback/drafts still open",
+    "Fan-pump sync, 280/360 and manual LED loops still open",
+    "Full GUI native fault/accessibility and simultaneous thermal/dynamic palette acceptance remain open"
+  ],
+  "failed_harness_attempt": {
+    "root": "/tmp/lconnect-native-lighting-palette-s6ji50uj",
+    "reason": "Initial null last-RGB packet not guarded; fixed polling to wait for first packet"
+  },
+  "initial_browser_failure": "getByLabel exact selector included option text; fixed to semantic combobox accessible name"
+}

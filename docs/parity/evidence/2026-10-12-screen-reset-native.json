@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-12",
+  "scope": "Native WebKitGTK Screen reset keyboard and AT-SPI with private Xvfb/DBus/IPC/MockBackend",
+  "verification": {
+    "native": "PASS /tmp/reset-native-run.log",
+    "fixture": "/tmp/lconnect-native-keyboard-imxc25nx",
+    "trusted_key_steps": 440,
+    "atspi_variants": 13,
+    "live_events": 37,
+    "zoom": 1,
+    "platform": "X11 Xvfb, 1280 CSS px, DPR 1",
+    "fixture_build": "PASS /tmp/reset-native-fixture-build.log",
+    "gui_build": "PASS native-smoke,custom-protocol /tmp/reset-native-gui-build.log",
+    "clippy": "PASS /tmp/reset-native-clippy.log",
+    "fmt": "PASS",
+    "python_compile": "PASS",
+    "javascript_syntax": "PASS",
+    "review": "Native harness static review: no blocking findings",
+    "hardware": "NOT RUN; MockBackend only"
+  },
+  "observations": [
+    "skip-link",
+    "window-switch:brightness-focus-restored",
+    "settings:99/90",
+    "cooling:fan79",
+    "cooling:curve-numeric-draft",
+    "cooling:pump-fixed-rpm2201",
+    "cooling:pump-curve-rpm2201/31",
+    "lighting:manual-grace",
+    "lighting:thermal86",
+    "lighting:dynamic-invalid/recovery",
+    "lighting:dynamic-celsius/rpm31-61/speed1-99/off",
+    "sensors:hwmon:2f63:coretemp:temp1",
+    "display:add/apply",
+    "screen-reset:keyboard/cancel/commit/lcd-failure/readback/reapply/focus/files/draft",
+    "connection:offline/reconnected"
+  ],
+  "reset_controls": [
+    {
+      "name": "Проверить результат сброса",
+      "focused": true,
+      "enabled": true
+    },
+    {
+      "name": "Повторно применить к LCD",
+      "focused": false,
+      "enabled": true
+    }
+  ],
+  "limits": [
+    "AT-SPI presence/focus does not establish screen-reader speech",
+    "Draft preservation assertion checks name, not every layer/background field",
+    "File preservation assertion compares image catalog, not video/font file contents",
+    "Eight Screen entries/revision increment checked; exact slot default contents covered by Rust lifecycle test",
+    "Reset-specific expanded scaling and native ambiguous reset reply not exercised"
+  ],
+  "sha256": {
+    "desktop/scripts/native-keyboard.js": "27da203483c8769c8f28b6ace2bb0afb38d55af14f116a8e75000867772bc247",
+    "desktop/scripts/native-keyboard.py": "5d854ca41c89b62cca8e21cf6c622a22fc9033b9e79127f7f82f213ad15c5eac",
+    "desktop/scripts/native-atspi.py": "722ffbed9ef08b40fbd784bc6d346edb0af19464d73a477acb640e8a3569203b",
+    "desktop/src-tauri/src/main.rs": "346b301c7a9278d5d17b159ed7db592c2d6a58e74dec27967c43255d1ed3ac9d",
+    "desktop/src/lib/ScreenReset.svelte": "11f2251ac99bf8ac5363e4994a5f574b5fd69049a65146ee1bf120f691e979ab"
+  }
+}

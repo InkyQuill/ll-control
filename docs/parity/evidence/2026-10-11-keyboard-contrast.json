@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-11",
+  "scope": "Browser keyboard flows and visible field boundary contrast",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/src/routes/+page.svelte": "fd64b55692c8fbc8c718e09194b71f8790797cc9bbdd9d623d4e0150e8e57c74",
+    "desktop/tests/control-keyboard.spec.ts": "b375942a088d818f9d0af7674c4d92ab503e82deec1ce111a19544fb196c2485",
+    "desktop/tests/keyboard.spec.ts": "dd650f6213c6258b5ad8c6bb6e1646efd8edb32c011353482bcf02f39f1a5936",
+    "desktop/tests/layer-keyboard.spec.ts": "5df6dd0b6145ff7bc7b91d9fcb106abd0bcd02814876494ca8df064af7f65caf"
+  },
+  "verification": {
+    "keyboard_playwright_tests": 7,
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "native_rerun": false,
+    "rust_rerun": false
+  },
+  "change": "Shared text/select input border #3b4a60 -> #657891",
+  "red_green": "Browser contrast regression failed at 1.967351446610966 before CSS change and passed after it",
+  "assertions": [
+    "Tab/Enter/Space/arrow input flows for settings, cooling fan PWM, lighting brightness and CPU source selection",
+    "Edits do not write until explicit Apply; exact target/payload checked",
+    "Visible controls in default states of all five pages have accessible names",
+    "Sampled focused controls have visible outline; existing layer reorder/delete focus tests pass",
+    "Enabled text/number/select fields in default page states have at least 3:1 border contrast against fill and surrounding opaque background"
+  ],
+  "limits": [
+    "Headless Chromium and bridge fixtures, not native WebKitGTK keyboard or AT verification",
+    "Does not cover every expanded editor state, text contrast, zoom/reflow, forced colors or announcements",
+    "First RGB test failed because fixture omitted get_lighting_info; fixture corrected before final passing run"
+  ]
+}

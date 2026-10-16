@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-12",
+  "scope": "indexed on-disk media container foundation; not yet wired to GUI/IPC playback",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "source_sha256": {
+    "crates/lconnect-ipc/src/clip.rs": "4dec04fbb818887f1260c85fd4d7dd73ee6f8e3caadd518fd5690fba22a58520",
+    "crates/lconnect-daemon/src/media_file.rs": "bc6885b3de1ff467baed3b6e8415d7f39fea72a609d764df26aae60675093392",
+    "crates/lconnect-daemon/src/lib.rs": "63316344646d8126da127a1442cee9b12e808bb516ff1dba13194e48bb30db00",
+    "crates/lconnect-daemon/tests/media_file.rs": "4bfbd28b60e5f2128dab91df0914d7aefd80815df791f87661a23347e34f301d"
+  },
+  "checks": {
+    "rust": "672tests/97targets,fmt,strictClippy,docs,production GUI check",
+    "codec": "synthetic 480x480 VP9-in-MP4,24fps,586frames; FFmpeg H264 -> indexed file -> AU reads -> decoder586frames; payload >1MiB",
+    "storage": "staging drop/no-clobber,version/unknown fields,gap/overlap,oversize,index/truncation/symlink,changed AU rejection"
+  },
+  "logs_sha256": {
+    "/tmp/media-file-focused.log": "40829d5682442fb4365dce370368f628c52f1ab4613fb81326c0a1fd80de0b3e",
+    "/tmp/media-file-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/media-file-clippy.log": "d4f2840f46dd51cde8890450f4391c226182680341a49f1e179b8ed2b64eb615",
+    "/tmp/media-file-rust-all.log": "e12a1565b1da52a12e0d15ba398f0ab487bb1dffe6cb4130674dd56881b43c8e",
+    "/tmp/media-file-doc.log": "c242d3f475ff9eb412135f92317e98d16be32b42f88fa98559f833ec9c71b464",
+    "/tmp/media-file-production.log": "1268085776148224e1445979ecd1a92834e4658f7e4fb75cb88ebc2155c06426"
+  },
+  "new_browser_or_native_gui_tests": false,
+  "hardware_run": false,
+  "limitations": [
+    "container module not connected to MediaAssetStore/RPC/actor/GUI",
+    "user import still10s/240AU/1MiB",
+    "blocking file work must be owned by worker; joined cancellation integration pending",
+    "NAL checks are not full decoder conformance; open validates index and first AU, later AUs validated on read",
+    "budgets86400frames/256MiB payload/128KiB AU/8MiB index are Linux resource budgets not Windows limits"
+  ],
+  "next": [
+    "chunked publication and media store v1/v2 coexistence with reference pins",
+    "bounded reader worker and actor/replay/sleep integration",
+    "GUI long import/defaults and video+sensor composition"
+  ]
+}

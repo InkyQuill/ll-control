@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-10",
+  "scope": "Native font cleanup protects profile-only and offline-device-only references and renders after restart",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/scripts/native-smoke.js": "a437cb706644f7b1d80147d48cc533189a95ce392157c484bff08b5fcb8a333f",
+    "desktop/scripts/native-smoke.py": "c2e29e9db06a8cef4c5663acfc7c2ea4830ddfc81974340c5fa43a0b40bcc181"
+  },
+  "native_artifact": "/tmp/lconnect-native-5jlyffhn/acceptance.json",
+  "native_artifact_sha256": "c41b091fa2e965aeb52c8c46862bdb4f3f007d907a4ebdf130dbf40125d60998",
+  "verification": {
+    "native_smoke": "passed",
+    "native_build": "passed",
+    "javascript_syntax": "passed",
+    "python_compile": "passed",
+    "production_code_changed": false,
+    "rust_browser_rerun": false
+  },
+  "assertions": [
+    "Two prior-lifetime fonts seeded directly without import/session registration",
+    "Profile-only and offline-device-only references retained by native GUI dry-run/delete",
+    "Exactly one font orphan removed; two referenced fonts and one subsequently imported font remain",
+    "After final daemon restart referenced font bytes match originals and both image/text themes render successfully"
+  ],
+  "limits": [
+    "MockBackend/private settings only",
+    "Native draft-only/session-only retention, corrupt profile JSON and partial unlink/retry remain open"
+  ]
+}

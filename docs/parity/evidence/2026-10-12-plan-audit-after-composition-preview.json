@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-12",
+  "scope": "Documentation-only plan reconciliation after composition backend preview; no implementation or hardware work",
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "open_plan_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 5
+  },
+  "newly_completed_plans_removed": [],
+  "cleanup": "Prior removals retained. All three remaining plans have open acceptance or platform requirements; no additional plan qualifies for deletion. Historical audits/evidence remain outside active queue.",
+  "corrections": [
+    "Remove native long-video import from M1 pending work",
+    "Distinguish implemented composition backend from missing GUI workflow",
+    "Record passed backend video preview in checklist",
+    "Keep expanded faults/performance and hardware gates open"
+  ],
+  "verified_source_hashes": {
+    "2026-10-12-video-composition-preview.json": {
+      "crates/lconnect-daemon/src/media_composition.rs": true,
+      "crates/lconnect-daemon/src/ipc_server.rs": true,
+      "crates/lconnect-daemon/tests/composition_ipc.rs": true
+    },
+    "2026-10-12-native-long-import.json": {
+      "desktop/src-tauri/src/media_import.rs": true,
+      "desktop/src-tauri/src/main.rs": true,
+      "desktop/src-tauri/src/media_prepare.rs": true,
+      "desktop/src/lib/MediaImport.svelte": true,
+      "desktop/tests/media-import.spec.ts": true,
+      "desktop/scripts/native-media.py": true,
+      "desktop/scripts/native-media.js": true
+    }
+  },
+  "validation": {
+    "broken_local_links": [],
+    "software_tests_rerun": false,
+    "hardware_run": false
+  },
+  "documents": [
+    "roadmap.md",
+    "docs/superpowers/plans/README.md",
+    "docs/superpowers/plans/basic-parity.md",
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md",
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md",
+    "docs/parity/lcdv2-baseline-gaps.md",
+    "docs/parity/basic-parity-checklist.md",
+    "docs/parity/video-composition.md"
+  ]
+}

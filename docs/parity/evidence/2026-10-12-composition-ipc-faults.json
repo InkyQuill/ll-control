@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-12",
+  "scope": "Composition private IPC early EOF and lost Apply response; test-only change",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "source_sha256": {
+    "crates/lconnect-daemon/tests/composition_ipc.rs": "1bf340288ced383d2c0e13c89ec646e4389569c131bfc9766bccb84f2f566771"
+  },
+  "verification": {
+    "composition_ipc_integration": "passed, 16.50s",
+    "strict_daemon_clippy": "passed",
+    "fmt": "passed",
+    "review": "No remaining findings after making lost-reply theme distinguishable",
+    "hardware": "NOT RUN"
+  },
+  "scenarios": [
+    "Request followed by buffered EOF cancels deferred preparation; existing theme remains",
+    "Real transport response-write BrokenPipe after handshake; distinguishable new theme observed via second connection",
+    "Playback advances at least three more frames after failed-reply connection closes",
+    "Repeated subsequent Apply succeeds; restart/sleep/missing-media recovery/Clear and final deletion still pass"
+  ],
+  "limitations": [
+    "Early EOF does not cover disconnect during active codec preparation",
+    "No full IPC reply-loss recovery UI matrix",
+    "No physical playback or long-run performance qualification"
+  ],
+  "logs": [
+    "/tmp/composition-disconnect-final.log",
+    "/tmp/composition-disconnect-clippy-final.log"
+  ]
+}

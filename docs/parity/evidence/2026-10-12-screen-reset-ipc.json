@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-12",
+  "scope": "External software Screen reset/readback and receipt-aware LCD preparation admission",
+  "verification": {
+    "workspace": {
+      "passed": 754,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 109,
+      "log": "/tmp/reset-admission-workspace.log"
+    },
+    "fmt": "PASS",
+    "clippy": "PASS /tmp/reset-admission-clippy.log",
+    "docs": "PASS /tmp/reset-admission-doc.log",
+    "focused": "7 passed /tmp/reset-admission-tests.log",
+    "review": "Focused Rust static follow-up: no actionable findings",
+    "hardware": "NOT RUN; deferred",
+    "native_gui": "NOT RUN"
+  },
+  "covered": [
+    "Reset RPC validation, collection revision conflict, durable receipt and ordered readback",
+    "Delayed reset rejected before durable write after newer Clear/Apply",
+    "Completed duplicate admission preserves pending newer theme ticket"
+  ],
+  "remaining": [
+    "Explicit transport reapply protected from later edits",
+    "GUI scope, confirmation and ambiguous reply recovery",
+    "Native accessibility and combined reset lifecycle"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/src/actor/mod.rs": "b128870717d3f7a412e8b027e4cb09fa65e457cf5cd6e3d448f2775b25f8d03a",
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "0106818c6d3e0f2f5b21d8b00bdcc15ae42d0f55acf37baece6343c04036b9cf",
+    "crates/lconnect-daemon/src/ipc_server.rs": "1dd22357b831f6571ef43cb0fe105f70c31ef340dd2eeabe40887bf7c5dc2315",
+    "crates/lconnect-daemon/tests/screen_reset_actor.rs": "2b677217b5885974538e3e8c021681f608205e8cf5e587615d7abbda583ddb9b",
+    "crates/lconnect-daemon/tests/screen_collections_ipc.rs": "3902463bf41885a83830312ece47ed8cb7595c638e6e4e32f423ab1c359c5e77",
+    "crates/lconnect-ipc/src/screen_reset.rs": "3de1799158c060c442ad331e2708a363dbaec2791b27374d38b1b8251c46040b",
+    "crates/lconnect-ipc/src/server.rs": "2b65168d705c2eef8b60be3930b9744ab4373d6c53c386a7a2c218ffbff7ebd7",
+    "crates/lconnect-ipc/src/trait_def.rs": "c60e2e8cadd434dbc1a227ba35e5926dda722181e0766b4ba74fd8e469619007"
+  }
+}

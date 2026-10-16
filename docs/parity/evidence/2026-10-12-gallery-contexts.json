@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-12",
+  "scope": "Gallery selection contexts and static background; plan reconciliation",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "baseline": "Windows L-Connect 3 2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "source_sha256": {
+    "crates/lconnect-ipc/src/theme.rs": "216431585684af54dfe75b6af78265b2ebfdb22bf5e9dbce62a8b9ef5ff7433a",
+    "crates/lconnect-ipc/src/assets.rs": "52b6145ad9d1035a73e978cd64356dde84b8ed65feecee30b11af26c66450398",
+    "crates/lconnect-image/src/theme.rs": "958a50efa4c183386e1d2fe6e6cff74ab24f9dd5339da11837669892bd54021e",
+    "crates/lconnect-daemon/src/theme_assets.rs": "4f9de12b19998802269749f7de994874cfedaef5feec7b46d31de996001c0994",
+    "crates/lconnect-daemon/src/persistence.rs": "0ac8cc351f8e224092c01a14da375e638d7dbae689b01757cd25cd0c319c4bcf",
+    "crates/lconnect-daemon/src/ipc_server.rs": "8676dc53f48dda3caed880cd1d13722ebaa896cf86897809d9c318a682389693",
+    "desktop/src/lib/ImageGallery.svelte": "360fc91a853eef0f60a059c5771bf652effa9bcf676604c8225ca88ee648b5ce",
+    "desktop/src/lib/BackgroundEditor.svelte": "82e2efad8884638faa735ad4cc682ebe116949658a6dc19e29aa64a094571218",
+    "desktop/src/routes/+page.svelte": "03970ae9871618103d9cae338c41ac0b450c205a55a17a6476dffff6535a62b5",
+    "desktop/tests/video-background.spec.ts": "64cffb774a1182755ee512d1d63af2600bbb59d3cdb80fdeda42df5a0d761d30",
+    "desktop/scripts/native-media.js": "8869192bd846fd801562e9d60e9bc6968c7e1672d95ba29117d584fa5764b189"
+  },
+  "verification": {
+    "fmt": "PASS",
+    "strict_clippy": "PASS",
+    "workspace": {
+      "passed": 724,
+      "failed": 0,
+      "ignored": 1,
+      "targets": 104,
+      "log": "/tmp/gallery-context-workspace.log"
+    },
+    "docs": "PASS",
+    "svelte": "0 errors, 0 warnings",
+    "frontend_build": "PASS",
+    "browser": "11 passed; video-background, image-delete, image-gallery",
+    "cross_language_contracts": 31,
+    "reviews": "Rust/Svelte read-only: no actionable findings",
+    "native": {
+      "status": "PARTIAL; full workflow not accepted on current tree",
+      "verified_prefix": "static background + watermark selection, preview, Apply identity and Clear completed in both attempts",
+      "attempts": [
+        {
+          "fixture": "/tmp/lconnect-native-media-uf7ffg4g",
+          "failure": "clear applied media profile; added enabled Stop wait after Apply"
+        },
+        {
+          "fixture": "/tmp/lconnect-native-media-oyhbq8tf",
+          "failure": "GIF chooser AT-SPI windows=[] controls=[]",
+          "log": "/tmp/gallery-context-native-retry.log"
+        }
+      ]
+    },
+    "hardware": "NOT RUN; deferred by user"
+  },
+  "active_plans": {
+    "2026-09-08-m1-lcdv2-dynamic-display.md": 5,
+    "2026-09-09-m2-sensors-and-cooling.md": 6,
+    "basic-parity.md": 5
+  },
+  "newly_removed_plans": [],
+  "previous_removals": "Ten obsolete plans already removed; none of three remaining plans fully complete",
+  "limits": [
+    "Shared catalog selection purposes do not implement per-device collection membership or full Screen reset",
+    "Older daemon explicitly rejects new background_image field",
+    "Native accessibility and full workflow repeat remain open",
+    "No physical LCD/cooling/RGB/lifecycle qualification"
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-15",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_worktree": true,
+  "baseline": {
+    "windows": "L-Connect3 2.1.28.0",
+    "target": "Galahad II LCDV2 0416:7395",
+    "firmware_candidate_sha256": "68e2d11c409e75b1e25bf9c2e84b891bcdc18ac735bafa67a0ee25a218b2d9d3",
+    "external_reference": "/home/inky/Development/lian-li/reference-firmware/2026-10-15-lcdv2-1.6",
+    "firmware_provenance_checkpoint": "2026-10-15-firmware-image-research.json",
+    "source_inference": {
+      "dispatcher": "0x3c418 / callbacks0x862f8 / response512",
+      "upload": "0x81a94 / copied request prefix, cmd2+byte6 on error",
+      "collector": "0x8219c / canonical total/PN/length progression",
+      "activate": "0x815d8 / payload01, raw bytes11/12 set1 before reset"
+    },
+    "external_references_rehashed": true
+  },
+  "scope": "Pure source-derived FW1.6 ACK/error decoder. No I/O, daemon commands, update job, image approval or frontend changes.",
+  "implementation": {
+    "module": "crates/protocol/src/galahad2_lcdv2/firmware_update.rs",
+    "chunk_expectation": "Only nonempty canonical cmd11 request shape; widened PN multiplication, bounded end, canonical length and zero padding. Copies first512 actual output bytes as pending expectation.",
+    "chunk_response": "Requires actual512 input bytes; matches complete visible request prefix, preserving echoed header Length up to1013 while payload echo reaches only501 bytes. Typed metadata describes expected request end/last flag, not persistence/update success.",
+    "errors": "cmd2 overwrites command/byte6; remaining bytes must match request. All high-bit raw statuses return DeviceRejected including unknown codes; invalid status/unmatched/short/oversize rejected. Error above PN65535 cannot fully correlate after high PN overwritten and is explicit ambiguity.",
+    "activation": "Fixed cmd10/total1/PN0/Length1/payload01 and raw byte12=1. No out-of-bounds access through declared data slice. ResetRequested only, no reboot/version success claim.",
+    "side_effects": "None; no command builder for firmware image uploads added, no transport integration."
+  },
+  "source_snapshot": {
+    "sha256": {
+      "crates/protocol/Cargo.toml": "9c0738ed60d98547810f6c3a2944fa17491da803df2f97619a02a823694fb2d0",
+      "crates/protocol/src/common/mod.rs": "0feff337c3abfde942b56f1cf445d1c73e82e9f0956ad13d5b6ccb45b833cabf",
+      "crates/protocol/src/galahad2_lcdv2/bpacket.rs": "780aa0412fe66607578dbd03510bc0e2b8f950c98c35ae1f2f56f4cf8adeb0b0",
+      "crates/protocol/src/galahad2_lcdv2/commands.rs": "4db29483f1beda7a3640b64ef5e148906b3ed6c0f9e091451b2f06a9c7e4a03d",
+      "crates/protocol/src/galahad2_lcdv2/cpacket.rs": "4a47f973ffbaee483e84b76d777305a750da09e85f6a81263beac4b2ddf25b67",
+      "crates/protocol/src/galahad2_lcdv2/fan_pwm.rs": "3c0a3ee26a69ebed61112d68456b60481e18f42eab13371b496631f52de4d323",
+      "crates/protocol/src/galahad2_lcdv2/firmware.rs": "84cec434656f70627258361e7b218c38baf799ff76ad7e7cfae7420a93d265fc",
+      "crates/protocol/src/galahad2_lcdv2/firmware_update.rs": "e7f24b2c6b0c1c6dcdb0403863195d76f3f64f4138d6b87be7904aaeda253820",
+      "crates/protocol/src/galahad2_lcdv2/get_lighting.rs": "7ce3e8aac9dd1b5583629fc3bffa05f5f133911b01e957bcef94ee2e074e05e7",
+      "crates/protocol/src/galahad2_lcdv2/h264.rs": "e5afeff1edb5178ef0b0ff444b2418b2e2f3f3eec4bd87e2bfa0841322790598",
+      "crates/protocol/src/galahad2_lcdv2/handshake.rs": "927c81edd471a48eb18e8bcada7ea973a23520e81a03a4055c212d3155ba0e8c",
+      "crates/protocol/src/galahad2_lcdv2/jpeg.rs": "bacc7c9c1760c18f4d8584f98511b653f49694a59d63a9efb58849151b1dac0d",
+      "crates/protocol/src/galahad2_lcdv2/lcd.rs": "3a8b714b69442499f1aabc02d7c0cf6569e073382bc0dec4b1a9d823d0fd4edc",
+      "crates/protocol/src/galahad2_lcdv2/lighting.rs": "c0c48377146d7a7c6143ebb5b05432ddb411d52f4841562ab90811d917508a3c",
+      "crates/protocol/src/galahad2_lcdv2/lighting_enums.rs": "06b662404bf8449d4a1b41527d9078baa925591308cf358cd0c781713682a5db",
+      "crates/protocol/src/galahad2_lcdv2/mod.rs": "79bcc8170cd02cae3f69d091600478b50e854bece2475d280639cc96902dc8db",
+      "crates/protocol/src/galahad2_lcdv2/packets.rs": "6dad5cb8ca60ba4d6a8f9c9c1e8b1ab96bf85b5c7385c000f86820a08b8ac534",
+      "crates/protocol/src/galahad2_lcdv2/pump_pwm.rs": "ef116a9799fbc939f420ca8381f2ab432131614cfb51c72dd9e49a74fd974b3d",
+      "crates/protocol/src/galahad2_lcdv2/pwm.rs": "41b801b2dce44b81227745eaf466b3d1ab51fe041a566dd221b19346f85f0d2d",
+      "crates/protocol/src/galahad2_lcdv2/reset.rs": "10933682a02a6981c4880fadc017f3d915f28546dc6f1f6ce1db607dc2dc33ad",
+      "crates/protocol/src/galahad2_lcdv2/set_led_colors.rs": "67b36434f6507fe5fa946e23a8aa8d4192bddb7072a55d9a9ea8cb72ce5b8ddb",
+      "crates/protocol/src/galahad2_lcdv2/set_lighting.rs": "13edb6d0853a9c454f35a03642bac7eea1c7b1c6d96882397fbac196b962a0c9",
+      "crates/protocol/src/lib.rs": "972c7800df0a08f12600b58d82bd2018c674289dcdb078964ca66084f4fe886f",
+      "crates/protocol/tests/galahad2_lcdv2_bpacket.rs": "3d6bfd016d72bd567a24465cd009ae9136fc2cd4060127aded59f7a47c126e03",
+      "crates/protocol/tests/galahad2_lcdv2_cpacket.rs": "5e2f163506fcee8c6ae0fb7bf762b0d56ddd1bc92514c4ec4ead04fa8fc143d8",
+      "crates/protocol/tests/galahad2_lcdv2_fan_lighting.rs": "dd925343180aa5fb821f27577192d5cb8129469445bdfa8ec13d9533310c5274",
+      "crates/protocol/tests/galahad2_lcdv2_fan_pwm.rs": "11c5301f8a1770b7166ebe94cd0c9c3b4d088801f2d73edf7a1ac6b593d88564",
+      "crates/protocol/tests/galahad2_lcdv2_firmware.rs": "40919dee54ea49ca55ef12c0c2ae26fdaae64f06cec37147ea98b66bbcb064f2",
+      "crates/protocol/tests/galahad2_lcdv2_firmware_update.rs": "ec50ea5d19a2dcc598f4eda8e951a21848c5c2b7045df8465bd815f7abf9e466",
+      "crates/protocol/tests/galahad2_lcdv2_get_lighting.rs": "e6387df31e7eca8b51944fd24e7d581b775673ae57b1f6195976a6a25e136fae",
+      "crates/protocol/tests/galahad2_lcdv2_handshake.rs": "d285540ca0d9d151c581495419acea338b7843c5a5a3bbc3beccfedef0ea7c7f",
+      "crates/protocol/tests/galahad2_lcdv2_lcd_available.rs": "15d84a1d5b644f48a8db3c1795f56dfef9b48d391d57da98be5ecef3ee5dad97",
+      "crates/protocol/tests/galahad2_lcdv2_lcd_control.rs": "7606f4c1a7ec8707c9b9422d71deeb81ab8819b722ecb5358c3829487b3edaf5",
+      "crates/protocol/tests/galahad2_lcdv2_lighting_enums.rs": "306af8a267670f8f2bfdc048d19bb3db76277e2854b78e310c4f044fd277b3a1",
+      "crates/protocol/tests/galahad2_lcdv2_lighting_info.rs": "0709afaebb247d00be1beb6e89db690886c494c0e6e0471808b5fe9c946c3220",
+      "crates/protocol/tests/galahad2_lcdv2_packets.rs": "05933c409654018ce3b0666d48a49cf8382944527f3370a7b76da744494c33b3",
+      "crates/protocol/tests/galahad2_lcdv2_pump_lighting.rs": "9e2c371f89c4504affbb7dd53c5eb9d89121ca7d960bde68cfbcc19542751841",
+      "crates/protocol/tests/galahad2_lcdv2_pump_pwm.rs": "8188bb07331344b5a7d05d73466c582acda4e13869af4b96698433d5de79f4d9",
+      "crates/protocol/tests/galahad2_lcdv2_pwm.rs": "89b468d6bd37c0976e1b19687661acc376e33bc1936e986f450616bfa46f9619",
+      "crates/protocol/tests/galahad2_lcdv2_reset.rs": "47488bc44ca765ba05ce49cf3481fc7702084096bc00b3aaac7c86ee8a955e1a",
+      "crates/protocol/tests/galahad2_lcdv2_send_h264_frame.rs": "430b54c388fd3470dcf78ccd9603c8cdbb8399df3e34997a8c01934e47b80798",
+      "crates/protocol/tests/galahad2_lcdv2_send_jpeg.rs": "aa03f824ed487b04024d3f106b84324394730e7a72b495319c13cd0abed35476",
+      "crates/protocol/tests/galahad2_lcdv2_set_led_colors.rs": "335c39a543fe75c49ec89c8e4ca4c58e22c6f2551beac8697b0bd2b584b966ff",
+      "crates/protocol/tests/galahad2_lcdv2_set_lighting.rs": "949923366085eec3aaaa04e03e990e254e01309cb2baace44e39813603bb4cea",
+      "crates/protocol/tests/galahad2_lcdv2_upload_jpeg.rs": "21db536cad6624ad71cce0949c4af156063127ec3e1adb20d79ebc151da9fd2f"
+    },
+    "unchanged_after_checks": true
+  },
+  "checks": {
+    "new_targeted_tests": {
+      "passed": 10,
+      "failed": 0
+    },
+    "protocol_all": {
+      "passed": 190,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 24,
+      "includes_doctests": true
+    },
+    "strict_clippy": "PASS protocol all-targets and workspace all-targets",
+    "format": "PASS workspace cargo fmt --check",
+    "rustdoc": "PASS protocol no-deps with RUSTDOCFLAGS=-D warnings",
+    "browser_native": "NOT RUN: no frontend or native application behavior changed.",
+    "hardware": "NOT RUN: no HID or daemon started."
+  },
+  "coverage": [
+    "619 synthetic chunks with exact researched image byte count626212/final178; generic BResponse correctly rejects full-chunk echo declaring1013bytes.",
+    "Invalid request command/empty/overrun/noncanonical length and huge PN rejected.",
+    "Actual response lengths0..511 and513 rejected for chunk and activation.",
+    "Single bit flipped at every byte position0..511 of correct chunk/activation response rejected.",
+    "Old PN, other total/payload prefix and changed error envelope rejected.",
+    "Observed/unknown high-bit raw device statuses remain failures, low-bit cmd2 status malformed.",
+    "Overwritten high PN on error returns explicit ambiguity.",
+    "Activation uses extra raw byte outside Length1; ordinary echo/missingflag/changedLength rejected.",
+    "Explicit limit test: identical delayed response and different unechoed payload tail cannot be authenticated by echo."
+  ],
+  "logs": {
+    "targeted": {
+      "path": "/tmp/lconnect-firmware-ack-targeted.log",
+      "sha256": "1e631a6e20337340b0549c76ff767a8b17a71124ad3ca375e6400a80750e6fcb"
+    },
+    "protocol-tests": {
+      "path": "/tmp/lconnect-firmware-ack-protocol-tests.log",
+      "sha256": "3372e45a6aa6c5eb319a53e56e212f9c52c41739c09d67dee81ef586546c9387"
+    },
+    "fmt": {
+      "path": "/tmp/lconnect-firmware-ack-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clippy": {
+      "path": "/tmp/lconnect-firmware-ack-clippy.log",
+      "sha256": "a627889ce47b7b719c0964406261b6cff01628f3be9f32c6ed4aa7f3ef574895"
+    },
+    "workspace-clippy": {
+      "path": "/tmp/lconnect-firmware-ack-workspace-clippy.log",
+      "sha256": "756bc8fd8a389f65940df68cbd37f87a99a22f118b5b91218cf1465d853f5282"
+    },
+    "doc": {
+      "path": "/tmp/lconnect-firmware-ack-doc.log",
+      "sha256": "676a5651e004872daced0046d7d13388e4d9aa4c60f90ccf0786cabd1d609122"
+    }
+  },
+  "remaining": [
+    "Physical wire qualification for exact firmware/hardware revision.",
+    "Image/target qualification beyond pinned candidate recognition.",
+    "Single-owner updater job, quiesce/join keepers, one request in flight per attachment/epoch, joined shutdown.",
+    "Persistent boot/interruption/recovery semantics; no automatic flash/chunk retry on ambiguous outcomes.",
+    "Identity-bound reconnect plus fresh version verification before claiming update success or restoring saved intent.",
+    "No nonce in protocol and only501payload bytes echoed: comparison alone cannot prove freshness or full chunk integrity."
+  ]
+}

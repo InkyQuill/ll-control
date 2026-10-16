@@ -1,0 +1,437 @@
+{
+  "date": "2026-10-10",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "scope": "Explicit recommended CPU/GPU source draft, Apply, native resolution, reconnect retention and restart; Linux deterministic proposal, not Windows HWiNFO selection equivalence",
+  "rust_tests": 536,
+  "rust_failed": 0,
+  "rust_ignored": 0,
+  "fmt": "passed",
+  "strict_clippy": "passed",
+  "rust_docs": "passed",
+  "frontend_check": "0 errors/warnings (preceding run; UI unchanged)",
+  "frontend_build": "passed (preceding run; UI unchanged)",
+  "theme_contracts": 16,
+  "browser_tests": 34,
+  "fixture_root": "/tmp/lconnect-native-ykoxp7jn",
+  "native_result": {
+    "asset": "b9fdbdae31dac9e421ab03915b2272a5",
+    "controls": {
+      "base_mode": "breathing",
+      "dynamic": {
+        "high_colors": [
+          {
+            "b": 0,
+            "g": 0,
+            "r": 255
+          }
+        ],
+        "high_speed_percent": 100,
+        "high_value": 60,
+        "low_colors": [
+          {
+            "b": 255,
+            "g": 0,
+            "r": 0
+          }
+        ],
+        "low_speed_percent": 0,
+        "low_value": 30,
+        "sensor_id": "fixture:cpu",
+        "unit": "celsius"
+      },
+      "fan": {
+        "mode": "fixed",
+        "percent": 55
+      },
+      "lcd": {
+        "brightness_percent": 65,
+        "mode": "LocalUI",
+        "rotation_degrees": 180
+      },
+      "pump": {
+        "fallback_percent": 100,
+        "hysteresis_c": 2,
+        "mode": "curve_rpm",
+        "points": [
+          {
+            "celsius": 35,
+            "rpm": 2000
+          },
+          {
+            "celsius": 45,
+            "rpm": 2200
+          },
+          {
+            "celsius": 60,
+            "rpm": 2400
+          },
+          {
+            "celsius": 70,
+            "rpm": 2600
+          },
+          {
+            "celsius": 80,
+            "rpm": 2800
+          },
+          {
+            "celsius": 85,
+            "rpm": 3000
+          }
+        ],
+        "sensor_id": "fixture:cpu"
+      },
+      "thermal": {
+        "cpu": {
+          "color": {
+            "b": 76,
+            "g": 76,
+            "r": 255
+          },
+          "sensor_id": "fixture:cpu",
+          "threshold_c": 80
+        },
+        "gpu": null
+      }
+    },
+    "dev": "galahad2-lcdv2:0001",
+    "missing_asset_rejection": true,
+    "missing_sensor_profile_recovery": true,
+    "native_controls_reconnect": true,
+    "native_display_reconnect": true,
+    "native_lost_reply": true,
+    "native_recommended_defaults": true,
+    "native_sensor_defaults": true,
+    "native_write_timeout": true,
+    "ok": true,
+    "preview_bytes": 12431,
+    "profile_conflict_recovery": true,
+    "profiles": {
+      "profiles": [
+        {
+          "content": {
+            "kind": "screen",
+            "value": {
+              "background": [
+                0,
+                0,
+                0
+              ],
+              "layers": [
+                {
+                  "asset": "b9fdbdae31dac9e421ab03915b2272a5",
+                  "fit": "contain_native",
+                  "height": 480,
+                  "kind": "image",
+                  "opacity": 255,
+                  "shadow": {
+                    "blur": 2,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 60,
+                    "x": 2,
+                    "y": 2
+                  },
+                  "watermark_position": {
+                    "horizontal": 75,
+                    "vertical": 50
+                  },
+                  "width": 480,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "format": "date",
+                  "kind": "clock",
+                  "show_seconds": false,
+                  "style": {
+                    "align": "center",
+                    "color": [
+                      0,
+                      0,
+                      255
+                    ],
+                    "size": 24,
+                    "x": 240,
+                    "y": 120
+                  },
+                  "twenty_four_hour": false
+                },
+                {
+                  "decimals": 1,
+                  "kind": "sensor",
+                  "label": "CPU",
+                  "parts": {
+                    "label": {
+                      "align": "center",
+                      "color": [
+                        255,
+                        0,
+                        0
+                      ],
+                      "size": 22,
+                      "x": 240,
+                      "y": 150
+                    },
+                    "unit": {
+                      "align": "center",
+                      "color": [
+                        0,
+                        255,
+                        0
+                      ],
+                      "size": 22,
+                      "x": 240,
+                      "y": 270
+                    }
+                  },
+                  "sensor_id": "fixture:cpu",
+                  "style": {
+                    "align": "center",
+                    "color": [
+                      255,
+                      0,
+                      0
+                    ],
+                    "font": "mono",
+                    "line_height": 58,
+                    "max_width": 300,
+                    "size": 40,
+                    "vertical_align": "center",
+                    "x": 240,
+                    "y": 200
+                  },
+                  "temperature_unit": "celsius",
+                  "unit": "celsius"
+                }
+              ],
+              "name": "Native DOM applied",
+              "version": 1
+            }
+          },
+          "name": "Native retained screen",
+          "slot": 0
+        },
+        {
+          "content": {
+            "kind": "pump",
+            "value": {
+              "fallback_percent": 100,
+              "hysteresis_c": 2,
+              "mode": "curve_rpm",
+              "points": [
+                {
+                  "celsius": 35,
+                  "rpm": 2000
+                },
+                {
+                  "celsius": 45,
+                  "rpm": 2200
+                },
+                {
+                  "celsius": 60,
+                  "rpm": 2400
+                },
+                {
+                  "celsius": 70,
+                  "rpm": 2600
+                },
+                {
+                  "celsius": 80,
+                  "rpm": 2800
+                },
+                {
+                  "celsius": 85,
+                  "rpm": 3000
+                }
+              ],
+              "sensor_id": "fixture:cpu"
+            }
+          },
+          "name": "Native pump retained",
+          "slot": 0
+        },
+        {
+          "content": {
+            "kind": "fan",
+            "value": {
+              "mode": "fixed",
+              "percent": 55
+            }
+          },
+          "name": "Native fan retained",
+          "slot": 0
+        }
+      ],
+      "revision": 16,
+      "version": 1
+    },
+    "sensor_defaults": {
+      "cpu": {
+        "clock": null,
+        "fan": null,
+        "load": null,
+        "power": null,
+        "temperature": "hwmon:2f63:coretemp:temp1",
+        "voltage": null
+      },
+      "gpu": {
+        "clock": null,
+        "device_id": "sysfs:2f62:amdgpu",
+        "fan": null,
+        "load": "amdgpu:2f62:utilization",
+        "memory_used": null,
+        "power": null,
+        "temperature": null,
+        "voltage": null
+      },
+      "revision": 1,
+      "version": 1
+    },
+    "theme": {
+      "background": [
+        0,
+        0,
+        0
+      ],
+      "layers": [
+        {
+          "asset": "b9fdbdae31dac9e421ab03915b2272a5",
+          "fit": "contain_native",
+          "height": 480,
+          "kind": "image",
+          "opacity": 255,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 60,
+            "x": 2,
+            "y": 2
+          },
+          "watermark_position": {
+            "horizontal": 75,
+            "vertical": 50
+          },
+          "width": 480,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "format": "date",
+          "kind": "clock",
+          "show_seconds": false,
+          "style": {
+            "align": "center",
+            "color": [
+              0,
+              0,
+              255
+            ],
+            "size": 24,
+            "x": 240,
+            "y": 120
+          },
+          "twenty_four_hour": false
+        },
+        {
+          "decimals": 1,
+          "kind": "sensor",
+          "label": "CPU",
+          "parts": {
+            "label": {
+              "align": "center",
+              "color": [
+                255,
+                0,
+                0
+              ],
+              "size": 22,
+              "x": 240,
+              "y": 150
+            },
+            "unit": {
+              "align": "center",
+              "color": [
+                0,
+                255,
+                0
+              ],
+              "size": 22,
+              "x": 240,
+              "y": 270
+            }
+          },
+          "sensor_id": "fixture:cpu",
+          "style": {
+            "align": "center",
+            "color": [
+              255,
+              0,
+              0
+            ],
+            "font": "mono",
+            "line_height": 58,
+            "max_width": 300,
+            "size": 40,
+            "vertical_align": "center",
+            "x": 240,
+            "y": 200
+          },
+          "temperature_unit": "celsius",
+          "unit": "celsius"
+        }
+      ],
+      "name": "Native DOM applied",
+      "version": 1
+    },
+    "lost_reply_proxy": {
+      "requests": 1,
+      "dropped_responses": 1
+    },
+    "timeout_proxy": {
+      "requests": 1,
+      "withheld_responses": 1
+    },
+    "gui_closed_jpeg_frames": 2,
+    "restart_replay": true,
+    "controls_restart_replay": true,
+    "controls_restart_applied": true,
+    "profiles_restart_replay": true
+  },
+  "logs": [
+    "/tmp/source-recommend-check.log",
+    "/tmp/source-recommend-build.log",
+    "/tmp/source-recommend-contracts.log",
+    "/tmp/source-recommend-browser.log",
+    "/tmp/source-recommend-clippy.log",
+    "/tmp/source-recommend-tests.log",
+    "/tmp/source-recommend-docs.log",
+    "/tmp/source-recommend-native-build.log",
+    "/tmp/source-recommend-native-run.log"
+  ],
+  "sha256": {
+    "crates/lconnect-daemon/src/sensor_selection.rs": "ad2ac12834f405b1eae5afa5a6f651a7b40859099b7c11493fdcedee2a046889",
+    "crates/lconnect-daemon/src/ipc_server.rs": "c974c2279ee0dc47e06aff06615ffb04252208ad965b53ba0fda0ae3bdead60f",
+    "crates/lconnect-daemon/tests/sensor_selection.rs": "c7a162a28008b4628b68981d8784735e0278c91c4f738c09f5f282138bc32400",
+    "crates/lconnect-daemon/examples/desktop-mock.rs": "92b2906bf7098fff0bcc697edfd26db4f160a7f4a5bed847c144267079e0e88c",
+    "crates/lconnect-ipc/src/sensor_defaults.rs": "0da0358601e2222759a407cf23a2d6676267cf8fdbbf8c49121cba1028bcdfce",
+    "desktop/src/lib/SensorDefaults.svelte": "f58bad1f81b96751b9a0384144aaba35fffcf0466187c74a0b68ce0798c61d2c",
+    "desktop/src/lib/api.ts": "47c23cd81a6123356095027dfc6e16b701b7c144dc08f64aa020b0c9275962de",
+    "desktop/tests/sensor-defaults.spec.ts": "e5993a38365d1c2496f0fdb71cbbc334986c16c8da459c37fceba5cb745e6c92",
+    "desktop/scripts/native-smoke.js": "322c32c308c2c06b181b24b23fd3f79b5e8798f55b2d4116dcba4048cd10028b",
+    "desktop/scripts/native-smoke.py": "a9d817ef2607d6d57584f01bf7b83d9b8110c77d9ab54bc4055c640fd75eceb2"
+  },
+  "remaining": [
+    "Ambiguous source mutation recovery in UI/native",
+    "Hardware providers and physical LCD output",
+    "Full basic-parity acceptance"
+  ]
+}

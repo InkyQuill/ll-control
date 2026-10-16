@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-10",
+  "scope": "Current active-plan audit after Intel voltage verification",
+  "workspace": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "tests_rerun_for_document_audit": false,
+  "active_plans_open_top_level_items": {
+    "docs/superpowers/plans/2026-09-08-m1-lcdv2-dynamic-display.md": 6,
+    "docs/superpowers/plans/2026-09-09-m2-sensors-and-cooling.md": 6,
+    "docs/superpowers/plans/basic-parity.md": 11
+  },
+  "new_fully_closed_plans": [],
+  "new_plan_files_deleted": [],
+  "previous_obsolete_plan_removals_preserved": true,
+  "checkpoints": {
+    "intel-voltage": {
+      "evidence": "docs/parity/evidence/2026-10-10-intel-voltage.json",
+      "matching_paths": [
+        "crates/lconnect-daemon/src/sensors.rs",
+        "crates/lconnect-daemon/src/sensor_selection.rs",
+        "crates/lconnect-daemon/tests/host_sensors.rs"
+      ],
+      "changed_or_missing_paths": []
+    },
+    "cpu-fan-mapping": {
+      "evidence": "docs/parity/evidence/2026-10-10-cpu-fan-mapping.json",
+      "matching_paths": [
+        "crates/lconnect-daemon/tests/sensor_selection.rs",
+        "crates/lconnect-daemon/tests/sensor_defaults_ipc.rs",
+        "crates/lconnect-daemon/examples/desktop-mock.rs",
+        "desktop/src/lib/SensorDefaults.svelte",
+        "desktop/tests/sensor-defaults.spec.ts",
+        "desktop/scripts/native-smoke.js",
+        "desktop/scripts/native-smoke.py"
+      ],
+      "changed_or_missing_paths": [
+        "crates/lconnect-daemon/src/sensor_selection.rs",
+        "crates/lconnect-daemon/tests/host_sensors.rs"
+      ],
+      "native_artifact_exists": true
+    },
+    "noto-coverage": {
+      "evidence": "docs/parity/evidence/2026-10-10-noto-coverage.json",
+      "matching_paths": [
+        "crates/lconnect-image/src/theme.rs",
+        "crates/lconnect-image/tests/theme.rs",
+        "crates/lconnect-image/tests/fonts.rs",
+        "crates/lconnect-daemon/tests/font_upload_ipc.rs",
+        "crates/lconnect-image/assets/NotoSansTC-provenance.json",
+        "tools/prepare-noto-tc.py",
+        "desktop/static/font-licenses.txt"
+      ],
+      "changed_or_missing_paths": [
+        "desktop/scripts/native-smoke.js",
+        "desktop/scripts/native-smoke.py"
+      ],
+      "native_artifact_exists": true
+    },
+    "font-cleanup-races": {
+      "evidence": "docs/parity/evidence/2026-10-10-font-cleanup-races.json",
+      "matching_paths": [
+        "crates/lconnect-daemon/src/theme_fonts.rs",
+        "desktop/tests/font-cleanup.spec.ts"
+      ],
+      "changed_or_missing_paths": []
+    }
+  },
+  "limits": [
+    "Checkpoint hash differences do not invalidate historical results, but require final same-tree acceptance",
+    "Original lconnect-linux checkout and ENE-family plan not modified; active workspace is lconnect-linux-m1"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-12",
+  "scope": "Immutable embedded image defaults; not complete Windows default catalog",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "source_sha256": {
+    "crates/lconnect-image/src/defaults.rs": "5cd45c98ac38cd236aae6a34af83286e436b8694416ed5ede9630e003bdad99b",
+    "crates/lconnect-image/src/lib.rs": "e59adeabed318c16311a5fa6fa02a51f7fdfdff8ce2d130e53b5624409a060f4",
+    "crates/lconnect-image/assets/defaults/orbit-mark.png": "8cea73b25fb924e542c51b6b8c87997835a84106ef92ed31b3d2597659cbff70",
+    "crates/lconnect-image/assets/defaults/midnight.png": "435bc4eb894a059862b9644b9a23e57922cc95e8dbe0533994a6d471e9583ae0",
+    "tools/generate-lcd-defaults.py": "f7bbcf3b0b289db36cbc43ebb9533cb45202df4baccdc9d9049ff7548765e7d5",
+    "crates/lconnect-ipc/src/assets.rs": "5333b2851924e808f15d77cad354ec4e5bab2d815d120b358ac87e916c3d208b",
+    "crates/lconnect-daemon/src/theme_assets.rs": "0dd9d43083c8ca33c5f86dfc5df02dbdfe811d4a277731da84878492e61acc7b",
+    "crates/lconnect-daemon/tests/theme_assets.rs": "23cccd06032ce4c4244ad75842a0d51ae82a046b74e4e63d8f5463683d0d7c07",
+    "crates/lconnect-daemon/tests/theme_ipc.rs": "33299193043a5fba6c9187cfb11052b495ac5b46621e970f2eaf3be14adb7661",
+    "crates/lconnect-daemon/tests/image_delete.rs": "01f32858bc86aa6ebe878ceafcd4794c6c02344f46db98ec51e57a4dcd2f80af",
+    "desktop/src/lib/ImageGallery.svelte": "21169e8ce36cac4d942ced1bf0c9ad96c310443f9f030722fd6c5a38d5e4ad9c",
+    "desktop/tests/image-delete.spec.ts": "e4bd49ae196cc283686f847664884d3dfa608b335ff0a330b001157e464fed08",
+    "desktop/scripts/native-media.js": "d6df1eb3a3119e0d8d4a92d4531d7a2cddc4b65343744b52b308cda649485c10"
+  },
+  "verification": {
+    "focused_rust": "15 passed (image_delete/theme_assets/theme_ipc); subsequent IPC default checks also included in workspace run",
+    "focused_browser": "8 passed (4.2s), final Add label rerun passed",
+    "frontend_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "strict_workspace_clippy": "passed",
+    "fmt": "passed",
+    "docs": "passed",
+    "artwork_regeneration": "byte-identical",
+    "rust_review": "no actionable findings",
+    "svelte_review": "no actionable findings",
+    "hardware": "NOT RUN",
+    "workspace_tests": "719 passed / 103 targets, 1 ignored standalone paced performance test; retry exit 0",
+    "first_workspace_attempt": "terminated SIGTERM exit 143 after 362 passing tests, cause not established; not treated as pass"
+  },
+  "native": {
+    "fixture": "/tmp/lconnect-native-media-vslb1vtf",
+    "whole_workflow": "FAILED at final chooser_slow, sequence 11: Chooser path/Open not ready: []",
+    "scoped_evidence": "Reaching sequence 11 in compiled native-media.js requires both builtin thumbnails loaded, rename/delete disabled, user image deletion read back through IPC and focus returned to summary. No PNG files remain in isolated settings directory. No final acceptance.json was produced.",
+    "limitations": "Does not qualify complete native workflow, speech/scaling or physical LCD"
+  },
+  "remaining": [
+    "builtin video and gallery contexts",
+    "full Screen reset/recovery",
+    "native chooser failure and extended accessibility",
+    "physical output deferred"
+  ],
+  "logs": [
+    "/tmp/builtin-images-tests.log",
+    "/tmp/builtin-images-browser.log",
+    "/tmp/builtin-images-clippy.log",
+    "/tmp/builtin-images-check.log",
+    "/tmp/builtin-images-build.log",
+    "/tmp/builtin-images-doc.log",
+    "/tmp/builtin-images-native.log",
+    "/tmp/builtin-images-workspace-tests.log",
+    "/tmp/builtin-images-workspace-retry.log"
+  ]
+}

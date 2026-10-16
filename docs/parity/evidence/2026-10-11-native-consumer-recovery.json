@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-11",
+  "scope": "Combined native missing/recovery for pump, fan, thermal and dynamic RGB",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/src/lib/DynamicRgb.svelte": "692436ec09ba04d5b2d63ab811347ba5bb9b6ab27d0f3505a1818eb113100677",
+    "desktop/tests/dynamic-rgb.spec.ts": "dad7cd0aaf34ff2f90cda022fa951e1bf24ff9804312fb101fbfb6bf0e9626ce",
+    "desktop/scripts/native-smoke.js": "8f79f8aa29663c8177662677e0e37c87abb74f9d6d1f631532cb17498a0eec0e",
+    "desktop/scripts/native-smoke.py": "faf5b479cda957752efe421b61ec4dcbf43c130918f6f4b87a05ce3c7cfdcb33"
+  },
+  "native_artifact": "/tmp/lconnect-native-p7zaz8a1/acceptance.json",
+  "native_artifact_sha256": "4db29f8fc4bfd845ffa3d4d46d6e7061ae4d987c2541ee23f6064de7820ae108",
+  "verification": {
+    "native_smoke": "passed",
+    "native_build": "passed",
+    "frontend_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "dynamic_rgb_browser_tests": 4,
+    "rust_rerun": false
+  },
+  "assertions": [
+    "CPU source shared by pump and fan curves, thermal and dynamic RGB",
+    "Missing source gives pump configured fallback and fan95; alert remains applied in both zones with degraded source",
+    "Dynamic state retains binding and reports degraded plus thermal suppression; GUI no longer falsely claims base lighting",
+    "Unsent threshold edits and active LCD theme retained",
+    "Same source ID restores cooling without Apply, clears degraded while thermal retains ownership",
+    "Explicit threshold restoration releases thermal and resumes dynamic RGB; original fan55 restored",
+    "Full native reconnect/restart/replay succeeds"
+  ],
+  "limits": [
+    "Missing input, not aged stale sample",
+    "LCD theme preservation checked; unavailable pixel rendering relies on existing component test",
+    "Thermal release uses explicit threshold change, not hot-to-cool sample",
+    "Transport-error independence and hardware behavior remain open"
+  ],
+  "test_iteration": "Initial native run reached correct joint fallback but failed order-sensitive JSON comparison; fixed by semantic committed-curve validation and readback snapshot preservation"
+}

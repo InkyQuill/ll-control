@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "CSS manual soft-hyphen rendering and break selection",
+  "sha256": {
+    "crates/lconnect-image/src/text_layout.rs": "d376a0a670e40270a04bd059b14ef75013b35fd9da47fa1582b4e724e5223988",
+    "crates/lconnect-image/src/theme.rs": "2c156fb24d8e5bb3a62349ff4f32957f87b538561ae372d61125d94b218ee504",
+    "desktop/scripts/text-hyphen-oracle.mjs": "7372679c48a913b064699d600b0fac28cb238124662e771564227cce0367b8bd"
+  },
+  "browser_oracle": {
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+    "cases": [
+      {
+        "text": "ab­cd",
+        "width": 300,
+        "lines": [
+          "ab­cd"
+        ]
+      },
+      {
+        "text": "ab­cd",
+        "width": 70,
+        "lines": [
+          "ab­",
+          "cd"
+        ]
+      },
+      {
+        "text": "ab­cd",
+        "width": 60,
+        "lines": [
+          "ab­",
+          "cd"
+        ]
+      },
+      {
+        "text": "ab­cd",
+        "width": 50,
+        "lines": [
+          "ab­",
+          "cd"
+        ]
+      },
+      {
+        "text": "ab­cd",
+        "width": 40,
+        "lines": [
+          "ab­",
+          "cd"
+        ]
+      },
+      {
+        "text": "a b­cdef",
+        "width": 80,
+        "lines": [
+          "a b­",
+          "cdef"
+        ]
+      },
+      {
+        "text": "a b­cdef",
+        "width": 70,
+        "lines": [
+          "a ",
+          "b­",
+          "cdef"
+        ]
+      },
+      {
+        "text": "a ab­i",
+        "width": 100,
+        "lines": [
+          "a ab­i"
+        ]
+      },
+      {
+        "text": "ab­",
+        "width": 300,
+        "lines": [
+          "ab­"
+        ]
+      },
+      {
+        "text": "ab­\ncd",
+        "width": 300,
+        "lines": [
+          "ab­\n",
+          "cd"
+        ]
+      }
+    ]
+  },
+  "image_tests": [
+    "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+    "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.48s",
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s",
+    "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.78s",
+    "test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s",
+    "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+  ],
+  "limits": [
+    "Manual SHY only, no dictionary hyphenation",
+    "No native GUI or hardware run",
+    "Complex bidi controls, locale substitutions and font fallback not qualified"
+  ],
+  "workspace_verification": {
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "tests": {
+      "passed": 600,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "pass",
+    "review": "no findings",
+    "logs": [
+      "/tmp/css-hyphen-review-fmt.log",
+      "/tmp/css-hyphen-review-clippy.log",
+      "/tmp/css-hyphen-review-test.log",
+      "/tmp/css-hyphen-review-doc.log"
+    ],
+    "native_current_change": "not run",
+    "hardware": "not run"
+  }
+}

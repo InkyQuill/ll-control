@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-12",
+  "scope": "Native recorded-source ordered crop decode through admission and preparation",
+  "verification": {
+    "all_features_tests": [
+      "test result: ok. 77 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.14s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "strict_clippy": "passed",
+    "fmt": "passed",
+    "rustdoc": "warnings denied passed",
+    "review": "Read-only rust-practices reviewer found no blockers; temporal evidence limitation retained",
+    "logs": [
+      "/tmp/recording-cut-native-test.log",
+      "/tmp/recording-cut-clippy.log",
+      "/tmp/recording-cut-full-tests.log",
+      "/tmp/recording-cut-doc.log"
+    ]
+  },
+  "assertions": [
+    "Admitted synthetic source survives capture cancel, removed after preparation",
+    "Prepared MP4 contains24 decoded frames,12 red then12 blue",
+    "ReviewReady has no published key; cancel revokes preview"
+  ],
+  "limitations": [
+    "Static SMPTE regions cannot prove source timestamps; time-varying oracle still required",
+    "No Tauri/native GUI, real PipeWire or hardware test"
+  ],
+  "sha256": {
+    "desktop/src-tauri/src/screen_record_jobs/tests.rs": "c2d4edae0606df0d07aef0e2f391a51713a9ceb77eb095cb03cc687ba7602186",
+    "desktop/src-tauri/src/screen_record.rs": "5a0c30ac71a2a1c96ed2297e07215faeb6b53712dda63b6785cd2fb262243538",
+    "desktop/src-tauri/src/media_prepare.rs": "b2ea135ec010c676b428d3f37b25e1e8f8e32fbc4e742e30dac7c2a9f4e4acae"
+  }
+}

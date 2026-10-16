@@ -11,7 +11,7 @@ use lconnect_ipc::LightingKind;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{mpsc, watch};
+use tokio::sync::{mpsc, oneshot, watch};
 
 /// Galahad II LCDV2 ACommandPacket header offsets.
 const REPORT_ID_OFFSET: usize = 0;
@@ -37,6 +37,8 @@ fn fan_state() -> LightingState {
         speed: 2,
         direction: "forward".into(),
         color: "#c4a8ff".into(),
+        additional_colors: Vec::new(),
+        fan_topology: None,
         disabled: false,
     }
 }
@@ -49,6 +51,7 @@ fn pump_state() -> PumpLightingState {
         speed: 1,
         direction: "forward".into(),
         color: "#00ff00".into(),
+        additional_colors: Vec::new(),
         disabled: false,
     }
 }
@@ -79,12 +82,14 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
     // lighting_keeper actor with a tight 50ms re-issue cadence so the
     // test wraps in well under a second.
     let (state_tx, state_rx) = mpsc::channel::<LightingStateMsg>(8);
+    let (settings, _settings_rx) = mpsc::channel(16);
     let _keeper = lighting_keeper::spawn(
         hid_io_tx,
         50,
         Some(fan_state()),
         None,
         state_rx,
+        settings,
         sd_rx.clone(),
     );
 
@@ -112,10 +117,15 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
     );
 
     // Replace pump state -> next tick should also emit a cmd-131 write.
+    let (reply, done) = oneshot::channel();
     state_tx
-        .send(LightingStateMsg::SetPump(pump_state()))
+        .send(LightingStateMsg::SetPump {
+            state: pump_state(),
+            reply,
+        })
         .await
         .expect("send SetPump");
+    done.await.unwrap().unwrap();
 
     tokio::time::sleep(Duration::from_millis(180)).await;
 
@@ -128,10 +138,15 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
     );
 
     // Clear fan -> after a settling period, fan-write count must stop growing.
+    let (reply, done) = oneshot::channel();
     state_tx
-        .send(LightingStateMsg::Clear(LightingKind::Fan))
+        .send(LightingStateMsg::Clear {
+            kind: LightingKind::Fan,
+            reply,
+        })
         .await
         .expect("send Clear(Fan)");
+    done.await.unwrap().unwrap();
 
     // Give the keeper one tick to absorb the message before snapshotting.
     tokio::time::sleep(Duration::from_millis(80)).await;

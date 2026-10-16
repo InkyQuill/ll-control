@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-11",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "scope": "Font upload keyboard cancel focus restoration without stealing moved focus",
+  "sha256": {
+    "desktop/src/lib/FontImport.svelte": "9c51c417c90f19db62040ff3323561b761ce9a53ca0839e996e0a4cf566f406f",
+    "desktop/tests/fonts.spec.ts": "d74ec7332cd106dd193647c72813c4af1186d8613d4490593e8fdda142f3be59"
+  },
+  "red": "Original cancel Enter left file input inactive; assertion failed in /tmp/lconnect-font-focus-red.log",
+  "checks": {
+    "svelte_check": "0 errors, 0 warnings",
+    "production_build": "pass",
+    "browser_tests": 10,
+    "svelte_review": "Self review: typed $state DOM refs; tick after removal; alive/connected/activeElement guards; no added effects or IPC. ESLint/lint not configured."
+  },
+  "logs": [
+    "/tmp/lconnect-font-focus-check.log",
+    "/tmp/lconnect-font-focus-build.log",
+    "/tmp/lconnect-font-focus-green.log"
+  ],
+  "limits": [
+    "Headless Chromium mocks only",
+    "No OS file-picker, native screen reader, or hardware test"
+  ]
+}

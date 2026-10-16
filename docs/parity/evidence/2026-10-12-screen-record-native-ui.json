@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-12",
+  "scope": "Synthetic ScreenRecord native Tauri/WebKit workflow with private Xvfb/D-Bus/MockBackend",
+  "acceptance": {
+    "close_while_recording": true,
+    "collection_membership": true,
+    "explicit_save": true,
+    "ok": true,
+    "prepared_decode": true,
+    "saved_key": "1fe6510899894d84b7e7c4212c18923e",
+    "source_dimensions": [
+      320,
+      240
+    ],
+    "source_seek": true,
+    "normal_close_exit": 0
+  },
+  "evidence_directory": "/tmp/lconnect-native-recording-wgsv8s54",
+  "verification": {
+    "rust_tests": [
+      "test result: ok. 78 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.16s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "fmt": "passed",
+    "strict_clippy": "passed",
+    "default_build_check": "passed",
+    "rustdoc": "passed",
+    "frontend_build": "passed",
+    "final_native_build_run": "passed after explicit collection assertion correction"
+  },
+  "correction": "First harness allowed legacy null collections; final run migrates to explicit collections and requires saved background key.",
+  "limits": [
+    "Source is GStreamer videotestsrc; no portal/PipeWire or hardware test",
+    "No native crop/edit/limit/fault matrix yet",
+    "Resume command exercised; additional frames after resume not explicitly asserted"
+  ],
+  "sha256": {
+    "desktop/src-tauri/src/main.rs": "2ffb7449e90c4688e3a670d411734c9e14ccb6fdeb087683de47502489899689",
+    "desktop/src-tauri/src/screen_record.rs": "75534caf751779ffb3adabf952d26217916901f631aeb2052aa600befa7aaa5c",
+    "desktop/src-tauri/src/screen_record_jobs.rs": "729213b3d9c4b22d52347ca8e21ceffd2426cbbe85c943ddbb8ce12ee33e01a8",
+    "desktop/scripts/native-recording.py": "95d2aaddd2f6cedb0c23673399028bfa803c5e0d4a6f437e3651d929ca6dec1d",
+    "desktop/scripts/native-recording.js": "16da6a544af943348606a2301cfc102fc3392937dc041967acf8d4d7f5c58545",
+    "desktop/src/lib/ScreenRecorder.svelte": "01658ead028b99a39f3471da7140cc9fb259cbedfeccd6a3c0a1be8097e705b2"
+  }
+}

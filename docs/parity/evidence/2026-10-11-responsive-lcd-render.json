@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-11",
+  "scope": "Responsive periodic theme render and obsolete-result isolation",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "source_hashes": {
+    "crates/lconnect-daemon/src/actor/lcd_keeper.rs": "5d7dfabad06e3b09be4ab0f14018d37071e65f5bb0b4fbc065fb85b107eff923",
+    "crates/lconnect-daemon/src/actor/lcd_render_tests.rs": "748531d54dd09b207ee674c4240d697c6799e5d7079dd3daae99d86e74f8f60b"
+  },
+  "change": "Service LCD commands while periodic render is pending; shutdown then ready-frame then command priority; generation/source guard before frame send; joined render lifetime on shutdown",
+  "verification": {
+    "focused_render_tests": 3,
+    "focused_integration_tests": 25,
+    "fmt": "pass",
+    "strict_clippy": "pass",
+    "full_rust": {
+      "passed": 605,
+      "failed": 0,
+      "ignored": 0,
+      "targets": 92
+    },
+    "docs": "pass",
+    "review": "no remaining findings"
+  },
+  "logs": {
+    "fmt": {
+      "path": "/tmp/lcd-render-review-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clippy": {
+      "path": "/tmp/lcd-render-review-clippy.log",
+      "sha256": "ad469c8afc614bf13a31e134dce54c71735dfb49e0477744b0916d1dac1f74bf"
+    },
+    "test": {
+      "path": "/tmp/lcd-render-review-test.log",
+      "sha256": "778fb1930b12279095202c0e3052bd845051c9726c14c960f305e3f6638d2016"
+    },
+    "doc": {
+      "path": "/tmp/lcd-render-review-doc.log",
+      "sha256": "086dfd3820a77658c4e736d5d6434954c885f58764c11577367d26b63e6fcbd2"
+    }
+  },
+  "limits": [
+    "Controlled render-future gate, not actual CPU encode performance measurement",
+    "Initial SetTheme and HID batches remain serialized",
+    "Outer command-priority scheduling is unchanged",
+    "Combined IPC/cooling/RGB slow-encode scenario remains open"
+  ],
+  "hardware_run": false
+}

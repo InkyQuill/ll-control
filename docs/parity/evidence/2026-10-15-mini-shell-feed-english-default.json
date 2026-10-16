@@ -1,0 +1,201 @@
+{
+  "date": "2026-10-15",
+  "baseline": "Windows L-Connect3 2.1.28.0 / LCDV2",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "branch": "codex/m1-lcdv2-dynamic-display",
+  "scope": "English default with legacy Russian preservation; retire Tauri Mini window; read-only GUI-independent CLI feed for future Plasma/GNOME adapters. Shell widgets are not implemented by this slice.",
+  "source_sha256": {
+    "crates/lconnect-ipc/src/display_settings.rs": "cd2a2f8ba3bd121b78b4f4e126f0a10f2e4260b36392a32c48ee7ffd60b9985c",
+    "crates/lconnect-daemon/src/display_settings.rs": "48abf6bce933001222c58bfdf88b1511aa0d2ba6ca8cb584dcd0232cd27ae84d",
+    "crates/lconnect-cli/src/commands/mini.rs": "0b223e0e3e09a676a9e77a8edae7d6ab6ee9e0b2c36a0a977e6cca1681ed4970",
+    "crates/lconnect-cli/src/commands/mod.rs": "1a60027229cdf82da65a0b617ea66e3763e37694677cbc33d89b2a296f939c74",
+    "crates/lconnect-cli/src/main.rs": "4e6936890ac08392f804c427bc92103c18ac85b974de4ac84bd21dcb9ca2eda3",
+    "crates/lconnect-cli/tests/mini.rs": "5c1a374a2ba04e3e8f4932d5ec284de03b8ea52e9d77f554c2fd9dbb9d85d2bf",
+    "desktop/src/lib/presentation.svelte.ts": "b3129b6ed0dc898f23c0720812e1e1e93bd8a7f6976ea57b7d7b6617ede7e376",
+    "desktop/src-tauri/src/main.rs": "4b772e7d0b432fcf16e0e40a59cd722db2abc888168d0b4b0c5a346c209c968c",
+    "desktop/src-tauri/src/lib.rs": "ed41115e63652329eeceb45e915c6b01df8f394b03759ffdcda95e26f4cc0fad",
+    "desktop/src-tauri/src/desktop_settings.rs": "8c00f470c005a8186e411a5864052b60b1febee5316489c05a853cab3db374c5",
+    "desktop/src-tauri/build.rs": "cb38c22a35c3f78baae8432be6f37996403ef300d5c97fc5ee79e13d5df71871",
+    "desktop/src-tauri/capabilities/main.json": "426e67f5f05e4a51a7af2bf324b59eb34772dcd1291db810708c34cf28ef781c",
+    "desktop/src-tauri/tauri.conf.json": "4cc3073e76b15a5669b9f55267f0014305cf6ec0ce7e96c065d0c595252c6644",
+    "desktop/src/routes/+page.svelte": "49990482a895d91af8eb095e03779347c5b1ea5cc9df6501443766d6f0dedd0f",
+    "desktop/playwright.config.ts": "e1ef20548104e24cb57bb3170b79a5cf1d4dd5de2da5b10aa2d9528b136f75d9",
+    "desktop/tests/interface-language.spec.ts": "d7d735230bbd987c089fd3c847d6e50c5207ec91d01b6c89173d9352d1ba34d3",
+    "desktop/scripts/native-interface-language.js": "cf0a582f4254241428941b1ec8419121c6986d3bf2bd1d2adac0da210988bfb6"
+  },
+  "checks": {
+    "workspace": {
+      "passed": 1099,
+      "ignored": 3,
+      "suites": 152,
+      "log": "/tmp/lconnect-shell-transition-workspace.log"
+    },
+    "browser": {
+      "status": "pass",
+      "passed": 337,
+      "failed": 0,
+      "duration": "6.4m",
+      "log": "/tmp/lconnect-english-default-browser-all.log",
+      "fixture_language": "Existing workflow tests explicitly pin saved Russian; default-policy cases clear or replace it and native fresh startup has no saved cache."
+    },
+    "frontend": {
+      "diagnostics": "0 errors / 0 warnings",
+      "build": "pass",
+      "strict_locale": "768/768 static keys, 63 dynamic call sites remain",
+      "logs": [
+        "/tmp/lconnect-english-default-frontend-final.log",
+        "/tmp/lconnect-english-default-build.log",
+        "/tmp/lconnect-english-default-locales.log",
+        "/tmp/lconnect-english-default-contracts.log"
+      ],
+      "contracts": 39
+    },
+    "clippy": {
+      "workspace": "pass",
+      "native_workspace": "pass",
+      "logs": [
+        "/tmp/lconnect-shell-transition-clippy.log",
+        "/tmp/lconnect-shell-transition-native-clippy.log"
+      ]
+    },
+    "rustdoc": "/tmp/lconnect-shell-transition-doc.log",
+    "fmt": "/tmp/lconnect-shell-transition-fmt-final.log",
+    "cli_feed": {
+      "tests": 2,
+      "log": "/tmp/lconnect-shell-feed-cli-final.log",
+      "coverage": "private Unix peer; exact read-only method set, unchanged raw label, offline/connect/disconnect/reconnect with new sample; owned child cleanup"
+    },
+    "native": {
+      "fixture": "/tmp/lconnect-native-interface-language-ihxyvmsc",
+      "log": "/tmp/lconnect-english-default-native.log",
+      "acceptance": {
+        "initial": {
+          "documentLanguage": "ru",
+          "imageEditorPreview": false,
+          "initial": {
+            "interface_language": "en-US",
+            "revision": 0,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "noDevices": true,
+          "ok": true,
+          "recovery": false,
+          "settings": {
+            "interface_language": "ru-RU",
+            "revision": 1,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "userDraft": "Настройки"
+        },
+        "recovery": {
+          "documentLanguage": "en",
+          "imageEditorPreview": false,
+          "initial": {
+            "interface_language": "ru-RU",
+            "revision": 1,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "noDevices": true,
+          "ok": true,
+          "recovery": true,
+          "settings": {
+            "interface_language": "en-US",
+            "revision": 2,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "userDraft": "Настройки"
+        },
+        "image_editor": {
+          "documentLanguage": "en",
+          "imageEditorPreview": true,
+          "initial": {
+            "interface_language": "en-US",
+            "revision": 2,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "noDevices": false,
+          "ok": true,
+          "recovery": false,
+          "settings": {
+            "interface_language": "en-US",
+            "revision": 3,
+            "temperature_unit": "celsius",
+            "version": 1
+          },
+          "userDraft": "Настройки"
+        },
+        "normal_close": true,
+        "daemon_restart": true,
+        "no_device_phase_zero_hid_writes": true,
+        "image_phase_mock_hid_writes": 1
+      },
+      "fresh_default": "en-US",
+      "russian_persists_after_gui_and_daemon_restart": true,
+      "physical_device_access": false,
+      "phase_limits": "First two phases zero devices and HID writes. Third phase one fake MockBackend LCDV2, one mock startup HID write."
+    },
+    "documents": {
+      "local_links": "pass",
+      "count": 10
+    },
+    "translator": {
+      "result": "pass",
+      "log": "/tmp/lconnect-english-default-translator.log"
+    },
+    "active_plans_open_items": {
+      "M1": 5,
+      "M2": 6,
+      "basic": 5
+    }
+  },
+  "window_retired": {
+    "archive": "/tmp/lconnect-mini-window-retired-20261015",
+    "removed_product_paths": [
+      "Tauri Mini builder/managed state",
+      "Mini command/capability/ACL entries",
+      "/mini route",
+      "main GUI Mini settings component",
+      "Mini-specific shutdown work",
+      "experimental Mini browser/native harnesses"
+    ],
+    "remaining": "No shell adapters claimed. Source copy retained outside checkout for reference."
+  },
+  "language_contract": {
+    "new_store": "English",
+    "missing_invalid_denied_cache": "English",
+    "explicit_russian_cache": "Russian",
+    "legacy_v1_missing_field": "Russian; read does not write or increment revision",
+    "new_writes": "both languages explicit; temperature/CAS preserved",
+    "translation_status": "English/Russian dynamic/native translation remains partial; other locales deferred to polish"
+  },
+  "open": [
+    "Plasma widget adapter and shell lifecycle",
+    "GNOME Shell extension adapter and lifecycle",
+    "Shared six-slot configuration for shell integrations",
+    "Linux FPS source",
+    "Complete EN/RU dynamic/native translations and default content",
+    "Other locales in polishing",
+    "Real platform/hardware acceptance deferred; Sway/other environments deferred"
+  ],
+  "log_sha256": {
+    "/tmp/lconnect-shell-transition-workspace.log": "bb993b8a78dc84b9f58ecdb11bb6dd45bc2ebce8afd00cf47e36434ac52c6df8",
+    "/tmp/lconnect-shell-transition-clippy.log": "e31874c40e8682f6e09010ce4d5c80916c86d64a7fc789e851e09947e7c453bb",
+    "/tmp/lconnect-shell-transition-native-clippy.log": "df411f46c087a435aedbf49428e64f86bde3cc62b6067ccd4c3fed31fa6ee7c1",
+    "/tmp/lconnect-shell-transition-doc.log": "89cf94063fa347e058aad8f40348a56cd7d80856a41054872ec5d0f744c45009",
+    "/tmp/lconnect-shell-transition-fmt-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/lconnect-shell-feed-cli-final.log": "7e201a34710224d85e5d34339338a3c05ea7f991810d4685b2bb43692c2f0fa8",
+    "/tmp/lconnect-english-default-native.log": "b33004229a296c2e3fe5cace806e6fa4f65703a23717a2fe50b664f2495ec732",
+    "/tmp/lconnect-english-default-frontend-final.log": "90a6093d8b8ccb0ac2603dc2a487929f8eb4b3b20081068eccc8790452a77620",
+    "/tmp/lconnect-english-default-build.log": "d76370cde47dc2ba0bad8f819a8d41210e2cf223bd5f5d8a30d112f6f9c92358",
+    "/tmp/lconnect-english-default-locales.log": "bfb5e974c6e66404c6b7e74839bb8e660aac903e1e8be1bb6ca5c2268676252e",
+    "/tmp/lconnect-english-default-contracts.log": "21236fb006b93d1b1e751f650f3bc5454dfb0f6eb4b500421294639055ce5f5c",
+    "/tmp/lconnect-english-default-translator.log": "cf5af7551b2f7c1d695b6233102c5401ec5bb487cf391715892754398a03d322",
+    "/tmp/lconnect-english-default-browser-all.log": "9af36df2dad60cbd6ad8f21362ed90efcb512f5bd264058afb7d9582e438c0d9"
+  }
+}

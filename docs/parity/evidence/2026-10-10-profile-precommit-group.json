@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-10",
+  "scope": "Browser profile rejection before commit and pending pump reply across fan switch",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/tests/profiles-interrupted.spec.ts": "e742eef4f3cec13ab82899e9c05c625031c471c2f73855eea28081583028021f",
+    "desktop/tests/profiles-group-switch.spec.ts": "0312d8b60378228dd5a0758a651f184e693091440b670a8ce01bf8a9d98dc1ff",
+    "desktop/src/lib/Profiles.svelte": "a31f840fc6559a59c1b1480ffedb9cf13be5885cdc0ddcda72d247f0ee1721a7",
+    "desktop/src/lib/Cooling.svelte": "547e86b92e597f6cc4771c5cd0945b53a8d24ec8601bfa8e8a471508d5c57241"
+  },
+  "verification": {
+    "browser_profile_matrix": 18,
+    "browser_group_switch": 2,
+    "svelte_check": "0 errors, 0 warnings",
+    "diff_check": "passed",
+    "production_code_changed": false,
+    "native_rerun": false
+  },
+  "assertions": [
+    "Four screen mutations reject before commit: original library/revision retained; editor draft retained; explicit refresh required; no retry",
+    "Pump save commits but reply held; switch to fan and independently save before old pump success/error arrives",
+    "Old pump result/error cannot replace fan library, name or unsent PWM draft",
+    "Explicit load returns distinct pump70/fan35 snapshots; exactly two profile writes, no cooling Apply"
+  ],
+  "iteration_note": "Initial group tests used an unmatched exact getByLabel selector; corrected to existing role=combobox/name=Канал pattern. Both corrected tests passed; other 18 profile tests passed unchanged.",
+  "limits": [
+    "Browser synthetic IPC only: no real transport cut before persistence",
+    "Native rename/delete/reset fault injection and wider cooling/lighting mutation matrix remain open",
+    "Production source unchanged; native/Rust builds not repeated"
+  ]
+}

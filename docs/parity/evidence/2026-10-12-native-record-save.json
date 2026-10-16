@@ -1,0 +1,331 @@
+{
+  "date": "2026-10-12",
+  "scope": "Native recorded-cut Save, per-interval numeric crop and automatic source-end stop",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "fixture": "/tmp/lconnect-native-media-0wvjxc8i",
+  "acceptance": {
+    "builtin_images_verified": true,
+    "builtin_video_verified": true,
+    "cancelled": true,
+    "chooser_cancel": true,
+    "close_pending": true,
+    "composition_verified": true,
+    "delete_verified": true,
+    "gallery_contexts_verified": true,
+    "gallery_verified": true,
+    "gallery_video_edit_verified": true,
+    "image_delete_verified": true,
+    "image_gallery_verified": true,
+    "image_names_verified": true,
+    "keys": [
+      "b1a18aa91d994546b65fa73d21fec860",
+      "9a3ac10bbb574113b84d91cdcb57ca77"
+    ],
+    "malformed_rejected": true,
+    "media_slot_verified": true,
+    "native_media_seek_verified": true,
+    "native_record_pause_verified": true,
+    "native_record_save_verified": true,
+    "native_record_source_end_verified": true,
+    "ok": true,
+    "phases": [
+      "inspecting",
+      "encoding",
+      "encoding",
+      "encoding",
+      "validating",
+      "transferring",
+      "transferring",
+      "complete",
+      "inspecting",
+      "encoding",
+      "validating",
+      "complete"
+    ],
+    "recorded_intervals": [
+      {
+        "autoEnd": false,
+        "end": 0.574,
+        "left": 0,
+        "start": 0.25
+      },
+      {
+        "autoEnd": true,
+        "end": 24.417,
+        "left": 50,
+        "start": 24.067
+      }
+    ],
+    "recorded_review_duration": 0.667,
+    "restart_preserved": true,
+    "source_unchanged": true,
+    "thumbnails": [
+      {
+        "height": 144,
+        "name": "fixture.mp4",
+        "width": 144
+      },
+      {
+        "height": 144,
+        "name": "fixture.gif",
+        "width": 144
+      },
+      {
+        "after_restart": true,
+        "height": 144,
+        "width": 144
+      },
+      {
+        "frames": 586,
+        "height": 144,
+        "pixel": [
+          0,
+          254,
+          254,
+          255
+        ],
+        "v2": true,
+        "width": 144
+      }
+    ],
+    "video_edit_verified": true,
+    "dialogs": [
+      {
+        "action": "chooser_cancel",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n"
+      },
+      {
+        "action": "chooser_bad",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/broken.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_editor",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/editor.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_mp4",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_gif",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/fixture.gif",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      },
+      {
+        "action": "chooser_slow",
+        "title": "Select File",
+        "properties": "WM_TRANSIENT_FOR(WINDOW): window id # 0x400004\n_NET_WM_WINDOW_TYPE(ATOM) = _NET_WM_WINDOW_TYPE_DIALOG\n",
+        "accessibility": {
+          "path": "/tmp/lconnect-native-media-0wvjxc8i/fixture.mp4",
+          "focused_path_verified": true,
+          "open_enabled": true
+        }
+      }
+    ],
+    "cancel_reaped": [
+      {
+        "pid": 4135193,
+        "source": "/tmp/lconnect-native-media-0wvjxc8i/native-tmp/.tmpVwMQRm/source.mp4",
+        "output": "/tmp/lconnect-native-media-0wvjxc8i/native-tmp/.tmpADGkPp/clip.h264"
+      }
+    ],
+    "close_reaped": {
+      "pid": 4135705,
+      "source": "/tmp/lconnect-native-media-0wvjxc8i/native-tmp/.tmpHvtXvl/source.mp4",
+      "output": "/tmp/lconnect-native-media-0wvjxc8i/native-tmp/.tmpxD5ZO9/clip.h264"
+    },
+    "decoded": [
+      {
+        "name": "fixture.gif",
+        "bytes": 691200,
+        "top_pixel": [
+          252,
+          0,
+          0
+        ],
+        "decoded_frames": 12,
+        "format": "v2"
+      },
+      {
+        "name": "fixture.mp4",
+        "bytes": 691200,
+        "top_pixel": [
+          0,
+          0,
+          0
+        ],
+        "decoded_frames": 586,
+        "format": "v2"
+      }
+    ],
+    "normal_close_exit": 0
+  },
+  "persisted_decode": {
+    "clip": {
+      "encoded_bytes": 3631,
+      "fps": 24,
+      "frames": 16,
+      "is_default": false,
+      "key": "7c309bae64454f83a0e44024e9a93052",
+      "name": "fixture.mp4"
+    },
+    "center_colors": [
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        0,
+        0,
+        252
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ],
+      [
+        252,
+        0,
+        0
+      ]
+    ],
+    "blue_frames": 8,
+    "red_frames": 8
+  },
+  "verification": {
+    "native_build": "passed",
+    "native_harness": "passed",
+    "syntax": "node --check and Python py_compile passed",
+    "rust_format": "passed",
+    "environment": "private Xvfb/Openbox/MockBackend; software avdec_h264",
+    "logs": [
+      "/tmp/native-record-save.log",
+      "/tmp/native-record-end-retry.log"
+    ],
+    "full_workspace_or_browser_rerun": false
+  },
+  "prior_attempt": {
+    "log": "/tmp/native-record-end.log",
+    "reason": "AT-SPI chooser empty application tree before record scenario; known unresolved fixture flakiness"
+  },
+  "limitations": [
+    "No native 180-second limit qualification",
+    "Numeric crop output verified; pointer/keyboard crop interaction and arbitrary geometry remain",
+    "No Windows pixel/timing equivalence, Wayland, real hardware or speech qualification",
+    "Fault/device/lost-reply matrix and large-workload performance remain"
+  ],
+  "source_sha256": {
+    "desktop/scripts/native-media.js": "4057f647cb8ae11917fbb7bbe3ecc4205236c0a33a8b76da4c6edc85af3a3e3d",
+    "desktop/scripts/native-media.py": "a33a7741d18cb04106d0df91da887f7371b2c10c10b2f91a71c356251db0e30e",
+    "desktop/src-tauri/src/main.rs": "e373229d0726ce3ab2aebe8de72663d26d04cbf68f1313d1bd73b08607c0e0b5",
+    "desktop/src/lib/VideoSourcePreview.svelte": "7879110483446c39a88c1534b9d9a9cc21fe031b623d149bc4a603244eda1ed2",
+    "desktop/src/lib/MediaImport.svelte": "56852991bb4cbe86bada9bb46be3d578102e3fe17b718d35b6dc3293b1ae41b0"
+  }
+}

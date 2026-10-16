@@ -1,0 +1,342 @@
+{
+  "supported": [
+    "ru-RU",
+    "en-US"
+  ],
+  "englishStatus": "static-catalog-complete",
+  "staticKeys": 768,
+  "translatedStaticKeys": 768,
+  "missingStaticKeys": 0,
+  "englishEntries": 882,
+  "missing": [],
+  "dynamicCalls": [
+    {
+      "file": "desktop/src/lib/AssetCleanup.svelte",
+      "line": 31,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 106,
+      "expression": "current.last_error"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 124,
+      "expression": "pollError"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 125,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Cooling.svelte",
+      "line": 125,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 41,
+      "expression": "snapshot.trayError"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 42,
+      "expression": "snapshot.registration.problem"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 43,
+      "expression": "snapshot.integrationError"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 49,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/DesktopSettings.svelte",
+      "line": 50,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/DisplaySettings.svelte",
+      "line": 36,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/DisplaySettings.svelte",
+      "line": 37,
+      "expression": "writeError"
+    },
+    {
+      "file": "desktop/src/lib/DisplaySettings.svelte",
+      "line": 40,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 135,
+      "expression": "current.last_error"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 167,
+      "expression": "pollError"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 168,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/DynamicRgb.svelte",
+      "line": 168,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/FontImport.svelte",
+      "line": 51,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/FullGroupArchive.svelte",
+      "line": 112,
+      "expression": "job.readback.runtime.last_error"
+    },
+    {
+      "file": "desktop/src/lib/FullGroupArchive.svelte",
+      "line": 127,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ImageEditor.svelte",
+      "line": 170,
+      "expression": "control.label"
+    },
+    {
+      "file": "desktop/src/lib/ImageEditor.svelte",
+      "line": 171,
+      "expression": "control.label"
+    },
+    {
+      "file": "desktop/src/lib/ImageEditor.svelte",
+      "line": 183,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/ImageEditor.svelte",
+      "line": 184,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ImageGallery.svelte",
+      "line": 113,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ImageGallery.svelte",
+      "line": 140,
+      "expression": "deleteNotice"
+    },
+    {
+      "file": "desktop/src/lib/ImageGallery.svelte",
+      "line": 146,
+      "expression": "renameError"
+    },
+    {
+      "file": "desktop/src/lib/Lighting.svelte",
+      "line": 199,
+      "expression": "pollError"
+    },
+    {
+      "file": "desktop/src/lib/Lighting.svelte",
+      "line": 200,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Lighting.svelte",
+      "line": 200,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/MediaImport.svelte",
+      "line": 358,
+      "expression": "labels[job.phase]"
+    },
+    {
+      "file": "desktop/src/lib/MediaImport.svelte",
+      "line": 368,
+      "expression": "error || pollError"
+    },
+    {
+      "file": "desktop/src/lib/MediaLibrary.svelte",
+      "line": 150,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/MediaThumbnail.svelte",
+      "line": 33,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ProfileArchive.svelte",
+      "line": 120,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ProfileArchive.svelte",
+      "line": 121,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/Profiles.svelte",
+      "line": 102,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Profiles.svelte",
+      "line": 103,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/RecordingRegionPreview.svelte",
+      "line": 84,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ScreenCollections.svelte",
+      "line": 88,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ScreenCollections.svelte",
+      "line": 89,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/ScreenRecorder.svelte",
+      "line": 205,
+      "expression": "labels[status.phase]"
+    },
+    {
+      "file": "desktop/src/lib/ScreenRecorder.svelte",
+      "line": 264,
+      "expression": "result?.message ?? (result?.phase==='failed' ? 'Подготовка не завершена.' : result?.phase==='cancelled' ? 'Подготовка отменена.' : 'Подготовка или сохранение записи…')"
+    },
+    {
+      "file": "desktop/src/lib/ScreenRecorder.svelte",
+      "line": 267,
+      "expression": "error || status?.message"
+    },
+    {
+      "file": "desktop/src/lib/ScreenReset.svelte",
+      "line": 79,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/ScreenReset.svelte",
+      "line": 80,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/ScreenReset.svelte",
+      "line": 82,
+      "expression": "readback.lcd.last_error"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 73,
+      "expression": "readError"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 74,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 75,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 85,
+      "expression": "field.label"
+    },
+    {
+      "file": "desktop/src/lib/SensorDefaults.svelte",
+      "line": 102,
+      "expression": "field.label"
+    },
+    {
+      "file": "desktop/src/lib/Settings.svelte",
+      "line": 27,
+      "expression": "lcd.last_error"
+    },
+    {
+      "file": "desktop/src/lib/Settings.svelte",
+      "line": 28,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/Settings.svelte",
+      "line": 28,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/lib/SystemSpec.svelte",
+      "line": 46,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/lib/SystemSpec.svelte",
+      "line": 50,
+      "expression": "category.label"
+    },
+    {
+      "file": "desktop/src/lib/SystemSpec.svelte",
+      "line": 57,
+      "expression": "labels[field.key]??field.key"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 307,
+      "expression": "lcd.persistence.last_error"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 308,
+      "expression": "connectionError"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 309,
+      "expression": "error"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 311,
+      "expression": "notice"
+    },
+    {
+      "file": "desktop/src/routes/+page.svelte",
+      "line": 332,
+      "expression": "previewError"
+    }
+  ],
+  "remainingWindowsLocales": [
+    "de-DE",
+    "es-ES",
+    "fr-FR",
+    "ko-KR",
+    "zh-CN",
+    "zh-TW"
+  ],
+  "notes": [
+    "User names, device labels and LCD text bypass translation.",
+    "Dynamic messages/labels and native tray/menu require separate qualification.",
+    "Static resource completeness alone does not prove runtime or Windows parity."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-11",
+  "scope": "Desktop reflow at 320 and 640 CSS pixels",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty_tree": true,
+  "hardware": false,
+  "sha256": {
+    "desktop/src/routes/+page.svelte": "87bd94507be9a1d9a8d3f53d4c91b444eec89c8ea15e546456877f0dc9f9f778",
+    "desktop/src/lib/SensorDefaults.svelte": "17a55413a57c422c919ff4116cf9bb62fa5a73ac54060ce5e8ba86cf8dd7b22c",
+    "desktop/tests/control-keyboard.spec.ts": "cc2e943462f34ef966983fef5bbd63fdc3ac974c8f877a59d7d8854409cd7069"
+  },
+  "verification": {
+    "playwright_keyboard_contrast_reflow": 9,
+    "svelte_check": "0 errors, 0 warnings",
+    "frontend_build": "passed",
+    "native_rerun": false
+  },
+  "red_green": "Both viewport regressions measured 842px horizontal page width before fix; all five pages now fit both tested widths",
+  "changes": [
+    "Single-column LCD workspace below 1100px",
+    "Navigation moves above content below 760px; control rows and action groups wrap",
+    "System source field grid minimum shrinks to available width"
+  ],
+  "assertions": [
+    "Text layer editor, pump PWM curve and loaded thermal rules fit horizontally",
+    "All visible buttons/inputs/selects/textareas in tested states remain within viewport",
+    "No device writes occur during navigation/editor setup",
+    "Existing keyboard, focus, accessible names and boundary contrast tests remain green"
+  ],
+  "visual_inspection": [
+    "desktop/test-results/control-keyboard-editors-r-d0711-ithout-horizontal-scrolling/cooling-320.png"
+  ],
+  "limits": [
+    "CSS viewport reflow is not native WebKit zoom or OS text scaling verification",
+    "All possible layer combinations, forced colors and screen reader review remain open"
+  ]
+}

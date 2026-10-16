@@ -1,0 +1,806 @@
+{
+  "date": "2026-10-13",
+  "head": "bcaf7a2538a10176c89dd1fddddafbe29826b56e",
+  "dirty": true,
+  "baseline": "Windows2.1.28.0 / Galahad II LCDV2 0416:7395",
+  "scope": "Standalone Fireworks model, six-color numeric parameters and bounded stateful rocket/burst renderer; no theme/daemon/GUI integration yet",
+  "reference": [
+    {
+      "path": "/home/inky/Development/lian-li/reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnect3cs/Products/Galahad2Vision/Galahad2VisionScreenSettingPage_Fireworks.cs",
+      "sha256": "469682d2f6264da9fb719dfde09d4be1b89e6717cd1cca82d640f3f3e8eb5301"
+    },
+    {
+      "path": "/home/inky/Development/lian-li/winver/L-Connect 3/Assets/ga2v/js/app.8fc94db7.js",
+      "sha256": "f3691c15dbe62d1248abee444dc94c82a34c46e45697bda4ccad77825c6e878a"
+    }
+  ],
+  "oracle": {
+    "method": "Execute extracted actual installed Fireworks pure mapping/rgbToHsb functions offline under Node outside repo; capture numeric output only",
+    "fixture": "crates/lconnect-ipc/tests/fixtures/fireworks-2.1.28-parameters.json",
+    "data": {
+      "low_colors": [
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ],
+        [
+          128,
+          0,
+          255
+        ],
+        [
+          255,
+          0,
+          65
+        ],
+        [
+          255,
+          215,
+          0
+        ],
+        [
+          130,
+          173,
+          237
+        ]
+      ],
+      "high_colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ],
+        [
+          255,
+          255,
+          255
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          255,
+          255
+        ],
+        [
+          16,
+          32,
+          64
+        ]
+      ],
+      "rows": [
+        {
+          "low": 30,
+          "high": 60,
+          "value": 0,
+          "rate": 0.1,
+          "hsb": [
+            [
+              120,
+              100,
+              100
+            ],
+            [
+              240,
+              100,
+              100
+            ],
+            [
+              271,
+              100,
+              100
+            ],
+            [
+              345,
+              100,
+              100
+            ],
+            [
+              51,
+              100,
+              100
+            ],
+            [
+              216,
+              46,
+              93
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 30,
+          "rate": 0.1,
+          "hsb": [
+            [
+              120,
+              100,
+              100
+            ],
+            [
+              240,
+              100,
+              100
+            ],
+            [
+              271,
+              100,
+              100
+            ],
+            [
+              345,
+              100,
+              100
+            ],
+            [
+              51,
+              100,
+              100
+            ],
+            [
+              216,
+              46,
+              93
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 40,
+          "rate": 0.1,
+          "hsb": [
+            [
+              120,
+              100,
+              100
+            ],
+            [
+              240,
+              100,
+              100
+            ],
+            [
+              271,
+              100,
+              100
+            ],
+            [
+              345,
+              100,
+              100
+            ],
+            [
+              51,
+              100,
+              100
+            ],
+            [
+              216,
+              46,
+              93
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 46,
+          "rate": 0.2,
+          "hsb": [
+            [
+              72,
+              100,
+              100
+            ],
+            [
+              168,
+              100,
+              100
+            ],
+            [
+              162.6,
+              60,
+              100
+            ],
+            [
+              207,
+              60,
+              60
+            ],
+            [
+              102.6,
+              100,
+              100
+            ],
+            [
+              217.6,
+              57.6,
+              66.2
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 50,
+          "rate": 0.2,
+          "hsb": [
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              150,
+              100,
+              100
+            ],
+            [
+              135.5,
+              50,
+              100
+            ],
+            [
+              172.5,
+              50,
+              50
+            ],
+            [
+              115.5,
+              100,
+              100
+            ],
+            [
+              218,
+              60.5,
+              59.5
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 54,
+          "rate": 0.2,
+          "hsb": [
+            [
+              48,
+              100,
+              100
+            ],
+            [
+              132,
+              100,
+              100
+            ],
+            [
+              108.4,
+              40,
+              100
+            ],
+            [
+              138,
+              40,
+              40
+            ],
+            [
+              128.4,
+              100,
+              100
+            ],
+            [
+              218.4,
+              63.4,
+              52.8
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 58,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 60,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 30,
+          "high": 60,
+          "value": 100,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 0,
+          "rate": 0.1,
+          "hsb": [
+            [
+              120,
+              100,
+              100
+            ],
+            [
+              240,
+              100,
+              100
+            ],
+            [
+              271,
+              100,
+              100
+            ],
+            [
+              345,
+              100,
+              100
+            ],
+            [
+              51,
+              100,
+              100
+            ],
+            [
+              216,
+              46,
+              93
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 30,
+          "rate": 0.1,
+          "hsb": [
+            [
+              120,
+              100,
+              100
+            ],
+            [
+              240,
+              100,
+              100
+            ],
+            [
+              271,
+              100,
+              100
+            ],
+            [
+              345,
+              100,
+              100
+            ],
+            [
+              51,
+              100,
+              100
+            ],
+            [
+              216,
+              46,
+              93
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 40,
+          "rate": 0.2,
+          "hsb": [
+            [
+              null,
+              null,
+              null
+            ],
+            [
+              null,
+              null,
+              null
+            ],
+            [
+              null,
+              null,
+              null
+            ],
+            [
+              null,
+              null,
+              null
+            ],
+            [
+              null,
+              null,
+              null
+            ],
+            [
+              null,
+              null,
+              null
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 46,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 50,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 54,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 58,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 60,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        },
+        {
+          "low": 40,
+          "high": 40,
+          "value": 100,
+          "rate": 0.3,
+          "hsb": [
+            [
+              0,
+              100,
+              100
+            ],
+            [
+              60,
+              100,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              180,
+              100,
+              100
+            ],
+            [
+              220,
+              75,
+              26
+            ]
+          ]
+        }
+      ]
+    },
+    "nonfinite_policy": "Native NaN is JSON null. Equal-bound equality resolves low rate/colors in Linux, retaining finite below/above branches."
+  },
+  "checks": {
+    "workspace": {
+      "passed": 908,
+      "ignored": 2,
+      "log": "/tmp/lconnect-fireworks-workspace-final.log"
+    },
+    "strict_clippy": "/tmp/lconnect-fireworks-clippy.log",
+    "rustdoc": "/tmp/lconnect-fireworks-doc.log",
+    "format": "/tmp/lconnect-fireworks-fmt.log",
+    "parameters_and_meteor_regression": "/tmp/lconnect-fireworks-parameters.log",
+    "renderer": "/tmp/lconnect-fireworks-render.log",
+    "offline_preview": "/tmp/lconnect-fireworks-preview.png",
+    "review": "No blocking static findings; added incremental-vs-single-jump fixed-step consistency regression"
+  },
+  "behavior": [
+    "Intensity1..3 default1, launch factor .1/.2/.3",
+    "Six static/low/high colors; source-specific palettes/ranges bounded64 sources",
+    "Shared native9-band/direct HSB mapping; Meteor existing numeric fixture still passes",
+    "Missing/stale/wrong-unit readings use static fallback, no fake zero",
+    "Seeded launches, gravity,40-particle bursts and captured launch colors",
+    "Existing rockets/sparks keep original colors across sensor changes",
+    "Bounded pools and600-step catch-up; long gaps clear/warm recent interval",
+    "Monotonic time/frame validation before mutation; extreme timestamps bounded",
+    "Fixed-step state independent of render cadence within catch-up window"
+  ],
+  "remaining": [
+    "Theme layer/version/page-cache and assets",
+    "Daemon/H.264/video/preview/persistence/profile/restart",
+    "GUI intensity/six colors/per-source palettes/ranges/CPU Load/page switching",
+    "Native MockBackend/fault and hardware qualification",
+    "Windows native60Hz/default P5 vs encoding24fps timing, stochastic trails/shadow raster/reset behavior and long-gap comparison"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-12",
+  "scope": "Streaming composition worker foundation; no actor/IPC/persistence/GUI integration",
+  "worktree": "/home/inky/Development/lian-li/lconnect-linux-m1",
+  "fixes": [
+    "Decoder max_pixels262144 accommodates aligned512x480 allocation for480x480 canvas; fixed230400 rejection observed in FFmpeg stderr",
+    "Decoder -xerror rejects invalid allocation promptly",
+    "Receive deadline survives cancellation; stop retains supervisor join until cleanup"
+  ],
+  "focused_tests": {
+    "passed": 4,
+    "log": "/tmp/composition-fixed-v3.log",
+    "scenarios": [
+      "60 composed/encoded/decoded frames, four-frame loop, CPU40 to80 pixel change and preserved video background",
+      "Valid1024x1024 source rejected before timeout with pin released",
+      "Stalled codec children killed and reaped; cancelled receive retains deadline; source deletion succeeds after stop",
+      "AUD framing across every1..16 byte boundary and oversize rejection"
+    ]
+  },
+  "review": "Companion Rust reviewer: no findings; deadline concern addressed and re-reviewed",
+  "limitations": [
+    "Not connected to LCD actor or public composition API",
+    "No GUI, hardware or host sensor run",
+    "No24fps CPU/RSS/latency measurement",
+    "Additional malformed/truncated source, slow read and integration lifecycle scenarios remain"
+  ],
+  "source_sha256": "5bef7ade9eff6793372894efb7902e1f13b1f7a5ae07887291dbb9ea34aa1355",
+  "validation": {
+    "fmt": "passed",
+    "daemon_strict_clippy": "passed",
+    "daemon_all_targets_all_features": {
+      "passed": 336,
+      "targets": 42,
+      "log": "/tmp/composition-final-tests.log",
+      "exit_code": 0
+    },
+    "daemon_docs": "passed",
+    "focused_final_exit_code": 0,
+    "hardware_run": false
+  }
+}

@@ -31,6 +31,56 @@ struct Cli {
 enum Cmd {
     /// List attached devices.
     Devices,
+    /// List host sensor bindings, values and freshness (no device required).
+    Sensors,
+    /// Read or change global display units without changing physical controls.
+    DisplaySettings {
+        #[command(subcommand)]
+        command: commands::display_settings::Command,
+    },
+    /// Read-only JSON feed for desktop-shell widgets (no GUI or device required).
+    Mini {
+        #[command(subcommand)]
+        command: commands::mini::Command,
+    },
+    /// Read static hardware inventory (no Lian Li device required).
+    Spec {
+        /// Bypass the short-lived inventory cache.
+        #[arg(long)]
+        refresh: bool,
+    },
+    /// Inspect or configure autonomous cooling policies.
+    Cooling {
+        #[command(subcommand)]
+        command: CoolingSubcommand,
+    },
+    /// Save, rename, delete or apply named screen/fan/pump profiles.
+    Profiles {
+        #[command(subcommand)]
+        command: commands::profiles::Command,
+    },
+    /// Import images, preview and apply realtime LCD themes.
+    Theme {
+        #[command(subcommand)]
+        command: ThemeSubcommand,
+    },
+    /// Configure sensor-driven pump lighting (separate from thermal alerts).
+    DynamicRgb {
+        #[command(subcommand)]
+        command: ThermalSubcommand,
+    },
+    /// Configure temperature-triggered RGB warnings.
+    Thermal {
+        #[command(subcommand)]
+        command: ThermalSubcommand,
+    },
+    /// Inspect saved firmware recovery state without querying a device.
+    FirmwareRecovery,
+    /// Configure the opt-in MangoHud per-frame FPS source.
+    Fps {
+        #[command(subcommand)]
+        command: commands::fps::Command,
+    },
     /// Show firmware info for a device.
     Firmware {
         #[arg(long)]
@@ -91,6 +141,81 @@ enum Cmd {
     Daemon(DaemonArgs),
 }
 
+#[derive(Subcommand)]
+pub enum ThemeSubcommand {
+    /// Report orphaned assets; add --delete to remove eligible files.
+    Cleanup {
+        #[arg(long)]
+        delete: bool,
+        #[arg(long)]
+        keep: Vec<String>,
+    },
+    Import {
+        file: std::path::PathBuf,
+    },
+    State {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    Apply {
+        config: std::path::PathBuf,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    Preview {
+        config: std::path::PathBuf,
+        output: std::path::PathBuf,
+        #[arg(long)]
+        device: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum ThermalSubcommand {
+    State {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    Set {
+        #[arg(long)]
+        config: std::path::PathBuf,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    Disable {
+        #[arg(long)]
+        device: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum CoolingSubcommand {
+    /// Print a fan or pump preset as policy JSON; does not connect or apply settings.
+    Preset {
+        #[arg(value_parser = ["quiet", "performance", "standard", "high", "full"])]
+        name: String,
+        #[arg(long, default_value = "pump", value_parser = ["fan", "pump"])]
+        target: String,
+        #[arg(long)]
+        sensor: String,
+        #[arg(long, default_value_t = 2.0)]
+        hysteresis_c: f64,
+        #[arg(long, default_value_t = 100)]
+        fallback_percent: u8,
+    },
+    State {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    Set {
+        target: String,
+        #[arg(long)]
+        policy: std::path::PathBuf,
+        #[arg(long)]
+        device: Option<String>,
+    },
+}
+
 // The arg structs below are intentionally minimal placeholders. The
 // owning P1E-* task fleshes each one out with its real flags; keeping
 // them as `Option<String>` shaped today lets `main.rs` compile without
@@ -113,6 +238,16 @@ pub enum LightingSubcommand {
         mode: String,
         #[arg(long)]
         color: Option<String>,
+        /// Colors 2–4 in palette order; repeat for each remaining mode slot.
+        #[arg(long)]
+        additional_color: Vec<String>,
+        /// Fan-only sync override; omitted fields preserve the current global topology.
+        #[arg(long)]
+        sync_to_pump: Option<bool>,
+        #[arg(long, value_parser=["280","360"])]
+        fan_size: Option<String>,
+        #[arg(long, value_parser=clap::value_parser!(u8).range(8..=50))]
+        led_count: Option<u8>,
         #[arg(long)]
         speed: Option<u8>,
         #[arg(long)]
@@ -174,35 +309,24 @@ pub enum LcdSubcommand {
         device: Option<String>,
     },
     /// Set LCD brightness (0..=100).
-    ///
-    /// NOTE: The Phase 1 IPC only exposes `set_lcd_config` wholesale, so
-    /// this also overwrites mode (to Application) and rotation (to 0). A
-    /// future `get_lcd_config` IPC method would let brightness be edited
-    /// without disturbing siblings.
     Brightness {
         percent: u8,
         #[arg(long)]
         device: Option<String>,
     },
     /// Set LCD rotation (0/90/180/270).
-    ///
-    /// NOTE: same caveat as `brightness` — also overwrites mode and
-    /// brightness.
     Rotation {
         degrees: u16,
         #[arg(long)]
         device: Option<String>,
     },
     /// Set LCD control mode (LocalUI, Application, ...).
-    ///
-    /// NOTE: same caveat as `brightness` — also overwrites brightness
-    /// and rotation.
     Mode {
         mode: String,
         #[arg(long)]
         device: Option<String>,
     },
-    /// Upload an image (any format ffmpeg can decode) as JPEG to the LCD.
+    /// Upload an image supported by the image decoder as JPEG to the LCD.
     Image {
         path: std::path::PathBuf,
         /// Fit mode: crop | letterbox | stretch.
@@ -217,7 +341,54 @@ pub enum LcdSubcommand {
         #[arg(long)]
         device: Option<String>,
     },
-    /// Clear the displayed image (firmware reverts to LocalUI ~20s after).
+    /// Show requested/applied LCD configuration and source status.
+    State {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Play a prepared diagnostic H.264 clip (480x480, 24 fps).
+    PlayClip {
+        path: std::path::PathBuf,
+        #[arg(long, default_value_t = 1)]
+        loops: u16,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Save a prepared H.264 manifest in the daemon library; does not play it.
+    ImportClip {
+        path: std::path::PathBuf,
+        #[arg(long)]
+        name: String,
+    },
+    /// Select a saved clip for continuous playback and restore after restart.
+    SelectClip {
+        key: String,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Show the clip selected for continuous playback, or null.
+    SelectedClip {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// List saved prepared clips; no connected LCD is required.
+    Clips,
+    /// Delete an unreferenced clip. Active or saved selections must be cleared first.
+    DeleteClip { key: String },
+    /// Load a saved prepared clip and play it; does not set restart/autoplay.
+    PlaySavedClip {
+        key: String,
+        #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u16).range(1..=900))]
+        loops: u16,
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Show sent frame counters and diagnostic playback status.
+    PlaybackStats {
+        #[arg(long)]
+        device: Option<String>,
+    },
+    /// Stop the software source and switch to LocalUI; wait for the write.
     Clear {
         #[arg(long)]
         device: Option<String>,
@@ -262,7 +433,20 @@ async fn main() -> anyhow::Result<()> {
     init_tracing();
     let cli = Cli::parse();
     match cli.command {
+        Cmd::Profiles { command } => commands::profiles::run(command, cli.json).await,
+        Cmd::Theme { command } => commands::theme::run(command).await,
+        Cmd::DynamicRgb { command } => commands::dynamic_rgb::run(command, cli.json).await,
+        Cmd::Thermal { command } => commands::thermal::run(command).await,
+        Cmd::Cooling { command } => commands::cooling::run(command).await,
+        Cmd::DisplaySettings { command } => {
+            commands::display_settings::run(command, cli.json).await
+        }
+        Cmd::Mini { command } => commands::mini::run(command).await,
+        Cmd::Spec { refresh } => commands::system_spec::run(cli.json, refresh).await,
+        Cmd::Sensors => commands::devices::sensors(cli.json).await,
         Cmd::Devices => commands::devices::run(cli.json).await,
+        Cmd::Fps { command } => commands::fps::run(command, cli.json).await,
+        Cmd::FirmwareRecovery => commands::devices::firmware_recovery(cli.json).await,
         Cmd::Firmware { device } => commands::devices::firmware(device, cli.json).await,
         Cmd::Snapshot { device } => commands::devices::snapshot(device, cli.json).await,
         Cmd::Watch { device } => commands::watch::run(device, cli.json).await,
