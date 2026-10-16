@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cooling-preset"
+description = "Enables the cooling_preset command without any pre-configured scope."
+commands.allow = ["cooling_preset"]
+
+[[permission]]
+identifier = "deny-cooling-preset"
+description = "Denies the cooling_preset command without any pre-configured scope."
+commands.deny = ["cooling_preset"]

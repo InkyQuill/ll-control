@@ -1,0 +1,52 @@
+import QtQuick
+import QtTest
+import "file://@MODEL_DIR@/mini.mjs" as Mini
+
+TestCase {
+ id:testCase
+ name:"MiniConfig"
+ visible:true
+ width:700;height:1200
+ readonly property var config:loader.item
+ when:windowShown&&config!==null
+ Loader {
+  id:loader
+  anchors.fill:parent
+  source:"file://@PACKAGE_DIR@/contents/ui/configGeneral.qml"
+  onLoaded:{item.cfg_slotConfig=JSON.stringify(Mini.defaultConfig());item.cfg_languageCache="en-US"}
+ }
+ function choose(box,steps){mouseClick(box,box.width/2,box.height/2);tryVerify(()=>box.popup.visible);keyClick(Qt.Key_Home);for(let i=0;i<steps;i++)keyClick(Qt.Key_Down);keyClick(Qt.Key_Return)}
+ function test_01_keyboardSelectionKeepsDelegateAndExactSource() {
+  let box=findChild(config,"reading0");verify(box!==null)
+  choose(box,6)
+  tryCompare(box,"activeFocus",true)
+  tryCompare(config,"cfg_slotConfig",JSON.stringify({version:1,slots:[{kind:"gpu_power",source:null}].concat(Mini.defaultConfig().slots.slice(1))}))
+  compare(findChild(config,"reading0"),box,"Editing must not destroy the focused slot delegate")
+  const source=findChild(config,"source0")
+  tryVerify(()=>source.count===3)
+  choose(source,2)
+  tryCompare(source,"activeFocus",true)
+  compare(JSON.parse(config.cfg_slotConfig).slots[0].source,"gpu:B:power")
+  wait(1400)
+  compare(source.activeFocus,true,"Polling must preserve keyboard focus")
+  compare(JSON.parse(config.cfg_slotConfig).slots[0].source,"gpu:B:power","Polling must preserve selected source")
+  choose(box,0)
+  compare(JSON.parse(config.cfg_slotConfig).slots[0],null)
+  compare(findChild(config,"reading0"),box)
+ }
+ function test_015_fpsHasExplicitSourceAndPersistsSelection() {
+  const box=findChild(config,"reading0");choose(box,11)
+  const source=findChild(config,"source0");tryVerify(()=>source.visible&&source.count===2)
+  compare(source.model[0].label,"No FPS source selected")
+  choose(source,1)
+  compare(JSON.parse(config.cfg_slotConfig).slots[0].source,"mangohud:2f67616d65:1:2:logged_frame_mean")
+  wait(1100)
+  compare(JSON.parse(config.cfg_slotConfig).slots[0].source,"mangohud:2f67616d65:1:2:logged_frame_mean")
+ }
+ function test_02_futureConfigIsPreservedUntilExplicitReset() {
+  const future=JSON.stringify({version:8,slots:[]});config.cfg_slotConfig=future
+  wait(1100);compare(config.cfg_slotConfig,future);compare(config.draft,null)
+  const reset=findChild(config,"resetSlots");verify(reset!==null);mouseClick(reset,reset.width/2,reset.height/2)
+  compare(config.cfg_slotConfig,JSON.stringify(Mini.defaultConfig()))
+ }
+}

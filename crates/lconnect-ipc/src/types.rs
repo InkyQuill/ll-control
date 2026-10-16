@@ -46,6 +46,9 @@ pub struct SensorSnapshot {
 pub struct FirmwareInfo {
     pub version: String,
     pub raw_token: String,
+    /// Unparsed build datetime from firmware PN1; absent when the device did not report it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_datetime: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -90,6 +93,7 @@ pub enum LedTarget {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct Rgb {
     pub r: u8,
     pub g: u8,
@@ -99,8 +103,18 @@ pub struct Rgb {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct LightingConfig {
+    /// Pump-only explicit selection: true restores the last saved source for this
+    /// mode. False/omitted applies the manual base and disables this mode's policy.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dynamic_mode: Option<bool>,
+    /// Fan-only global topology; omitted updates preserve the owner's current value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fan_topology: Option<crate::FanLightingTopology>,
     pub mode: String, // serialised as the enum variant name
     pub color: Rgb,
+    /// Remaining mode palette entries; omitted by legacy single-color clients.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub additional_colors: Vec<Rgb>,
     pub brightness_percent: u8,
     pub speed_percent: u8,
     pub direction: String,     // "forward" | "reverse"
@@ -108,19 +122,91 @@ pub struct LightingConfig {
     pub disabled: bool,
 }
 
+impl LightingConfig {
+    /// Construct a manual setting using the CLI percentage/direction defaults.
+    pub fn new(mode: impl Into<String>, color: Rgb) -> Self {
+        Self {
+            dynamic_mode: None,
+            fan_topology: None,
+            mode: mode.into(),
+            color,
+            additional_colors: Vec::new(),
+            brightness_percent: 100,
+            speed_percent: 50,
+            direction: "forward".into(),
+            scope: None,
+            disabled: false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LightingInfo {
+    /// Supports explicit restoration of per-mode pump dynamic profiles.
+    #[serde(default)]
+    pub dynamic_mode_supported: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fan_topology: Option<crate::FanLightingTopology>,
+    #[serde(default)]
+    pub catalog: Vec<crate::LightingModeControls>,
+    #[serde(default)]
+    pub profiles: Vec<LightingConfig>,
+    /// Last committed manual mode base from the RGB owner, not physical readback.
+    /// None for unset/direct-color output. Old daemons omit this field.
+    #[serde(default)]
+    pub base: Option<LightingConfig>,
     pub max_speed: u8,
     pub max_brightness: u8,
     pub modes: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct LcdConfig {
     pub mode: String, // "LocalUI" | "Application" | ...
     pub brightness_percent: u8,
     pub rotation_degrees: u16, // 0 / 90 / 180 / 270
+}
+
+impl LcdConfig {
+    #[must_use]
+    pub fn new(mode: impl Into<String>, brightness_percent: u8, rotation_degrees: u16) -> Self {
+        Self {
+            mode: mode.into(),
+            brightness_percent,
+            rotation_degrees,
+        }
+    }
+}
+
+/// Partial LCD configuration update. Omitted fields retain their current value.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LcdConfigPatch {
+    pub mode: Option<String>,
+    pub brightness_percent: Option<u8>,
+    pub rotation_degrees: Option<u16>,
+}
+
+/// Software source currently driving the LCD.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum LcdSourceKind {
+    Idle,
+    Jpeg,
+    DiagnosticClip,
+    Theme,
+}
+
+/// Observable LCD configuration and source state.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LcdState {
+    /// Latest dispatcher observation for all device settings, not LCD transport.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub persistence: Option<SettingsSaveState>,
+    pub requested: LcdConfig,
+    pub applied: Option<LcdConfig>,
+    pub source: LcdSourceKind,
+    pub generation: u64,
+    pub last_error: Option<String>,
 }
 
 /// Cryptographically random token returned by `request_reset_token`.
@@ -155,4 +241,26 @@ pub struct DaemonStats {
 pub struct ErrorBrief {
     pub category: String,
     pub message: String,
+}
+
+/// In-memory status of this device's settings writer during the current session.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SettingsSaveState {
+    /// Changes have reached the dispatcher but have not been durably written.
+    pub pending: bool,
+    /// At least one successful file + parent-directory sync in this session.
+    pub saved: bool,
+    pub last_error: Option<String>,
+}
+
+#[cfg(test)]
+mod firmware_info_tests {
+    use super::FirmwareInfo;
+    #[test]
+    fn legacy_firmware_response_does_not_invent_a_build_date() {
+        let old = serde_json::json!({"version":"1.6","raw_token":"legacy token"});
+        let info: FirmwareInfo = serde_json::from_value(old.clone()).unwrap();
+        assert!(info.build_datetime.is_none());
+        assert_eq!(serde_json::to_value(info).unwrap(), old);
+    }
 }

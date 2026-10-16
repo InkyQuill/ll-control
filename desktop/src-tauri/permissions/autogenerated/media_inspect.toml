@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-media-inspect"
+description = "Enables the media_inspect command without any pre-configured scope."
+commands.allow = ["media_inspect"]
+
+[[permission]]
+identifier = "deny-media-inspect"
+description = "Denies the media_inspect command without any pre-configured scope."
+commands.deny = ["media_inspect"]

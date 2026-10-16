@@ -72,6 +72,12 @@ impl Harness {
 }
 
 async fn make_harness(allow_raw_send: bool) -> Harness {
+    make_harness_with_sensors(allow_raw_send, Default::default()).await
+}
+async fn make_harness_with_sensors(
+    allow_raw_send: bool,
+    sensors: lconnect_daemon::sensors::SensorCache,
+) -> Harness {
     let tmp = TempDir::new().expect("tempdir");
     let mock = MockBackend::new();
     mock.add_device(lcdv2_info("SN-A", "/mock/hidraw0"));
@@ -85,7 +91,7 @@ async fn make_harness(allow_raw_send: bool) -> Harness {
         fast_poll_config(),
         Arc::new(Stats::new()),
     );
-    let manager_handle = manager.spawn().await;
+    let manager_handle = manager.with_sensors(sensors.clone()).spawn().await;
 
     // Wait for the first poll tick to attach the seeded device.
     for _ in 0..40 {
@@ -103,7 +109,8 @@ async fn make_harness(allow_raw_send: bool) -> Harness {
     config.daemon.allow_raw_send = allow_raw_send;
 
     let stats = Arc::new(Stats::new());
-    let rpc = Arc::new(IpcServerImpl::new(manager_handle, stats, config, store));
+    let rpc =
+        Arc::new(IpcServerImpl::new(manager_handle, stats, config, store).with_sensors(sensors));
 
     let (client_end, server_end) = mem_pair();
     let server = IpcServer::new(rpc);
@@ -414,5 +421,157 @@ async fn clear_lcd_sends_lcd_control_localui() {
             .collect::<Vec<_>>()
     );
 
+    h.shutdown().await;
+}
+
+#[tokio::test]
+async fn lcd_state_patch_and_stats_roundtrip_preserves_omitted_fields() {
+    let h = make_harness(false).await;
+    let devices: Vec<DeviceDescriptor> =
+        serde_json::from_value(h.client.call("list_devices", json!({})).await.unwrap()).unwrap();
+    let dev = &devices[0].id;
+    let first: lconnect_ipc::LcdState = serde_json::from_value(
+        h.client
+            .call(
+                "patch_lcd_config",
+                json!({"dev":dev,"patch":{"rotation_degrees":90,"brightness_percent":73}}),
+            )
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(first.requested.rotation_degrees, 90);
+    let second: lconnect_ipc::LcdState = serde_json::from_value(
+        h.client
+            .call(
+                "patch_lcd_config",
+                json!({"dev":dev,"patch":{"brightness_percent":40}}),
+            )
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(second.requested.rotation_degrees, 90);
+    assert_eq!(second.requested.brightness_percent, 40);
+    let state: lconnect_ipc::LcdState = serde_json::from_value(
+        h.client
+            .call("get_lcd_state", json!({"dev":dev}))
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(state.persistence.is_some());
+    let mut display_state = state;
+    display_state.persistence = None; // writer status is separate from actor transaction reply
+    assert_eq!(display_state, second);
+    let stats: lconnect_ipc::LcdPlaybackStats = serde_json::from_value(
+        h.client
+            .call("get_lcd_playback_stats", json!({"dev":dev}))
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(stats.sent_frames, 0);
+    let invalid = h
+        .client
+        .call(
+            "play_lcd_clip",
+            json!({"dev":dev,"clip":{"fps":24,"units":[]},"loops":1}),
+        )
+        .await;
+    assert!(invalid.is_err());
+    h.shutdown().await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn direct_lighting_rpc_acknowledges_write_and_propagates_actor_validation() {
+    let h = make_harness(false).await;
+    let dev = lcdv2_info("SN-A", "/mock/hidraw0");
+    let colors = json!([{"r":10,"g":20,"b":30}]);
+    h.client
+        .call(
+            "set_led_colors",
+            json!({"dev":"galahad2-lcdv2:0001","target":"screen","colors":colors}),
+        )
+        .await
+        .unwrap();
+    let count = h
+        .mock
+        .write_history(&dev)
+        .iter()
+        .filter(|w| w.get(1) == Some(&20))
+        .count();
+    assert!(count >= 1, "reply must follow the physical write");
+    let error = h
+        .client
+        .call(
+            "set_led_colors",
+            json!({"dev":"galahad2-lcdv2:0001","target":"screen","colors":[]}),
+        )
+        .await
+        .unwrap_err();
+    assert!(matches!(error, IpcError::InvalidArgument(_)));
+    h.shutdown().await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn thermal_rpc_configures_restores_and_persists_only_base_and_rules() {
+    use lconnect_ipc::{SensorReading, SensorStatus, SensorUnit, ThermalLayer, ThermalState};
+    let cache = lconnect_daemon::sensors::SensorCache::default();
+    cache.publish(
+        std::time::Instant::now(),
+        vec![SensorReading {
+            id: "cpu:test".into(),
+            label: "CPU".into(),
+            unit: SensorUnit::Celsius,
+            value: Some(80.0),
+            status: SensorStatus::Valid,
+            observed_unix_ms: Some(1),
+            age_ms: Some(0),
+        }],
+    );
+    let h = make_harness_with_sensors(false, cache).await;
+    let dev = "galahad2-lcdv2:0001";
+    let config = json!({"cpu":{"sensor_id":"cpu:test","threshold_c":70,"color":{"r":255,"g":0,"b":0}},"gpu":null});
+    assert!(h
+        .client
+        .call("set_thermal_config", json!({"dev":dev,"config":config}))
+        .await
+        .is_err());
+    for kind in ["fan", "pump"] {
+        h.client.call("set_lighting",json!({"dev":dev,"kind":kind,"cfg":{"mode":"static","color":{"r":1,"g":2,"b":3},"brightness_percent":50,"speed_percent":50,"direction":"forward","scope":"outer","disabled":false}})).await.unwrap();
+    }
+    let s: ThermalState = serde_json::from_value(
+        h.client
+            .call("set_thermal_config", json!({"dev":dev,"config":config}))
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(matches!(s.fan.applied, Some(ThermalLayer::Alert { .. })));
+    let s: ThermalState = serde_json::from_value(
+        h.client
+            .call("get_thermal_state", json!({"dev":dev}))
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(s.requested.cpu.is_some());
+    tokio::time::sleep(Duration::from_millis(350)).await;
+    let key = lconnect_daemon::persistence::settings_key(&lcdv2_info("SN-A", "/mock/hidraw0"));
+    let store = PersistenceStore::new_with_root(h._tmp.path().into());
+    let saved = store.read(&key).unwrap();
+    assert!(saved.thermal.cpu.is_some());
+    assert_eq!(saved.lighting.fan.unwrap().color, "#010203");
+    let s: ThermalState = serde_json::from_value(
+        h.client
+            .call("set_thermal_config", json!({"dev":dev,"config":{}}))
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(!s.requested.enabled());
+    assert_eq!(s.fan.applied, Some(ThermalLayer::Base));
+    assert_eq!(s.pump.applied, Some(ThermalLayer::Base));
     h.shutdown().await;
 }

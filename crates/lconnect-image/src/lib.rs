@@ -9,6 +9,22 @@
 
 #![forbid(unsafe_code)]
 
+pub mod assets;
+pub mod defaults;
+pub mod editor;
+pub mod editor_filters;
+mod editor_spatial;
+pub mod effects;
+pub mod fireworks;
+pub mod fonts;
+pub mod meteor;
+pub mod rotation;
+pub mod snow3d;
+pub mod theme;
+pub use rotation::FrameRotation;
+
+mod text_layout;
+
 use image::{imageops, DynamicImage, ImageBuffer, Rgb, RgbImage};
 
 /// LCD width on the Galahad II LCDV2 pump cap. Source: `Constants.cs:61`.
@@ -83,6 +99,14 @@ impl Default for Quality {
 /// Crate-local error type.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("invalid frame rotation {0}; expected0/90/180/270")]
+    InvalidRotation(u16),
+    /// Empty or oversized theme image input.
+    #[error("image asset exceeds size limits or is empty")]
+    AssetSize,
+    /// Invalid image editor selection or operation budget.
+    #[error("invalid image edit: {0}")]
+    InvalidEdit(&'static str),
     /// JPEG quality outside the valid 1..=100 range.
     #[error("JPEG quality {0} out of range (must be 1..=100)")]
     InvalidQuality(u8),
@@ -105,7 +129,7 @@ pub fn prepare_jpeg_from_path<P: AsRef<std::path::Path>>(
     mode: FitMode,
     quality: Quality,
 ) -> Result<PreparedJpeg> {
-    let img = image::open(path)?;
+    let img = assets::decode_oriented(image::ImageReader::open(path)?, image::Limits::default())?;
     prepare_jpeg_from_image(img, mode, quality)
 }
 
@@ -115,7 +139,8 @@ pub fn prepare_jpeg_from_bytes(
     mode: FitMode,
     quality: Quality,
 ) -> Result<PreparedJpeg> {
-    let img = image::load_from_memory(bytes)?;
+    let reader = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format()?;
+    let img = assets::decode_oriented(reader, image::Limits::default())?;
     prepare_jpeg_from_image(img, mode, quality)
 }
 

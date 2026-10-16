@@ -1,0 +1,36 @@
+[package]
+name = "lconnect-gui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = "=2.4.2"
+lconnect-ipc = { path = "../../crates/lconnect-ipc" }
+lconnect-image = { path = "../../crates/lconnect-image" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "macros", "net", "io-util", "rt"] }
+
+tempfile = "3"
+anyhow.workspace = true
+httparse = "1"
+zbus = { version = "4.4.0", default-features = false, features = ["tokio"] }
+futures-util = "0.3"
+url = "2"
+libc = "0.2"
+sha2 = "0.10.9"
+rustix = { version = "=1.1.4", features = ["fs"] }
+gstreamer = "0.21"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+lconnect-daemon = { path = "../../crates/lconnect-daemon" }
+lconnect-hid = { path = "../../crates/lconnect-hid" }
+tokio = { workspace = true, features = ["macros", "rt"] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+native-smoke = []

@@ -1,3 +1,5 @@
+> Historical design reference. Current scope/order: [roadmap](../../../roadmap.md); current execution: [plan index](../plans/README.md). Older phase status and architecture must be reconciled with the M1/M2 daemon contracts before implementation.
+
 # L-Connect Linux — Design
 
 - **Status:** approved (brainstorming complete) — ready for Phase 0 plan
@@ -519,6 +521,11 @@ lconnect-linux/
 │   │   │       ├── packet.rs
 │   │   │       └── crypto.rs        # iff transport-encrypted
 │   │   └── tests/                   # round-trip + golden-byte tests
+│   ├── ene6k77-bootloader/          # PURE: ENE 6K77xx bootloader codec
+│   │   │                            #   (Phase 5b, off-path)
+│   │   ├── src/{lib,bank,control,register,flash,
+│   │   │        enter_bootloader,identify}.rs
+│   │   └── tests/                   # table-driven, byte-fingerprinted
 │   ├── hid/                         # hidapi wrapper, hotplug, retries
 │   ├── theme/                       # manifest + expr + render + reload
 │   ├── ipc/                         # DaemonRpc trait + JSON-RPC impls
@@ -530,6 +537,10 @@ lconnect-linux/
 │   ├── daemon/                      # binary: lconnectd
 │   ├── cli/                         # binary: lconnectctl
 │   └── gui/                         # binary: lconnect-gui
+├── tools/                           # standalone binaries that don't
+│   │                                #   belong in the daemon graph
+│   ├── verify-galahad/              # Phase 0 hardware harness
+│   └── fw-update-ene6k77/           # Phase 5b experimental flasher
 ├── packaging/
 │   ├── systemd/lconnectd.service
 │   ├── udev/70-lianli-hid.rules
@@ -593,6 +604,83 @@ PolicyKit needed.
 - Tarball release with prebuilt binaries (later, post-v1).
 - **No** Flatpak / AppImage in v1 (sandboxing + `hidraw` is fiddly).
 
+## 12b. Phase 5b — ENE 6K77 firmware updater (off-path)
+
+A standalone firmware updater for the **ENE 6K77xx** chip family —
+the older Lian-Li fan-controller and Strimer Plus generation that
+ships separately from L-Connect 3 itself, flashed by the bundled
+Windows utility `FwUpdate.exe` (and its GUI sibling
+`UsbISPDialog_v.1.0.1.18.exe`). Distinct chip, distinct USB
+personality (vendor control transfers under PID `0x0CF2:0x7758`,
+not HID), distinct audience from this project's primary
+LCDV2/Galahad target.
+
+This phase exists because the work landed naturally during a
+side-investigation of `winver/L-Connect 3/FwUpdate.exe`, and the
+result is useful to a real (if non-overlapping) Linux user
+population. It does **not** block, depend on, or feed any other
+phase, and explicitly does **not** integrate with `lconnectd` —
+firmware update is a one-shot, root-adjacent operation that fits
+poorly behind a long-running daemon.
+
+### What the user has and does not have
+
+The project owns the decompiled binary
+(`docs/decomp/fw-update/fw-update.txt` and `…-hlil.txt`) and a
+shipped firmware bin per SKU (under `fw/LianLi_FwUpdate-tools_v.…/`).
+The project does **not** own any ENE 6K77 device. Therefore the
+codec's correctness can be locked at the wire-format level via
+table-driven tests, but the end-to-end flash flow can never be
+validated inside this project — only by an outside contributor with
+matching hardware.
+
+### Architecture
+
+Three artefacts. None of them touch any other crate in the
+workspace.
+
+- **`docs/protocol/ene6k77-bootloader.md`** — protocol reference
+  doc, parallel in style and citation discipline to
+  `docs/protocol/galahad2-lcdv2.md`. Every claim flagged
+  `inferred` (no live capture).
+- **`crates/ene6k77-bootloader/`** — pure no-I/O codec. Mirrors
+  the conventions of `crates/protocol/`: `build_*` request
+  builders return owned byte arrays; `<Type>::from_response` parses;
+  `crate::Result<T>` for errors; `#![forbid(unsafe_code)]`. Bank
+  alternation, the `0x1800`-byte skip region, and the
+  enter-bootloader sequence are all exposed as composable
+  primitives — no `flash_image()` orchestrator inside the codec.
+- **`tools/fw-update-ene6k77/`** — experimental CLI harness wired
+  to `rusb`. Five-layer "untested, may permanently brick"
+  warning wall (Cargo.toml description, README, `--help` blurb,
+  runtime banner, mandatory literal flag
+  `--i-accept-untested-firmware-risk` plus interactive `yes` prompt
+  unless `--yes` is supplied).
+
+### Detailed specs (committed)
+
+- Design / spec: [`docs/superpowers/specs/2026-04-26-ene6k77-bootloader-design.md`](2026-04-26-ene6k77-bootloader-design.md).
+- Implementation plan: [`docs/superpowers/plans/2026-04-26-ene6k77-bootloader.md`](../plans/2026-04-26-ene6k77-bootloader.md).
+
+The plan has 15 bite-sized tasks (TDD shape: write failing test,
+verify it fails, implement, verify pass, commit). Sequencing is
+spec-doc → codec modules (`bank`, `control`, `register`, `flash`,
+`enter_bootloader`, `identify`) → realistic-bin shape tests →
+harness skeleton → harness flow phases → cross-links + final
+audit.
+
+### Forward link to Phase 8
+
+The two flashing pathways shipping today (older ENE 6K77 family
+via `FwUpdate.exe`, newer LCDV2/HydroShift class via L-Connect 3
+itself) are both worth porting to Linux. Phase 5b covers the
+former. Phase 8 (in §15) covers the latter. The intentional
+naming choice — codec crate is `ene6k77-bootloader`, not
+`lconnect-firmware-ene` — leaves room for a future Galahad
+codec to sit beside it as a peer rather than needing to invade
+its namespace. A unified `lconnect-firmware` umbrella tool can
+then route by target VID/PID to whichever codec applies.
+
 ## 13. Logging
 
 - `tracing` crate everywhere.
@@ -627,8 +715,10 @@ is the only thing requiring the device; it is run once per protocol change.
 | **3. Lighting** | RGB control end-to-end (protocol → daemon → CLI → GUI). | yes | small-medium |
 | **4. LCD config + static image** | LCD on/off, brightness, rotation, push-static-JPEG. Validates the chunked-upload protocol. No theme engine yet. | yes | medium |
 | **5. Theme engine v1** | TOML themes + `expr` + `tiny-skia` renderer + hot reload + bindings. Ship 2–3 built-in themes. | yes | **large** |
+| **5b. ENE 6K77 fw updater** *(off-path, experimental)* | Standalone CLI for flashing firmware on the ENE 6K77 fan-controller / Strimer Plus family. Pure-codec crate + `rusb`-backed harness behind a five-layer "untested may-brick" warning wall. Static-analysis-only — never validated against real hardware in this project. **Off-path:** does not block any other phase, does not feed into the daemon, separate audience (ENE-6K77 owners, not LCDV2 owners). See §12b. | **no** (codec is pure; harness needs a target SKU + firmware bin neither of which the project owns) | medium |
 | **6. Polish** | Fan curves UI, theme parameter forms, AUR PKGBUILD, README rewrite, troubleshooting doc. | yes | medium |
 | 7. (later) Second product | Pick next device family, repeat 0 → 5 for it. Theme engine, GUI, IPC are reused. | yes | per-product medium |
+| 8. (later) In-app firmware update for the user's device family | Decompile the L-Connect 3 in-app firmware-upload command for the LCDV2/HydroShift class (probably a `BCommandPacket` multi-packet write analogous to `SendJpeg`/`SendH264Frame`). Sibling to Phase 5b under a future shared `lconnect-firmware` umbrella. Lets a single tool eventually flash both the older ENE 6K77 family (Phase 5b) and the newer Galahad/HydroShift class (this phase). | yes | medium-large |
 
 Each phase ends with a working binary; nothing is "build everything then turn
 it on". Each phase gets its own implementation plan via the **writing-plans**
@@ -657,3 +747,37 @@ skill when its predecessor lands. The first plan to be drafted is **Phase 0**.
   the `hidraw` backend are known to be quirky. The daemon design isolates
   this on `spawn_blocking`, but Phase 1 should benchmark the actual
   behaviour and document any backend-specific workarounds.
+- **Phase 5b: ENE 6K77 bootloader cmd-byte semantics.** The codec's
+  treatment of cmd `0x40` as "write flash", `0x30` as "read flash",
+  `0x70` as "open programming session", and `0x80` as "verify
+  checksum / finalise" is inferred from call-site context in the
+  decompiled `FwUpdate.exe` — none of those mappings are confirmed
+  by hardware. A wrong byte at the wrong address can permanently
+  brick the device. Mitigated by static-analysis-only spec, no
+  hardware integration in this project, and the harness's five-layer
+  warning wall + mandatory risk-acknowledgement flag. Settled only
+  by a future contributor with target hardware.
+- **Phase 5b: bootloader-region size assumption.** The codec and
+  harness skip the first `0x1800` bytes of every `.bin` because the
+  decompiled tool gates writes and reads on `if (addr >= 0x1800)`.
+  The assumption is that this is exactly the on-chip bootloader's own
+  region; if the ENE chip's actual reserved region is smaller, the
+  flash will succeed but waste capacity; if larger, the flash will
+  brick. Confirmed only by a hardware tester comparing a freshly
+  flashed device's behaviour against the original Windows tool.
+- **Phase 5b: shipped-bin filename checksum suffix.** Every Lian-Li
+  ENE 6K77 firmware filename ends with an 8-hex-digit suffix
+  (e.g., `…_0x00373B91_V07.bin`). Presumed to be the firmware
+  checksum that the cmd `0x80` step verifies on the chip. Algorithm
+  unknown — `sub_140001e40` only triggers verification, the chip
+  computes it. Confirmable on hardware by mutating one digit of the
+  suffix, attempting verify, and observing failure.
+- **Phase 8 (later): in-app firmware update for the LCDV2/HydroShift
+  class.** The user's actual device family is updated through
+  L-Connect 3 itself, not a separate executable — almost certainly
+  via a multi-packet HID write analogous to `SendJpeg`/`SendH264Frame`
+  using the `BCommandPacket` framing. The relevant cmd byte and
+  packet header layout are not yet identified in the C# source. A
+  separate Phase-0-style decompile pass against
+  `LConnectCore/Products/Galahad2Vision/...` is required before
+  this phase can plan implementation work.

@@ -1,7 +1,6 @@
 # Rust
 /target
 **/*.rs.bk
-Cargo.lock
 
 # IDE
 .vscode/
@@ -12,3 +11,18 @@ Cargo.lock
 
 # Local capture artefacts (real device serials, etc.)
 /docs/protocol/captures/private/
+
+# Local implementation-plan ledgers and review scratch
+/.superpowers/sdd/
+
+# Desktop build outputs
+desktop/node_modules/
+desktop/.svelte-kit/
+desktop/build/
+desktop/src-tauri/gen/
+desktop/test-results/
+desktop/playwright-report/
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]

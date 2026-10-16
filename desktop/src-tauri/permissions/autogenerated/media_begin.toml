@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-media-begin"
+description = "Enables the media_begin command without any pre-configured scope."
+commands.allow = ["media_begin"]
+
+[[permission]]
+identifier = "deny-media-begin"
+description = "Denies the media_begin command without any pre-configured scope."
+commands.deny = ["media_begin"]

@@ -54,6 +54,15 @@ pub enum Error {
     #[error("device reported response data invalid")]
     DataNotValid,
 
+    /// A multipart response used the wrong packet number for its role.
+    #[error("unexpected packet number: expected {expected}, got {got}")]
+    UnexpectedPacketNumber {
+        /// Required packet number.
+        expected: u16,
+        /// Observed packet number.
+        got: u16,
+    },
+
     /// A firmware version string did not have the expected 7
     /// comma-separated fields.
     #[error("malformed firmware version string: {got_fields} fields, need 7")]

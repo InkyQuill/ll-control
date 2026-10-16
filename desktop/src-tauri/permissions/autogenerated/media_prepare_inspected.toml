@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-media-prepare-inspected"
+description = "Enables the media_prepare_inspected command without any pre-configured scope."
+commands.allow = ["media_prepare_inspected"]
+
+[[permission]]
+identifier = "deny-media-prepare-inspected"
+description = "Denies the media_prepare_inspected command without any pre-configured scope."
+commands.deny = ["media_prepare_inspected"]

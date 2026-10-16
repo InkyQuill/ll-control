@@ -1,0 +1,382 @@
+{
+  "source": "Windows2.1.28 Galahad2VisionProfile defaultFanLEDProfiles/defaultScreenLEDSubSettings/ViewSettings; numeric facts transcribed, no vendor code/assets",
+  "rows": [
+    {
+      "kind": "fan",
+      "mode": "rainbow",
+      "colors": [],
+      "speed": 75,
+      "brightness": 100,
+      "direction": true
+    },
+    {
+      "kind": "fan",
+      "mode": "rainbow_morph",
+      "colors": [],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "fan",
+      "mode": "static",
+      "colors": [
+        [
+          0,
+          215,
+          255
+        ]
+      ],
+      "speed": null,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "fan",
+      "mode": "breathing",
+      "colors": [
+        [
+          0,
+          215,
+          255
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "fan",
+      "mode": "runway",
+      "colors": [
+        [
+          0,
+          215,
+          255
+        ],
+        [
+          255,
+          0,
+          0
+        ]
+      ],
+      "speed": 50,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "fan",
+      "mode": "meteor",
+      "colors": [
+        [
+          0,
+          215,
+          255
+        ],
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          150,
+          255,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": true
+    },
+    {
+      "kind": "pump",
+      "mode": "rainbow",
+      "colors": [],
+      "speed": 75,
+      "brightness": 100,
+      "direction": true
+    },
+    {
+      "kind": "pump",
+      "mode": "rainbow_morph",
+      "colors": [],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "static",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ]
+      ],
+      "speed": null,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "breathing",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "runway",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ]
+      ],
+      "speed": 50,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "meteor",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": true
+    },
+    {
+      "kind": "pump",
+      "mode": "ticker_tape",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": true
+    },
+    {
+      "kind": "pump",
+      "mode": "fluctuation",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "transmit",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": true
+    },
+    {
+      "kind": "pump",
+      "mode": "colorful_starry_night",
+      "colors": [],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "static_starry_night",
+      "colors": [
+        [
+          255,
+          255,
+          255
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "voice",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "big_bang",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "burst",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "colors_morph",
+      "colors": [],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    },
+    {
+      "kind": "pump",
+      "mode": "bounce",
+      "colors": [
+        [
+          255,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          255
+        ],
+        [
+          0,
+          255,
+          0
+        ],
+        [
+          255,
+          255,
+          0
+        ]
+      ],
+      "speed": 75,
+      "brightness": 100,
+      "direction": false
+    }
+  ]
+}

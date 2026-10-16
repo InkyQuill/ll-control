@@ -1,0 +1,71 @@
+name: Linux checks and Arch package
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.2.0
+      - run: npm install --global pnpm@12.9.1
+      - run: pnpm --dir desktop install --frozen-lockfile
+      - run: pnpm --dir desktop exec playwright install --with-deps chromium
+      - run: pnpm --dir desktop exec playwright test
+  arch:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: 2
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_TEST_DEBUG: 0
+    steps:
+      - name: Provision Arch build environment
+        run: |
+          pacman -Syu --noconfirm --needed git rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils
+          rustup toolchain install 1.96.0 --profile minimal --component rustfmt --component clippy
+          rustup default 1.96.0
+          npm install --global pnpm@12.9.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Frozen frontend dependencies
+        run: pnpm --dir desktop install --frozen-lockfile
+      - name: Rust and frontend checks
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          cargo test --locked --workspace --all-features
+          RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --all-features --no-deps
+          pnpm --dir desktop check
+          pnpm --dir desktop check:locales
+          pnpm --dir desktop check:contracts
+          python3 -m unittest discover -s tools/tests -p test_distribution.py -v
+      - name: Build production payload with both shell integrations
+        run: python3 tools/build-distribution.py --output target/distribution --gnome-shell-version 51
+      - name: Build Arch package without installing it
+        run: |
+          useradd --create-home builder
+          chown -R builder:builder target/distribution
+          cd target/distribution
+          runuser -u builder -- makepkg --nodeps --noconfirm
+      - name: Private install, upgrade and removal
+        run: python3 tools/test-distribution.py target/distribution
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: lconnect-linux-arch-x86_64
+          path: target/distribution/
+          if-no-files-found: error
+          compression-level: 0

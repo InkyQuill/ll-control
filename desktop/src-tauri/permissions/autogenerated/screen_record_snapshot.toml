@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-screen-record-snapshot"
+description = "Enables the screen_record_snapshot command without any pre-configured scope."
+commands.allow = ["screen_record_snapshot"]
+
+[[permission]]
+identifier = "deny-screen-record-snapshot"
+description = "Denies the screen_record_snapshot command without any pre-configured scope."
+commands.deny = ["screen_record_snapshot"]

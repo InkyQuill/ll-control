@@ -93,17 +93,30 @@ impl FirmwareVersion {
     /// first packet's data is the version string (ASCII); the second is
     /// the datetime string (ASCII).
     pub fn from_two_responses(buf1: &[u8], buf2: &[u8]) -> crate::Result<Self> {
+        Self::from_optional_responses(buf1, Some(buf2))
+    }
+
+    /// Decode already-classified PN0 version and optional PN1 raw datetime.
+    /// Missing PN1 leaves `raw_datetime` empty; PN0 is never used as a date.
+    pub fn from_optional_responses(version: &[u8], datetime: Option<&[u8]>) -> crate::Result<Self> {
         let cmd = Command::GetFirmwareVersion as u8;
-        let p1 = ACommandPacket::parse_response(buf1, cmd)?;
-        let p2 = ACommandPacket::parse_response(buf2, cmd)?;
-
-        // ASCII bytes — invalid UTF-8 would be a firmware bug, but we
-        // tolerate it via `from_utf8_lossy` rather than failing the whole
-        // decode (and `parse` will reject empty / under-fielded inputs
-        // downstream anyway).
-        let version_str = String::from_utf8_lossy(p1.data());
-        let datetime_str = String::from_utf8_lossy(p2.data());
-
-        Self::parse(&version_str, &datetime_str)
+        let p1 = ACommandPacket::parse_response(version, cmd)?;
+        let check_number = |bytes: &[u8], expected| {
+            let got = u16::from_be_bytes([bytes[3], bytes[4]]);
+            if got != expected {
+                return Err(crate::Error::UnexpectedPacketNumber { expected, got });
+            }
+            Ok(())
+        };
+        check_number(version, 0)?;
+        let date = match datetime {
+            Some(bytes) => {
+                let packet = ACommandPacket::parse_response(bytes, cmd)?;
+                check_number(bytes, 1)?;
+                String::from_utf8_lossy(packet.data())
+            }
+            None => std::borrow::Cow::Borrowed(""),
+        };
+        Self::parse(&String::from_utf8_lossy(p1.data()), &date)
     }
 }

@@ -1,0 +1,27 @@
+# Maintainer: Pavel Obruchnikov <me@inkyquill.net>
+# Generated beside a locally built, checksummed payload. No install scriptlets.
+pkgname=lconnect-linux
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='Linux client for Galahad II LCDV2, with Plasma and GNOME Mini integrations'
+arch=('x86_64')
+license=('GPL-3.0-or-later')
+# Payload binaries are already release artifacts. Further strip/debug splitting
+# changes bytes after the manifest is signed by its checksum.
+options=('!strip' '!debug')
+depends=('hidapi' 'systemd-libs' 'gtk3' 'webkit2gtk-4.1'
+         'libayatana-appindicator' 'ffmpeg' 'gstreamer' 'gst-plugins-base'
+         'gst-plugins-good' 'gst-plugins-bad' 'gst-plugins-ugly'
+         'gst-plugin-pipewire' 'qt6-declarative')
+optdepends=('plasma-workspace: Mini widget host'
+            'gnome-shell: Mini extension host, candidate versions in metadata'
+            'libadwaita: GNOME extension preferences'
+            'xdg-desktop-portal: interactive screen selection'
+            'systemd: user daemon service')
+conflicts=('lconnect-linux-git')
+source=('@ARCHIVE@')
+sha256sums=('@SHA256@')
+
+package() {
+    cp -a "$srcdir/payload/usr" "$pkgdir/"
+}

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-profile-archive-recover"
+description = "Enables the profile_archive_recover command without any pre-configured scope."
+commands.allow = ["profile_archive_recover"]
+
+[[permission]]
+identifier = "deny-profile-archive-recover"
+description = "Denies the profile_archive_recover command without any pre-configured scope."
+commands.deny = ["profile_archive_recover"]

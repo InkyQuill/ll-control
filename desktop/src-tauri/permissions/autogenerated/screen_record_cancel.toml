@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-screen-record-cancel"
+description = "Enables the screen_record_cancel command without any pre-configured scope."
+commands.allow = ["screen_record_cancel"]
+
+[[permission]]
+identifier = "deny-screen-record-cancel"
+description = "Denies the screen_record_cancel command without any pre-configured scope."
+commands.deny = ["screen_record_cancel"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-screen-record-control"
+description = "Enables the screen_record_control command without any pre-configured scope."
+commands.allow = ["screen_record_control"]
+
+[[permission]]
+identifier = "deny-screen-record-control"
+description = "Denies the screen_record_control command without any pre-configured scope."
+commands.deny = ["screen_record_control"]

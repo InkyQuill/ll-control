@@ -1,3 +1,5 @@
+> Historical design reference. Current scope/order: [roadmap](../../../roadmap.md); current execution: [plan index](../plans/README.md). Older phase status and architecture must be reconciled with the M1/M2 daemon contracts before implementation.
+
 # Phase 2 — GUI (Tauri 2 + SvelteKit) Design
 
 - **Status:** approved (brainstorming complete) — ready for Phase 2 plan

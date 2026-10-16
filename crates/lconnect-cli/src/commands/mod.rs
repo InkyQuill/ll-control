@@ -10,3 +10,23 @@ pub mod lighting;
 pub mod maintenance;
 pub mod pwm;
 pub mod watch;
+
+pub mod cooling;
+
+pub mod thermal;
+
+pub mod theme;
+
+pub mod profiles;
+
+pub mod dynamic_rgb;
+
+pub mod group_archives;
+
+pub mod system_spec;
+
+pub mod display_settings;
+
+pub mod mini;
+
+pub mod fps;

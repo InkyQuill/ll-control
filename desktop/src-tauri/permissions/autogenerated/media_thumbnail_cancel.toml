@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-media-thumbnail-cancel"
+description = "Enables the media_thumbnail_cancel command without any pre-configured scope."
+commands.allow = ["media_thumbnail_cancel"]
+
+[[permission]]
+identifier = "deny-media-thumbnail-cancel"
+description = "Denies the media_thumbnail_cancel command without any pre-configured scope."
+commands.deny = ["media_thumbnail_cancel"]

@@ -1,57 +1,23 @@
-//! Device manager: hot-plug poll + per-device actor tree lifecycle.
+//! Device discovery, stable settings association, and joined transport teardown.
 //!
-//! Owns a periodic enumeration loop (cadence `config.poll.hotplug_ms`,
-//! default 500 ms) that diffs the latest `backend.enumerate()` result
-//! against the live device map. New devices get a per-family stable
-//! `DeviceId` (`{family}:{counter:04}`) and the full actor tree spawned
-//! by [`spawn_device_actor_tree`]. Disappeared devices are evicted from
-//! the map; dropping their `ManagedDevice` runs the per-device
-//! `watch::Sender<bool>` `Drop` impl, flipping the shutdown watch and
-//! tearing every sibling actor down.
-//!
-//! Counter allocation is per-family and **per-process** -- across a
-//! daemon restart the counter resets. We deliberately do not persist
-//! the counter: opaque IDs are only required to be stable within one
-//! daemon lifetime.
-//!
-//! # Phase 1 scope
-//!
-//! - Single supported family: `galahad2-lcdv2`. `enumerate()` returns
-//!   the full list and the manager filters to known families before
-//!   diffing.
-//! - Replay scope (P1D-15): on every successful actor-tree spawn we
-//!   re-issue the persisted fan PWM (cmd 139), pump PWM + source
-//!   (cmd 138), and LCD config (cmd 12) with 50 ms spacing, so the
-//!   device comes back to its last-known user state after a daemon
-//!   restart or hot-replug. Lighting was already replayed via the
-//!   keeper's `initial_fan` / `initial_pump` arguments and is *not*
-//!   re-issued here. The LCD image (JPEG bytes) is deliberately
-//!   **not** replayed -- Hybrid C persistence: image bytes do not
-//!   persist across daemon restarts (see `persistence.rs` header).
-//!
-//! [`spawn_device_actor_tree`]: crate::actor::spawn_device_actor_tree
+//! Runtime DeviceIds are attachment counters. Persistence uses VID/PID and
+//! hex-encoded serial, or an explicitly restricted serial-less singleton key.
+//! Detach waits for the old display/transport/settings tasks before reattach.
+//! Diagnostic sources are not persisted and restart in Idle.
 
-use crate::actor::{spawn_device_actor_tree, DeviceHandles, HidCommand};
-use crate::codec_str::{parse_lcd_mode, rotation_from_degrees};
+use crate::actor::cooling::CoolingCommand;
+use crate::actor::{spawn_device_actor_tree_with_sensors, DeviceHandles, LcdCommand};
 use crate::config::Config;
-use crate::persistence::{DeviceSettings, PersistenceStore};
+use crate::persistence::{settings_key, DeviceSettings, PersistenceStore};
 use crate::stats::Stats;
 use lconnect_hid::{DeviceFamilyId, DeviceInfo, HidBackend};
-use lconnect_ipc::{DeviceDescriptor, DeviceId};
-use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request as build_fan_pwm_request;
-use lconnect_protocol::galahad2_lcdv2::lcd::{
-    build_lcd_control_request, Brightness, LCDControlSetting,
-};
-use lconnect_protocol::galahad2_lcdv2::pump_pwm::{
-    build_request as build_pump_pwm_request, PumpPwmSource,
-};
-use lconnect_protocol::galahad2_lcdv2::pwm::Pwm as ProtoPwm;
+use lconnect_ipc::{CoolingTarget, DeviceDescriptor, DeviceId, LcdConfigPatch};
 use serde_json::json;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{oneshot, watch, RwLock};
+use tokio::sync::{mpsc, oneshot, watch, RwLock};
 use tracing::{debug, info, warn};
 
 /// Spacing between successive replay writes. The C# service issues
@@ -103,6 +69,7 @@ impl DeviceKey {
 /// struct from the device map (e.g., on detach) flips the watch and
 /// every sibling actor exits its `select!` loop.
 pub struct ManagedDevice {
+    info: DeviceInfo,
     pub descriptor: DeviceDescriptor,
     pub handles: DeviceHandles,
     /// Held so its `Drop` flips the shutdown watch. Never moved out.
@@ -117,9 +84,237 @@ pub struct ManagedDevice {
 #[derive(Clone)]
 pub struct ManagerHandle {
     devices: Arc<RwLock<HashMap<DeviceId, ManagedDevice>>>,
+    shutdown_tx: watch::Sender<bool>,
+    done_rx: watch::Receiver<bool>,
+    power_tx: mpsc::Sender<PowerTransition>,
+    firmware_tx: mpsc::Sender<FirmwareRequest>,
+    admission: crate::admission::Admission,
+}
+
+struct PowerTransition {
+    sleeping: bool,
+    reply: oneshot::Sender<anyhow::Result<()>>,
+}
+
+struct FirmwareRequest {
+    id: DeviceId,
+    reply: oneshot::Sender<anyhow::Result<FirmwareOwner>>,
+    _admission: crate::admission::Lease,
+}
+#[derive(Clone)]
+struct HandoffStop {
+    stop: watch::Sender<bool>,
+    done: watch::Receiver<bool>,
+}
+impl HandoffStop {
+    fn from_device(device: &ManagedDevice) -> Self {
+        Self {
+            stop: device._shutdown_tx.clone(),
+            done: device.handles.teardown_rx.clone(),
+        }
+    }
+    fn request_stop(&self) {
+        self.stop.send_replace(true);
+    }
+    async fn wait(mut self) -> anyhow::Result<()> {
+        while !*self.done.borrow_and_update() {
+            self.done.changed().await?;
+        }
+        Ok(())
+    }
+}
+/// Exclusive manager handoff. No Clone/recovery constructor: ordinary map no
+/// longer owns these attachments. Holds the original target HID actor; this is
+/// neither a firmware arm nor permission to flash. Drop requests root shutdown,
+/// while the manager retains join receipts for daemon exit.
+pub struct FirmwareOwner {
+    backend: Arc<dyn HidBackend>,
+    admission: crate::admission::Admission,
+    target: ManagedDevice,
+    others: Vec<ManagedDevice>,
+}
+/// Created only after checked old-root teardown. Cannot be cloned, recovered
+/// from a journal or constructed by an IPC caller. Owns no open HID handle.
+pub(crate) struct FirmwareReconnectOwner {
+    backend: Arc<dyn HidBackend>,
+    admission: crate::admission::Admission,
+    original: DeviceInfo,
+    operation_id: String,
+}
+impl FirmwareReconnectOwner {
+    pub(crate) fn probe(
+        &self,
+        store: &PersistenceStore,
+    ) -> anyhow::Result<crate::actor::firmware_probe::ReconnectProbe> {
+        anyhow::ensure!(
+            self.admission.same_scope(&store.admission()) && self.admission.is_closed(),
+            "reconnect owner/store maintenance scope mismatch"
+        );
+        let probe = crate::actor::firmware_probe::ReconnectProbe::new(store.firmware_operations())?;
+        probe.bind_closed_target(&self.original, &self.operation_id)?;
+        Ok(probe)
+    }
+    pub(crate) fn observe(
+        &self,
+        probe: &mut crate::actor::firmware_probe::ReconnectProbe,
+    ) -> anyhow::Result<crate::actor::firmware_probe::Observation> {
+        probe.observe(&*self.backend)
+    }
+}
+impl FirmwareOwner {
+    pub(crate) fn identities(&self) -> Vec<DeviceInfo> {
+        self.devices().map(|d| d.info.clone()).collect()
+    }
+    pub fn info(&self) -> &DeviceInfo {
+        &self.target.info
+    }
+    pub fn descriptor(&self) -> &DeviceDescriptor {
+        &self.target.descriptor
+    }
+    pub fn handles(&self) -> &DeviceHandles {
+        &self.target.handles
+    }
+    fn devices(&self) -> impl Iterator<Item = &ManagedDevice> {
+        std::iter::once(&self.target).chain(self.others.iter())
+    }
+    /// Stop all admitted device producers concurrently; join every one even if
+    /// a peer reports cleanup/save failure. Retains the target's original HID.
+    pub async fn quiesce_checked(&self) -> anyhow::Result<()> {
+        let results = futures::future::join_all(self.devices().map(|device| async move {
+            (
+                device.descriptor.id.clone(),
+                device.handles.quiesce_checked().await,
+            )
+        }))
+        .await;
+        let errors: Vec<_> = results
+            .into_iter()
+            .filter_map(|(id, result)| result.err().map(|e| format!("{}: {e}", id.as_str())))
+            .take(16)
+            .collect();
+        anyhow::ensure!(
+            errors.is_empty(),
+            "firmware keeper preflight failed: {}",
+            errors.join("; ")
+        );
+        Ok(())
+    }
+    pub(crate) async fn close_for_reconnect(
+        self,
+        operation_id: String,
+    ) -> anyhow::Result<FirmwareReconnectOwner> {
+        let owner = FirmwareReconnectOwner {
+            backend: self.backend.clone(),
+            admission: self.admission.clone(),
+            original: self.info().clone(),
+            operation_id,
+        };
+        self.close().await?;
+        Ok(owner)
+    }
+    /// Root shutdown plus actual HID/settings/keeper teardown before reconnect
+    /// probing. Cancelling this waiter still triggers Drop and manager join.
+    pub async fn close(self) -> anyhow::Result<()> {
+        let stops: Vec<_> = self.devices().map(HandoffStop::from_device).collect();
+        for stop in &stops {
+            stop.request_stop();
+        }
+        let results = futures::future::join_all(stops.into_iter().map(HandoffStop::wait)).await;
+        for result in results {
+            result?;
+        }
+        Ok(())
+    }
+}
+impl Drop for FirmwareOwner {
+    fn drop(&mut self) {
+        for device in self.devices() {
+            device._shutdown_tx.send_replace(true);
+        }
+    }
 }
 
 impl ManagerHandle {
+    pub(crate) fn shares_admission(&self, gate: &crate::admission::Admission) -> bool {
+        self.admission.same_scope(gate)
+    }
+    /// Serialized after in-flight manager attach/replay. Once queued, request
+    /// belongs to the manager: reply loss closes the handed-off roots, never
+    /// reattaches/replays. Use only from the owned maintenance coordinator.
+    pub async fn take_for_firmware(
+        &self,
+        id: DeviceId,
+        maintenance: &crate::admission::Maintenance,
+    ) -> anyhow::Result<FirmwareOwner> {
+        let lease = maintenance.child(&self.admission)?;
+        let (reply, response) = oneshot::channel();
+        self.while_running(async {
+            self.firmware_tx
+                .send(FirmwareRequest {
+                    id,
+                    reply,
+                    _admission: lease,
+                })
+                .await
+                .map_err(|_| anyhow::anyhow!("device manager stopped before firmware handoff"))?;
+            response
+                .await
+                .map_err(|_| anyhow::anyhow!("device manager stopped during firmware handoff"))?
+        })
+        .await
+    }
+
+    /// Pause discovery and join all device actors before acknowledging sleep.
+    /// On wake, reopen devices and replay durable settings and themes. Runtime
+    /// attachment IDs change; diagnostic sources are deliberately not restored.
+    /// Duplicate transitions are harmless. A failed wake enumeration is retried
+    /// by the ordinary discovery loop and also returned to the caller.
+    pub async fn prepare_for_sleep(&self, sleeping: bool) -> anyhow::Result<()> {
+        let (reply, response) = oneshot::channel();
+        self.while_running(async {
+            self.power_tx
+                .send(PowerTransition { sleeping, reply })
+                .await
+                .map_err(|_| anyhow::anyhow!("device manager stopped"))?;
+            response
+                .await
+                .map_err(|_| anyhow::anyhow!("device manager stopped during power transition"))?
+        })
+        .await
+    }
+
+    // A send can reserve capacity just before receiver teardown. Its queued
+    // reply sender may then live until the last channel sender is dropped.
+    // Observe manager completion across both queue admission and reply waiting.
+    async fn while_running<T>(
+        &self,
+        request: impl std::future::Future<Output = anyhow::Result<T>>,
+    ) -> anyhow::Result<T> {
+        let mut done = self.done_rx.clone();
+        tokio::select! {
+            biased;
+            _ = async {
+                while !*done.borrow_and_update() {
+                    if done.changed().await.is_err() {
+                        break;
+                    }
+                }
+            } => Err(anyhow::anyhow!("device manager stopped")),
+            result = request => result,
+        }
+    }
+
+    /// Stop discovery and wait for all device transports and settings flushes.
+    pub async fn shutdown(&self) {
+        let _ = self.shutdown_tx.send(true);
+        let mut done = self.done_rx.clone();
+        while !*done.borrow_and_update() {
+            if done.changed().await.is_err() {
+                break;
+            }
+        }
+    }
+
     /// Snapshot the current device descriptors. Order is unspecified;
     /// IPC callers should sort by `id` if they need a stable view.
     pub async fn list(&self) -> Vec<DeviceDescriptor> {
@@ -143,6 +338,7 @@ impl ManagerHandle {
 
 /// Hot-plug poller + per-device-tree lifecycle.
 pub struct DeviceManager {
+    host_sensors: crate::sensors::SensorCache,
     backend: Arc<dyn HidBackend>,
     persistence: Arc<PersistenceStore>,
     config: Config,
@@ -157,9 +353,16 @@ pub struct DeviceManager {
     /// Reverse-lookup: physical key -> opaque DeviceId, so the diff loop
     /// can map a vanished `DeviceInfo` back to the entry to evict.
     by_key: HashMap<DeviceKey, DeviceId>,
+    handoffs: Vec<HandoffStop>,
+    firmware_taken: bool,
 }
 
 impl DeviceManager {
+    pub fn with_sensors(mut self, cache: crate::sensors::SensorCache) -> Self {
+        self.host_sensors = cache;
+        self
+    }
+
     #[must_use]
     pub fn new(
         backend: Arc<dyn HidBackend>,
@@ -168,6 +371,7 @@ impl DeviceManager {
         stats: Arc<Stats>,
     ) -> Self {
         Self {
+            host_sensors: Default::default(),
             backend,
             persistence,
             config,
@@ -175,6 +379,8 @@ impl DeviceManager {
             counters: HashMap::new(),
             devices: Arc::new(RwLock::new(HashMap::new())),
             by_key: HashMap::new(),
+            handoffs: Vec::new(),
+            firmware_taken: false,
         }
     }
 
@@ -185,28 +391,139 @@ impl DeviceManager {
     /// `config.poll.hotplug_ms` interval it enumerates, diffs, and
     /// reconciles by spawning new actor trees / dropping vanished ones.
     pub async fn spawn(self) -> ManagerHandle {
+        let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
+        let (done_tx, done_rx) = watch::channel(false);
+        let (power_tx, mut power_rx) = mpsc::channel::<PowerTransition>(8);
+        let (firmware_tx, mut firmware_rx) = mpsc::channel::<FirmwareRequest>(1);
         let handle = ManagerHandle {
             devices: self.devices.clone(),
+            shutdown_tx,
+            done_rx,
+            power_tx,
+            firmware_tx,
+            admission: self.persistence.admission(),
         };
+        let persistence = self.persistence.clone();
+        match tokio::task::spawn_blocking(move || persistence.recover_import_publications()).await {
+            Ok(Ok(_)) => {}
+            failure => {
+                tracing::error!(?failure, "Import recovery failed; device replay disabled");
+                let _ = done_tx.send(true);
+                return handle;
+            }
+        }
+        if let Err(error) = self.persistence.display_settings().get().await {
+            tracing::warn!(%error, "Display settings unavailable; using last known presentation unit");
+        }
         let mut state = self;
         let poll_ms = state.config.poll.hotplug_ms.max(1);
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_millis(poll_ms));
             interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+            let mut sleeping = false;
             loop {
-                interval.tick().await;
-                if let Err(e) = state.poll_once().await {
-                    warn!("device_manager poll_once failed: {e:#}");
+                tokio::select! {
+                    biased;
+                    _ = shutdown_rx.changed() => break,
+                    Some(request) = firmware_rx.recv() => {
+                        let result = state.handoff_for_firmware(&request.id).await;
+                        // Err(payload) drops FirmwareOwner and requests root stop.
+                        let _ = request.reply.send(result);
+                    }
+                    Some(transition) = power_rx.recv() => {
+                        let admission = state.persistence.admission().enter();
+                        let result = if let Err(error) = &admission {
+                            Err(anyhow::anyhow!(error.to_string()))
+                        } else if transition.sleeping == sleeping {
+                            Ok(())
+                        } else {
+                            sleeping = transition.sleeping;
+                            state.host_sensors.invalidate();
+                            if sleeping {
+                                state.detach_all().await;
+                                Ok(())
+                            } else {
+                                state.poll_once().await
+                            }
+                        };
+                        // Cancellation of the caller must not interrupt teardown.
+                        let _ = transition.reply.send(result);
+                    }
+                    _ = interval.tick(), if !sleeping && !state.persistence.admission().is_closed() => {
+                        if let Err(e) = state.poll_once().await {
+                            warn!("device_manager poll_once failed: {e:#}");
+                        }
+                    }
                 }
             }
+            state.detach_all().await;
+            let _ = done_tx.send(true);
         });
         handle
+    }
+
+    async fn handoff_for_firmware(&mut self, id: &DeviceId) -> anyhow::Result<FirmwareOwner> {
+        anyhow::ensure!(
+            self.persistence.admission().is_closed(),
+            "firmware handoff requires sealed maintenance"
+        );
+        anyhow::ensure!(!self.firmware_taken, "firmware owner already handed off");
+        let mut devices = self.devices.write().await;
+        let candidate = devices
+            .get(id)
+            .ok_or_else(|| anyhow::anyhow!("firmware target attachment unavailable"))?;
+        anyhow::ensure!(
+            candidate.info.vid == 0x0416 && candidate.info.pid == 0x7395,
+            "unsupported firmware target"
+        );
+        let target = devices
+            .remove(id)
+            .ok_or_else(|| anyhow::anyhow!("firmware target disappeared"))?;
+        let others: Vec<_> = devices.drain().map(|(_, device)| device).collect();
+        drop(devices);
+        self.by_key.clear();
+        self.firmware_taken = true;
+        for device in std::iter::once(&target).chain(others.iter()) {
+            self.handoffs.push(HandoffStop::from_device(device));
+        }
+        Ok(FirmwareOwner {
+            target,
+            others,
+            backend: self.backend.clone(),
+            admission: self.persistence.admission(),
+        })
+    }
+
+    async fn detach_all(&mut self) {
+        for stop in &self.handoffs {
+            stop.request_stop();
+        }
+        // Remove the whole map before joining: IPC cannot obtain a new producer
+        // while any old device is draining. Clear keys even if USB stays present.
+        self.by_key.clear();
+        let devices: Vec<_> = self
+            .devices
+            .write()
+            .await
+            .drain()
+            .map(|(_, device)| device)
+            .collect();
+        for device in devices {
+            teardown(device).await;
+        }
+        let handoffs = std::mem::take(&mut self.handoffs);
+        for handoff in handoffs {
+            if let Err(error) = handoff.wait().await {
+                tracing::warn!(%error, "firmware handoff join receipt lost");
+            }
+        }
     }
 
     /// One enumerate-diff-reconcile pass. Pulled out of `spawn` so
     /// tests / future signal-driven re-enumeration can call it
     /// directly without restructuring the loop.
     async fn poll_once(&mut self) -> anyhow::Result<()> {
+        let _admission = self.persistence.admission().enter()?;
         let enumerated = self.backend.enumerate()?;
         let visible: Vec<DeviceInfo> = enumerated
             .into_iter()
@@ -218,11 +535,19 @@ impl DeviceManager {
             .map(|i| (DeviceKey::from_info(&i), i))
             .collect();
 
-        // Detach: anything in by_key not in visible_keys.
+        let mut identity_counts = HashMap::new();
+        for info in visible_keys.values() {
+            *identity_counts.entry(settings_key(info)).or_insert(0usize) += 1;
+        }
+        // Detach disappeared or now-ambiguous identities before opening any new handle.
         let to_evict: Vec<DeviceKey> = self
             .by_key
             .keys()
-            .filter(|k| !visible_keys.contains_key(*k))
+            .filter(|k| {
+                visible_keys
+                    .get(*k)
+                    .is_none_or(|info| identity_counts[&settings_key(info)] > 1)
+            })
             .cloned()
             .collect();
         for key in to_evict {
@@ -230,20 +555,28 @@ impl DeviceManager {
                 // Drop the ManagedDevice -> drops its _shutdown_tx ->
                 // the watch flips -> every actor's select! arm fires.
                 let evicted = self.devices.write().await.remove(&id);
-                if evicted.is_some() {
-                    info!("device detached: id={} key={:?}", id.as_str(), key);
+                if let Some(device) = evicted {
+                    info!("device detached: id={}", id.as_str());
+                    teardown(device).await;
                 }
             }
         }
 
         // Attach: anything in visible_keys not in by_key.
         for (key, info) in visible_keys {
+            if identity_counts[&settings_key(&info)] > 1 {
+                warn!(
+                    "ambiguous settings identity for {:04x}:{:04x}; refusing attachment",
+                    info.vid, info.pid
+                );
+                continue;
+            }
             if self.by_key.contains_key(&key) {
                 continue;
             }
             match self.attach(info, &key).await {
                 Ok(id) => {
-                    info!("device attached: id={} key={:?}", id.as_str(), key);
+                    info!("device attached: id={}", id.as_str());
                     self.by_key.insert(key, id);
                 }
                 Err(e) => {
@@ -258,6 +591,12 @@ impl DeviceManager {
     }
 
     async fn attach(&mut self, info: DeviceInfo, key: &DeviceKey) -> anyhow::Result<DeviceId> {
+        // Guard BEFORE actor spawn/open/replay (including keeper startup writes).
+        // Existing live attachments are controlled by the future update owner;
+        // journal publication must not make discovery interrupt its transfer.
+        let journal = self.persistence.firmware_operations();
+        let candidate = info.clone();
+        tokio::task::spawn_blocking(move || journal.ensure_replay_allowed(&candidate)).await??;
         let family = info.family.clone();
         let id = self.allocate_id(&family);
 
@@ -273,17 +612,21 @@ impl DeviceManager {
         // a parameter so a sibling write between two reads cannot
         // leave the keepers seeded with state-A while replay sends
         // state-B for fan/pump.
-        let settings = self.persistence.read(id.as_str())?;
+        let persistence_key = settings_key(&info);
+        let persistence = self.persistence.clone();
+        let read_key = persistence_key.clone();
+        let settings = tokio::task::spawn_blocking(move || persistence.read(&read_key)).await??;
 
-        let handles = spawn_device_actor_tree(
+        let handles = spawn_device_actor_tree_with_sensors(
             self.backend.clone(),
             info.clone(),
             &self.config,
             self.persistence.clone(),
-            id.as_str().to_string(),
+            persistence_key,
             settings.clone(),
             self.stats.clone(),
             shutdown_rx,
+            self.host_sensors.clone(),
         )?;
 
         // Replay persisted device-level settings (fan PWM, pump PWM,
@@ -292,16 +635,174 @@ impl DeviceManager {
         // tree spawn and the replay -- if the IPC `set_*` lands first,
         // the replay would clobber it.
         replay_persisted_settings(&handles, &settings).await;
+        if let Some(theme) = settings.theme.clone() {
+            let store = self.persistence.theme_assets();
+            let fonts = self.persistence.theme_fonts();
+            let saved = theme.clone();
+            let media = self.persistence.media_assets();
+            let loaded = tokio::task::spawn_blocking(move || {
+                Ok::<_, anyhow::Error>((
+                    store.load(&saved)?,
+                    fonts.load_theme(&saved)?,
+                    media.pin_theme(&saved)?,
+                ))
+            })
+            .await;
+            let runtime = match loaded {
+                Ok(Ok((assets, fonts, pin))) => crate::theme_runtime::ThemeRuntime::with_fonts(
+                    theme.clone(),
+                    assets,
+                    fonts,
+                    vec![self.host_sensors.clone(), handles.sensor_cache.clone()],
+                )
+                .map_err(|e| e.to_string())
+                .and_then(|runtime| {
+                    let degrees = if theme.requires_streaming() && !settings.lcd.rotation.is_empty()
+                    {
+                        settings.lcd.rotation.parse().unwrap_or(u16::MAX)
+                    } else {
+                        0
+                    };
+                    lconnect_image::FrameRotation::try_from(degrees)
+                        .map(|rotation| {
+                            Arc::new(
+                                runtime
+                                    .with_display_unit(
+                                        self.persistence.display_settings().live_unit(),
+                                    )
+                                    .with_media_pin(pin)
+                                    .with_output_rotation(rotation),
+                            )
+                        })
+                        .map_err(|e| e.to_string())
+                }),
+                Ok(Err(e)) => Err(e.to_string()),
+                Err(e) => Err(e.to_string()),
+            };
+            let (reply, rx) = tokio::sync::oneshot::channel();
+            let command = match runtime {
+                Ok(runtime) if runtime.theme().requires_streaming() => {
+                    crate::media_composition::PreparedComposition::prepare(
+                        self.persistence.media_assets(),
+                        runtime,
+                    )
+                    .await
+                    .map(|prepared| crate::actor::LcdCommand::SetComposition {
+                        prepared,
+                        preparation: None,
+                        reply,
+                    })
+                    .map_err(|e| e.to_string())
+                }
+                Ok(runtime) => runtime
+                    .prepare()
+                    .await
+                    .map(|prepared| crate::actor::LcdCommand::SetTheme {
+                        prepared,
+                        preparation: None,
+                        reply,
+                    })
+                    .map_err(|e| e.to_string()),
+                Err(error) => Err(error),
+            };
+            let restored = match command {
+                Ok(command) => {
+                    if handles.lcd_tx.send(command).await.is_ok() {
+                        match rx.await {
+                            Ok(Ok(_)) => Ok(()),
+                            Ok(Err(e)) => Err(e.to_string()),
+                            Err(e) => Err(e.to_string()),
+                        }
+                    } else {
+                        Err("display actor closed".into())
+                    }
+                }
+                Err(error) => Err(error),
+            };
+            if let Err(error) = restored {
+                let (reply, rx) = tokio::sync::oneshot::channel();
+                if handles
+                    .lcd_tx
+                    .send(crate::actor::LcdCommand::RestoreThemeError {
+                        theme,
+                        error,
+                        reply,
+                    })
+                    .await
+                    .is_ok()
+                {
+                    let _ = rx.await;
+                }
+            }
+        }
+
+        if let Some(key) = settings.media_clip.clone() {
+            let prepared = crate::actor::screen_group::PreparedScreen::prepare(
+                &settings,
+                self.persistence.clone(),
+                vec![self.host_sensors.clone(), handles.sensor_cache.clone()],
+            )
+            .await;
+            let restored = match prepared {
+                Ok(prepared) => {
+                    let (reply, response) = tokio::sync::oneshot::channel();
+                    let command = match prepared.source {
+                        crate::actor::screen_group::PreparedSource::Media { source, .. } => {
+                            Some(crate::actor::LcdCommand::SetMediaClip {
+                                key: key.clone(),
+                                source,
+                                preparation: None,
+                                reply,
+                            })
+                        }
+                        crate::actor::screen_group::PreparedSource::Composition {
+                            prepared,
+                            ..
+                        } => Some(crate::actor::LcdCommand::SetMediaComposition {
+                            key: key.clone(),
+                            prepared,
+                            preparation: None,
+                            reply,
+                        }),
+                        _ => None,
+                    };
+                    if let Some(command) = command {
+                        match handles.lcd_tx.send(command).await {
+                            Ok(()) => response
+                                .await
+                                .map_err(|e| e.to_string())
+                                .and_then(|state| state.map(|_| ()).map_err(|e| e.to_string())),
+                            Err(error) => Err(error.to_string()),
+                        }
+                    } else {
+                        Err("display media replay preparation failed".into())
+                    }
+                }
+                Err(error) => Err(error.to_string()),
+            };
+            if let Err(error) = restored {
+                let (reply, rx) = tokio::sync::oneshot::channel();
+                if handles
+                    .lcd_tx
+                    .send(crate::actor::LcdCommand::RestoreMediaError { key, error, reply })
+                    .await
+                    .is_ok()
+                {
+                    let _ = rx.await;
+                }
+            }
+        }
 
         let descriptor = build_descriptor(&id, &info)?;
 
         let managed = ManagedDevice {
+            info,
             descriptor,
             handles,
             _shutdown_tx: shutdown_tx,
         };
         self.devices.write().await.insert(id.clone(), managed);
-        let _ = key; // key is logged by the caller; kept for symmetry.
+        let _ = key;
         Ok(id)
     }
 
@@ -316,8 +817,8 @@ impl DeviceManager {
 /// Replay persisted device-level settings to a freshly-spawned actor
 /// tree. Issues, in order with [`REPLAY_GAP`] spacing:
 ///
-/// 1. Fan PWM (cmd 139) -- skipped if `fan.pwm_percent == 0`.
-/// 2. Pump PWM (cmd 138) -- skipped if `pump.pwm_percent == 0`.
+/// 1. Fan PWM (cmd139) -- skip legacy unconfigured0, replay explicit manual0.
+/// 2. Pump PWM (cmd138) -- explicit source distinguishes manual0 from unconfigured0.
 /// 3. LCD config (cmd 12) -- skipped if the LCD section is at its
 ///    default (brightness 0 + empty rotation + empty control_mode).
 ///
@@ -347,90 +848,77 @@ async fn replay_persisted_settings(handles: &DeviceHandles, settings: &DeviceSet
     // but tight enough that hot-replug feels responsive.
     tokio::time::sleep(REPLAY_GAP).await;
 
-    if settings.fan.pwm_percent != 0 {
-        match ProtoPwm::new(settings.fan.pwm_percent) {
-            Ok(pwm) => {
-                let bytes = build_fan_pwm_request(pwm).to_vec();
-                replay_write(handles, bytes, "fan PWM").await;
-                tokio::time::sleep(REPLAY_GAP).await;
-            }
-            Err(e) => warn!(
-                "replay: skipping fan PWM ({}% rejected by Pwm::new: {})",
-                settings.fan.pwm_percent, e
-            ),
-        }
+    if settings.cooling.fan.is_none() && settings.fan.has_manual_setting() {
+        replay_manual_cooling(handles, CoolingTarget::Fan, settings.fan.pwm_percent, false).await;
+        tokio::time::sleep(REPLAY_GAP).await;
     }
 
-    if settings.pump.pwm_percent != 0 {
-        match ProtoPwm::new(settings.pump.pwm_percent) {
-            Ok(pwm) => {
-                let source = parse_pump_source(&settings.pump.source);
-                let bytes = build_pump_pwm_request(source, pwm).to_vec();
-                replay_write(handles, bytes, "pump PWM").await;
-                tokio::time::sleep(REPLAY_GAP).await;
-            }
-            Err(e) => warn!(
-                "replay: skipping pump PWM ({}% rejected by Pwm::new: {})",
-                settings.pump.pwm_percent, e
-            ),
-        }
+    if settings.cooling.pump.is_none() && settings.pump.has_manual_setting() {
+        let motherboard = matches!(settings.pump.source.as_str(), "application" | "Application");
+        replay_manual_cooling(
+            handles,
+            CoolingTarget::Pump,
+            settings.pump.pwm_percent,
+            motherboard,
+        )
+        .await;
+        tokio::time::sleep(REPLAY_GAP).await;
     }
 
     let lcd = &settings.lcd;
     if lcd.brightness != 0 || !lcd.rotation.is_empty() || !lcd.control_mode.is_empty() {
-        match Brightness::new(lcd.brightness) {
-            Ok(brightness) => {
-                // LCDControlSetting is `#[non_exhaustive]`; we cannot
-                // use struct-literal syntax from outside the protocol
-                // crate (mirrors the pattern already used in
-                // `ipc_server::set_lcd_config`). Mutate after default-
-                // construction instead.
-                let mut setting = LCDControlSetting::default();
-                setting.mode = parse_lcd_mode(&lcd.control_mode);
-                setting.brightness = brightness;
-                setting.rotation = rotation_from_degrees(lcd.rotation.parse::<u16>().unwrap_or(0));
-                let bytes = build_lcd_control_request(setting).to_vec();
-                replay_write(handles, bytes, "LCD config").await;
+        let rotation = match lcd.rotation.parse::<u16>() {
+            Ok(value) => value,
+            Err(error) => {
+                warn!("invalid persisted LCD rotation: {error}");
+                return;
             }
-            Err(e) => warn!(
-                "replay: skipping LCD config (brightness {} rejected: {})",
-                lcd.brightness, e
-            ),
+        };
+        let (reply, response) = oneshot::channel();
+        let patch = LcdConfigPatch {
+            mode: Some(lcd.control_mode.clone()),
+            brightness_percent: Some(lcd.brightness),
+            rotation_degrees: Some(rotation),
+        };
+        if handles
+            .lcd_tx
+            .send(LcdCommand::Patch { patch, reply })
+            .await
+            .is_err()
+        {
+            warn!("LCD replay actor closed");
+        } else if !matches!(response.await, Ok(Ok(_))) {
+            warn!("LCD replay failed; inspect LCD state for details");
         }
     }
 }
 
-/// Issue one `HidCommand::Write` for the replay path. Wait for the
-/// reply so a slow first write does not stack up behind the next
-/// `REPLAY_GAP` sleep, but log + ignore any failure -- replay is
-/// best-effort.
-async fn replay_write(handles: &DeviceHandles, bytes: Vec<u8>, label: &'static str) {
-    let (reply_tx, reply_rx) = oneshot::channel();
+/// Replay through the cooling owner so successful writes also publish applied
+/// duty/source. A direct HID write would leave IPC state empty after restart.
+async fn replay_manual_cooling(
+    handles: &DeviceHandles,
+    target: CoolingTarget,
+    percent: u8,
+    motherboard: bool,
+) {
+    let (reply, reply_rx) = oneshot::channel();
     if let Err(e) = handles
-        .hid_io_tx
-        .send(HidCommand::Write {
-            bytes,
-            reply: reply_tx,
+        .cooling_tx
+        .send(CoolingCommand::Manual {
+            target,
+            percent,
+            motherboard,
+            reply,
         })
         .await
     {
-        warn!("replay: {label} send failed (channel closed): {e}");
+        warn!("replay: {target:?} send failed (channel closed): {e}");
         return;
     }
     match reply_rx.await {
-        Ok(Ok(())) => debug!("replay: {label} re-issued"),
-        Ok(Err(e)) => warn!("replay: {label} write failed: {e}"),
-        Err(e) => warn!("replay: {label} reply dropped: {e}"),
-    }
-}
-
-/// Map the persistence string into a `PumpPwmSource`. Empty / unknown
-/// values fall back to `Mcu`, mirroring the IPC-server default.
-fn parse_pump_source(s: &str) -> PumpPwmSource {
-    match s {
-        "application" | "Application" => PumpPwmSource::Motherboard,
-        // Includes "" (never-set default) and "mcu" / "Mcu".
-        _ => PumpPwmSource::Mcu,
+        Ok(Ok(())) => debug!("replay: {target:?} PWM re-issued"),
+        Ok(Err(e)) => warn!("replay: {target:?} PWM failed: {e}"),
+        Err(e) => warn!("replay: {target:?} reply dropped: {e}"),
     }
 }
 
@@ -455,10 +943,57 @@ fn build_descriptor(id: &DeviceId, info: &DeviceInfo) -> anyhow::Result<DeviceDe
     Ok(descriptor)
 }
 
+async fn teardown(device: ManagedDevice) {
+    let mut done = device.handles.teardown_rx.clone();
+    // Drop shutdown sender and externally reachable producer handles first.
+    drop(device);
+    while !*done.borrow_and_update() {
+        if done.changed().await.is_err() {
+            break;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::codec_str::parse_lcd_mode;
     use lconnect_protocol::galahad2_lcdv2::lcd::LCDControlMode;
+
+    #[tokio::test]
+    async fn completed_manager_rejects_queued_and_new_power_requests() {
+        use super::*;
+        let (shutdown_tx, _shutdown_rx) = watch::channel(false);
+        let (done_tx, done_rx) = watch::channel(false);
+        let (power_tx, mut power_rx) = mpsc::channel(1);
+        let (firmware_tx, _firmware_rx) = mpsc::channel(1);
+        let manager = ManagerHandle {
+            devices: Arc::new(RwLock::new(HashMap::new())),
+            shutdown_tx,
+            done_rx,
+            power_tx,
+            firmware_tx,
+            admission: crate::admission::Admission::default(),
+        };
+        let caller = manager.clone();
+        let request = tokio::spawn(async move { caller.prepare_for_sleep(false).await });
+        // Keep the reply sender alive to reproduce the shutdown/channel race,
+        // rather than relying on scheduler timing or channel-drop notification.
+        let retained_request = power_rx.recv().await.unwrap();
+        done_tx.send_replace(true);
+        let result = tokio::time::timeout(Duration::from_secs(1), request)
+            .await
+            .expect("queued request must observe manager completion")
+            .unwrap();
+        assert!(result.is_err());
+        assert!(
+            tokio::time::timeout(Duration::from_secs(1), manager.prepare_for_sleep(false))
+                .await
+                .expect("post-shutdown request must not wait for a reply")
+                .is_err()
+        );
+        assert!(power_rx.try_recv().is_err());
+        drop(retained_request);
+    }
 
     /// Replay-side parser must accept every mode the IPC layer is
     /// allowed to persist. Mirrors

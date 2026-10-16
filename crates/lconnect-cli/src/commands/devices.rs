@@ -57,6 +57,10 @@ pub async fn firmware(device: Option<String>, json_mode: bool) -> Result<()> {
         println!("{s}");
     } else {
         println!("Version:   {}", info.version);
+        println!(
+            "Build date: {}",
+            info.build_datetime.as_deref().unwrap_or("unavailable")
+        );
         println!("Raw token: {}", info.raw_token);
     }
     Ok(())
@@ -140,4 +144,84 @@ fn format_age(last_seen_unix_ms: u64) -> String {
     } else {
         format!("{}h ago", delta_ms / 3_600_000)
     }
+}
+
+/// `lconnectctl sensors` works even when no USB device is attached.
+pub async fn sensors(json_mode: bool) -> Result<()> {
+    let client = connection::connect().await?;
+    let rows: Vec<lconnect_ipc::SensorReading> = serde_json::from_value(
+        client
+            .call("list_sensors", json!({}))
+            .await
+            .context("list_sensors RPC failed")?,
+    )?;
+    if json_mode {
+        println!("{}", serde_json::to_string(&rows)?);
+    } else {
+        for row in rows {
+            let value = row
+                .value
+                .map(|v| format!("{v:.2}"))
+                .unwrap_or_else(|| "—".into());
+            println!(
+                "{}: {} {:?} ({:?}, age {:?} ms)\n  {}",
+                row.label, value, row.unit, row.status, row.age_ms, row.id
+            );
+        }
+    }
+    Ok(())
+}
+
+/// Saved artifacts only; does not enumerate a device or issue firmware commands.
+pub async fn firmware_recovery(json_mode: bool) -> Result<()> {
+    let client = connection::connect().await?;
+    let value = client
+        .call("get_firmware_recovery", json!({}))
+        .await
+        .context("get_firmware_recovery RPC failed")?;
+    let status: lconnect_ipc::FirmwareRecoveryStatus =
+        serde_json::from_value(value).context("invalid firmware recovery response")?;
+    if json_mode {
+        println!("{}", serde_json::to_string(&status)?);
+    } else {
+        let state = serde_json::to_value(status.state)?;
+        println!(
+            "Saved firmware state: {}",
+            state.as_str().context("invalid recovery state")?
+        );
+        if let Some(operation) = &status.operation {
+            let stage = serde_json::to_value(operation.stage)?;
+            println!("Operation: {}", operation.operation_id);
+            println!(
+                "Saved stage: {}",
+                stage.as_str().context("invalid saved stage")?
+            );
+            println!(
+                "Target: {:04x}:{:04x} / {}",
+                operation.vid,
+                operation.pid,
+                operation.serial.as_deref().unwrap_or("serial unavailable")
+            );
+            if let Some(progress) = &operation.progress {
+                println!(
+                    "Last durable chunks: {} writes / {} echoes / {} total",
+                    progress.chunk_writes, progress.chunk_echoes, progress.total_chunks
+                );
+            }
+        }
+        println!("Settings guards: {}", status.guards.len());
+        for guard in &status.guards {
+            println!(
+                "Guard: {} / operation {}",
+                guard.settings_key, guard.operation_id
+            );
+        }
+        if let Some(diagnostic) = status.diagnostic {
+            println!("{diagnostic}");
+        }
+        println!(
+            "Saved artifacts only; not live job status, update success or permission to retry."
+        );
+    }
+    Ok(())
 }

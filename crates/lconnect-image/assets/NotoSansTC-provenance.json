@@ -1,0 +1,30 @@
+{
+  "commit": "74981c47522c5b7262fcc344bf01c18e82af5d78",
+  "base_url": "https://raw.githubusercontent.com/notofonts/noto-cjk/74981c47522c5b7262fcc344bf01c18e82af5d78/",
+  "fonttools": "4.66.1",
+  "license_url": "https://raw.githubusercontent.com/notofonts/noto-cjk/74981c47522c5b7262fcc344bf01c18e82af5d78/LICENSE",
+  "license_sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+  "inputs": {
+    "NotoSansTC-Regular.otf": {
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/74981c47522c5b7262fcc344bf01c18e82af5d78/Sans/SubsetOTF/TC/NotoSansTC-Regular.otf",
+      "sha256": "5e825e8c8969a911a4d0897ea764591097c9125f53140f8a652e30ef7a6146bc"
+    },
+    "NotoSansTC-Bold.otf": {
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/74981c47522c5b7262fcc344bf01c18e82af5d78/Sans/SubsetOTF/TC/NotoSansTC-Bold.otf",
+      "sha256": "cb207e99c3f6c8de30abc97c06f1618afa70edcb57ebf21afa9d3893143acc27"
+    }
+  },
+  "outputs": {
+    "NotoSansTC-Regular.otf": {
+      "sha256": "66a8a11a814912b60a439dcc221ce7c4b7acdc5d276dff4dd9081346aadb5713",
+      "bytes": 5797460,
+      "cmap_count": 20748
+    },
+    "NotoSansTC-Bold.otf": {
+      "sha256": "7424adca975f2e26e00a6e8bd2fdc99fe6117f073c8874558985224fda6c247f",
+      "bytes": 5973932,
+      "cmap_count": 20748
+    }
+  },
+  "transformation": "Embed full OFL in name ID13 only; no subsetting or glyph/metric changes"
+}

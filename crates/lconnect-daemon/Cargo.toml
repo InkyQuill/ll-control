@@ -12,7 +12,11 @@ name = "lconnectd"
 path = "src/main.rs"
 
 [dependencies]
+sha2 = "0.10.9"
+tempfile = "3"
+rustix = { version = "=1.1.4", features = ["fs"] }
 lconnect-protocol = { path = "../protocol" }
+lconnect-intel-memory = { path = "../lconnect-intel-memory" }
 lconnect-image    = { path = "../lconnect-image" }
 lconnect-hid      = { path = "../lconnect-hid" }
 lconnect-ipc      = { path = "../lconnect-ipc" }
@@ -32,6 +36,9 @@ anyhow.workspace = true
 bytes = "1"
 xdg = "2"
 rand = "0.8"
+chrono = { version = "0.4.42", default-features = false, features = ["clock"] }
+perf-event = "0.4.9"
+zbus = { version = "4.4.0", default-features = false, features = ["tokio"] }
 
 [dev-dependencies]
-tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }
