@@ -12,12 +12,14 @@ async function setup(page:Page,rotation=0) {
     const writes:unknown[]=[];
     Object.assign(window,{canvasWrites:writes,__TAURI_INTERNALS__:{invoke:async(command:string,req:{method:string;params:Record<string,unknown>})=>{
       if(command==='desktop_set_language')return null;
+      if(command==='import_image')return 'imported-image';
       switch(req.method){
         case 'list_devices':return [{id:'test',display_name:'LCD',family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'CPU',label:'CPU',unit:'celsius',value:40,status:'valid'},{id:'GPU',label:'GPU fan',unit:'rpm',value:1000,status:'valid'}];
         case 'get_lcd_state':return {source:'Idle',requested:{rotation_degrees:rotation},last_error:null};
         case 'get_lcd_theme':return theme;
         case 'list_profiles':return {revision:0,profiles:[]};
+        case 'get_screen_collections':return {collections:null,persistence:{pending:false,last_error:null}};
         case 'preview_lcd_editor': {
           const draft=req.params.theme as typeof theme;
           return {jpeg:Array.from(Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0))),layers:draft.layers.map(layer=>layer.kind==='image'?{x:layer.x,y:layer.y,width:layer.width,height:layer.height}:layer.style?{x:layer.style.x,y:layer.style.y,width:120,height:layer.style.size}:null)};
@@ -139,4 +141,23 @@ test('canvas remains usable in a narrow desktop window',async({page})=>{
   await expect(layer(page,2).getByLabel('Y',{exact:true})).toHaveValue('340');
   await page.getByRole('button',{name:'Отменить правку',exact:true}).click();await ready(page);
   await expect(layer(page,2).getByLabel('X',{exact:true})).toHaveValue('120');
+});
+
+
+test('importing an image preserves the selected existing layer',async({page})=>{
+  await setup(page);
+  await page.getByLabel('Выбранный слой',{exact:true}).selectOption('3');
+  await page.getByLabel('+ Изображение',{exact:true}).setInputFiles({
+    name:'new-image.png',mimeType:'image/png',
+    buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')
+  });
+  await expect(page.locator('.editor article.layer')).toHaveCount(5);
+  await ready(page);
+  await expect(page.getByLabel('Выбранный слой',{exact:true})).toHaveValue('4');
+  await expect(page.getByRole('button',{name:'Выбрать слой 5: Текст',exact:true})).toHaveAttribute('aria-pressed','true');
+  const handle=page.getByRole('button',{name:'Изменить размер выбранного слоя',exact:true});
+  await handle.focus();await page.keyboard.press('Control+ArrowRight');await ready(page);
+  await expect(layer(page,4).getByLabel('X',{exact:true})).toHaveValue('130');
+  await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
+  expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
 });

@@ -44,3 +44,15 @@ test('image and divider transforms retain fit, opacity and bounded geometry', ()
   resizeLayer(divider,{x:10,y:10,width:2,height:100},50,-200);
   expect(divider).toMatchObject({length:0.25,thickness:16});
 });
+
+test('watermark transforms keep percentage centers and the Windows zero-position convention', () => {
+  const watermark: Layer = {kind:'image',asset:'mark',x:0,y:0,width:100,height:50,
+    fit:'contain_native',opacity:65,watermark_position:{horizontal:0,vertical:50}};
+  translateLayer(watermark,1,1);
+  expect(watermark.watermark_position).toEqual({horizontal:0,vertical:50});
+  translateLayer(watermark,10,10);
+  expect(watermark.watermark_position).toEqual({horizontal:7,vertical:52});
+  resizeLayer(watermark,{x:0,y:215,width:100,height:50},100,50);
+  expect(watermark).toMatchObject({width:200,height:100,fit:'contain_native',opacity:65,
+    watermark_position:{horizontal:7,vertical:52}});
+});
