@@ -187,3 +187,44 @@ Reproduce with `native-lighting-palette.py` after building the native-smoke GUI,
 and `cargo test -p lconnect-daemon --locked --test cooling --test cooling_ipc
 --test cooling_mode_save --test dynamic_rgb --test dynamic_rgb_ipc
 --test lighting_owner --test lighting_palette --test thermal`.
+
+
+## Native keyboard and reset qualification
+
+The current Russian native keyboard workflow passed at 1× scale with real
+X11 input: 861 trusted key steps, 13 AT-SPI control states and eight native
+chooser interactions. Assertions verify cooling PWM, fixed/curve RPM and
+unapplied drafts; thermal grace/thresholds; dynamic Celsius/RPM fields and
+invalid-input recovery; image/font cancel/import/reselect and decoder/size
+errors; native focus/reflow; and screen reset cancel, durable commit with
+injected output failure, readback, explicit reapply without another commit,
+preserved files/draft and restored focus. Daemon stop/restart restores controls
+and emits ordered offline/reconnected accessibility events. Pending/saved and
+validation/font-error live events were also checked.
+
+The full control-reset native workflow passed separately: read-only preview,
+cancel, complete default cooling banks/selection, one slot revision, neighboring
+screen/draft preservation, explicit reapply without another commit, and both
+desktop/daemon restart readback refusing to overwrite newer manual intent.
+
+42 targeted tests passed with no ignores in `control_group_commit`,
+`control_group_barrier`, `screen_reset_actor`, `screen_reset_lifecycle`, and
+`screen_reset_storage`. Inspected assertions cover lost replies, two-owner
+barriers, commit-before-output, unknown outcomes, stale revisions, transport
+retry without storage replay, shutdown/sleep joining and neighbor preservation.
+
+Harness corrections create private XDG roots before session services, set the
+keyboard fixture language explicitly, update obsolete title/unit/error strings,
+enter test speeds independently of mode defaults, retain distinct per-source
+RPM thresholds, and navigate Library/Composition for font actions. Earlier
+failures were driver assumptions; no production fix is claimed. Failed runs
+are retained locally alongside the pass.
+
+Reproduce: build the native-smoke GUI, then run
+`LCONNECT_NATIVE_ATSPI=1 LCONNECT_NATIVE_DIALOGS=1 /usr/bin/python3 desktop/scripts/native-keyboard.py`
+and `/usr/bin/python3 desktop/scripts/native-control-reset.py`. The Rust suites
+above run with `cargo test -p lconnect-daemon --locked --test <suite>`.
+
+This is Russian, 1×, isolated X11 acceptance. It does not close EN/scale coverage,
+all core operation interruption matrices, real speech or Plasma Wayland.
+Resource budgets and the remaining R2 requirements remain open.

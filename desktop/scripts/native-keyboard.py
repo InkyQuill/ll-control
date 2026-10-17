@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import socket
 from pathlib import Path
 import subprocess
 import sys
@@ -11,14 +12,27 @@ import time
 
 repo = Path(__file__).resolve().parents[2]
 if '--inside-xvfb' not in sys.argv:
-    env = dict(os.environ)
-    env.pop('DISPLAY', None)
-    env.pop('WAYLAND_DISPLAY', None)
-    env['LCONNECT_KEYBOARD_ISOLATED'] = '1'
-    raise SystemExit(subprocess.call(['xvfb-run', '-a', '-s', '-screen 0 1600x1200x24', 'dbus-run-session', '--', sys.executable, __file__, '--inside-xvfb'], env=env))
+    root = Path(tempfile.mkdtemp(prefix='lconnect-native-keyboard-'))
+    env = dict(os.environ, LCONNECT_KEYBOARD_ISOLATED='1', LCONNECT_KEYBOARD_ROOT=str(root),
+        XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root/'config'),
+        XDG_CACHE_HOME=str(root/'cache'), XDG_DATA_HOME=str(root/'data'),
+        DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
+    for key in ['DISPLAY','WAYLAND_DISPLAY','DBUS_SESSION_BUS_ADDRESS','AT_SPI_BUS_ADDRESS']:
+        env.pop(key, None)
+    try:
+        code = subprocess.call(['xvfb-run', '-a', '-s', '-screen 0 1600x1200x24', 'dbus-run-session', '--', sys.executable, __file__, '--inside-xvfb'], env=env)
+    finally:
+        target = root/'doc'
+        def mounted():
+            return any(row.split()[4] == str(target) for row in Path('/proc/self/mountinfo').read_text().splitlines())
+        if mounted():
+            subprocess.run(['fusermount3','-uz','--',str(target)],check=True)
+            assert not mounted(), f'Private document mount remains: {target}'
+    raise SystemExit(code)
 
 assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1', 'Use the outer Xvfb launcher'
-root = Path(tempfile.mkdtemp(prefix='lconnect-native-keyboard-'))
+root = Path(os.environ['LCONNECT_KEYBOARD_ROOT'])
+assert os.environ['XDG_RUNTIME_DIR'] == str(root)
 (root / 'fixture-marker').write_text('MockBackend only\n')
 (root / 'fixture-image.png').write_bytes((repo / 'desktop/src-tauri/icons/icon.png').read_bytes())
 (root / 'fixture-font.ttf').write_bytes((repo / 'crates/lconnect-image/assets/DejaVuSansMono.ttf').read_bytes())
@@ -116,6 +130,19 @@ try:
         assert fixture.poll() is None, 'Mock fixture exited'
         if time.monotonic() > deadline: raise TimeoutError('Mock socket')
         time.sleep(.05)
+    def rpc(method, params=None):
+        with socket.socket(socket.AF_UNIX) as conn:
+            conn.settimeout(15); conn.connect(str(root/'lconnectd.sock'))
+            stream = conn.makefile('rwb')
+            stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode()); stream.flush()
+            while True:
+                reply = json.loads(stream.readline())
+                if reply.get('id') == 1:
+                    assert 'error' not in reply, reply
+                    return reply['result']
+    display = rpc('get_display_settings')
+    display['interface_language'] = 'ru-RU'
+    rpc('set_display_settings', {'settings':display})
     gui = launch([repo / 'target/debug/lconnect-gui'], 'gui')
     deadline = time.monotonic() + 180
     sequence = 0
@@ -261,7 +288,7 @@ try:
         assert pwm['value']['current'] == 79, 'AT-SPI value did not follow keyboard edit'
         result['native_atspi'] = atspi_results
         events = read_events()
-        assert any(event['live'] == 'assertive' and 'Пороги должны быть целыми' in ((event['delta'] or '') + event['text']) for event in events), 'Validation error did not emit an assertive AT-SPI text event'
+        assert any(event['live'] == 'assertive' and 'Пороги температуры должны соответствовать целым' in ((event['delta'] or '') + event['text']) for event in events), 'Validation error did not emit an assertive AT-SPI text event'
         assert any(event['live'] == 'polite' and 'Настройки ожидают записи на диск.' in event['text'] for event in events), 'Pending save event missing'
         assert any(event['live'] == 'polite' and 'Последняя запись настроек завершена.' in event['text'] for event in events), 'Saved event missing'
         assert connection_events_ready(events), 'Ordered offline → reconnected live events missing'

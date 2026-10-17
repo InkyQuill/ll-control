@@ -69,7 +69,7 @@ if page == 'lighting' and any(row['name'].startswith('Верхний порог 
     variant = 'dynamic_invalid'
     requirements['lighting'] = ([('button', 'Применить режим по датчику')], ('spin button', 'Верхний порог ('))
 required, focused = requirements[page]
-required = [('document web', 'L-Connect Linux · LCD'), ('link', 'Перейти к содержимому'),
+required = [('document web', 'L-Connect Linux'), ('link', 'Перейти к содержимому'),
             *[('button', name) for name in ['Экран помпы', 'Датчики', 'Охлаждение', 'Подсветка', 'Настройки']], *required]
 for role, name in required:
     assert any(row['role'] == role and row['name'] == name for row in rows), (page, role, name, rows)
@@ -79,18 +79,18 @@ if page == 'cooling' and variant == 'main':
     value = targets[0].get('value')
     assert value and value['minimum'] == 10 and value['maximum'] == 100 and value['current'] in (80, 79), ('PWM range interface', value)
 if variant in ('dynamic_celsius', 'dynamic_rpm'):
-    unit = variant.removeprefix('dynamic_')
+    unit = 'rpm' if variant == 'dynamic_rpm' else '°C'
     maximum = 3600 if unit == 'rpm' else 100
-    for name, current, high in [(f'Нижний порог ({unit})', 31, maximum), (f'Верхний порог ({unit})', 61, maximum), ('Нижняя скорость, %', 1, 100), ('Верхняя скорость, %', 99, 100)]:
+    for name, current, high in [(f'Нижний порог ({unit})', 801 if unit=='rpm' else 31, maximum), (f'Верхний порог ({unit})', 1201 if unit=='rpm' else 61, maximum), ('Нижняя скорость, %', 75 if unit=='rpm' else 1, 100), ('Верхняя скорость, %', 75 if unit=='rpm' else 99, 100)]:
         nodes = [node for node in rows if node['name'] == name and node['role'] == 'spin button']
         assert len(nodes) == 1 and nodes[0]['enabled'] and not nodes[0]['invalid'], (name, nodes)
         assert nodes[0].get('value') == {'current': current, 'minimum': 0, 'maximum': high}, (name, nodes)
 if variant == 'dynamic_invalid':
-    for name, current in [('Нижний порог (celsius)', 31), ('Верхний порог (celsius)', 30)]:
+    for name, current in [('Нижний порог (°C)', 31), ('Верхний порог (°C)', 30)]:
         nodes = [node for node in rows if node['name'] == name and node['role'] == 'spin button']
         assert len(nodes) == 1 and nodes[0]['invalid'] and nodes[0]['enabled'], (name, nodes)
         assert nodes[0].get('value') == {'current': current, 'minimum': 0, 'maximum': 100}, (name, nodes)
-    assert any('Пороги должны быть целыми' in node['name'] or 'Пороги должны быть целыми' in node.get('text', '') for node in rows), 'Accessible validation text missing'
+    assert any('Пороги температуры должны соответствовать целым' in node['name'] or 'Пороги температуры должны соответствовать целым' in node.get('text', '') for node in rows), 'Accessible validation text missing'
 if variant == 'thermal':
     assert targets[0].get('value') == {'current': 86, 'minimum': 0, 'maximum': 150}, targets[0]
 if variant == 'rpm':
