@@ -11,6 +11,8 @@
   async function change(name,value){await until(()=>field(name)&&!field(name).matches(':disabled'),`field ${name} enabled`);const el=field(name);el.value=String(value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));await delay(0);}
   async function click(name){await until(()=>button(name)&&!button(name).matches(':disabled'),`button ${name} enabled`);button(name).click();await delay(0);}
   try{
+    await click('Экран помпы');
+    await click('Композиция');
     await until(()=>button('Загрузить активную тему'),'native app mounted');
     const devices=await rpc('list_devices');assert(devices.length===1,'one mock device');const dev=devices[0].id;
     const sources=(await rpc('list_sensors')).filter(s=>['celsius','percent','rpm'].includes(s.unit));

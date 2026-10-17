@@ -26,11 +26,11 @@ checks. Do not repeat their workflows unless the relevant implementation changes
 |---|---|
 | Media inputs | Native EN/RU normalization of all eight EXIF orientations passed with exact pixel mapping and reopen checks; reconcile image/video happy-path assertions with the first milestone requirement |
 | Recovery | Integrated native fault workflow passed; map publication/replacement/delete/profile Save/Apply/both resets to concrete lost-reply, timeout, disconnect and close evidence; add only missing cases |
-| Storage | Reconcile actual syscall/journal/quota checks with publication/import ownership and partial-cleanup paths; resolve uncovered boundaries rather than treating generic test counts as proof |
+| Storage | Publication ownership/partial-cleanup suite passed with inspected assertions; reconcile actual syscall/journal/quota checks and remaining link failure boundaries rather than treating generic test counts as proof |
 | Cooling/RGB | Integrated mode/default Save and recovery passed; reconcile with native controls, restart and thermal backend assertions before final snapshot checks |
 | Media lifetime/resources | Fixed budget, exact storage/one-hour preparation and codec-fault/queued-stop assertions passed; reconcile with milestone scope. Physical/real-time soak belongs to R3 |
 | EN/RU/accessibility | Retain Russian keyboard/AT-SPI proof and EN/RU recovery matrices; audit missing supported recovery states and current scale coverage |
-| Optional isolation | Recording fault/cancel/close passed in EN/RU; profile and both group archive EN/RU checks passed; qualify retained Windows/weather isolation checks and inspect core-state/worker cleanup assertions |
+| Optional isolation | Recording fault/cancel/close passed in EN/RU; profile and both group archive EN/RU checks passed; Windows Screen/Control and corrupt-media EN/RU checks plus Russian effects/restart/joined-close checks passed; reconcile optional-flow cancellation coverage before closure |
 | Integrated snapshot | Once gaps above close, run exact-source Rust/frontend/contracts/browser checks and relevant native flows; record ignores without converting them to passes |
 
 ## Execution order
@@ -355,3 +355,50 @@ All six archive runs use private FileChooser fixtures and MockBackend. The GUI
 build, Python compilation and JavaScript syntax checks passed. No hardware or
 real Wayland acceptance is claimed; Windows/weather isolation and the remaining
 closure queue still keep R2 open.
+
+
+## Windows import, effects and publication ownership
+
+Native Windows Control and Screen import passed in EN/RU using owned fixture
+archives. Both cancel the initial source grant before a fresh import, preserve
+local drafts and neighboring state, require explicit Apply, and recover the
+original receipt after desktop/daemon restart with the source removed. Screen
+private scene/editor previews do not publish or Apply; the imported runtime and
+editor remain independent. These tests qualify isolation and recovery, not full
+Windows visual fidelity (R4).
+
+Corrupt MP4 Screen imports passed in EN/RU: preparation is rejected, Apply is
+unavailable, the library/catalog and current scene are unchanged, the existing
+JPEG bytes are preserved, no video stream starts and the private upload is
+released. All Windows runs assert normal close joins the owned workers.
+
+The Russian native effects workflow passed across Rain, Snow, MeteorShower,
+Snow3D and Fireworks. Assertions cover draft/preview versus Apply, independent
+page state, retained source thresholds/palettes, profile Save/load, managed
+background references, playback after GUI close and daemon restart. The driver
+now asserts joined close markers. EN/RU effects wording and visual/timing parity
+remain separate from this Russian workflow; full effect qualification belongs R8.
+The effects and Windows-control drivers now set private configuration before
+starting session services; the effects driver selects Russian explicitly and
+navigates to Composition. No production defect was demonstrated.
+
+The complete `asset_publication` library suite passed 28 tests. One ignored
+entry is the subprocess fixture invoked explicitly by its SIGKILL parent tests.
+Inspected assertions prove: private rollback preserves other publications, pins
+and offline references; partial preparation removes its own prefix but retains
+a foreign blocker; replaced inodes/adopted metadata are never swept; ownership
+callbacks precede final publication; callback failure vetoes image/name/font/media
+publication and removes temporary files. Manifest-write failure after creating
+an ownership link retains recovery material and vetoes the final asset. Drop
+cleanup is joined; failed cleanup preserves the manifest and closes admission.
+Callback-injected sync errors are not mislabeled as real syscall failures; the
+separate storage-fault batch supplies its declared syscall coverage.
+
+Four archive IPC tests also passed: profile Finish reply loss is produced on an
+actual Unix connection, read-only status precedes explicit idempotency checks,
+and restart cannot resurrect a reset slot. Group tests verify upload binding,
+chunk rejection/release, no preflight publication, accepted Finish surviving
+connection loss, selected-group restore and stale/newer-intent protection. These
+results do not stand in for every timeout/close cell in the remaining recovery
+matrix. GUI build, driver syntax/compilation and diff checks passed. Raw evidence
+is retained under ignored batch-10; R2 remains open for its closure queue.

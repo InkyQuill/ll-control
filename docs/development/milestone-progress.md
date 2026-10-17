@@ -192,3 +192,11 @@ Repository policy rechecked: all tracked documentation under `docs/` belongs to
 Raw evidence paths remain ignored and no run logs/captures are tracked. R0–R10
 plans are committed; only R0/R1 are complete. Completed qualification batches
 are committed separately from milestone completion.
+
+
+R2 optional-isolation/publication batch: six Windows import/rejection native
+cases passed in EN/RU; the Russian five-effect workflow passed with asserted
+joined close and restart. Publication ownership/cleanup tests passed 28 cases
+plus one explicitly invoked subprocess helper; four archive IPC tests passed.
+Updated private-session setup and effects navigation in the drivers. R4 fidelity,
+R8 full effect qualification and the remaining R2 closure queue stay open.
