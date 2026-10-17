@@ -9,8 +9,11 @@ use tokio::{
     task::JoinSet,
 };
 
+type DecodedFrame = Option<Result<(usize, Arc<RgbImage>), String>>;
+
 pub(crate) struct EditorVideo {
-    frame: watch::Receiver<Option<Result<Arc<RgbImage>, String>>>,
+    frame: watch::Receiver<DecodedFrame>,
+    requested: watch::Sender<usize>,
     stop: watch::Sender<bool>,
 }
 impl Drop for EditorVideo {
@@ -19,37 +22,38 @@ impl Drop for EditorVideo {
     }
 }
 impl EditorVideo {
-    pub async fn first_frame(&self) -> Result<Arc<RgbImage>> {
+    pub async fn frame_at(&self, target: usize) -> Result<Arc<RgbImage>> {
+        self.requested.send_replace(target);
         let mut frames = self.frame.clone();
         tokio::time::timeout(Duration::from_secs(10), async {
             loop {
-                if let Some(frame) = self.latest()? {
-                    return Ok(frame);
+                match frames.borrow_and_update().as_ref() {
+                    Some(Ok((index, frame))) if *index == target => return Ok(frame.clone()),
+                    Some(Err(error)) => anyhow::bail!(error.clone()),
+                    _ => {}
                 }
                 frames.changed().await.context("editor decoder stopped")?;
             }
         })
         .await
-        .context("editor first frame timeout")?
+        .context("editor frame deadline")?
     }
-    pub fn latest(&self) -> Result<Option<Arc<RgbImage>>> {
-        match self.frame.borrow().as_ref() {
-            Some(Ok(frame)) => Ok(Some(frame.clone())),
-            Some(Err(error)) => anyhow::bail!(error.clone()),
-            None => Ok(None),
-        }
-    }
-    pub fn spawn(source: PinnedMedia, permit: WorkPermit) -> Self {
+    pub fn spawn(source: PinnedMedia, permit: WorkPermit, target: usize) -> Self {
+        let (requested, requests) = watch::channel(target);
         let (send, frame) = watch::channel(None);
         let (stop, mut cancelled) = watch::channel(false);
         tokio::spawn(async move {
-            let result = run(source, send.clone(), &mut cancelled).await;
+            let result = run(source, target, requests, send.clone(), &mut cancelled).await;
             if let Err(error) = result {
                 send.send_replace(Some(Err(error.to_string())));
             }
             drop(permit);
         });
-        Self { frame, stop }
+        Self {
+            frame,
+            stop,
+            requested,
+        }
     }
 }
 async fn stop_requested(stop: &mut watch::Receiver<bool>) {
@@ -61,10 +65,24 @@ async fn stop_requested(stop: &mut watch::Receiver<bool>) {
 }
 async fn run(
     source: PinnedMedia,
-    send: watch::Sender<Option<Result<Arc<RgbImage>, String>>>,
+    target: usize,
+    mut requests: watch::Receiver<usize>,
+    send: watch::Sender<DecodedFrame>,
     stop: &mut watch::Receiver<bool>,
 ) -> Result<()> {
-    let fps = source.fps().max(1);
+    let (source, start, primer) = tokio::task::spawn_blocking(move || {
+        let mut source = source;
+        let start = source.keyframe_before(target)?;
+        anyhow::ensure!(target - start <= 1024, "editor seek exceeds warmup budget");
+        let primer = if start == 0 {
+            None
+        } else {
+            Some(source.read_unit(0)?)
+        };
+        Ok::<_, anyhow::Error>((source, start, primer))
+    })
+    .await??;
+    let skip_primer = usize::from(primer.is_some());
     let mut child = crate::media_composition::decoder_command(OsStr::new("ffmpeg"), false)
         .spawn()
         .context("editor decoder")?;
@@ -74,8 +92,11 @@ async fn run(
     let mut tasks = JoinSet::new();
     let mut writing_stop = shutdown.clone();
     tasks.spawn(async move {
-        let mut reader=MediaReader::spawn(source);
+        let mut reader=MediaReader::spawn_at(source,start);
         let outcome:Result<()>=async {
+            if let Some(primer)=primer {
+                tokio::select!{biased;_=stop_requested(&mut writing_stop)=>return Ok(()),result=input.write_all(&primer.bytes)=>result.context("editor parameter primer")?};
+            }
             loop {
                 let unit=tokio::select!{biased;_=stop_requested(&mut writing_stop)=>return Ok(()),unit=reader.next_unit()=>unit?};
                 tokio::select!{biased;_=stop_requested(&mut writing_stop)=>return Ok(()),result=input.write_all(&unit.bytes)=>result.context("editor decode input")?};
@@ -86,14 +107,22 @@ async fn run(
     });
     let mut reading_stop = shutdown;
     tasks.spawn(async move {
-        let mut pace=tokio::time::interval(Duration::from_secs_f64(1.0/f64::from(fps)));
-        pace.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        let mut index=start;
+        let mut primer_remaining=skip_primer;
         loop {
-            tokio::select!{biased;_=stop_requested(&mut reading_stop)=>return Ok(()),_=pace.tick()=>{}}
+            let target=*requests.borrow_and_update();
+            if index>target && primer_remaining==0 {
+                tokio::select!{biased;_=stop_requested(&mut reading_stop)=>return Ok(()),result=requests.changed()=>{result.context("editor request channel closed")?;}}
+                continue;
+            }
             let mut bytes=vec![0;480*480*3];
-            tokio::select!{biased;_=stop_requested(&mut reading_stop)=>return Ok(()),result=tokio::time::timeout(Duration::from_secs(10),output.read_exact(&mut bytes))=>{result.context("editor decode timeout")?.context("editor decode frame")?;}}
-            let frame=RgbImage::from_raw(480,480,bytes).context("editor frame dimensions")?;
-            send.send_replace(Some(Ok(Arc::new(frame))));
+            tokio::select!{biased;_=stop_requested(&mut reading_stop)=>return Ok(()),result=output.read_exact(&mut bytes)=>{result.context("editor decode frame")?;}}
+            if primer_remaining>0 {primer_remaining-=1;continue;}
+            if index==target {
+                let frame=RgbImage::from_raw(480,480,bytes).context("editor frame dimensions")?;
+                send.send_replace(Some(Ok((index,Arc::new(frame)))));
+            }
+            index+=1;
         }
     });
     let outcome = tokio::select! {biased;_=stop_requested(stop)=>Ok(()),result=tasks.join_next()=>match result{Some(Ok(result))=>result,Some(Err(error))=>Err(error.into()),None=>Ok(())}};

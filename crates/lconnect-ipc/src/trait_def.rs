@@ -398,7 +398,7 @@ pub trait DaemonRpc: Send + Sync + 'static {
         &self,
         _dev: Option<DeviceId>,
         _theme: crate::LcdTheme,
-        _elapsed_seconds: u64,
+        _elapsed_millis: u64,
         _layer_index: Option<u16>,
     ) -> Result<futures::future::BoxFuture<'static, Result<crate::LcdEditorPreview>>> {
         Err(IpcError::NotImplemented("preview_lcd_editor".into()))

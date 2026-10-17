@@ -318,7 +318,7 @@ for(const kind of ['rain','snow'] as const)test(`${kind} equal thresholds surviv
 test('Basic Rain and Snow retain independent names backgrounds and overlays through none Apply and reload',async({page})=>{
   const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});const name=page.getByLabel('Название',{exact:true});
   const background=page.getByLabel('Фон',{exact:true});const text=page.getByLabel('Текст',{exact:true}).first();
-  const overlay=async(value:string,check=false)=>{const index=await effect.inputValue()==='none'?0:1;await page.locator(`.layer-row[data-layer-index="${index}"]`).click();if(check)await expect(text).toHaveValue(value);else await text.fill(value);await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();};
+  const overlay=async(value:string,check=false)=>{const index=await effect.inputValue()==='none'?0:1;await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator(`.layer-row[data-layer-index="${index}"]`).click();if(check)await expect(text).toHaveValue(value);else await text.fill(value);await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();};
   await name.fill('Basic page');await background.fill('#123456');await overlay('Basic overlay');
   await effect.selectOption('rain');await name.fill('Rain page');await background.fill('#ff0000');await overlay('Rain overlay');
   await enableTemperature(page);await page.getByLabel('Нижний порог эффекта',{exact:true}).fill('35');
@@ -336,7 +336,7 @@ test('Basic Rain and Snow retain independent names backgrounds and overlays thro
 test('deleting the weather row restores Basic and preserves Rain for later Apply',async({page})=>{
   const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});const name=page.getByLabel('Название',{exact:true});
   await name.fill('Original Basic');await effect.selectOption('rain');await name.fill('Retained Rain');
-  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
   await expect(effect).toHaveValue('none');await expect(name).toHaveValue('Original Basic');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Original Basic');
@@ -376,7 +376,7 @@ test('Meteor static palettes speed and full page survive other pages None Apply 
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Meteor page');
   const theme=await page.evaluate(()=>window.weatherFixture.active);expect(theme?.version).toBe(3);expect(theme?.layers[0]).toMatchObject({kind:'meteor',effect:{speed:3,colors:[[255,17,34],[0,0,255]]}});expect(theme?.page_cache?.length).toBe(3);
-  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');
   await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('meteor');await expect(page.getByLabel('Цвет метеоров 1',{exact:true})).toHaveValue('#ff1122');
 });
 test('Meteor uses CPU Load and independently retains palettes ranges and unit identities for each source',async({page})=>{
@@ -419,7 +419,7 @@ test('Snow3D has independent intensity full page and no dynamic sensor controls'
   await effect.selectOption('rain');await effect.selectOption('snow');await effect.selectOption('meteor');await effect.selectOption('none');await effect.selectOption('snow3d');await expect(intensity).toHaveValue('3');await expect(page.getByLabel('Фон',{exact:true})).toHaveValue('#112233');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Snow3D page');
   const theme=await page.evaluate(()=>window.weatherFixture.active);expect(theme?.page_cache?.length).toBe(4);expect(theme?.layers[0]).toEqual({kind:'snow3d',effect:{intensity:3,seed:42}});expect(theme?.version).toBe(3);
-  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('snow3d');await expect(intensity).toHaveValue('3');
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('snow3d');await expect(intensity).toHaveValue('3');
   expect(await page.evaluate(()=>window.weatherFixture.calls.filter(call=>call.method==='get_sensor_defaults').length)).toBe(0);
 });
 
@@ -429,7 +429,7 @@ test('Fireworks six static colors and intensity survive all pages Apply and relo
   for(const target of ['rain','snow','meteor','snow3d','none','fireworks'])await effect.selectOption(target);
   await expect(intensity).toHaveValue('3');await expect(page.getByLabel('Цвет фейерверка 6',{exact:true})).toHaveValue('#112233');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Fireworks page');const saved=await page.evaluate(()=>window.weatherFixture.active);expect(saved?.page_cache?.length).toBe(5);expect(saved?.layers[0]).toMatchObject({kind:'fireworks',effect:{intensity:3,colors:[[0,255,0],[0,0,255],[128,0,255],[255,0,65],[255,215,0],[17,34,51]]}});
-  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('fireworks');await expect(intensity).toHaveValue('3');
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('fireworks');await expect(intensity).toHaveValue('3');
 });
 test('Fireworks per-source six palettes and equal ranges remain independent of Meteor',async({page})=>{
   const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});await effect.selectOption('fireworks');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();const source=page.getByRole('combobox',{name:'Источник эффекта',exact:true});await expect(source).toHaveValue(JSON.stringify(['cpu/load','percent']));

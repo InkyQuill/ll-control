@@ -69,7 +69,7 @@ test('cleanup discards scan after draft asset set changes and requires rescan',a
   const scan=page.getByRole('button',{name:'Проверить неиспользуемые изображения'});
   await scan.click();await expect(scan).toBeDisabled();
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
-  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {raceFixture:Fixture}).raceFixture.finish();});
   await expect(scan).toBeEnabled();

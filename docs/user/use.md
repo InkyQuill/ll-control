@@ -8,8 +8,9 @@ Unavailable sensor values appear as a dash; they are not zero.
 1. Choose a ready-made layout, or add an image/video from **Library**.
 2. Edit text, clocks, sensor bindings and appearance in **Composition**.
 3. Select a layer on the live canvas or in **Layers**, then drag, resize or edit its
-   properties. Only the selected layer’s controls are shown. Use the eye to hide a
-   layer, the lock to protect it, and **Undo edit** to restore a draft.
+   properties. **Layers** shows the compact stack; **Properties** shows the selected
+   layer’s controls. Use the eye to hide a layer, the lock to protect it, and
+   **Undo edit** to restore a draft.
 4. Choose **Apply to LCD** when the composition is ready.
 
 Canvas arrows move a layer; Shift + arrows resize it. Escape cancels a drag.

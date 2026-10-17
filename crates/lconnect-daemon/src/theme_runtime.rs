@@ -249,29 +249,55 @@ impl ThemeRuntime {
                     | lconnect_ipc::ThemeLayer::Fireworks { .. }
             )
         });
-        let background = lconnect_image::theme::render_theme_measured_millis(
+        let background_pixels = self.render_continuous_theme(
             &background_theme,
             &readings,
             clock,
-            &self.assets,
-            &self.fonts,
             elapsed_millis,
-            base_frame,
+            Some(base_frame),
+        )?;
+        let background = prepare_jpeg_from_image(
+            background_pixels.clone().into(),
+            FitMode::Stretch,
+            Quality::default(),
         )
         .map_err(|e| IpcError::InvalidArgument(e.to_string()))?
-        .image;
-        let background =
-            prepare_jpeg_from_image(background.into(), FitMode::Stretch, Quality::default())
-                .map_err(|e| IpcError::InvalidArgument(e.to_string()))?
-                .bytes;
+        .bytes;
+        let mut overlay_theme = theme.clone();
+        overlay_theme.background_image = None;
+        let temporary_id = (0..=theme.layers.len())
+            .map(|index| format!("editor-background-{index}"))
+            .find(|id| {
+                theme
+                    .layers
+                    .iter()
+                    .all(|layer| layer.editor().is_none_or(|editor| &editor.id != id))
+            })
+            .expect("one unused temporary layer identity");
+        for layer in &mut overlay_theme.layers {
+            if let lconnect_ipc::ThemeLayer::Weather { editor, .. }
+            | lconnect_ipc::ThemeLayer::Meteor { editor, .. }
+            | lconnect_ipc::ThemeLayer::Snow3d { editor, .. }
+            | lconnect_ipc::ThemeLayer::Fireworks { editor, .. } = layer
+            {
+                editor
+                    .get_or_insert_with(|| lconnect_ipc::LayerEditor {
+                        id: temporary_id.clone(),
+                        name: String::new(),
+                        hidden: true,
+                        locked: false,
+                    })
+                    .hidden = true;
+            }
+        }
         let rendered = lconnect_image::theme::render_theme_measured_millis(
-            theme,
+            &overlay_theme,
             &readings,
             clock,
             &self.assets,
             &self.fonts,
             elapsed_millis,
-            frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+            background_pixels,
         )
         .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
         let jpeg =
@@ -310,6 +336,92 @@ impl ThemeRuntime {
         )
         .map(|frame| self.output_rotation().apply(frame))
     }
+    fn render_continuous_theme(
+        &self,
+        theme: &lconnect_ipc::LcdTheme,
+        readings: &[lconnect_ipc::SensorReading],
+        clock: ClockTime,
+        elapsed_millis: u64,
+        frame: Option<RgbImage>,
+    ) -> Result<RgbImage> {
+        if let Some(fireworks) = &self.fireworks {
+            let mut scene = fireworks
+                .lock()
+                .map_err(|_| IpcError::DeviceBusy("fireworks scene poisoned".into()))?;
+            return lconnect_image::theme::render_theme_fireworks_frame(
+                theme,
+                readings,
+                clock,
+                &self.assets,
+                &self.fonts,
+                lconnect_image::theme::FireworksFrame {
+                    elapsed_millis,
+                    scene: &mut scene,
+                },
+                frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+            )
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()));
+        }
+        if theme.snow3d_effect().is_some() {
+            return lconnect_image::theme::render_theme_snow3d_frame(
+                theme,
+                readings,
+                clock,
+                &self.assets,
+                &self.fonts,
+                elapsed_millis,
+                frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+            )
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()));
+        }
+        if let Some(meteor) = &self.meteor {
+            let mut scene = meteor
+                .lock()
+                .map_err(|_| IpcError::DeviceBusy("meteor scene poisoned".into()))?;
+            return lconnect_image::theme::render_theme_meteor_frame(
+                theme,
+                readings,
+                clock,
+                &self.assets,
+                &self.fonts,
+                lconnect_image::theme::MeteorFrame {
+                    elapsed_millis,
+                    scene: &mut scene,
+                },
+                frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+            )
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()));
+        }
+        if let Some(weather) = &self.weather {
+            let mut scene = weather
+                .lock()
+                .map_err(|_| IpcError::DeviceBusy("weather scene poisoned".into()))?;
+            return lconnect_image::theme::render_theme_weather_frame(
+                theme,
+                readings,
+                clock,
+                &self.assets,
+                &self.fonts,
+                lconnect_image::theme::WeatherFrame {
+                    elapsed_millis,
+                    scene: &mut scene,
+                },
+                frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+            )
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()));
+        }
+        lconnect_image::theme::render_theme_measured_millis(
+            theme,
+            readings,
+            clock,
+            &self.assets,
+            &self.fonts,
+            elapsed_millis,
+            frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+        )
+        .map(|rendered| rendered.image)
+        .map_err(|e| IpcError::InvalidArgument(e.to_string()))
+    }
     fn render_inner(
         &self,
         frame: Option<RgbImage>,
@@ -334,72 +446,7 @@ impl ThemeRuntime {
             second: now.second() as u8,
         };
         if continuous {
-            if let Some(fireworks) = &self.fireworks {
-                let mut scene = fireworks
-                    .lock()
-                    .map_err(|_| IpcError::DeviceBusy("fireworks scene poisoned".into()))?;
-                return lconnect_image::theme::render_theme_fireworks_frame(
-                    theme,
-                    &readings,
-                    clock,
-                    &self.assets,
-                    &self.fonts,
-                    lconnect_image::theme::FireworksFrame {
-                        elapsed_millis,
-                        scene: &mut scene,
-                    },
-                    frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
-                )
-                .map_err(|e| IpcError::InvalidArgument(e.to_string()));
-            }
-            if self.theme.snow3d_effect().is_some() {
-                return lconnect_image::theme::render_theme_snow3d_frame(
-                    theme,
-                    &readings,
-                    clock,
-                    &self.assets,
-                    &self.fonts,
-                    elapsed_millis,
-                    frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
-                )
-                .map_err(|e| IpcError::InvalidArgument(e.to_string()));
-            }
-            if let Some(meteor) = &self.meteor {
-                let mut scene = meteor
-                    .lock()
-                    .map_err(|_| IpcError::DeviceBusy("meteor scene poisoned".into()))?;
-                return lconnect_image::theme::render_theme_meteor_frame(
-                    theme,
-                    &readings,
-                    clock,
-                    &self.assets,
-                    &self.fonts,
-                    lconnect_image::theme::MeteorFrame {
-                        elapsed_millis,
-                        scene: &mut scene,
-                    },
-                    frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
-                )
-                .map_err(|e| IpcError::InvalidArgument(e.to_string()));
-            }
-            if let Some(weather) = &self.weather {
-                let mut scene = weather
-                    .lock()
-                    .map_err(|_| IpcError::DeviceBusy("weather scene poisoned".into()))?;
-                return lconnect_image::theme::render_theme_weather_frame(
-                    theme,
-                    &readings,
-                    clock,
-                    &self.assets,
-                    &self.fonts,
-                    lconnect_image::theme::WeatherFrame {
-                        elapsed_millis,
-                        scene: &mut scene,
-                    },
-                    frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
-                )
-                .map_err(|e| IpcError::InvalidArgument(e.to_string()));
-            }
+            return self.render_continuous_theme(theme, &readings, clock, elapsed_millis, frame);
         }
         match frame {
             Some(frame) => render_theme_over_frame(
