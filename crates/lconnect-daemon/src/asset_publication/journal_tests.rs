@@ -733,6 +733,64 @@ fn dangling_recovery_report_symlink_is_an_error_without_replacing_it() {
 }
 
 #[test]
+fn ownership_link_collision_vetoes_publication_and_preserves_the_foreign_inode() {
+    use std::os::unix::fs::MetadataExt;
+
+    let root = tempfile::tempdir().unwrap();
+    let store = Arc::new(PersistenceStore::new_with_root(root.path().into()));
+    let scope = Publication::begin(
+        store.clone(),
+        Binding {
+            device_key: "device".into(),
+            operation: OP.into(),
+            group: GroupKind::Screen,
+            expected: GroupRevision {
+                profile_revision: 0,
+                settings_sha256: "a".repeat(64),
+            },
+            source_sha256: "b".repeat(64),
+        },
+    )
+    .unwrap();
+    let directory = scope.staging_directory().unwrap().to_owned();
+    let manifest = fs::read(directory.join("manifest.json")).unwrap();
+    let foreign = root.path().join("foreign");
+    fs::write(&foreign, b"unrelated file").unwrap();
+    let inode = fs::metadata(&foreign).unwrap().ino();
+    fs::hard_link(&foreign, directory.join("0.owned")).unwrap();
+    let mut claimed = String::new();
+    let error = store
+        .theme_assets()
+        .import_named_in(
+            lconnect_image::defaults::IMAGES[0].png,
+            None,
+            scope.staging_directory(),
+            |key, _, file| {
+                claimed = key.into();
+                scope.created(CreatedKind::Image, key, file)
+            },
+        )
+        .unwrap_err();
+    assert!(error
+        .chain()
+        .any(|cause| cause.downcast_ref::<rustix::io::Errno>() == Some(&rustix::io::Errno::EXIST)));
+    assert_eq!(fs::read(directory.join("manifest.json")).unwrap(), manifest);
+    assert!(!store
+        .theme_assets_root()
+        .join(format!("{claimed}.png"))
+        .exists());
+    assert_eq!(store.profiles().list().unwrap().revision, 0);
+    scope.rollback().unwrap();
+    drop(scope);
+    assert_eq!(fs::read(&foreign).unwrap(), b"unrelated file");
+    assert_eq!(fs::metadata(&foreign).unwrap().ino(), inode);
+    assert!(!directory.exists());
+    let reopened = PersistenceStore::open_with_root(root.path().into()).unwrap();
+    assert_eq!(reopened.profiles().list().unwrap().revision, 0);
+    assert!(!reopened.theme_assets().list().unwrap().contains(&claimed));
+}
+
+#[test]
 fn ownership_manifest_write_failure_after_link_creation_vetoes_the_final_asset() {
     let root = tempfile::tempdir().unwrap();
     let store = Arc::new(PersistenceStore::new_with_root(root.path().into()));
