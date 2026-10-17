@@ -181,8 +181,10 @@
     await chooseDynamicUnit('celsius');
     const low = field('Нижний порог'); await tabTo(low); await key('Up');
     const high = field('Верхний порог'); await tabTo(high); await key('Up');
-    const lowSpeed = field('Нижняя скорость'); await tabTo(lowSpeed); await key('Up');
-    const highSpeed = field('Верхняя скорость'); await tabTo(highSpeed); await key('Down');
+    const lowSpeed = field('Нижняя скорость'); await tabTo(lowSpeed);
+    for(let n=Number(lowSpeed.value);n>0;n--)await key('Down'); await key('Up');
+    const highSpeed = field('Верхняя скорость'); await tabTo(highSpeed);
+    for(let n=Number(highSpeed.value);n<100;n++)await key('Up'); await key('Down');
     await tabTo(low); await key('Tab', 'lighting');
     assert((await rpc('get_dynamic_rgb', {dev})).requested === null, 'Dynamic draft must not apply');
     await activate('Применить режим по датчику');
@@ -195,24 +197,26 @@
     for (let i = 0; i < 31; i++) await key('Down');
     assert(high.value === '30' && high.getAttribute('aria-invalid') === 'true' && low.getAttribute('aria-invalid') === 'true', 'Inverted thresholds must be invalid');
     await activate('Применить режим по датчику');
-    await wait(() => [...document.querySelectorAll('[role="alert"]')].some(el => el.textContent.includes('Пороги должны быть целыми')), 'Dynamic validation message');
+    await wait(() => [...document.querySelectorAll('[role="alert"]')].some(el => el.textContent.includes('Пороги температуры должны соответствовать целым')), 'Dynamic validation message');
     assert(JSON.stringify((await rpc('get_dynamic_rgb', {dev})).requested) === beforeInvalid, 'Invalid draft changed active dynamic config');
     await tabTo(high); await key('Tab', 'lighting');
     await tabTo(high);
     for (let i = 0; i < 31; i++) await key('Up');
     assert(high.value === '61' && high.getAttribute('aria-invalid') === 'false' && low.getAttribute('aria-invalid') === 'false', 'Corrected thresholds must recover');
     await activate('Применить режим по датчику');
-    await wait(() => ![...document.querySelectorAll('[role="alert"]')].some(el => el.textContent.includes('Пороги должны быть целыми')), 'Validation error cleared after valid Apply');
+    await wait(() => ![...document.querySelectorAll('[role="alert"]')].some(el => el.textContent.includes('Пороги температуры должны соответствовать целым')), 'Validation error cleared after valid Apply');
     await tabTo(low); await key('Tab', 'lighting');
     observations.push('lighting:dynamic-invalid/recovery');
     await chooseDynamicUnit('rpm');
-    await tabTo(low); await key('Tab', 'lighting');
+    const rpmLow=field('Нижний порог'),rpmHigh=field('Верхний порог');
+    await tabTo(rpmLow);await key('Up');await tabTo(rpmHigh);await key('Up');
+    await tabTo(rpmLow); await key('Tab', 'lighting');
     assert((await rpc('get_dynamic_rgb', {dev})).requested.unit === 'celsius', 'Unit draft must not apply');
     await activate('Применить режим по датчику');
     await wait(async () => (await rpc('get_dynamic_rgb', {dev})).requested?.unit === 'rpm', 'Dynamic RPM IPC readback');
     await activate('Отключить режим по датчику');
     await wait(async () => (await rpc('get_dynamic_rgb', {dev})).requested === null, 'Dynamic disabled IPC readback');
-    observations.push('lighting:dynamic-celsius/rpm31-61/speed1-99/off');
+    observations.push('lighting:dynamic-celsius31-61/speed1-99/rpm801-1201/off');
 
 
 
@@ -257,6 +261,7 @@
     const imagePreview = await rpc('preview_lcd_theme', { dev, theme: importedTheme });
     assert(imagePreview.length > 100 && imagePreview[0] === 255 && imagePreview[1] === 216, 'Imported image theme JPEG preview');
     observations.push('image-dialog:select/reselect/focus/draft/apply');
+    await activate('Библиотека');
     const fontDetails = [...document.querySelectorAll('summary')].find(el => el.textContent.trim() === 'Пользовательские шрифты');
     await tabTo(fontDetails); await key('Return');
     const fontInput = field('Загрузить шрифт');
@@ -287,6 +292,7 @@
       assert(JSON.stringify(await rpc('get_lcd_theme', { dev })) === beforeFontImport, 'Font upload must not implicitly apply');
       importedFont = [...document.querySelectorAll('select option[value^="asset:"]')].find(el => !beforeOptions.includes(el.value));
     }
+    await activate('Композиция');
     const fontSelect = importedFont.parentElement;
     await tabTo(fontSelect); await key('End'); await key('Tab');
     assert(fontSelect.value === importedFont.value, 'Keyboard must select the newly imported font');

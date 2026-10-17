@@ -147,3 +147,11 @@ Native catalog/palette/source-unit/topology checks passed, including disabled
 dynamic mode across navigation and daemon restart while inactive profiles remain
 intact. Private-session isolation and obsolete driver locale/label assumptions
 were corrected. Native cooling/reset/accessibility and other R2 gates remain open.
+
+
+R2 keyboard/reset batch: native Russian 1× keyboard/AT-SPI/chooser workflow
+passed, including cooling, dynamic validation, font/image recovery, screen-reset
+output failure/reapply and daemon reconnect. Full control reset passed across
+desktop/daemon restart with newer intent preserved. 42 reset/transaction tests
+passed, no ignores. Updated obsolete driver expectations and private-session
+isolation; raw outputs remain ignored. R2 remains open for its unqualified gates.
