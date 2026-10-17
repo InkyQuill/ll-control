@@ -179,3 +179,16 @@ fault/cancel/close cases passed in EN/RU with joined children and unchanged devi
 write counters. Twelve codec lifetime tests passed; one paced benchmark remained
 explicitly ignored. The R2 ledger now has an active closure queue; remaining
 requirements are not waived.
+
+
+R2 EXIF/archive batch: native EN/RU gallery workflow and all eight EXIF
+orientations passed; profile and both settings-group archive workflows passed
+in EN/RU, including receipt/restart, draft preservation and joined close.
+Private-session setup and initial navigation were corrected in the drivers.
+No production defect was established. R2 remains open.
+
+Repository policy rechecked: all tracked documentation under `docs/` belongs to
+`development/` or `user/`; user installation/use/help guides total 92 lines.
+Raw evidence paths remain ignored and no run logs/captures are tracked. R0–R10
+plans are committed; only R0/R1 are complete. Completed qualification batches
+are committed separately from milestone completion.

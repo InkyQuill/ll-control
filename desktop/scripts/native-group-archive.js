@@ -12,6 +12,7 @@
  const phase=async p=>(await invoke('group_archive_status'))?.phase===p;
  try {
   await wait(async()=>(await rpc('list_devices')).length===1,'mock device');const dev=(await rpc('list_devices'))[0].id;
+  await click('Экран помпы');
   const group=window.__nativeGroupKind||'screen';
   async function configure(value){if(group==='screen')await rpc('patch_lcd_config',{dev,patch:{brightness_percent:value}});else await rpc('set_cooling_policy',{dev,target:'fan',policy:{mode:'fixed',percent:value}});}
   async function current(){return group==='screen'?(await rpc('get_lcd_state',{dev})).requested.brightness_percent:(await rpc('get_cooling_state',{dev})).fan.requested.percent;}

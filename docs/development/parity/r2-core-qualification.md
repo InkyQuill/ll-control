@@ -24,13 +24,13 @@ checks. Do not repeat their workflows unless the relevant implementation changes
 
 | Area | Work still needed before closure |
 |---|---|
-| Media inputs | Qualify EXIF-oriented input through normalization/output; reconcile image/video happy-path assertions with the first milestone requirement |
+| Media inputs | Native EN/RU normalization of all eight EXIF orientations passed with exact pixel mapping and reopen checks; reconcile image/video happy-path assertions with the first milestone requirement |
 | Recovery | Integrated native fault workflow passed; map publication/replacement/delete/profile Save/Apply/both resets to concrete lost-reply, timeout, disconnect and close evidence; add only missing cases |
 | Storage | Reconcile actual syscall/journal/quota checks with publication/import ownership and partial-cleanup paths; resolve uncovered boundaries rather than treating generic test counts as proof |
 | Cooling/RGB | Integrated mode/default Save and recovery passed; reconcile with native controls, restart and thermal backend assertions before final snapshot checks |
 | Media lifetime/resources | Fixed budget, exact storage/one-hour preparation and codec-fault/queued-stop assertions passed; reconcile with milestone scope. Physical/real-time soak belongs to R3 |
 | EN/RU/accessibility | Retain Russian keyboard/AT-SPI proof and EN/RU recovery matrices; audit missing supported recovery states and current scale coverage |
-| Optional isolation | Recording fault/cancel/close passed in EN/RU; qualify retained archive/Windows/weather isolation checks and inspect core-state/worker cleanup assertions |
+| Optional isolation | Recording fault/cancel/close passed in EN/RU; profile and both group archive EN/RU checks passed; qualify retained Windows/weather isolation checks and inspect core-state/worker cleanup assertions |
 | Integrated snapshot | Once gaps above close, run exact-source Rust/frontend/contracts/browser checks and relevant native flows; record ignores without converting them to passes |
 
 ## Execution order
@@ -328,3 +328,30 @@ stop, handoff and rotation. One 30-second paced test is ignored by this ordinary
 run; it is not counted as passed. The separately executed four-widget resource
 contract covers the release workload budget. Raw native logs and receipts stay
 ignored. No production defect was demonstrated by this batch.
+
+
+## EXIF and native archive qualification
+
+The gallery editor workflow passed again in EN/RU, followed by all eight JPEG
+EXIF orientations through native editor preparation, managed import and readback.
+Every normalized pixel matches the expected transform of the decoded source;
+editor/import dimensions and pixels agree, and reopening normalized media does
+not rotate it a second time. The extra EXIF assets are created after the gallery
+workflow to avoid changing its collection/thumbnail fixture. Earlier failed
+fixture arrangements are retained locally, not treated as production defects.
+
+Profile archive export/import passed in EN/RU, including localized destination
+errors, dependency remapping, preserved editor draft, no implicit Apply, durable
+receipt readback without another import, normal worker join and daemon restart.
+Full Screen and FanAndLighting group archives also passed in both languages:
+inspect does not mutate, explicit restore applies the selected group, reapply
+does not recommit, the editor survives, publication ownership records retire,
+and the restored state and receipt survive restart. These are native Linux
+archives, not Windows-compatible export.
+
+The archive drivers now establish private configuration before desktop-session
+services and explicitly navigate from the device overview to the LCD editor.
+All six archive runs use private FileChooser fixtures and MockBackend. The GUI
+build, Python compilation and JavaScript syntax checks passed. No hardware or
+real Wayland acceptance is claimed; Windows/weather isolation and the remaining
+closure queue still keep R2 open.
