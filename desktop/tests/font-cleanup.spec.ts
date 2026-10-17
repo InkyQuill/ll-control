@@ -1,3 +1,4 @@
+import {loadControls,selectLayer} from './editor-controls';
 import { test, expect } from '@playwright/test';
 test('font cleanup protects loaded draft keys and requires fresh scan after selection changes', async ({page}) => {
   await page.addInitScript(() => {
@@ -5,6 +6,7 @@ test('font cleanup protects loaded draft keys and requires fresh scan after sele
     Object.assign(window,{__TAURI_INTERNALS__:{invoke:async(_:string,{method,params}:{method:string;params:{delete?:boolean;keep?:string[]}})=>{
         if (_ === 'desktop_set_language') return null;
       switch(method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Theme',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'Application'}};
@@ -17,14 +19,14 @@ test('font cleanup protects loaded draft keys and requires fresh scan after sele
   });
   await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
-  await page.getByRole('button',{name:'Загрузить активную тему'}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему'}).click();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Font draft');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Очистка неиспользуемых шрифтов',{exact:true}).click();
   await page.getByRole('button',{name:'Проверить неиспользуемые шрифты',exact:true}).click();
   await expect(page.getByText('Можно удалить: 0',{exact:false})).toBeVisible();
   await expect(page.getByText('В черновике: 1',{exact:false})).toBeVisible();
-  await page.getByRole('button',{name:'Композиция',exact:true}).click();
+  await page.getByRole('button',{name:'Композиция',exact:true}).click();await selectLayer(page,0);
   await page.getByRole('combobox',{name:'Шрифт',exact:true,includeHidden:true}).selectOption('sans');
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
   await expect(page.getByText('Можно удалить:',{exact:false})).toHaveCount(0);
@@ -42,6 +44,7 @@ test('partial font cleanup shows failure and supports explicit rescan and retry'
     Object.assign(window,{__TAURI_INTERNALS__:{invoke:async(_:string,{method,params}:{method:string;params:{delete?:boolean}})=>{
         if (_ === 'desktop_set_language') return null;
       switch(method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'None',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'Application'}};

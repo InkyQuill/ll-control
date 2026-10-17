@@ -19,6 +19,7 @@ test.beforeEach(async ({page})=>{
         return fixture.corrupt?[1,2,3,4]:png;
       }
       switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];

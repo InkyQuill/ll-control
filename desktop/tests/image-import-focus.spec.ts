@@ -1,3 +1,4 @@
+import {addControls} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
@@ -17,6 +18,7 @@ test.beforeEach(async ({ page }) => {
           });
         }
         switch (args.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'get_screen_collections': return {collections:fixture.collections,persistence:{pending:false,saved:false,last_error:null}};
           case 'set_screen_collections': fixture.writes++; if(fixture.failMembership) throw new Error('Collection conflict'); fixture.collections=args.params.collections; return fixture.collections;
           case 'list_devices': if(!fixture.online)throw new Error('offline');return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
@@ -28,12 +30,12 @@ test.beforeEach(async ({ page }) => {
     } });
   });
   await page.goto('/?view=display');
-  await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await expect(page.getByText('Daemon подключён')).toBeVisible();await addControls(page);
 });
 
 test('late image import failure after reconnect cannot overwrite the new connection state',async({page})=>{
   await page.getByLabel('Название',{exact:true}).fill('New session draft');
-  const count=await page.locator('.layer').count();
+  const count=await page.locator('.layer-row[data-layer-index]').count();
   await page.locator('.file input[type=file]').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('fixture')});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {imageImport:{admitted:boolean}}).imageImport.admitted)).toBe(true);
   await page.evaluate(()=>(window as unknown as {imageImport:{online:boolean}}).imageImport.online=false);
@@ -42,7 +44,7 @@ test('late image import failure after reconnect cannot overwrite the new connect
   await page.getByRole('button',{name:'Повторить подключение',exact:true}).click();await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
   await page.evaluate(()=>(window as unknown as {imageImport:{finish(fail:boolean):void}}).imageImport.finish(true));
   await expect(page.locator('.file input[type=file]')).toBeEnabled();await expect(page.getByRole('alert').filter({hasText:'Invalid image fixture'})).toHaveCount(0);
-  await expect(page.getByLabel('Название',{exact:true})).toHaveValue('New session draft');await expect(page.locator('.layer')).toHaveCount(count);
+  await expect(page.getByLabel('Название',{exact:true})).toHaveValue('New session draft');await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(count);
 });
 
 for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-page'] as const) {
@@ -50,7 +52,7 @@ for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-p
     const input = page.locator('.file input[type=file]');
     const other = page.getByRole('button', { name: '+ Текст', exact: true });
     if (outcome === 'layer-limit') {
-      while (await page.locator('.layer').count() < 31) await other.click();
+      while (await page.locator('.layer-row[data-layer-index]').count() < 31) await other.click();
     }
     await input.focus();
     await input.setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: Buffer.from('fixture') });
@@ -66,14 +68,14 @@ for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-p
       return;
     }
     if (outcome === 'layer-limit') {
-      await expect(page.locator('.layer')).toHaveCount(32);
+      await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(32);
       await expect(input).toBeDisabled();
     }
     else await expect(input).toBeEnabled();
     await expect(input).toHaveValue('');
     if (outcome === 'error') await expect(page.getByRole('alert')).toContainText('Invalid image fixture');
     else await expect(page.getByRole('status').filter({hasText:'Изображение добавлено'})).toBeVisible();
-    const target = outcome === 'layer-limit' ? page.getByRole('heading', { name: '1. Изображение', exact: true }) : outcome === 'move-focus' ? other : input;
+    const target = outcome === 'layer-limit' ? page.locator('.inspector h2') : outcome === 'move-focus' ? other : input;
     await expect(target).toBeFocused();
     if (outcome === 'success' || outcome === 'error') {
       await page.keyboard.press('Tab');
@@ -87,15 +89,15 @@ for (const fail of [false,true]) test(`import into saved image collection, membe
     const f=(window as unknown as {imageImport:{collections:unknown;failMembership:boolean}}).imageImport;
     f.collections={version:1,revision:3,images:[],watermarks:[],backgrounds:[]}; f.failMembership=fail;
   },fail);
-  const before=await page.locator('.layer').count();
+  const before=await page.locator('.layer-row[data-layer-index]').count();
   await page.locator('.file input[type=file]').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('fixture')});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {imageImport:{admitted:boolean}}).imageImport.admitted)).toBe(true);
   await page.evaluate(()=>(window as unknown as {imageImport:{finish(fail:boolean):void}}).imageImport.finish(false));
   if(fail){
     await expect(page.getByRole('alert')).toContainText('Файл сохранён в каталоге');
-    await expect(page.locator('.layer')).toHaveCount(before);
+    await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before);
   }else{
-    await expect(page.locator('.layer')).toHaveCount(before+1);
+    await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before+1);
     expect(await page.evaluate(()=>(window as unknown as {imageImport:{collections:{revision:number;images:string[]}}}).imageImport.collections)).toMatchObject({revision:4,images:['a'.repeat(32)]});
   }
   expect(await page.evaluate(()=>(window as unknown as {imageImport:{writes:number}}).imageImport.writes)).toBe(1);

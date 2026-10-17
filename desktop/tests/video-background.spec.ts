@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 import type { ProfileLibrary, Theme } from '../src/lib/api';
 
@@ -37,7 +38,8 @@ test.beforeEach(async ({ page }) => {
           case 'set_lcd_theme':
             if (fixture.missing && (req.params.theme as Theme).background_video) throw new Error('Video asset missing');
             active = structuredClone(req.params.theme); return {source:'Theme'};
-          case 'preview_lcd_theme':
+          case 'preview_lcd_editor':
+        case 'preview_lcd_theme':
             if (fixture.missing) throw new Error('Video asset missing');
             return [255,216,255,217];
           case 'list_profiles': return structuredClone(library);
@@ -66,8 +68,7 @@ test('video background preserves layers and gradient, previews and saves complet
   await expect(mode).toHaveValue('video');
   const writes = () => page.evaluate(() => window.compositionFixture.calls.filter(c=>c.method.startsWith('set_lcd')));
   expect(await writes()).toEqual([]);
-  await page.getByRole('button',{name:'Обновить preview',exact:true}).click();
-  await expect.poll(() => page.evaluate(() => window.compositionFixture.calls.filter(c=>c.method==='preview_lcd_theme').length)).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.compositionFixture.calls.filter(c=>c.method==='preview_lcd_editor').length)).toBeGreaterThan(0);
   expect(await writes()).toEqual([]);
   await page.getByText('Сохранённые профили',{exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();
@@ -102,7 +103,7 @@ test('missing draft video is not silently replaced and failed Apply is visible',
   await page.getByRole('button',{name:'Обновить ролики',exact:true}).click();
   await expect(page.getByRole('combobox',{name:'Тип фона',exact:true,includeHidden:true})).toHaveValue('video');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
-  await expect(page.getByRole('alert').filter({hasText:'Video asset missing'})).toBeVisible();
+  await expect(page.getByRole('alert').filter({hasText:'Применение темы не подтверждено: Video asset missing'})).toBeVisible();
   await expect(page.getByText('Источник: Нет программного потока',{exact:true})).toBeVisible();
 });
 
@@ -137,7 +138,7 @@ test('image background and watermark contexts preserve overlays and switch exclu
   await page.getByLabel('Назначение изображения').selectOption('background');
   await page.getByRole('button',{name:'Сделать фоном Полночь',exact:true}).click();
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
-  await page.getByLabel('Тип фона').selectOption('solid');
+  await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();await page.getByLabel('Тип фона').selectOption('solid');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.compositionFixture.calls.filter(c=>c.method==='set_lcd_theme').length)).toBe(3);
   const solid=await page.evaluate(()=>window.compositionFixture.calls.filter(c=>c.method==='set_lcd_theme').at(-1)!.params.theme as Theme);

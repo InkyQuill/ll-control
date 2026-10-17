@@ -19,7 +19,8 @@ async function setup(page:Page,language='ru-RU'){
     if(command==='profile_archive_recover'){f.job={id:args.id,mode:'import',group:args.group,slot:args.slot,phase:'recovering',transferred:0,total:0,file_name:null,message:null,result:null};complete();return structuredClone(f.job);}
    }
    if(args.method?.startsWith('set_')||args.method==='edit_profile')f.writes.push(args.method);
-   switch(args.method){case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];case 'list_sensors':return [];case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'}};case 'list_profiles':return structuredClone(library);case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];default:return null;}
+   switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];case 'list_sensors':return [];case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'}};case 'list_profiles':return structuredClone(library);case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];default:return null;}
   }}});
  },language);
  await page.goto('/?view=display');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible();await open(page,language);

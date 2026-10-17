@@ -145,6 +145,11 @@ def case(root, language):
                 outcome = json.loads((root / 'result.json').read_text())
                 run(['import', '-window', window(gui), root / ('recovery.png' if outcome.get('recovery') else 'canvas.png')])
                 assert outcome['ok'], outcome
+                if not outcome.get('recovery'):
+                    for width, height in [(1280, 800), (1024, 768)]:
+                        run(['xdotool', 'windowsize', window(gui), width, height])
+                        time.sleep(.5)
+                        run(['import', '-window', window(gui), root / f'canvas-{width}x{height}.png'])
                 return outcome
             time.sleep(.025)
         raise AssertionError('GUI exited before acceptance result')

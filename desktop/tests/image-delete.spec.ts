@@ -8,6 +8,7 @@ test.beforeEach(async({page})=>{
         if (command === 'desktop_set_language') return null;
       if(command==='media_status')return null;
       switch(r.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];

@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
       if(command === 'media_status') return null;
       if(!fixture.online) throw new Error('offline');
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings': return structuredClone(fixture.settings);
         case 'get_screen_collections': return {collections:fixture.scoped ? {version:1,revision:1,images:[],watermarks:[],backgrounds:[{kind:'video',key:keys[req.params.dev==='A'?0:1]}]}:null,persistence:{pending:false,saved:false,last_error:null}};
         case 'list_devices': return fixture.ids.map(id=>({id,display_name:`LCD ${id}`, family:'galahad2-lcdv2'}));

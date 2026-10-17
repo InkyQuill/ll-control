@@ -1,3 +1,4 @@
+import {loadControls,openEditorSection} from './editor-controls';
 import {test, expect} from '@playwright/test';
 
 interface Fixture { online:boolean; hold:string; finish:(fail?:boolean)=>void }
@@ -9,6 +10,7 @@ test.beforeEach(async({page})=>{
       if(!fixture.online)throw new Error('offline');
       let result:unknown;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source:'Theme',last_error:null,requested:{mode:'Application',brightness_percent:60,rotation_degrees:90}};
@@ -59,7 +61,7 @@ test('profile edit result after disconnect requires fresh library and preserves 
 });
 
 test('cleanup discards scan after draft asset set changes and requires rescan',async({page})=>{
-  await page.getByRole('button',{name:'Загрузить активную тему'}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему'}).click();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Image draft');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Очистка неиспользуемых изображений',{exact:true}).click();
@@ -67,7 +69,7 @@ test('cleanup discards scan after draft asset set changes and requires rescan',a
   const scan=page.getByRole('button',{name:'Проверить неиспользуемые изображения'});
   await scan.click();await expect(scan).toBeDisabled();
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
-  await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
+  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {raceFixture:Fixture}).raceFixture.finish();});
   await expect(scan).toBeEnabled();

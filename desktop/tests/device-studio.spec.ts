@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 import { inspect } from './accessibility-helpers';
 
@@ -8,6 +9,7 @@ test.beforeEach(async ({ page }) => {
         if (_ === 'desktop_set_language') return null;
       fixture.calls.push(request);
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return fixture.devices;
         case 'list_sensors': return [];
         case 'get_lcd_state': return { source: 'Idle', requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 }, last_error: null };

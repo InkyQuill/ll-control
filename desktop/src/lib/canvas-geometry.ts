@@ -1,7 +1,7 @@
 import type { Layer, Style } from './api';
 
 export interface LayerBounds { x: number; y: number; width: number; height: number }
-export interface EditorPreview { jpeg: number[]; layers: (LayerBounds | null)[] }
+export interface EditorPreview { jpeg: number[]; background?:number[]; layer_images?:number[][]; layers: (LayerBounds | null)[] }
 export type QuarterTurn = 0 | 90 | 180 | 270;
 
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
@@ -97,4 +97,29 @@ export function resizeLayer(layer: Layer, bounds: LayerBounds, dx: number, dy: n
     if (style.max_width) style.max_width = integer(style.max_width * factor, 1, 480);
     if (style.line_height) style.line_height = integer(style.line_height * factor, 8, 320);
   }
+}
+
+/** Match the renderer's transform anchor and the model's clamping during a gesture. */
+export function layerTransform(original:Layer, bounds:LayerBounds, mode:'move'|'resize', dx:number, dy:number) {
+  const copy=structuredClone(original);
+  const anchor=(layer:Layer):[number,number]=>{
+    if('style' in layer)return [layer.style.x,layer.style.y];
+    if(layer.kind==='image'&&layer.watermark_position)return [layer.watermark_position.horizontal===0?22:Math.round(layer.watermark_position.horizontal*4.8),layer.watermark_position.vertical===0?22:Math.round(layer.watermark_position.vertical*4.8)];
+    if(layer.kind==='image'||layer.kind==='divider')return [layer.x,layer.y];
+    return [bounds.x,bounds.y];
+  };
+  const [ox,oy]=anchor(original);
+  if(mode==='move'){
+    translateLayer(copy,dx,dy);const [x,y]=anchor(copy);
+    return {dx:x-ox,dy:y-oy,sx:1,sy:1,ox,oy};
+  }
+  resizeLayer(copy,bounds,dx,dy);
+  let sx=1,sy=1;
+  if('style' in copy&&'style' in original)sx=sy=copy.style.size/original.style.size;
+  else if(copy.kind==='image'&&original.kind==='image'){sx=copy.width/original.width;sy=copy.height/original.height;}
+  else if(copy.kind==='divider'&&original.kind==='divider'){
+    sx=copy.axis==='horizontal'?copy.length/original.length:copy.thickness/original.thickness;
+    sy=copy.axis==='horizontal'?copy.thickness/original.thickness:copy.length/original.length;
+  }
+  return {dx:0,dy:0,sx,sy,ox,oy};
 }

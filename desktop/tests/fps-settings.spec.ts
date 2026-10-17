@@ -11,6 +11,7 @@ async function setup(page:Page){
    const method=String(args.method),params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
    if(f.offline)throw {message:'Fixture offline'};
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'list_devices':case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];
     case 'list_profiles':return {version:1,revision:0,profiles:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};

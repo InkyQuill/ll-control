@@ -33,6 +33,7 @@ async function setup(page:Page,videoUrl='data:video/mp4;base64,',language='ru-RU
       if(command==='media_cancel'){if(f.failCancel){f.failCancel=false;throw new Error(f.cancelMessage);}if(f.job)f.job.phase='cancelled';return;}
       if(command==='media_playback_url')return videoUrl;
       if(command==='daemon_call')switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];

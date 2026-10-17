@@ -1,3 +1,4 @@
+import {addControls} from './editor-controls';
 import { test, expect, type Page } from '@playwright/test';
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=';
 async function setup(page: Page, fail = false, delay = false, hold = false, language: 'en-US'|'ru-RU' = 'ru-RU') {
@@ -16,6 +17,7 @@ async function setup(page: Page, fail = false, delay = false, hold = false, lang
       }
       if(command==='import_image') { if(hold) await new Promise<void>(resolve=>control.release=resolve); if(fail) throw {message:'Lost import reply'}; return 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; }
       switch(args.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings': return structuredClone(control.settings);
         case 'list_devices': if(control.offline) throw {message:'Disconnected'}; return [{id:'lcd:test',display_name:'Test LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
@@ -77,14 +79,16 @@ test('lost publication reply requires catalog inspection and does not offer blin
 
 test('publication rechecks layer capacity after delayed import',async({page})=>{
   await setup(page,false,false,true);
-  while (await page.locator('.layer').count() < 31) await page.getByRole('button',{name:'+ Текст',exact:true}).click();
+  await addControls(page);while (await page.locator('.layer-row[data-layer-index]').count() < 31) await page.getByRole('button',{name:'+ Текст',exact:true}).click();
+  await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();
   await page.getByRole('button',{name:'Подготовить preview изображения'}).click();
   await page.getByRole('button',{name:'Сохранить изображение в галерею'}).click();
-  await page.getByRole('button',{name:'+ Текст',exact:true}).click();
+  await addControls(page);await page.getByRole('button',{name:'+ Текст',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>!!(window as unknown as {editorControl:{release?:()=>void}}).editorControl.release)).toBe(true);
   await page.evaluate(()=>(window as unknown as {editorControl:{release:()=>void}}).editorControl.release());
+  await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();
   await expect(page.getByRole('region',{name:'Редактор изображения',exact:true}).getByRole('status')).toContainText('лимит 32 слоёв');
-  await expect(page.locator('.layer')).toHaveCount(32);
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(32);
 });
 test('publication after connection loss reports library-only outcome',async({page})=>{
   await setup(page,false,false,true);

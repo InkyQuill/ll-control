@@ -15,6 +15,7 @@ async function setup(page:Page,language:Language,operation:Operation){
    if(command==='media_thumbnail')return png;
    const params=args.params??{};
    switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return structuredClone(f.settings);
     case 'list_devices':if(!f.online)throw new Error('offline');return [{id:'A',display_name:'LCD A',family:'galahad2-lcdv2'}];
     case 'list_sensors':return [];

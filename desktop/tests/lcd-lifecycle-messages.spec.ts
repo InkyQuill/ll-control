@@ -14,6 +14,7 @@ async function setup(page:Page,language:string){
    if(method===f.fail&&(!mutating||!f.commit))throw {message:'Настройки',code:f.code};
    let result:unknown;
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
     case 'list_devices':return [{id:'lcd',display_name:'Fixture LCDV2',family:'galahad2-lcdv2'}];
     case 'get_lcd_state':return lcd();

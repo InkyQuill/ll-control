@@ -498,12 +498,22 @@ async fn admit_theme<R: DaemonRpc>(
             theme: crate::LcdTheme,
             #[serde(default)]
             elapsed_seconds: u64,
+            #[serde(default)]
+            layer_index: Option<u16>,
+            #[serde(default)]
+            elapsed_millis: Option<u64>,
         }
         let p: Params = from_value(params)?;
         p.theme.validate()?;
         if method == "preview_lcd_editor" {
             let work = rpc
-                .begin_lcd_editor_preview(p.dev, p.theme, p.elapsed_seconds)
+                .begin_lcd_editor_preview(
+                    p.dev,
+                    p.theme,
+                    p.elapsed_millis
+                        .unwrap_or_else(|| p.elapsed_seconds.saturating_mul(1000)),
+                    p.layer_index,
+                )
                 .await?;
             return Ok(Box::pin(async move { to_value(&work.await?) }));
         }

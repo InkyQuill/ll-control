@@ -10,7 +10,7 @@ async function setup(page:Page,rotation=0) {
       {kind:'text',text:'Top layer',style:{...style}}
     ]};
     const writes:unknown[]=[];
-    Object.assign(window,{canvasWrites:writes,__TAURI_INTERNALS__:{invoke:async(command:string,req:{method:string;params:Record<string,unknown>})=>{
+    Object.assign(window,{canvasReplaceTheme:()=>{theme={...theme,layers:theme.layers.slice(0,1)};},canvasWrites:writes,__TAURI_INTERNALS__:{invoke:async(command:string,req:{method:string;params:Record<string,unknown>})=>{
       if(command==='desktop_set_language')return null;
       if(command==='import_image')return 'imported-image';
       switch(req.method){
@@ -22,7 +22,8 @@ async function setup(page:Page,rotation=0) {
         case 'get_screen_collections':return {collections:null,persistence:{pending:false,last_error:null}};
         case 'preview_lcd_editor': {
           const draft=req.params.theme as typeof theme;
-          return {jpeg:Array.from(Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0))),layers:draft.layers.map(layer=>layer.kind==='image'?{x:layer.x,y:layer.y,width:layer.width,height:layer.height}:layer.style?{x:layer.style.x,y:layer.style.y,width:120,height:layer.style.size}:null)};
+          const pixels=Array.from(Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0)));
+          return {jpeg:pixels,background:pixels,layer_images:draft.layers.map((_,index)=>index===req.params.layer_index?pixels:[]),layers:draft.layers.map(layer=>layer.kind==='image'?{x:layer.x,y:layer.y,width:layer.width,height:layer.height}:layer.style?{x:layer.style.x,y:layer.style.y,width:120,height:layer.style.size}:null)};
         }
         case 'patch_lcd_config':writes.push(req.params);return {source:'Theme',requested:req.params.patch,last_error:null};
         case 'set_lcd_theme':writes.push(req.params);theme=req.params.theme as typeof theme;return {source:'Theme',requested:{rotation_degrees:rotation},last_error:null};
@@ -200,4 +201,33 @@ test('compact stack preserves layer metadata, visibility, lock and explicit disp
   const writes=await page.evaluate(()=>Reflect.get(window,'canvasWrites'));
   expect(writes[0].theme.layers[6].editor).toMatchObject({name:'GPU caption',hidden:true,locked:false});
   expect(writes[1]).toMatchObject({dev:'test',patch:{rotation_degrees:90}});
+});
+
+
+test('rendered layer follows pointer before committing and Escape restores it',async({page})=>{
+  await setup(page);
+  const target=page.getByRole('button',{name:'Выбрать слой 4: Текст',exact:true});
+  const box=(await target.boundingBox())!;
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+  await page.mouse.move(box.x+box.width/2+25,box.y+box.height/2+15);
+  await expect(page.locator('.layer-pixels')).toHaveCount(4);
+  await expect(page.locator('.layer-pixels').last()).toHaveCSS('transform',/matrix\(1, 0, 0, 1, [1-9]/);
+  await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
+  expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
+  await page.keyboard.press('Escape');await page.mouse.up();
+  await expect(page.locator('.layer-pixels')).toHaveCount(0);
+  await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
+});
+
+test('loading a smaller document clears stale selection and remains editable',async({page})=>{
+  await setup(page);
+  await page.locator('.layer-row[data-layer-index="3"]').click();
+  await page.evaluate(()=>Reflect.get(window,'canvasReplaceTheme')());
+  await page.getByText('Загрузить или остановить',{exact:true}).click();
+  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(1);
+  await expect(page.locator('.inspector[data-layer-index="3"]')).toHaveCount(0);
+  await page.locator('.layer-row[data-layer-index="0"]').click();
+  await expect(layer(page,0).getByLabel('width',{exact:true})).toHaveValue('80');
+  await ready(page);
 });

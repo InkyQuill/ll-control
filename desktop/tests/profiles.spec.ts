@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 test('screen profiles save and reload drafts, rename and delete without applying', async ({ page }) => {
   await page.addInitScript(() => {
@@ -8,6 +9,7 @@ test('screen profiles save and reload drafts, rename and delete without applying
     Object.assign(window, { profileWrites: writes, getGroupResetCount: () => groupResetCount, loseNextGroupReply: () => { loseGroupReply = true; }, advanceProfileRevision: () => { library.revision++; }, __TAURI_INTERNALS__: { invoke: async (_: string, request: { method: string; params: { expected_revision: number; edit: { action: string; profile: Profile; slot: number; group: string; name: string } } }) => {
         if (_ === 'desktop_set_language') return null;
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
         case 'list_devices': return [{ id: 'test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [];
@@ -85,6 +87,7 @@ test('pump and fan profile loads remain separate local cooling drafts', async ({
         if (_ === 'desktop_set_language') return null;
       const channel = { requested:null, applied_percent:80, motherboard:false, fallback_active:false, last_error:null };
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
         case 'list_devices': return [{ id:'test',display_name:'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [];

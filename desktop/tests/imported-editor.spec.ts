@@ -1,3 +1,4 @@
+import {loadControls} from './editor-controls';
 import {test,expect} from '@playwright/test';
 import raw from './fixtures/basic-editor-theme.json' with {type:'json'};
 import type {Theme} from '../src/lib/api';
@@ -10,6 +11,7 @@ for(const language of ['en-US','ru-RU'] as const)test(`${language}: imported edi
   Object.assign(window,{importedLoad:state,__TAURI_INTERNALS__:{invoke:async(command:string,request:{method:string;params:Record<string,unknown>}={method:'',params:{}})=>{
    if(command!=='daemon_call')return null;
    switch(request.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:language};
     case 'list_devices':return [{id:'lcd:fixture',display_name:'Owned LCDV2',family:'galahad2-lcdv2'}];
     case 'list_sensors':return [];
@@ -25,7 +27,7 @@ for(const language of ['en-US','ru-RU'] as const)test(`${language}: imported edi
  },{theme:raw as Theme,language});
  const text=(en:string,ru:string)=>language==='en-US'?en:ru;
  await page.goto('/?view=display');
- const load=page.getByRole('button',{name:text('Load imported editor','Загрузить импортированный редактор'),exact:true});
+ await loadControls(page);const load=page.getByRole('button',{name:text('Load imported editor','Загрузить импортированный редактор'),exact:true});
  const name=page.getByLabel(text('Name','Название'),{exact:true});
  await load.click();
  await expect(name).toHaveValue(raw.name);

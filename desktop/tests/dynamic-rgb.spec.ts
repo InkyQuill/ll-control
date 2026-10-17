@@ -13,6 +13,7 @@ test('dynamic RGB loads named channels, validates draft device and shows output 
       const state=()=>({base_mode:'static',color_count:1,speed_supported:false,requested,
         applied:null,degraded:true,suppressed_by_thermal:false,last_error:null});
       switch(request.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'lcd:a',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'lcd:b',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu:test',label:'CPU package',unit:'celsius',value:42,status:'valid',age_ms:10},{id:'power:test',label:'CPU power',unit:'watts',value:50,status:'valid',age_ms:10}];
         case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{}};
@@ -73,6 +74,7 @@ test('missing sensor status respects thermal ownership and updates after recover
         if (_ === 'desktop_set_language') return null;
       const health = (window as unknown as { rgbHealth: { degraded: boolean; suppressed: boolean } }).rgbHealth;
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [];
         case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };

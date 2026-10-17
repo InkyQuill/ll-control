@@ -19,6 +19,7 @@ async function setup(page:Page) {
         if (_ === 'desktop_set_language') return null;
       const key=req.params?`${req.params.dev}:${req.params.kind}`:'';
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle',requested:{}};

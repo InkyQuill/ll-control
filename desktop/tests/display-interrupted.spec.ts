@@ -1,3 +1,4 @@
+import {loadControls} from './editor-controls';
 import { test, expect } from '@playwright/test';
 import type { Theme } from '../src/lib/api';
 
@@ -23,6 +24,7 @@ for (const operation of ['set_lcd_theme', 'clear_lcd', 'get_lcd_theme'] as const
         if (_ === 'desktop_set_language') return null;
             if (!fixture.online) throw new Error('offline');
             switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
               case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
               case 'list_sensors': return [];
               case 'get_lcd_state': return { source: fixture.active ? 'Theme' : 'Idle', last_error: null };
@@ -51,6 +53,7 @@ for (const operation of ['set_lcd_theme', 'clear_lcd', 'get_lcd_theme'] as const
       const button = page.getByRole('button', { name: {
         set_lcd_theme: 'Применить к LCD', clear_lcd: 'Вернуть LocalUI', get_lcd_theme: 'Загрузить активную тему',
       }[operation], exact: true });
+      if(operation!=='set_lcd_theme')await loadControls(page);
       await button.click();
       await expect(button).toBeDisabled();
       await title.fill('New unsent edits');
@@ -72,7 +75,7 @@ for (const operation of ['set_lcd_theme', 'clear_lcd', 'get_lcd_theme'] as const
         : operation === 'set_lcd_theme' ? 'Submitted draft' : 'Previously active' });
       // Explicit readback is separate from reconnect and never reapplies the new draft.
       await page.evaluate(() => { (window as unknown as { interruptedDisplay: Fixture }).interruptedDisplay.hold = null; });
-      await page.getByRole('button', { name: 'Загрузить активную тему', exact: true }).click();
+      await loadControls(page);await page.getByRole('button', { name: 'Загрузить активную тему', exact: true }).click();
       if (operation === 'clear_lcd') {
         await expect(page.getByText('На устройстве нет активной темы', { exact: false })).toBeVisible();
         await expect(title).toHaveValue('New unsent edits');

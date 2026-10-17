@@ -1,3 +1,4 @@
+import {loadControls} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 test('gradient settings survive mode changes and explicit save/load without applying drafts', async ({ page }) => {
@@ -8,6 +9,7 @@ test('gradient settings survive mode changes and explicit save/load without appl
         if (_ === 'desktop_set_language') return null;
       calls.push(structuredClone(request));
       switch(request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source:'Theme',last_error:null,requested:{mode:'Application',brightness_percent:100,rotation_degrees:0}};
@@ -41,7 +43,7 @@ test('gradient settings survive mode changes and explicit save/load without appl
   await expect(page.getByRole('status')).toContainText('Тема отправлена');
   expect((await writes())[0].params.theme).toMatchObject({background:[18,52,86],background_fill:{mode:'horizontal',horizontal:{colors:[[255,0,0],[0,0,255]],flip:true},vertical:{colors:[[0,255,0],[26,115,105]],flip:false}}});
   await type.selectOption('radial');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await expect(type).toHaveValue('horizontal');
   await expect(page.getByLabel('Обратить градиент')).toBeChecked();
   expect(await writes()).toHaveLength(1);

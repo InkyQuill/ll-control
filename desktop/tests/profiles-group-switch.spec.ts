@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 import type { ProfileEdit, ProfileLibrary } from '../src/lib/api';
 interface Fixture {
@@ -13,6 +14,7 @@ for (const fail of [false, true]) {
         invoke: async (_: string, req: { method: string; params: { edit: ProfileEdit; expected_revision: number } }) => {
         if (_ === 'desktop_set_language') return null;
           switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
             case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
             case 'list_sensors': return [];

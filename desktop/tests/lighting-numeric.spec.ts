@@ -7,6 +7,7 @@ test('numeric lighting validation exposes ranges and prevents invalid writes', a
     Object.assign(window, { numericWrites: writes, __TAURI_INTERNALS__: { invoke: async (_: string, req: { method: string }) => {
         if (_ === 'desktop_set_language') return null;
       switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{ id: 'mock', display_name: 'LCD', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid' }, { id: 'pump', label: 'Pump', unit: 'rpm', value: 2200, status: 'valid' }];
         case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };

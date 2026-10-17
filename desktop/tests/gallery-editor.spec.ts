@@ -12,6 +12,7 @@ async function setup(page:Page, failure = '') {
       if(command==='import_image') {fixture.imported=true;return fresh;}
       const params=args.params as Record<string,unknown>;
       switch(args.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':if(!fixture.online)throw new Error('offline');return [{id:'lcd:A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle'};

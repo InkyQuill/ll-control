@@ -15,6 +15,7 @@ async function setup(page:Page,response:unknown,language='en-US',sealed=false){
    }
    if(f.sealed)throw {message:'ordinary work admission closed for firmware maintenance'};
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,interface_language:language,temperature_unit:'celsius'};
     case 'get_fps_source':return {version:1,revision:0,enabled:false,log_path:null};
     case 'list_devices':case 'list_sensors':case 'list_prepared_clips':return [];

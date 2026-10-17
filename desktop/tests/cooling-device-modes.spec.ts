@@ -50,6 +50,7 @@ async function setup(page:Page,language:'en-US'|'ru-RU'='ru-RU') {
       if(command!=='daemon_call')return null;
       const method=args.method as string,params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
       switch(method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return structuredClone(f.settings);
         case 'list_devices':return f.online===false?[]:[{id:'A',display_name:'LCD A',family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B',family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu:test',label:'CPU package',unit:'celsius',value:42,status:'valid',age_ms:1}];

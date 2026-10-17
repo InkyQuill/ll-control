@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect, type Page } from '@playwright/test';
 
 async function setup(page: Page) {
@@ -16,6 +17,7 @@ async function setup(page: Page) {
       __TAURI_INTERNALS__: {invoke: async (_:string, r:{method:string;params:Record<string,unknown>}) => {
         if (_ === 'desktop_set_language') return null;
         switch(r.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices': return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'},{id:'other',display_name:'Other LCD', family:'galahad2-lcdv2'}];
           case 'list_sensors': return [];
           case 'get_lcd_state': return lcd();

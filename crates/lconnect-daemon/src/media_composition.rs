@@ -278,7 +278,7 @@ fn command(program: &OsStr) -> Command {
         .kill_on_drop(true);
     command
 }
-fn decoder_command(program: &OsStr, first_only: bool) -> Command {
+pub(crate) fn decoder_command(program: &OsStr, first_only: bool) -> Command {
     let mut decoder = command(program);
     decoder.args([
         "-xerror",
@@ -337,10 +337,12 @@ pub(crate) async fn preview(
 
 /// Canvas geometry and pixels share the decoded background and live snapshot.
 /// The owned theme job retains admission until decoder and renderer both finish.
+#[cfg(test)]
 pub(crate) async fn editor_preview(
     store: crate::media_assets::MediaAssetStore,
     runtime: Arc<ThemeRuntime>,
     elapsed_seconds: u64,
+    layer_index: Option<u16>,
 ) -> Result<lconnect_ipc::LcdEditorPreview> {
     let key = runtime
         .theme()
@@ -355,7 +357,11 @@ pub(crate) async fn editor_preview(
     let frame = decode_preview_frame(unit, OsStr::new("ffmpeg"), Duration::from_secs(10)).await?;
     let rendered = tokio::task::spawn_blocking(move || {
         let _pin = pin;
-        runtime.editor_preview(Some(frame), elapsed_seconds)
+        runtime.editor_preview(
+            Some(frame),
+            elapsed_seconds.saturating_mul(1000),
+            layer_index,
+        )
     })
     .await??;
     Ok(rendered)
@@ -886,7 +892,7 @@ mod tests {
         );
         let first = preview(store.clone(), runtime.clone(), 0).await.unwrap();
         let second = preview(store.clone(), runtime.clone(), 2).await.unwrap();
-        let editor = editor_preview(store.clone(), runtime.clone(), 2)
+        let editor = editor_preview(store.clone(), runtime.clone(), 2, None)
             .await
             .unwrap();
         assert_eq!(editor.jpeg, second);
@@ -896,6 +902,39 @@ mod tests {
         update(&cache, 80.0);
         let changed = preview(store.clone(), runtime, 0).await.unwrap();
         assert!(first != changed, "preview ignored updated reading");
+        store.delete_unreferenced(&key, || Ok(false)).unwrap();
+    }
+
+    #[tokio::test]
+    async fn editor_video_reuses_decoder_and_maintenance_joins_before_releasing_assets() {
+        let (_root, store, key, source) = tokio::task::spawn_blocking(source).await.unwrap();
+        drop(source);
+        let gate = crate::admission::Admission::default();
+        let slots = crate::admission::WorkSlots::new(1, gate.clone());
+        let editor = Arc::new(crate::editor_cache::EditorCache::default());
+        let runtime = Arc::new(ThemeRuntime::new(theme(), ThemeAssets::new(), vec![]).unwrap());
+        editor.store(None, theme(), runtime);
+        let first = editor
+            .video_frame(key.clone(), 0, store.clone(), slots.clone())
+            .await
+            .unwrap();
+        assert_eq!(first.dimensions(), (480, 480));
+        let second = editor
+            .video_frame(key.clone(), 0, store.clone(), slots)
+            .await
+            .unwrap();
+        assert_eq!(first, second);
+        assert_eq!(
+            gate.active(),
+            1,
+            "one decoder serves repeated editor frames"
+        );
+        assert!(store.delete_unreferenced(&key, || Ok(false)).is_err());
+        tokio::time::timeout(Duration::from_secs(5), gate.close().wait_checked())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(gate.active(), 0);
         store.delete_unreferenced(&key, || Ok(false)).unwrap();
     }
 

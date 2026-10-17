@@ -23,6 +23,7 @@ async function setup(page:Page,language:'en-US'|'ru-RU'='en-US',failure=''){
    if(command==='media_playback_url')return 'data:video/mp4;base64,AA==';
    if(command==='media_cancel'){if(f.job)f.job.phase='cancelled';return f.job?{...f.job}:null;}
    switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return structuredClone(f.settings);
     case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':return [];
     case 'get_lcd_state':return {source:'Idle',requested:{mode:'LocalUI',brightness_percent:100,rotation_degrees:0},last_error:null};
@@ -114,12 +115,12 @@ for(const language of ['en-US','ru-RU'] as const){
   }
  });
  for(const failure of ['import','membership'] as const) test(`plain image ${failure} failure preserves diagnostics and draft (${language})`,async({page})=>{
-  const english=language==='en-US';await setup(page,language,failure);const count=await page.locator('.layer').count();
+  const english=language==='en-US';await setup(page,language,failure);const count=await page.locator('.layer-row[data-layer-index]').count();
   await page.locator('.file input[type=file]').setInputFiles({name:'Настройки.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   const alert=page.locator('main > .error[role=alert]');await expect(alert).toContainText('Настройки');
   const en=failure==='import'?'Image import was not confirmed':'The file was saved to the catalog';const ru=failure==='import'?'Импорт изображения не подтверждён':'Файл сохранён в каталоге';
   await expect(alert).toContainText(english?en:ru);await switchErrorLanguage(page,english);await expect(alert).toContainText(english?ru:en);
-  await expect(page.locator('.layer')).toHaveCount(count);
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(count);
   expect(await page.evaluate(()=>(window as unknown as {englishMedia:{calls:{command:string}[]}}).englishMedia.calls.filter(c=>c.command==='import_image').length)).toBe(1);
  });
  test(`gallery replacement lost reply preserves raw diagnostic without repeating publication (${language})`,async({page})=>{
@@ -155,7 +156,7 @@ for(const language of ['en-US','ru-RU'] as const)test(`local pending collection 
 
 for(const language of ['en-US','ru-RU'] as const)for(const failure of ['stale','missing','null','pending','error'])test(`acknowledged image membership requires current readback: ${failure} (${language})`,async({page})=>{
  const english=language==='en-US';await setup(page,language,'membership-readback-'+failure);
- const before=await page.locator('.layer').count();
+ const before=await page.locator('.layer-row[data-layer-index]').count();
  await page.getByRole('button',{name:english?'Import and edit…':'Импорт с редактированием…',exact:true}).click();
  await page.getByLabel(english?'File to edit':'Файл для редактирования',{exact:true}).setInputFiles({name:'source.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
  const editor=page.getByRole('region',{name:/^(Image editor|Редактор изображения)$/});
@@ -166,7 +167,7 @@ for(const language of ['en-US','ru-RU'] as const)for(const failure of ['stale','
  const expected=(en:boolean)=>failure==='error'?'Настройки {0} <disk>':failure==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
  await expect(alert).toContainText(expected(english));await switchErrorLanguage(page,english);await expect(alert).toContainText(expected(!english));
  await expect(editor.getByRole('button',{name:english?'Сохранить изображение в галерею':'Save image to gallery',exact:true})).toBeDisabled();
- await expect(page.locator('.layer')).toHaveCount(before);
+ await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before);
  const f=await page.evaluate(()=>(window as unknown as {englishMedia:{assets:{key:string}[];calls:{command:string;args:{method?:string}}[]}}).englishMedia);
  expect(f.assets.map(asset=>asset.key)).toEqual(['a'.repeat(32),'b'.repeat(32)]);
  expect(f.calls.filter(c=>c.command==='import_image')).toHaveLength(1);

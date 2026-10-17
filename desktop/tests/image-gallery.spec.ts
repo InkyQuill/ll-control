@@ -3,7 +3,7 @@ test.beforeEach(async ({page}) => {
   await page.addInitScript(() => {
     const fixture={scoped:false,collectionError:false,names:{} as Record<string,{name:string;revision:number}>, loseRename:false, calls:[] as {method:string;params:Record<string,unknown>}[], created:[] as string[],revoked:[] as string[],hold:false,release:null as null|(()=>void)};
     const create=URL.createObjectURL.bind(URL),revoke=URL.revokeObjectURL.bind(URL);
-    URL.createObjectURL=(blob:Blob)=>{const url=create(blob);fixture.created.push(url);return url;};
+    URL.createObjectURL=(blob:Blob)=>{const url=create(blob);if(blob.type==='image/png')fixture.created.push(url);return url;};
     URL.revokeObjectURL=(url:string)=>{fixture.revoked.push(url);revoke(url);};
     const png=Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
     Object.assign(window,{fixture,__TAURI_INTERNALS__:{invoke:async(command:string,args:{method:string;params:Record<string,unknown>})=>{
@@ -11,6 +11,7 @@ test.beforeEach(async ({page}) => {
       if(command==='media_status')return null;
       fixture.calls.push(args);
       switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_screen_collections': if(fixture.collectionError) throw new Error('collection read failed'); return {collections:fixture.scoped ? {version:1,revision:1,images:['0'.repeat(32)],backgrounds:[{kind:'image',key:'2'.repeat(32)}],watermarks:['3'.repeat(32)]}:null,persistence:{pending:false,saved:false,last_error:null}};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];

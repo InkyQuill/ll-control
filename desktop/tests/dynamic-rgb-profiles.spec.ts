@@ -11,6 +11,7 @@ async function setup(page:Page){
     Object.assign(window,{dynamicProfiles:f,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params?:{config:C|null}})=>{
         if (_ === 'desktop_set_language') return null;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [['cpu:temp','celsius'],['gpu:load','percent'],['pump:rpm','rpm'],['cpu:load','percent']].map(([id,unit])=>({id,unit,label:id,status:'valid',value:45,age_ms:0}));
         case 'get_lighting_info':return {modes:['static','meteor']};

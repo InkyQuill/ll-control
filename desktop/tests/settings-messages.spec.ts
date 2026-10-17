@@ -12,6 +12,7 @@ async function setup(page:Page,language:string,kind:Kind){
    if(f.fail===method)throw {message:'Настройки'};
    if(f.invalid===method)return {version:999};
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {...f.display,interface_language:f.badLanguageEnabled?f.badLanguage:f.language};
     case 'set_display_settings':f.display={...(params.settings as Fixture['display']),revision:f.display.revision+1};f.language=f.display.interface_language??'ru-RU';return structuredClone(f.display);
     case 'get_fps_source':return structuredClone(f.fps);

@@ -104,6 +104,9 @@
     lastDevice = devices.find(d => d.id === value);
     device = value; selectionRevision++; lcdRevision++; lcd = null; notice = ''; error = '';
   }
+  let editorImages=$state<string[]>([]),editorBackground=$state('');
+  const rasterCache=new Map<string,string>();
+  function clearEditorImages(){if(editorBackground)URL.revokeObjectURL(editorBackground);editorImages=[];editorBackground='';}
   let preview = $state(''), selectedSensor = $state('');
   let presetId = $state<PresetId>('focus'), presetBindings = $state<string[]>([]);
   let presetRequired = $derived(presets.find(p => p.id === presetId)!.sensors);
@@ -139,7 +142,7 @@
         return;
       }
       if (!saved) { error = imported ? 'Нет импортированного basic-редактора для загрузки.' : 'На устройстве нет активной темы'; return; }
-      theme = saved;
+      theme = saved;selectedLayer=-1;
       loadedMediaKey = '';
       if (imported) notice = 'Импортированный редактор загружен в черновик. Применение — отдельное действие.';
     }, () => selection === selectionRevision, imported ? 'load-imported' : 'load');
@@ -189,18 +192,24 @@
   }
   onMount(() => {
     if (new URLSearchParams(location.search).get('view') === 'display') tab = 'display';
+    const visibility=()=>windowVisible=!document.hidden;
+    visibility();document.addEventListener('visibilitychange',visibility);
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     async function poll() { await refresh(); if (!stopped) timer = setTimeout(poll, 1500); }
     void poll();
-    return () => { stopped = true; clearTimeout(timer); if (preview) URL.revokeObjectURL(preview); };
+    return () => { document.removeEventListener('visibilitychange',visibility);clearEditorImages();for(const url of rasterCache.values())URL.revokeObjectURL(url);rasterCache.clear();stopped = true; clearTimeout(timer); if (preview) URL.revokeObjectURL(preview); };
   });
   async function action(run: () => Promise<void>, current: () => boolean, context: LcdOperation) {
     actionBusy = true; error = ''; notice = '';
     try { await run(); } catch (e) { if (current()) error = { context: e instanceof ImportedImageMembershipError ? 'image-membership' : context, detail: e instanceof ImportedImageMembershipError ? e.detail : e instanceof ValidationError ? e : message(e) }; } finally { actionBusy = false; }
   }
+  let windowVisible=$state(true);
+  let animationOrigin=performance.now(), animationElapsed=0;
+  function toggleAnimation(){if(livePreview)animationElapsed+=performance.now()-animationOrigin;else animationOrigin=performance.now();livePreview=!livePreview;}
   let livePreview=$state(true), previewRequest=$state(0), previewBusy=$state(false), previewError=$state('');
   const canvasEditing=true; let canvasBounds=$state<(LayerBounds|null)[]>([]), canvasDraft=$state(''), selectedLayer=$state(-1);
+  $effect(()=>{if(selectedLayer>=theme.layers.length)selectedLayer=-1;});
   const layerIdentities=new WeakMap<Layer,number>();
   let nextLayerIdentity=0;
   function layerIdentity(layer:Layer):number {
@@ -210,8 +219,8 @@
   }
   const canvasLayerKeys=$derived(theme.layers.map(layerIdentity));
   let pendingDisplay=$state<Record<string,{rotation_degrees?:QuarterTurn;brightness_percent?:number}>>({});
-  const canvasRotation=$derived(pendingDisplay[device]?.rotation_degrees??(lcd?.requested.rotation_degrees??0) as QuarterTurn);
-  const displayBrightness=$derived(pendingDisplay[device]?.brightness_percent??lcd?.requested.brightness_percent??100);
+  const canvasRotation=$derived(pendingDisplay[device]?.rotation_degrees??(lcd?.requested?.rotation_degrees??0) as QuarterTurn);
+  const displayBrightness=$derived(pendingDisplay[device]?.brightness_percent??lcd?.requested?.brightness_percent??100);
   function stageDisplay(patch:{rotation_degrees?:QuarterTurn;brightness_percent?:number}) {
     pendingDisplay[device]={...pendingDisplay[device],...patch};
   }
@@ -246,35 +255,69 @@
   let previewTimer:ReturnType<typeof setTimeout>|undefined;
   let previewFlight=false;
   $effect(()=>{
-    const draft=previewDraft, dev=device, online=connected, visible=tab==='display', live=livePreview, request=previewRequest, editor=canvasEditing;
+    const draft=previewDraft, dev=device, online=connected, visible=tab==='display'&&windowVisible, live=livePreview, request=previewRequest, editor=canvasEditing;
     const manual=request!==lastPreviewRequest;lastPreviewRequest=request;
     const generation=++previewGeneration;
     clearTimeout(previewTimer);
     if(!editor || !online || !visible) {untrack(()=>{if(preview) URL.revokeObjectURL(preview);});preview='';}
     previewError='';canvasDraft='';
-    previewJob=online && visible && (live||manual||editor) ? {generation,dev,theme:JSON.parse(draft),live,editor,started:performance.now()} : null;
-    if(previewJob && (live||manual||editor)) previewTimer=setTimeout(runPreview,250);
+    previewJob=online && visible && (live||manual||editor) ? {generation,dev,theme:JSON.parse(draft),live,editor,started:animationOrigin-animationElapsed} : null;
+    if(previewJob && (live||manual||editor)) previewTimer=setTimeout(runPreview,50);
     return()=>{previewJob=null;clearTimeout(previewTimer);};
   });
   async function runPreview() {
     if(previewFlight || !previewJob)return;
-    const job=previewJob;previewFlight=true;previewBusy=true;
+    const job=previewJob, frameStarted=performance.now();previewFlight=true;previewBusy=true;
     try {
-      const params={dev:job.dev||null,theme:job.theme,elapsed_seconds:Math.floor((performance.now()-job.started)/1000)};
+      const params={dev:job.dev||null,theme:job.theme,elapsed_millis:Math.floor(job.live?performance.now()-job.started:animationElapsed)};
       const result=job.editor?await rpc<EditorPreview>('preview_lcd_editor',params):await rpc<number[]>('preview_lcd_theme',params);
       const bytes=Array.isArray(result)?result:result.jpeg;
       if(previewJob?.generation!==job.generation)return;
-      const url=URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:'image/jpeg'}));
+      const url=bytes.length?URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:'image/jpeg'})):'';
       if(preview)URL.revokeObjectURL(preview);
       preview=url;previewError='';
-      canvasBounds=Array.isArray(result)?[]:result.layers;canvasDraft=job.editor?JSON.stringify(job.theme):'';
+      canvasBounds=Array.isArray(result)?[]:result.layers;
+      if(!Array.isArray(result) && result.background?.length) {
+        const backgroundUrl=URL.createObjectURL(new Blob([new Uint8Array(result.background)],{type:'image/jpeg'}));
+        const nextImages:string[]=[];
+        try {
+          for(let index=0;index<job.theme.layers.length;index++) {
+            const layer=job.theme.layers[index];
+            if(layer.editor?.hidden || !editableLayer(layer)){nextImages.push('');continue;}
+            const dynamic=layer.kind==='clock'||layer.kind==='sensor'||layer.kind==='sensor_cycle';
+            const signature=JSON.stringify([layer,dynamic?Math.floor(Date.now()/1000):0,dynamic?sensors:[],presentation.settings?.temperature_unit]);
+            let raster=rasterCache.get(signature);
+            if(!raster) {
+              const part=await rpc<EditorPreview>('preview_lcd_editor',{...params,layer_index:index});
+              if(previewJob?.generation!==job.generation)return;
+              const bytes=part.layer_images?.[index];
+              raster=bytes?.length?URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:'image/png'})):'';
+              if(raster) {
+                for(const [key,url] of rasterCache) {
+                  if(rasterCache.size<64)break;
+                  if(!editorImages.includes(url) && !nextImages.includes(url)){URL.revokeObjectURL(url);rasterCache.delete(key);}
+                }
+                rasterCache.set(signature,raster);
+              }
+            }
+            nextImages.push(raster);
+          }
+          if(previewJob?.generation!==job.generation)return;
+          clearEditorImages();editorImages=nextImages;editorBackground=backgroundUrl;
+          for(const [key,url] of rasterCache) {
+            if(rasterCache.size<=64)break;
+            if(!nextImages.includes(url)){URL.revokeObjectURL(url);rasterCache.delete(key);}
+          }
+        } finally {if(editorBackground!==backgroundUrl)URL.revokeObjectURL(backgroundUrl);}
+      }
+      canvasDraft=job.editor?JSON.stringify(job.theme):'';
       if(!job.live&&!job.editor)notice='Preview обновлён. На устройство ничего не отправлено.';
     } catch(e) {
       if(previewJob?.generation===job.generation){previewError=message(e);if(preview)URL.revokeObjectURL(preview);preview='';}
     } finally {
       previewFlight=false;previewBusy=false;
       if(previewJob && (previewJob.live || previewJob.generation!==job.generation)) {
-        clearTimeout(previewTimer);previewTimer=setTimeout(runPreview,previewJob.generation===job.generation?1000:250);
+        clearTimeout(previewTimer);previewTimer=setTimeout(runPreview,previewJob.generation===job.generation?(!previewError&&(job.theme.background_video||job.theme.layers.some(layer=>['weather','meteor','snow3d','fireworks'].includes(layer.kind)))?Math.max(0,1000/24-(performance.now()-frameStarted)):1000):50);
       }
     }
   }
@@ -358,17 +401,19 @@
     await tick();
     if (!editor?.isConnected || editor !== editorElement || layers !== theme.layers) return;
     const items = editor.querySelectorAll<HTMLElement>('.layer h2');
-    const target = items[0] ?? editor.querySelector<HTMLElement>('[data-add-text]');
+    const target = items[0] ?? editor.querySelector<HTMLElement>('.add-layer summary');
     target?.focus();
   }
   function prependLayer(layer:Layer) {
+    layer.editor={id:crypto.randomUUID(),name:'',hidden:false,locked:false};
     const selected=theme.layers[selectedLayer];
     theme.layers.splice(isProcedural(theme.layers[0])?1:0,0,layer);
     if(selected)selectedLayer=theme.layers.indexOf(selected);
   }
   function removeLayer(index: number) {
+    if(index<0 || index>=theme.layers.length)return;
     if(isProcedural(theme.layers[index])) {
-      try {theme=switchLcdPage($state.snapshot(theme),'basic');error='';}
+      try {theme=switchLcdPage($state.snapshot(theme),'basic');selectedLayer=-1;error='';return;}
       catch(e) {error=message(e);return;}
     } else theme.layers.splice(index, 1);
     selectedLayer=Math.min(index,theme.layers.length-1);
@@ -376,13 +421,13 @@
   }
   function reorderLayer(index:number,target:number) {
     const first=isProcedural(theme.layers[0])?1:0;
-    if(index<first||target<first||target>=theme.layers.length||index===target)return;
+    if(index>=theme.layers.length||index<first||target<first||target>=theme.layers.length||index===target)return;
     const [layer]=theme.layers.splice(index,1);theme.layers.splice(target,0,layer);
     selectedLayer=target;void focusLayer(target);
   }
   function move(index:number,step:number) {reorderLayer(index,index+step);}
   function duplicateLayer(index:number) {
-    if(theme.layers.length>=32 || isProcedural(theme.layers[index]))return;
+    if(index<0 || index>=theme.layers.length || theme.layers.length>=32 || isProcedural(theme.layers[index]))return;
     const copy=structuredClone($state.snapshot(theme.layers[index]));
     copy.editor={...copy.editor,id:crypto.randomUUID(),name:copy.editor?.name??'',hidden:copy.editor?.hidden??false,locked:false};
     theme.layers.splice(index+1,0,copy);
@@ -463,12 +508,12 @@
     {:else}
       <div class="workspace">
         <div class="document-head">          <div class="row"><label>{t("Название")}<input bind:value={theme.name} maxlength="128"/></label></div>
-          <details class="profiles-disclosure"><summary>{t("Сохранённые темы")}</summary><Profiles refreshEpoch={resetEpoch} group="screen" mediaKey={profileMediaKey} {connected} disabled={busy} draft={() => { const draft=$state.snapshot(theme);assertWeatherDraft(draft);return {kind:'screen',value:draft}; }} onload={content => { if (content.kind === 'screen_media') { lcdPanel = 'composition'; loadedMediaKey = content.value; notice = 'Ролик из профиля загружен. Применение — отдельное действие.'; } else if (content.kind === 'screen') { loadedMediaKey = ''; theme = content.value; notice = ''; if (preview) URL.revokeObjectURL(preview); preview = ''; } }}/></details>
+          <div class="profiles-disclosure"><Profiles refreshEpoch={resetEpoch} group="screen" mediaKey={profileMediaKey} {connected} disabled={busy} draft={() => { const draft=$state.snapshot(theme);assertWeatherDraft(draft);return {kind:'screen',value:draft}; }} onload={content => { if (content.kind === 'screen_media') { lcdPanel = 'composition'; loadedMediaKey = content.value; notice = 'Ролик из профиля загружен. Применение — отдельное действие.'; } else if (content.kind === 'screen') { loadedMediaKey = ''; theme = content.value;selectedLayer=-1; notice = ''; if (preview) URL.revokeObjectURL(preview); preview = ''; } }}/></div>
           <div class="editor-tabs" aria-label={t('Рабочая область LCD')}><button aria-pressed={lcdPanel === 'presets'} onclick={() => lcdPanel = 'presets'}>{t('Готовые темы')}</button><button aria-pressed={lcdPanel === 'composition'} onclick={() => lcdPanel = 'composition'}>{t('Композиция')}</button><button aria-pressed={lcdPanel === 'library'} onclick={() => lcdPanel = 'library'}>{t('Библиотека')}</button></div>
 </div>
         <section class="visual" class:canvas-mode={canvasEditing} aria-label="{t("Предпросмотр LCD")}">
-          <div class="canvas-toolbar"><label>{t('Ориентация экрана')}<select aria-label={t('Ориентация экрана')} value={canvasRotation} onchange={event=>stageDisplay({rotation_degrees:Number(event.currentTarget.value) as QuarterTurn})}>{#each [0,90,180,270] as angle (angle)}<option value={angle}>{angle}°</option>{/each}</select></label></div>
-          <LcdPreview geometry={capabilities.display}>{#if canvasEditing}<CanvasEditor image={preview} keys={canvasLayerKeys} layers={theme.layers} bounds={canvasBounds} selected={selectedLayer} rotation={canvasRotation} ready={canvasDraft===previewDraft && connected} {labels} onselect={selectCanvasLayer} onchange={changeCanvasLayer} onorder={move}/>{:else if preview}<img src={preview} alt="{t("Подготовленная композиция LCD — preview, не подтверждение вывода на устройство")}"/>{:else}<div class="empty"><span>{capabilities.display?.width ?? 480} × {capabilities.display?.height ?? 480}</span><p>{t("Создайте тему")}<br/>{t("и обновите preview")}</p></div>{/if}</LcdPreview>
+          <div class="canvas-toolbar"><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button><label>{t('Ориентация экрана')}<select aria-label={t('Ориентация экрана')} value={canvasRotation} onchange={event=>stageDisplay({rotation_degrees:Number(event.currentTarget.value) as QuarterTurn})}>{#each [0,90,180,270] as angle (angle)}<option value={angle}>{angle}°</option>{/each}</select></label></div>
+          <LcdPreview geometry={capabilities.display}>{#if canvasEditing}<CanvasEditor image={preview} images={editorImages} background={editorBackground} keys={canvasLayerKeys} layers={theme.layers} bounds={canvasBounds} selected={selectedLayer} rotation={canvasRotation} ready={canvasDraft===previewDraft && connected} {labels} onselect={selectCanvasLayer} onchange={changeCanvasLayer} onorder={move}/>{:else if preview}<img src={preview} alt="{t("Подготовленная композиция LCD — preview, не подтверждение вывода на устройство")}"/>{:else}<div class="empty"><span>{capabilities.display?.width ?? 480} × {capabilities.display?.height ?? 480}</span><p>{t("Создайте тему")}<br/>{t("и обновите preview")}</p></div>{/if}</LcdPreview>
           <div class="status"><span>{t("Источник:")} {lcdSourceLabel(lcd?.source)}</span><span>{lcd?.last_error ?? t('Preview не подтверждает физический вывод')}</span></div>
           {#if canvasEditing}
             <details><summary>{t('Управление холстом')}</summary>
@@ -476,9 +521,9 @@
             <p>{t('Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.')}</p></details>
           {/if}
           <div class="actions"><button disabled={!undoDrafts.length} onclick={()=>restoreDraft()}>{t('Отменить правку')}</button><button disabled={!redoDrafts.length} onclick={()=>restoreDraft(true)}>{t('Повторить правку')}</button></div>
-          <button aria-pressed={!livePreview} onclick={()=>livePreview=!livePreview}>{livePreview?t('Приостановить анимацию'):t('Продолжить анимацию')}</button>
+          <button aria-pressed={!livePreview} onclick={toggleAnimation}>{livePreview?t('Приостановить анимацию'):t('Продолжить анимацию')}</button>
           {#if previewError}<p role="alert">{t('Не удалось создать preview: {0}', previewError)}</p>{/if}
-          <div class="actions"><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button></div>
+
           <details><summary>{t('Настройки экрана')}</summary><label>{t('Яркость экрана, %')}<input type="range" min="0" max="100" value={displayBrightness} oninput={event=>stageDisplay({brightness_percent:Number(event.currentTarget.value)})}/><output>{displayBrightness}%</output></label><p>{t('Настройки экрана изменятся после применения.')}</p></details>
           {#if Object.keys(pendingDisplay[device]??{}).length}<p class="status">{t('Настройки экрана изменятся после применения.')}</p>{/if}
           <details><summary>{t("Загрузить или остановить")}</summary><div class="document-actions">          <button disabled={busy || !deviceAvailable} onclick={() => loadTheme()}>{t("Загрузить активную тему")}</button>
@@ -490,7 +535,7 @@
           <section class="preset-picker"><h2>{t("Готовые темы — редактируемые раскладки")}</h2>
             <label>{t("Раскладка")}<select aria-label="{t("Раскладка")}" bind:value={presetId} onchange={() => presetBindings = []}>{#each presets as preset}<option value={preset.id}>{preset.name} · {t(preset.description)}</option>{/each}</select></label>
             {#if presetRequired}<p>{t("Выберите")} {presetRequired} {t("датчиков. Порядок выбора задаёт расположение.")}</p><div class="preset-sensors">{#each sensors as sensor (sensor.id)}<label><input type="checkbox" checked={presetBindings.includes(sensor.id)} onchange={e => { presetBindings = e.currentTarget.checked ? [...presetBindings, sensor.id] : presetBindings.filter(id => id !== sensor.id); }} disabled={!presetBindings.includes(sensor.id) && presetBindings.length >= presetRequired}/>{sensor.label} · {sensor.unit}</label>{/each}</div>{/if}
-            <button disabled={presetBindings.length !== presetRequired || busy} onclick={() => { try { theme = presetTheme(presetId, presetBindings.map(id => { const sensor = sensors.find(s => s.id === id); if (!sensor) throw new Error('Датчик исчез из каталога'); return sensor; })); lcdPanel = 'composition'; notice = 'Раскладка заменила локальный черновик. Настройте её и нажмите Apply для отправки.'; error = ''; } catch (e) { error = message(e); } }}>{t("Создать черновик из раскладки")}</button>
+            <button disabled={presetBindings.length !== presetRequired || busy} onclick={() => { try { theme = presetTheme(presetId, presetBindings.map(id => { const sensor = sensors.find(s => s.id === id); if (!sensor) throw new Error('Датчик исчез из каталога'); return sensor; })); selectedLayer=-1;lcdPanel = 'composition'; notice = 'Раскладка заменила локальный черновик. Настройте её и нажмите Apply для отправки.'; error = ''; } catch (e) { error = message(e); } }}>{t("Создать черновик из раскладки")}</button>
           </section>
           </div>
           <div data-studio-panel="library" hidden={lcdPanel !== 'library'}>
@@ -526,7 +571,7 @@
           <details class="add-layer"><summary>{t('Добавить слой')}</summary>          <div class="toolbar"><button disabled={busy || theme.layers.length >= 32} onclick={() => addLayer({kind:'divider',axis:'horizontal',x:34,y:240,length:412,thickness:2,color:[144,177,201],opacity:100,shadow:{x:0,y:0,blur:5,color:[0,0,0],opacity:100}})}>{t('+ Разделитель')}</button><button data-add-text disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'text', text: t('Новый текст'), style: style(180) })}>{t("+ Текст")}</button><button disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) })}>{t("+ Часы")}</button><label class="file">{t("+ Изображение")}<input type="file" accept="image/png,image/jpeg,image/webp,image/bmp" onchange={importImage} disabled={busy || theme.layers.length >= 32}/></label></div>
           <div class="row"><label>{t("Привязать датчик")}<select bind:value={selectedSensor}><option value="">{t("Выберите источник")}</option>{#each sensors as s}<option value={s.id}>{s.label} · {s.unit}</option>{/each}</select></label><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}>{t("Добавить")}</button></div>
 </details>          <LayerStack layers={theme.layers} {labels} selected={selectedLayer} onselect={selectCanvasLayer} onmove={reorderLayer} onduplicate={duplicateLayer} onremove={removeLayer} onvisibility={index=>{const meta=layerMetadata(index);meta.hidden=!meta.hidden;}} onlock={index=>{const meta=layerMetadata(index);meta.locked=!meta.locked;}}/>
-          {#if selectedLayer>=0 && theme.layers[selectedLayer]}
+          {#if selectedLayer>=0 && theme.layers[selectedLayer] && !isProcedural(theme.layers[selectedLayer])}
             <article class="layer inspector" data-layer-index={selectedLayer} aria-label={t('Свойства выбранного слоя')}>
               <h2 tabindex="-1">{labels[theme.layers[selectedLayer].kind]}</h2>
               <label>{t('Имя слоя')}<input value={theme.layers[selectedLayer].editor?.name??''} maxlength="128" oninput={event=>layerMetadata(selectedLayer).name=event.currentTarget.value}/></label>
@@ -534,8 +579,8 @@
             </article>
           {:else}
           {#if loadedMediaKey}<section aria-label="{t("Ролик из профиля")}"><MediaThumbnail clipKey={loadedMediaKey} name={t('Ролик из профиля')}/><button disabled={busy || !deviceAvailable} onclick={() => selectMedia(loadedMediaKey)}>{t("Применить ролик из профиля")}</button><button onclick={() => loadedMediaKey = ''}>{t("Закрыть ролик из профиля")}</button></section>{/if}<BasicEditor bind:theme disabled={busy} onchange={() => loadedMediaKey = ''}/><WeatherEditor bind:theme {sensors} disabled={busy}/><PaletteEditor bind:theme {sensors} disabled={busy}/><BackgroundEditor bind:theme/>
-          {#key device}<ImageEditor disabled={busy || !deviceAvailable || theme.layers.length >= 32} onpublish={publishEditedImage}/>{/key}
           {/if}
+          <div hidden={selectedLayer>=0 && !isProcedural(theme.layers[selectedLayer])}>{#key device}<ImageEditor disabled={busy || !deviceAvailable || theme.layers.length >= 32} onpublish={publishEditedImage}/>{/key}</div>
           </div>
         </section>
       </div>
@@ -544,11 +589,12 @@
   </main>
 </div>
 <style>
-.document-head{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.document-head>.row{flex:1;min-width:160px;margin:0}.document-head .editor-tabs{margin:0;padding:0;border:0}.document-head details{margin:0}.document-actions{display:grid;gap:8px}.add-layer{margin:0 0 8px}.file input{width:100%}.toolbar>.file{flex-basis:100%}.canvas-toolbar{display:flex;align-items:center;gap:8px}.canvas-toolbar label{max-width:180px}
+.document-head{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.document-head>.row{flex:1;min-width:160px;margin:0}.document-head .editor-tabs{margin:0;padding:0;border:0}.document-head :global(details){margin:0}.document-actions{display:grid;gap:8px}.add-layer{margin:0 0 8px}.file input{width:100%}.toolbar>.file{flex-basis:100%}.canvas-toolbar{display:flex;align-items:end;justify-content:space-between;gap:8px}.canvas-toolbar>.primary{align-self:stretch}.canvas-toolbar label{max-width:180px}
 
   .visual.canvas-mode{grid-auto-rows:max-content;align-content:start;}
 
-.shell{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.aside-note,.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}.aside-note{margin-top:14px}main{padding:24px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,360px);gap:20px}.visual{position:sticky;top:16px;align-self:start;display:grid;gap:10px;padding:16px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.actions,.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{padding:12px 0;margin-top:8px;display:grid;gap:8px}.layer-fields{border:0;padding:0;margin:0}.inspector{max-height:calc(100vh - 470px);min-height:200px;overflow:auto;scrollbar-gutter:stable}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
+.shell{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.aside-note,.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}.aside-note{margin-top:14px}main{padding:24px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,360px);gap:20px}.visual{position:sticky;top:16px;align-self:start;display:grid;gap:10px;padding:16px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.actions,.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{padding:12px 0;margin-top:8px;display:grid;gap:8px}.layer-fields{border:0;padding:0;margin:0}.inspector{max-height:clamp(160px,calc(100vh - 640px),360px);min-height:160px;overflow:auto;scrollbar-gutter:stable}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
+@media(min-width:981px){header{margin-bottom:16px;padding-bottom:16px}h1{font-size:26px;margin-bottom:4px}.workspace{gap:12px}.visual{padding:12px}.document-head{gap:8px}.document-head>.row{max-width:210px}.editor :global(.stack){margin-block:8px;padding-block:8px}.editor :global(.rows){max-height:180px}.editor :global(.layer-row){padding:4px 8px;min-height:28px}.editor :global(.stack footer){padding-top:6px}.visual .status{max-height:48px;overflow:auto}.visual>.actions{margin:0}.visual>details{margin:0}}
 @media(max-width:980px){.shell{grid-template-columns:190px minmax(0,1fr)}main{padding:24px}.workspace{grid-template-columns:minmax(0,1fr)}.visual{position:static;max-width:560px;width:100%;justify-self:center}}
 @media(max-width:760px){.shell{grid-template-columns:minmax(0,1fr)}aside{padding:16px;border-right:0;border-bottom:1px solid var(--border)}.brand{margin-bottom:16px}nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-label,.global-nav{grid-column:1/-1}.global-nav{display:flex;flex-wrap:wrap;margin-top:10px;padding-top:10px}.connection{margin-top:16px}.aside-note{margin-bottom:0}main{padding:16px}header{flex-wrap:wrap;gap:16px}.device-picker{flex-basis:100%;max-width:none}h1{font-size:28px}.visual{padding:18px}}
 </style>

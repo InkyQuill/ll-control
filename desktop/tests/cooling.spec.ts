@@ -9,6 +9,7 @@ test('cooling edits and presets stay local; Apply sends selected channel and pol
         if (command === 'cooling_preset') return { mode: 'curve_rpm', sensor_id: args.sensorId, points: [{ celsius: 30, rpm: 2000 }, { celsius: 85, rpm: 3000 }], hysteresis_c: 2, fallback_percent: 100 };
         const request = args as { method: string; params: Record<string, unknown> }; calls.push(request);
         switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [{ id: 'cpu:test', label: 'CPU package', unit: 'celsius', value: 42, status: 'valid', age_ms: 10 }];
           case 'get_lcd_state': return { source: 'Idle', last_error: null, requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 } };

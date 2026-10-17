@@ -6,6 +6,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LcdEditorPreview {
     pub jpeg: Vec<u8>,
+    /// Independent PNG rasters in document order. Empty entries are hidden or procedural.
+    #[serde(default)]
+    pub layer_images: Vec<Vec<u8>>,
+    /// Background plus procedural effects, without editable foreground layers.
+    #[serde(default)]
+    pub background: Vec<u8>,
     pub layers: Vec<Option<LayerBounds>>,
 }
 

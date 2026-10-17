@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 import type { ProfileEdit, ProfileLibrary } from '../src/lib/api';
 
@@ -27,6 +28,7 @@ for (const action of Object.keys(actions) as (keyof typeof actions)[]) {
         if (_ === 'desktop_set_language') return null;
             if (!f.online) throw new Error('offline');
             switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
               case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
               case 'list_sensors': return [];

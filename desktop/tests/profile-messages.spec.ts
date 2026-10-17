@@ -13,6 +13,7 @@ for (const initial of ['en-US', 'ru-RU'] as const) {
           invoke: async (_: string, req: { method: string; params: { edit: { action: string; name: string } } }) => {
         if (_ === 'desktop_set_language') return null;
             switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
               case 'get_display_settings': return { version: 1, revision: f.settingsRevision, temperature_unit: 'celsius', interface_language: f.language };
               case 'list_devices': return [{ id: 'lcd', display_name: 'My pump', family: 'galahad2-lcdv2' }];
               case 'list_sensors': return [];

@@ -329,6 +329,33 @@ pub fn render_theme_measured(
     )
 }
 
+/// Editor frame at a millisecond timeline, with matching selection geometry.
+pub fn render_theme_measured_millis(
+    theme: &LcdTheme,
+    readings: &[SensorReading],
+    clock: ClockTime,
+    assets: &ThemeAssets,
+    managed: &ThemeFonts,
+    elapsed_millis: u64,
+    canvas: RgbImage,
+) -> Result<ThemeFrame, RenderError> {
+    render_layers_measured(
+        theme,
+        readings,
+        clock,
+        assets,
+        managed,
+        RenderTime {
+            seconds: elapsed_millis / 1000,
+            millis: elapsed_millis,
+            weather: None,
+            meteor: None,
+            fireworks: None,
+        },
+        canvas,
+    )
+}
+
 fn render_layers(
     theme: &LcdTheme,
     readings: &[SensorReading],

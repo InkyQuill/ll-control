@@ -1,3 +1,4 @@
+import {loadControls} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 test('disconnect and missing device preserve the draft without redirecting Apply', async ({ page }) => {
@@ -7,6 +8,7 @@ test('disconnect and missing device preserve the draft without redirecting Apply
         if (_ === 'desktop_set_language') return null;
       if (!fixture.online) throw new Error('fixture disconnected');
       switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': fixture.polls++; return fixture.ids.map(id => ({id, display_name: `LCD ${id}`, family:'galahad2-lcdv2'}));
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source: 'Idle'};
@@ -26,6 +28,7 @@ test('disconnect and missing device preserve the draft without redirecting Apply
     new MutationObserver(records => { observation.mutations += records.length; }).observe(node, { childList: true, subtree: true, characterData: true });
     Object.assign(window, { connectionNode: node, connectionObservation: observation });
   });
+  await loadControls(page);
   await page.getByLabel('Название', {exact: true}).fill('My unsent draft');
   await page.evaluate(() => { (window as unknown as {fixture: {online: boolean}}).fixture.online = false; });
   await expect(page.getByText('Нет связи с daemon')).toBeVisible();
@@ -57,6 +60,7 @@ test('late active-theme load cannot replace edits made while waiting', async ({p
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: {method: string}) => {
         if (_ === 'desktop_set_language') return null;
       switch(req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source: 'Theme'};
@@ -66,7 +70,7 @@ test('late active-theme load cannot replace edits made while waiting', async ({p
     }}});
   });
   await page.goto('/?view=display');
-  await page.getByRole('button', {name: 'Загрузить активную тему'}).click();
+  await loadControls(page);await page.getByRole('button', {name: 'Загрузить активную тему'}).click();
   await page.getByLabel('Название', {exact: true}).fill('New local edits');
   await page.evaluate(() => (window as unknown as {finishLoad: () => void}).finishLoad());
   await expect(page.getByText('Черновик изменился.', {exact: false})).toBeVisible();
@@ -78,6 +82,7 @@ test('late LCD status from the previous device is discarded', async ({page}) => 
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: {method: string; params: {dev: string}}) => {
         if (_ === 'desktop_set_language') return null;
       switch(req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state':

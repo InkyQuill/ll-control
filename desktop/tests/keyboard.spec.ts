@@ -5,6 +5,7 @@ test('keyboard skips navigation, identifies current page and applies separate LC
     Object.assign(window,{keyboardPatches:patches,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params:{patch:unknown}})=>{
         if (_ === 'desktop_set_language') return null;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
         case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
