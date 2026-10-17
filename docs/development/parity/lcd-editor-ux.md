@@ -1,6 +1,7 @@
 # LCD editor redesign brief
 
-Status: proposed interaction design; live canvas / explicit device Apply confirmed
+Status: approved for implementation on2026-10-17; implementation in progress.
+Live canvas / explicit device Apply confirmed
 by Pavel on 2026-10-17. Based on source at `1d61c2a` and the installed-app feedback.
 This is development planning, not an implementation or hardware acceptance claim.
 
@@ -193,3 +194,18 @@ for controls; automated checks and real-session observations agree at their scop
 Snapping/guides, align/distribute, multi-select/groups, arbitrary layer rotation,
 advanced history and timeline editing stay out of this bounded redesign unless a
 verified parity requirement promotes them. Additional themes remain R8.
+
+## UX1 implementation checkpoint
+
+Compact stack and contextual inspector are implemented, with default canvas mode,
+layer duplication/reordering, persisted optional identity/name/visibility/lock,
+hidden-layer rendering, advanced typography disclosure, and staged screen controls.
+Existing themes without metadata remain readable. Seven existing canvas workflows
+and a new seven-layer/metadata/staged-Apply scenario pass in the browser. Svelte
+checks report0 errors/warnings; strict Rust Clippy passed before the added regression
+test, and the focused hidden-layer/legacy-JSON test passes.
+
+This is not UX1 or release closure: remaining work includes broader affected-flow
+regressions, native/visual review, live pixels during gestures, rendering sessions,
+performance qualification and physical orientation acceptance. Screenshots/logs
+remain ignored; user documentation will change when the shipped workflow is tested.

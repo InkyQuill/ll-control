@@ -2285,6 +2285,7 @@ dependencies = [
  "image",
  "lconnect-ipc",
  "rustybuzz",
+ "serde_json",
  "thiserror 1.0.69",
  "unicode-bidi",
  "unicode-linebreak",

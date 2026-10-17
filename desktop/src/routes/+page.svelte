@@ -7,13 +7,13 @@
   import DeviceOverview from '$lib/DeviceOverview.svelte';
   import { deviceCapabilities } from '$lib/device-capabilities';
   import LcdPreview from '$lib/LcdPreview.svelte';
-  import TextStyleControls from '$lib/TextStyleControls.svelte';
   import CanvasEditor from '$lib/CanvasEditor.svelte';
+  import LayerInspector from '$lib/LayerInspector.svelte';
+  import LayerStack from '$lib/LayerStack.svelte';
   import { editableLayer, type EditorPreview, type LayerBounds, type QuarterTurn } from '$lib/canvas-geometry';
   let collectionEpoch = $state(0), resetEpoch = $state(0);
   import { addImportedToCollection, imageReplacementSnapshot, replaceCollectionImage, ImportedImageMembershipError } from '$lib/collection-membership';
   import FullGroupArchive from '$lib/FullGroupArchive.svelte';
-  import DividerEditor from '$lib/DividerEditor.svelte';
   import ScreenReset from '$lib/ScreenReset.svelte';
   import ScreenCollections from '$lib/ScreenCollections.svelte';
   import ImageGallery from '$lib/ImageGallery.svelte';
@@ -155,12 +155,23 @@
     }, () => selection === selectionRevision, 'media');
   }
   async function applyTheme() {
-    const target = device, selection = selectionRevision, draft = $state.snapshot(theme);
+    const target = device, selection = selectionRevision, draft = $state.snapshot(theme), displayPatch={...pendingDisplay[device]};
     lcdRevision++;
     await action(async () => {
       // Local draft validation is app-owned UI text; daemon errors remain data.
       try { assertWeatherDraft(draft); } catch (e) { error = message(e); return; }
-      const result = await rpc<LcdState>('set_lcd_theme', { dev: target, theme: draft });
+      let result = await rpc<LcdState>('set_lcd_theme', { dev: target, theme: draft });
+      if(Object.keys(displayPatch).length) {
+        if(selection!==selectionRevision)return;
+        try {
+          result=await rpc<LcdState>('patch_lcd_config',{dev:target,patch:displayPatch});
+          const pending=pendingDisplay[target];
+          if(pending && pending.rotation_degrees===displayPatch.rotation_degrees && pending.brightness_percent===displayPatch.brightness_percent)delete pendingDisplay[target];
+        } catch(cause) {
+          try {const state=await rpc<LcdState>('get_lcd_state',{dev:target});if(selection===selectionRevision)lcd=state;}catch{/* Keep the pending draft when readback is unavailable. */}
+          throw new Error(t('Тема отправлена, но настройки экрана не подтверждены: {0}',message(cause)));
+        }
+      }
       if (selection !== selectionRevision) return;
       lcdRevision++; lcd = result;
       notice = 'Тема отправлена. Сохранение настроек поставлено в очередь.';
@@ -188,8 +199,8 @@
     actionBusy = true; error = ''; notice = '';
     try { await run(); } catch (e) { if (current()) error = { context: e instanceof ImportedImageMembershipError ? 'image-membership' : context, detail: e instanceof ImportedImageMembershipError ? e.detail : e instanceof ValidationError ? e : message(e) }; } finally { actionBusy = false; }
   }
-  let livePreview=$state(false), previewRequest=$state(0), previewBusy=$state(false), previewError=$state('');
-  let canvasEditing=$state(false), canvasBounds=$state<(LayerBounds|null)[]>([]), canvasDraft=$state(''), selectedLayer=$state(-1);
+  let livePreview=$state(true), previewRequest=$state(0), previewBusy=$state(false), previewError=$state('');
+  const canvasEditing=true; let canvasBounds=$state<(LayerBounds|null)[]>([]), canvasDraft=$state(''), selectedLayer=$state(-1);
   const layerIdentities=new WeakMap<Layer,number>();
   let nextLayerIdentity=0;
   function layerIdentity(layer:Layer):number {
@@ -198,7 +209,12 @@
     return id;
   }
   const canvasLayerKeys=$derived(theme.layers.map(layerIdentity));
-  const canvasRotation=$derived((lcd?.requested.rotation_degrees ?? 0) as QuarterTurn);
+  let pendingDisplay=$state<Record<string,{rotation_degrees?:QuarterTurn;brightness_percent?:number}>>({});
+  const canvasRotation=$derived(pendingDisplay[device]?.rotation_degrees??(lcd?.requested.rotation_degrees??0) as QuarterTurn);
+  const displayBrightness=$derived(pendingDisplay[device]?.brightness_percent??lcd?.requested.brightness_percent??100);
+  function stageDisplay(patch:{rotation_degrees?:QuarterTurn;brightness_percent?:number}) {
+    pendingDisplay[device]={...pendingDisplay[device],...patch};
+  }
   let undoDrafts=$state<string[]>([]), redoDrafts=$state<string[]>([]);
   let historyDraft=untrack(()=>JSON.stringify(theme));
   function rememberDraft(next:string) {
@@ -213,7 +229,10 @@
     const source=redo?redoDrafts:undoDrafts, next=source.at(-1);if(!next)return;
     if(redo){redoDrafts=source.slice(0,-1);undoDrafts=[...undoDrafts,historyDraft];}
     else{undoDrafts=source.slice(0,-1);redoDrafts=[...redoDrafts,historyDraft];}
-    historyDraft=next;theme=JSON.parse(next);selectedLayer=-1;
+    const selectedId=theme.layers[selectedLayer]?.editor?.id;
+    historyDraft=next;theme=JSON.parse(next);
+    const restored=selectedId?theme.layers.findIndex(layer=>layer.editor?.id===selectedId):-1;
+    selectedLayer=restored>=0?restored:Math.min(selectedLayer,theme.layers.length-1);
   }
   function selectCanvasLayer(index:number) {selectedLayer=index;lcdPanel='composition';}
   function changeCanvasLayer(index:number,layer:Layer) {
@@ -259,9 +278,18 @@
       }
     }
   }
+  function layerMetadata(index:number) {
+    const layer=theme.layers[index];
+    return layer.editor??(layer.editor={id:crypto.randomUUID(),name:'',hidden:false,locked:false});
+  }
+  function addLayer(layer:Layer) {
+    if(theme.layers.length>=32)return;
+    layer.editor={id:crypto.randomUUID(),name:'',hidden:false,locked:false};
+    theme.layers.push(layer);selectedLayer=theme.layers.length-1;lcdPanel='composition';
+  }
   function addSensor() {
     const sensor = sensors.find(s => s.id === selectedSensor); if (!sensor) return;
-    theme.layers.push({ kind: 'sensor', sensor_id: sensor.id, label: sensor.label, unit: sensor.unit, temperature_unit: 'system', decimals: 1, style: style(210) });
+    addLayer({ kind: 'sensor', sensor_id: sensor.id, label: sensor.label, unit: sensor.unit, temperature_unit: 'system', decimals: 1, style: style(210) });
   }
   async function importImage(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -330,18 +358,8 @@
     await tick();
     if (!editor?.isConnected || editor !== editorElement || layers !== theme.layers) return;
     const items = editor.querySelectorAll<HTMLElement>('.layer h2');
-    const target = items[Math.min(index, items.length - 1)] ?? editor.querySelector<HTMLElement>('[data-add-text]');
+    const target = items[0] ?? editor.querySelector<HTMLElement>('[data-add-text]');
     target?.focus();
-  }
-  async function removeCycleSensor(layer: Extract<Layer, { kind: 'sensor_cycle' }>, index: number, button: HTMLButtonElement) {
-    if (layer.sensors.length <= 1) return;
-    const container = button.closest('article'), sensors = layer.sensors;
-    sensors.splice(index, 1);
-    await tick();
-    // A concurrent theme load/removal must not focus controls from an obsolete draft.
-    if (!container?.isConnected || !theme.layers.includes(layer) || sensors !== layer.sensors) return;
-    const sources = container.querySelectorAll<HTMLSelectElement>('[data-cycle-source]');
-    sources[Math.min(index, sources.length - 1)]?.focus();
   }
   function prependLayer(layer:Layer) {
     const selected=theme.layers[selectedLayer];
@@ -356,13 +374,19 @@
     selectedLayer=Math.min(index,theme.layers.length-1);
     void focusLayer(index);
   }
-  function move(index: number, step: number) {
-    const target = index + step;
+  function reorderLayer(index:number,target:number) {
     const first=isProcedural(theme.layers[0])?1:0;
-    if (target < first || index < first || target >= theme.layers.length) return;
-    [theme.layers[index], theme.layers[target]] = [theme.layers[target], theme.layers[index]];
-    selectedLayer=target;
-    void focusLayer(target);
+    if(index<first||target<first||target>=theme.layers.length||index===target)return;
+    const [layer]=theme.layers.splice(index,1);theme.layers.splice(target,0,layer);
+    selectedLayer=target;void focusLayer(target);
+  }
+  function move(index:number,step:number) {reorderLayer(index,index+step);}
+  function duplicateLayer(index:number) {
+    if(theme.layers.length>=32 || isProcedural(theme.layers[index]))return;
+    const copy=structuredClone($state.snapshot(theme.layers[index]));
+    copy.editor={...copy.editor,id:crypto.randomUUID(),name:copy.editor?.name??'',hidden:copy.editor?.hidden??false,locked:false};
+    theme.layers.splice(index+1,0,copy);
+    selectedLayer=index+1;
   }
   const labels: Record<Layer['kind'], string> = $derived({ divider:t('Разделитель'),fireworks:t('Фейерверк'), snow3d:t('Объёмный снег'), meteor:t('Метеоры'), weather:t('Эффект погоды'), sensor_cycle:t('Смена датчиков'), text:t('Текст'), clock:t('Часы'), sensor:t('Датчик'), image:t('Изображение') });
 </script>
@@ -438,32 +462,30 @@
       {#if !sensors.length}<p>{t("Показания появятся после подключения daemon.")}</p>{/if}
     {:else}
       <div class="workspace">
+        <div class="document-head">          <div class="row"><label>{t("Название")}<input bind:value={theme.name} maxlength="128"/></label></div>
+          <details class="profiles-disclosure"><summary>{t("Сохранённые темы")}</summary><Profiles refreshEpoch={resetEpoch} group="screen" mediaKey={profileMediaKey} {connected} disabled={busy} draft={() => { const draft=$state.snapshot(theme);assertWeatherDraft(draft);return {kind:'screen',value:draft}; }} onload={content => { if (content.kind === 'screen_media') { lcdPanel = 'composition'; loadedMediaKey = content.value; notice = 'Ролик из профиля загружен. Применение — отдельное действие.'; } else if (content.kind === 'screen') { loadedMediaKey = ''; theme = content.value; notice = ''; if (preview) URL.revokeObjectURL(preview); preview = ''; } }}/></details>
+          <div class="editor-tabs" aria-label={t('Рабочая область LCD')}><button aria-pressed={lcdPanel === 'presets'} onclick={() => lcdPanel = 'presets'}>{t('Готовые темы')}</button><button aria-pressed={lcdPanel === 'composition'} onclick={() => lcdPanel = 'composition'}>{t('Композиция')}</button><button aria-pressed={lcdPanel === 'library'} onclick={() => lcdPanel = 'library'}>{t('Библиотека')}</button></div>
+</div>
         <section class="visual" class:canvas-mode={canvasEditing} aria-label="{t("Предпросмотр LCD")}">
+          <div class="canvas-toolbar"><label>{t('Ориентация экрана')}<select aria-label={t('Ориентация экрана')} value={canvasRotation} onchange={event=>stageDisplay({rotation_degrees:Number(event.currentTarget.value) as QuarterTurn})}>{#each [0,90,180,270] as angle (angle)}<option value={angle}>{angle}°</option>{/each}</select></label></div>
           <LcdPreview geometry={capabilities.display}>{#if canvasEditing}<CanvasEditor image={preview} keys={canvasLayerKeys} layers={theme.layers} bounds={canvasBounds} selected={selectedLayer} rotation={canvasRotation} ready={canvasDraft===previewDraft && connected} {labels} onselect={selectCanvasLayer} onchange={changeCanvasLayer} onorder={move}/>{:else if preview}<img src={preview} alt="{t("Подготовленная композиция LCD — preview, не подтверждение вывода на устройство")}"/>{:else}<div class="empty"><span>{capabilities.display?.width ?? 480} × {capabilities.display?.height ?? 480}</span><p>{t("Создайте тему")}<br/>{t("и обновите preview")}</p></div>{/if}</LcdPreview>
           <div class="status"><span>{t("Источник:")} {lcdSourceLabel(lcd?.source)}</span><span>{lcd?.last_error ?? t('Preview не подтверждает физический вывод')}</span></div>
-          <label><input type="checkbox" bind:checked={canvasEditing}/>{t('Редактировать на холсте')}</label>
           {#if canvasEditing}
             <details><summary>{t('Управление холстом')}</summary>
             <p>{t('Стрелки — перемещение; Shift + стрелки — размер; Ctrl + стрелки — шаг 10; Alt + стрелки — порядок. Escape — отмена жеста.')}</p>
             <p>{t('Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.')}</p></details>
-            <label>{t('Выбранный слой')}<select aria-label={t('Выбранный слой')} value={selectedLayer} onchange={event=>selectCanvasLayer(Number(event.currentTarget.value))}>
-              <option value={-1}>{t('Выберите слой')}</option>
-              {#each theme.layers as layer,index}<option value={index}>{index+1}. {labels[layer.kind]}{editableLayer(layer)?'':` (${t('Неподвижный фон')})`}</option>{/each}
-            </select></label>
-            <button disabled={selectedLayer<0} onclick={()=>void focusLayer(selectedLayer)}>{t('Свойства выбранного слоя')}</button>
           {/if}
           <div class="actions"><button disabled={!undoDrafts.length} onclick={()=>restoreDraft()}>{t('Отменить правку')}</button><button disabled={!redoDrafts.length} onclick={()=>restoreDraft(true)}>{t('Повторить правку')}</button></div>
-          <label><input type="checkbox" bind:checked={livePreview}/>{t("Непрерывный preview")}</label>
+          <button aria-pressed={!livePreview} onclick={()=>livePreview=!livePreview}>{livePreview?t('Приостановить анимацию'):t('Продолжить анимацию')}</button>
           {#if previewError}<p role="alert">{t('Не удалось создать preview: {0}', previewError)}</p>{/if}
-          <div class="actions"><button disabled={previewBusy || !connected} onclick={() => {notice='';previewRequest++;}}>{t("Обновить preview")}</button><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button></div>
-          <button disabled={busy || !deviceAvailable} onclick={() => loadTheme()}>{t("Загрузить активную тему")}</button>
+          <div class="actions"><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button></div>
+          <details><summary>{t('Настройки экрана')}</summary><label>{t('Яркость экрана, %')}<input type="range" min="0" max="100" value={displayBrightness} oninput={event=>stageDisplay({brightness_percent:Number(event.currentTarget.value)})}/><output>{displayBrightness}%</output></label><p>{t('Настройки экрана изменятся после применения.')}</p></details>
+          {#if Object.keys(pendingDisplay[device]??{}).length}<p class="status">{t('Настройки экрана изменятся после применения.')}</p>{/if}
+          <details><summary>{t("Загрузить или остановить")}</summary><div class="document-actions">          <button disabled={busy || !deviceAvailable} onclick={() => loadTheme()}>{t("Загрузить активную тему")}</button>
           <button disabled={busy || !deviceAvailable} onclick={() => loadTheme(true)}>{t("Загрузить импортированный редактор")}</button>
-          <button disabled={busy || !deviceAvailable} onclick={clearTheme}>{t("Вернуть LocalUI")}</button>
+          <button disabled={busy || !deviceAvailable} onclick={clearTheme}>{t("Вернуть LocalUI")}</button></div></details>
         </section>
         <section class="editor" aria-label="{t("Редактор темы")}" bind:this={editorElement}>
-          <div class="row"><label>{t("Название")}<input bind:value={theme.name} maxlength="128"/></label></div>
-          <Profiles refreshEpoch={resetEpoch} group="screen" mediaKey={profileMediaKey} {connected} disabled={busy} draft={() => { const draft=$state.snapshot(theme);assertWeatherDraft(draft);return {kind:'screen',value:draft}; }} onload={content => { if (content.kind === 'screen_media') { lcdPanel = 'composition'; loadedMediaKey = content.value; notice = 'Ролик из профиля загружен. Применение — отдельное действие.'; } else if (content.kind === 'screen') { loadedMediaKey = ''; theme = content.value; notice = ''; if (preview) URL.revokeObjectURL(preview); preview = ''; } }}/>
-          <div class="editor-tabs" aria-label={t('Рабочая область LCD')}><button aria-pressed={lcdPanel === 'presets'} onclick={() => lcdPanel = 'presets'}>{t('Готовые темы')}</button><button aria-pressed={lcdPanel === 'composition'} onclick={() => lcdPanel = 'composition'}>{t('Композиция')}</button><button aria-pressed={lcdPanel === 'library'} onclick={() => lcdPanel = 'library'}>{t('Библиотека')}</button></div>
           <div data-studio-panel="presets" hidden={lcdPanel !== 'presets'}>
           <section class="preset-picker"><h2>{t("Готовые темы — редактируемые раскладки")}</h2>
             <label>{t("Раскладка")}<select aria-label="{t("Раскладка")}" bind:value={presetId} onchange={() => presetBindings = []}>{#each presets as preset}<option value={preset.id}>{preset.name} · {t(preset.description)}</option>{/each}</select></label>
@@ -485,7 +507,7 @@
             }
             if (theme.layers.length >= 32) return;
             if (context === 'watermark') {
-              theme.layers.push({kind:'image', asset, x:0, y:0, width:144, height:144, fit:'contain_native', opacity:255, watermark_position:{horizontal:50,vertical:50}});
+              addLayer({kind:'image', asset, x:0, y:0, width:144, height:144, fit:'contain_native', opacity:255, watermark_position:{horizontal:50,vertical:50}});
               notice = 'Водяной знак добавлен в черновик темы.';
             } else {
               prependLayer({ kind:'image', asset, x:0, y:0, width:480, height:480, fit:'crop', opacity:255 });
@@ -501,70 +523,19 @@
 
           </div>
           <div data-studio-panel="composition" hidden={lcdPanel !== 'composition'}>
+          <details class="add-layer"><summary>{t('Добавить слой')}</summary>          <div class="toolbar"><button disabled={busy || theme.layers.length >= 32} onclick={() => addLayer({kind:'divider',axis:'horizontal',x:34,y:240,length:412,thickness:2,color:[144,177,201],opacity:100,shadow:{x:0,y:0,blur:5,color:[0,0,0],opacity:100}})}>{t('+ Разделитель')}</button><button data-add-text disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'text', text: t('Новый текст'), style: style(180) })}>{t("+ Текст")}</button><button disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) })}>{t("+ Часы")}</button><label class="file">{t("+ Изображение")}<input type="file" accept="image/png,image/jpeg,image/webp,image/bmp" onchange={importImage} disabled={busy || theme.layers.length >= 32}/></label></div>
+          <div class="row"><label>{t("Привязать датчик")}<select bind:value={selectedSensor}><option value="">{t("Выберите источник")}</option>{#each sensors as s}<option value={s.id}>{s.label} · {s.unit}</option>{/each}</select></label><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}>{t("Добавить")}</button></div>
+</details>          <LayerStack layers={theme.layers} {labels} selected={selectedLayer} onselect={selectCanvasLayer} onmove={reorderLayer} onduplicate={duplicateLayer} onremove={removeLayer} onvisibility={index=>{const meta=layerMetadata(index);meta.hidden=!meta.hidden;}} onlock={index=>{const meta=layerMetadata(index);meta.locked=!meta.locked;}}/>
+          {#if selectedLayer>=0 && theme.layers[selectedLayer]}
+            <article class="layer inspector" data-layer-index={selectedLayer} aria-label={t('Свойства выбранного слоя')}>
+              <h2 tabindex="-1">{labels[theme.layers[selectedLayer].kind]}</h2>
+              <label>{t('Имя слоя')}<input value={theme.layers[selectedLayer].editor?.name??''} maxlength="128" oninput={event=>layerMetadata(selectedLayer).name=event.currentTarget.value}/></label>
+              <fieldset class="layer-fields" disabled={theme.layers[selectedLayer].editor?.locked}><LayerInspector bind:value={theme.layers[selectedLayer]} {sensors} {fontChoices}/></fieldset>
+            </article>
+          {:else}
           {#if loadedMediaKey}<section aria-label="{t("Ролик из профиля")}"><MediaThumbnail clipKey={loadedMediaKey} name={t('Ролик из профиля')}/><button disabled={busy || !deviceAvailable} onclick={() => selectMedia(loadedMediaKey)}>{t("Применить ролик из профиля")}</button><button onclick={() => loadedMediaKey = ''}>{t("Закрыть ролик из профиля")}</button></section>{/if}<BasicEditor bind:theme disabled={busy} onchange={() => loadedMediaKey = ''}/><WeatherEditor bind:theme {sensors} disabled={busy}/><PaletteEditor bind:theme {sensors} disabled={busy}/><BackgroundEditor bind:theme/>
           {#key device}<ImageEditor disabled={busy || !deviceAvailable || theme.layers.length >= 32} onpublish={publishEditedImage}/>{/key}
-          <div class="toolbar"><button disabled={busy || theme.layers.length >= 32} onclick={() => theme.layers.push({kind:'divider',axis:'horizontal',x:34,y:240,length:412,thickness:2,color:[144,177,201],opacity:100,shadow:{x:0,y:0,blur:5,color:[0,0,0],opacity:100}})}>{t('+ Разделитель')}</button><button data-add-text disabled={theme.layers.length >= 32} onclick={() => theme.layers.push({ kind: 'text', text: t('Новый текст'), style: style(180) })}>{t("+ Текст")}</button><button disabled={theme.layers.length >= 32} onclick={() => theme.layers.push({ kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) })}>{t("+ Часы")}</button><label class="file">{t("+ Изображение")}<input type="file" accept="image/png,image/jpeg,image/webp,image/bmp" onchange={importImage} disabled={busy || theme.layers.length >= 32}/></label></div>
-          <div class="row"><label>{t("Привязать датчик")}<select bind:value={selectedSensor}><option value="">{t("Выберите источник")}</option>{#each sensors as s}<option value={s.id}>{s.label} · {s.unit}</option>{/each}</select></label><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}>{t("Добавить")}</button></div>
-          {#each theme.layers as layer, i (layer)}
-            <article class="layer" class:canvas-selected={canvasEditing && selectedLayer===i} onfocusin={()=>selectedLayer=i} aria-labelledby={`layer-heading-${i}`}><div class="layer-head"><h2 id={`layer-heading-${i}`} tabindex="-1">{i + 1}. {labels[layer.kind]}</h2><div><button aria-label="{t("Слой ниже")}" disabled={i === 0 || (i === 1 && isProcedural(theme.layers[0]))} onclick={() => move(i, -1)}>↑</button><button aria-label="{t("Слой выше")}" disabled={isProcedural(layer) || i === theme.layers.length - 1} onclick={() => move(i, 1)}>↓</button><button aria-label="{t("Удалить слой")}" onclick={() => removeLayer(i)}>×</button></div></div>
-              {#if layer.kind==='divider'}<DividerEditor bind:layer={()=>layer,value=>theme.layers[i]=value}/>{/if}
-              {#if layer.kind==='meteor'}<p>{t("Настройки MeteorShower находятся в блоке «Метеоры».")}</p>{/if}
-              {#if layer.kind==='weather'}<p>{t("Настройки Rain/Snow находятся в блоке «Анимация LCD».")}</p>{/if}
-              {#if layer.kind === 'text'}<label>{t("Текст")}<textarea bind:value={layer.text} maxlength="2048"></textarea></label>{/if}
-              {#if layer.kind === 'sensor'}<label>{t('Источник датчика')}<select aria-label={t('Источник датчика')} value={layer.sensor_id} onchange={event=>{const source=sensors.find(s=>s.id===event.currentTarget.value);if(source){layer.sensor_id=source.id;layer.unit=source.unit;}}}>
-                {#each sensors as source}<option value={source.id}>{source.label} · {source.unit}</option>{/each}
-                {#if !sensors.some(source=>source.id===layer.sensor_id)}<option value={layer.sensor_id}>{t('Недоступен:')} {layer.sensor_id}</option>{/if}
-              </select></label><label>{t("Подпись")}<input bind:value={layer.label}/></label><code>{layer.sensor_id}</code><div class="row"><label>{t("Точность")}<input type="number" bind:value={layer.decimals} min="0" max="2"/></label>{#if layer.unit === 'celsius'}<label>{t("Единица")}<select bind:value={layer.temperature_unit}><option value="system">{t("Общие настройки")}</option><option value="celsius">°C</option><option value="fahrenheit">°F</option></select></label>{/if}</div>{/if}
-              {#if layer.kind === 'sensor_cycle'}
-                <label>{t("Интервал переключения, с")}<input type="number" min="1" max="3600" bind:value={layer.interval_seconds}/></label>
-                <button disabled={layer.sensors.length>=16} onclick={()=>layer.sensors.push({...layer.sensors[layer.sensors.length-1]})}>{t("Добавить показатель в цикл")}</button>
-                {#each layer.sensors as sensor,j}
-                  <button disabled={layer.sensors.length===1} onclick={event=>removeCycleSensor(layer,j,event.currentTarget)}>{t("Удалить показатель")} {j+1}</button>
-                  <label>{t("Источник")} {j+1}<select data-cycle-source value={sensor.sensor_id} onchange={event=>{const selected=sensors.find(s=>s.id===event.currentTarget.value);if(selected){sensor.sensor_id=selected.id;sensor.unit=selected.unit;}}}>
-                    {#each sensors as source}<option value={source.id}>{source.label} · {source.unit}</option>{/each}
-                    {#if !sensors.some(s=>s.id===sensor.sensor_id)}<option value={sensor.sensor_id}>{t("Недоступен:")} {sensor.sensor_id}</option>{/if}
-                  </select></label>
-                  <label>{t("Подпись")} {j+1}<input bind:value={sensor.label}/></label>
-                  <label>{t("Точность")} {j+1}<input type="number" min="0" max="2" bind:value={sensor.decimals}/></label>
-                  {#if sensor.unit === 'celsius'}<label>{t("Единица")} {j+1}<select bind:value={sensor.temperature_unit}><option value="system">{t("Общие настройки")}</option><option value="celsius">°C</option><option value="fahrenheit">°F</option></select></label>{/if}
-                {/each}
-              {/if}
-              {#if layer.kind === 'sensor' || layer.kind === 'sensor_cycle'}
-                <label><input type="checkbox" checked={!!layer.parts} onchange={e => {layer.parts=e.currentTarget.checked?{label:{...$state.snapshot(layer.style),y:Math.max(0,layer.style.y-45),size:22},unit:{...$state.snapshot(layer.style),y:Math.min(479,layer.style.y+65),size:22}}:null;}}/>{t("Раздельные стили подписи и единицы")}</label>
-                {#if layer.parts}
-                  {#each ['label','unit'] as part (part)}
-                    <fieldset><legend>{part === 'label' ? "" + t("Подпись датчика") + "" : "" + t("Единица датчика") + ""}</legend>
-                      <TextStyleControls bind:style={layer.parts[part as 'label'|'unit']} fonts={fontChoices}/>
-                    </fieldset>
-                  {/each}
-                {/if}
-              {/if}
-              {#if layer.kind === 'clock'}<label>{t("Содержимое часов")}<select aria-label="{t("Содержимое часов")}" value={layer.format ?? 'time'} onchange={e => {layer.format=e.currentTarget.value as typeof layer.format;}}><option value="time">{t("Время")}</option><option value="time_without_period">{t("Время без AM/PM")}</option><option value="date">{t("Дата YYYY/MM/DD")}</option><option value="period">A.M. / P.M.</option></select></label><div class="row"><label><input type="checkbox" bind:checked={layer.twenty_four_hour}/>{t("24 часа")}</label><label><input type="checkbox" bind:checked={layer.show_seconds}/>{t("Секунды")}</label></div>{/if}
-              {#if layer.kind === 'image'}
-                <label><input type="checkbox" checked={!!layer.watermark_position} onchange={e => layer.watermark_position=e.currentTarget.checked?{horizontal:50,vertical:50}:null}/>{t("Положение watermark как в L-Connect")}</label>
-                {#if layer.watermark_position}
-                  <p>{t("Центр изображения задаётся в процентах экрана. Значение 0 размещает центр в 22 px от края, как в L-Connect.")}</p>
-                  <label>{t("Watermark по горизонтали")}<input type="number" min="0" max="100" bind:value={layer.watermark_position.horizontal}/></label>
-                  <label>{t("Watermark по вертикали")}<input type="number" min="0" max="100" bind:value={layer.watermark_position.vertical}/></label>
-                {/if}
-                <label>{t("Масштаб")}<select bind:value={layer.fit}><option value="crop">{t("Заполнить с обрезкой")}</option><option value="contain">{t("Вписать")}</option><option value="contain_native">{t("Вписать без увеличения (watermark)")}</option><option value="stretch">{t("Растянуть")}</option></select></label>
-                <label><input type="checkbox" checked={!!layer.shadow} onchange={e => layer.shadow=e.currentTarget.checked?{x:2,y:2,blur:2,color:[0,0,0],opacity:60}:null}/>{t("Тень изображения")}</label>
-                {#if layer.shadow}
-                  <div class="row">
-                    <label>{t("Смещение тени изображения X")}<input type="number" min="-32" max="32" bind:value={layer.shadow.x}/></label>
-                    <label>{t("Смещение тени изображения Y")}<input type="number" min="-32" max="32" bind:value={layer.shadow.y}/></label>
-                    <label>{t("Размытие тени изображения")}<input type="number" min="0" max="16" bind:value={layer.shadow.blur}/></label>
-                    <label>{t("Непрозрачность тени изображения, %")}<input type="number" min="0" max="100" bind:value={layer.shadow.opacity}/></label>
-                    <label>{t("Цвет тени изображения")}<input type="color" value={hex(layer.shadow.color)} oninput={e=>{if(layer.shadow)layer.shadow.color=rgb(e.currentTarget.value);}}/></label>
-                  </div>
-                {/if}
-                <label>{t("Непрозрачность")}<input type="range" min="0" max="255" bind:value={layer.opacity}/></label>
-                <div class="row">{#each ['x', 'y', 'width', 'height'] as key}<label>{key}<input type="number" disabled={!!layer.watermark_position && (key === 'x' || key === 'y')} min="0" max="480" value={layer[key as 'x' | 'y' | 'width' | 'height']} oninput={e => { if (layer.kind === 'image') layer[key as 'x' | 'y' | 'width' | 'height'] = Number(e.currentTarget.value); }}/></label>{/each}</div>
-              {:else if layer.kind !== 'divider' && layer.kind !== 'weather' && layer.kind !== 'meteor' && layer.kind !== 'snow3d' && layer.kind !== 'fireworks'}
-                <TextStyleControls bind:style={layer.style} fonts={fontChoices}/>
-              {/if}
-            </article>
-          {/each}
+          {/if}
           </div>
         </section>
       </div>
@@ -573,10 +544,11 @@
   </main>
 </div>
 <style>
-  .visual.canvas-mode{max-height:calc(100vh - 48px);overflow:auto;grid-auto-rows:max-content;align-content:start;}
-  @media(max-width:760px){.visual.canvas-mode{max-height:none;overflow:visible;}}
-  .canvas-selected{outline:2px solid #7ce9ff;outline-offset:3px;}
-.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.aside-note,.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}.aside-note{margin-top:14px}main{padding:36px 40px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.1fr);gap:32px}.visual{position:sticky;top:24px;align-self:start;display:grid;gap:16px;padding:24px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.actions,.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{border-top:1px solid var(--border);padding:24px 0;margin-top:24px;display:grid;gap:14px}.layer-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.layer-head button{padding:5px 9px;margin-left:4px}.layer-head h2{margin:0}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
-@media(max-width:1100px){.shell{grid-template-columns:190px minmax(0,1fr)}main{padding:24px}.workspace{grid-template-columns:minmax(0,1fr)}.visual{position:static;max-width:560px;width:100%;justify-self:center}}
-@media(max-width:760px){.shell{grid-template-columns:minmax(0,1fr)}aside{padding:16px;border-right:0;border-bottom:1px solid var(--border)}.brand{margin-bottom:16px}nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-label,.global-nav{grid-column:1/-1}.global-nav{display:flex;flex-wrap:wrap;margin-top:10px;padding-top:10px}.connection{margin-top:16px}.aside-note{margin-bottom:0}main{padding:16px}header{flex-wrap:wrap;gap:16px}.device-picker{flex-basis:100%;max-width:none}h1{font-size:28px}.layer-head{flex-wrap:wrap}.visual{padding:18px}}
+.document-head{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.document-head>.row{flex:1;min-width:160px;margin:0}.document-head .editor-tabs{margin:0;padding:0;border:0}.document-head details{margin:0}.document-actions{display:grid;gap:8px}.add-layer{margin:0 0 8px}.file input{width:100%}.toolbar>.file{flex-basis:100%}.canvas-toolbar{display:flex;align-items:center;gap:8px}.canvas-toolbar label{max-width:180px}
+
+  .visual.canvas-mode{grid-auto-rows:max-content;align-content:start;}
+
+.shell{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.aside-note,.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}.aside-note{margin-top:14px}main{padding:24px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,360px);gap:20px}.visual{position:sticky;top:16px;align-self:start;display:grid;gap:10px;padding:16px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.actions,.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{padding:12px 0;margin-top:8px;display:grid;gap:8px}.layer-fields{border:0;padding:0;margin:0}.inspector{max-height:calc(100vh - 470px);min-height:200px;overflow:auto;scrollbar-gutter:stable}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
+@media(max-width:980px){.shell{grid-template-columns:190px minmax(0,1fr)}main{padding:24px}.workspace{grid-template-columns:minmax(0,1fr)}.visual{position:static;max-width:560px;width:100%;justify-self:center}}
+@media(max-width:760px){.shell{grid-template-columns:minmax(0,1fr)}aside{padding:16px;border-right:0;border-bottom:1px solid var(--border)}.brand{margin-bottom:16px}nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-label,.global-nav{grid-column:1/-1}.global-nav{display:flex;flex-wrap:wrap;margin-top:10px;padding-top:10px}.connection{margin-top:16px}.aside-note{margin-bottom:0}main{padding:16px}header{flex-wrap:wrap;gap:16px}.device-picker{flex-basis:100%;max-width:none}h1{font-size:28px}.visual{padding:18px}}
 </style>

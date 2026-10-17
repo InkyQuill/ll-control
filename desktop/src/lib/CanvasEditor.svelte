@@ -15,7 +15,7 @@
     return nativePoint(event.clientX-rect.left,event.clientY-rect.top,rect.width,rotation);
   }
   function start(event: PointerEvent,index:number,mode:'move'|'resize') {
-    if(!ready || event.button!==0 || !bounds[index])return;
+    if(!ready || layers[index].editor?.locked || layers[index].editor?.hidden || event.button!==0 || !bounds[index])return;
     event.preventDefault();event.stopPropagation();
     onselect(index);
     (event.currentTarget as HTMLElement).focus();
@@ -43,7 +43,7 @@
   }
   function keyboard(event:KeyboardEvent,index:number) {
     if(event.key==='Escape'){event.preventDefault();cancel();return;}
-    if(!ready || gesture || !bounds[index])return;
+    if(!ready || layers[index].editor?.locked || gesture || !bounds[index])return;
     const directions:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
     const direction=directions[event.key];if(!direction)return;
     event.preventDefault();event.stopPropagation();
@@ -72,7 +72,7 @@
     {#if image}<img src={image} alt={t('Черновик LCD')} draggable="false"/>{/if}
     {#each layers as layer,index (keys[index])}
       {@const box=bounds[index]}
-      {#if box && editableLayer(layer)}
+      {#if box && !layer.editor?.hidden && editableLayer(layer)}
         <button class="region" class:selected={selected===index} style={rectangle(index,box)}
           aria-label={t('Выбрать слой {0}: {1}',index+1,labels[layer.kind])} aria-pressed={selected===index}
           aria-disabled={!ready} onfocus={()=>onselect(index)} onclick={()=>onselect(index)}
@@ -81,7 +81,7 @@
         </button>
       {/if}
     {/each}
-    {#if selected>=0 && bounds[selected] && layers[selected] && editableLayer(layers[selected])}
+    {#if selected>=0 && bounds[selected] && layers[selected] && !layers[selected].editor?.locked && !layers[selected].editor?.hidden && editableLayer(layers[selected])}
       {@const box=bounds[selected]!}
       <div class="selection" style={rectangle(selected,box)}></div>
       <button class="resize" style:left={`${Math.max(6,Math.min(474,box.x+box.width))/4.8}%`} style:top={`${Math.max(6,Math.min(474,box.y+box.height))/4.8}%`}

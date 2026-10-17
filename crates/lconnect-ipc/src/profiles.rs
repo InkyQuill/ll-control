@@ -121,10 +121,12 @@ impl NamedProfile {
                     background_fill: None,
                     layers: vec![
                         crate::ThemeLayer::Text {
+                            editor: None,
                             text: "L-Connect Linux".into(),
                             style: style(110),
                         },
                         crate::ThemeLayer::Clock {
+                            editor: None,
                             format: Default::default(),
                             twenty_four_hour: true,
                             show_seconds: true,

@@ -15,7 +15,8 @@ export type RgbSix=[[number,number,number],[number,number,number],[number,number
 export interface FireworksSensor {binding:EffectSensor;low_colors:RgbSix;high_colors:RgbSix}
 export interface FireworksEffect {intensity:number;colors:RgbSix;dynamic:boolean;sensor:FireworksSensor|null;retained_sensors?:FireworksSensor[];seed:number}
 export function fireworksColors():RgbSix {return [[0,255,0],[0,0,255],[128,0,255],[255,0,65],[255,215,0],[130,173,237]];}
-export type Layer =
+export interface LayerEditor {id:string;name:string;hidden:boolean;locked:boolean}
+export type Layer = {editor?:LayerEditor} & (
   | {kind:'divider';axis:'horizontal'|'vertical';x:number;y:number;length:number;thickness:number;color:number[];opacity:number;shadow?:Style['shadow']}
   | {kind:'fireworks';effect:FireworksEffect}
   | {kind:"snow3d";effect:Snow3dEffect}
@@ -25,7 +26,7 @@ export type Layer =
   | { kind: 'text'; text: string; style: Style }
   | { kind: 'sensor'; parts?: {label:Style;unit:Style}|null; sensor_id: string; label: string; unit: Unit; temperature_unit: 'system' | 'celsius' | 'fahrenheit'; decimals: number; style: Style }
   | { kind: 'clock'; format?: 'time' | 'time_without_period' | 'date' | 'period'; twenty_four_hour: boolean; show_seconds: boolean; style: Style }
-  | { kind: 'image'; watermark_position?: {horizontal:number;vertical:number}|null; shadow?: Style['shadow']; asset: string; x: number; y: number; width: number; height: number; fit: 'crop' | 'contain' | 'contain_native' | 'stretch'; opacity: number };
+  | { kind: 'image'; watermark_position?: {horizontal:number;vertical:number}|null; shadow?: Style['shadow']; asset: string; x: number; y: number; width: number; height: number; fit: 'crop' | 'contain' | 'contain_native' | 'stretch'; opacity: number });
 export type BackgroundMode = 'solid' | 'horizontal' | 'vertical' | 'radial';
 export interface GradientColors { colors: [number[], number[]]; flip: boolean }
 export interface BackgroundFill { mode: BackgroundMode; horizontal: GradientColors; vertical: GradientColors; radial: GradientColors }

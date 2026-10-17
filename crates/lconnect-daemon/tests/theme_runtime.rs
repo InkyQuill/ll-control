@@ -18,6 +18,7 @@ fn theme() -> LcdTheme {
         background_video: None,
         background_fill: None,
         layers: vec![ThemeLayer::Sensor {
+            editor: None,
             parts: None,
             sensor_id: "cpu".into(),
             label: "CPU".into(),
@@ -140,6 +141,7 @@ async fn preparation_fails_before_replacing_current_source() {
     let actor = lcd_keeper::spawn(hid, 60000, Default::default(), settings, rx, sd);
     let mut bad = theme();
     bad.layers.push(ThemeLayer::Image {
+        editor: None,
         watermark_position: None,
         shadow: None,
         asset: "missing".into(),
@@ -363,6 +365,7 @@ async fn cycle_cache_staleness_and_reordered_bindings_keep_label_value_unit_toge
         },
     ];
     cycle.layers.push(ThemeLayer::SensorCycle {
+        editor: None,
         sensors: bindings.clone(),
         interval_seconds: 2,
         parts: Some(parts.clone()),
@@ -396,6 +399,7 @@ async fn cycle_cache_staleness_and_reordered_bindings_keep_label_value_unit_toge
     for binding in &bindings {
         let mut single = theme();
         single.layers = vec![ThemeLayer::Sensor {
+            editor: None,
             sensor_id: binding.sensor_id.clone(),
             label: binding.label.clone(),
             unit: binding.unit,
@@ -611,6 +615,7 @@ async fn mixed_host_and_lcd_sensors_render_units_and_recover_independently() {
             style.y = 20 + index as u16 * 48;
             style.size = 24;
             ThemeLayer::Sensor {
+                editor: None,
                 parts: None,
                 sensor_id: (*id).into(),
                 label: (*label).into(),
@@ -657,6 +662,7 @@ async fn mixed_host_and_lcd_sensors_render_units_and_recover_independently() {
                     unreachable!()
                 };
                 ThemeLayer::Text {
+                    editor: None,
                     text: value.clone(),
                     style: style.clone(),
                 }
@@ -793,6 +799,7 @@ fn decoded_video_composes_live_sensor_updates_and_missing_values_without_erasing
             unreachable!()
         };
         expected.layers.push(ThemeLayer::Text {
+            editor: None,
             text: text.into(),
             style,
         });

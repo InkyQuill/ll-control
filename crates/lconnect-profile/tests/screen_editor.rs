@@ -62,7 +62,11 @@ fn all_eight_basic_banks_keep_every_inactive_overlay_and_original_slot_identity(
             assert_eq!(editor.selected_overlay, "Custom");
             assert!(!editor.source_default_materialized);
             assert_eq!(editor.overlays.len(), 7);
-            let ThemeLayer::Text { text, style } = &editor.overlays["Custom"].theme.layers[0]
+            let ThemeLayer::Text {
+                editor: _,
+                text,
+                style,
+            } = &editor.overlays["Custom"].theme.layers[0]
             else {
                 panic!("custom")
             };

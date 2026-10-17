@@ -24,19 +24,22 @@ async function setup(page:Page,rotation=0) {
           const draft=req.params.theme as typeof theme;
           return {jpeg:Array.from(Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0))),layers:draft.layers.map(layer=>layer.kind==='image'?{x:layer.x,y:layer.y,width:layer.width,height:layer.height}:layer.style?{x:layer.style.x,y:layer.style.y,width:120,height:layer.style.size}:null)};
         }
+        case 'patch_lcd_config':writes.push(req.params);return {source:'Theme',requested:req.params.patch,last_error:null};
         case 'set_lcd_theme':writes.push(req.params);theme=req.params.theme as typeof theme;return {source:'Theme',requested:{rotation_degrees:rotation},last_error:null};
         default:throw new Error('Unexpected '+req.method);
       }
     }}});
   },{rotation});
   await page.goto('/?view=display');
+  await page.getByText('Загрузить или остановить',{exact:true}).click();
   await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await page.getByText('Загрузить или остановить',{exact:true}).click();
   await expect(page.getByLabel('Название',{exact:true}).first()).toHaveValue('Canvas test');
-  await page.getByLabel('Редактировать на холсте',{exact:true}).check();
+  await page.locator('.layer-row[data-layer-index="0"]').click();
   await ready(page);
 }
 async function ready(page:Page){await expect(page.getByText('Обновление холста…',{exact:true})).toHaveCount(0);}
-const layer=(page:Page,index:number)=>page.locator('.editor article.layer').nth(index);
+const layer=(page:Page,index:number)=>page.locator(`.inspector[data-layer-index="${index}"]`);
 async function drag(page:Page,name:string,dx:number,dy:number,cancel=false){
   const target=page.getByRole('button',{name,exact:true});
   await target.scrollIntoViewIfNeeded();
@@ -61,7 +64,7 @@ test('pointer transforms, cancel, history and explicit Apply',async({page})=>{
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
   await page.getByRole('button',{name:'Повторить правку',exact:true}).click();await ready(page);
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('160');
-  await page.getByLabel('Выбранный слой',{exact:true}).selectOption('0');
+  await page.locator('.layer-row[data-layer-index="0"]').click();
   await drag(page,'Изменить размер выбранного слоя',40*step,40*step);
   await expect(layer(page,0).getByLabel('width',{exact:true})).toHaveValue('120');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
@@ -77,10 +80,11 @@ test('keyboard moves, resizes and sensor replacement preserve imported styles',a
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('130');
   await page.keyboard.press('Shift+ArrowRight');await ready(page);
   await expect(layer(page,3).getByLabel('Размер',{exact:true})).toHaveValue('25');
-  await page.getByLabel('Выбранный слой',{exact:true}).selectOption('1');
+  await page.locator('.layer-row[data-layer-index="1"]').click();
   await layer(page,1).getByLabel('Источник датчика',{exact:true}).selectOption('GPU');await ready(page);
   await expect(layer(page,1).getByLabel('Подпись',{exact:true})).toHaveValue('My CPU');
   await expect(layer(page,1).getByRole('group',{name:'Подпись датчика',exact:true}).getByLabel('Непрозрачность текста, %',{exact:true})).toHaveValue('80');
+  await layer(page,1).getByRole('group',{name:'Единица датчика',exact:true}).getByText('Дополнительные настройки текста',{exact:true}).click();
   await expect(layer(page,1).getByRole('group',{name:'Единица датчика',exact:true}).getByLabel('Ширина текста, px',{exact:true})).toHaveValue('150');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
 });
@@ -101,12 +105,12 @@ test('layer list reaches an obscured image and keyboard ordering preserves selec
   await ready(page);
   const text=page.getByRole('button',{name:'Выбрать слой 4: Текст',exact:true});
   await text.click();
-  await expect(page.getByLabel('Выбранный слой',{exact:true})).toHaveValue('3');
-  await page.getByLabel('Выбранный слой',{exact:true}).selectOption('0');
+  await expect(page.locator('.layer-row[data-layer-index="3"]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('.layer-row[data-layer-index="0"]').click();
   const handle=page.getByRole('button',{name:'Изменить размер выбранного слоя',exact:true});
   await handle.focus();await page.keyboard.press('Alt+ArrowDown');await ready(page);
-  await expect(page.getByLabel('Выбранный слой',{exact:true})).toHaveValue('1');
-  await expect(layer(page,1).getByRole('heading',{name:'2. Изображение',exact:true})).toBeFocused();
+  await expect(page.locator('.layer-row[data-layer-index="1"]')).toHaveAttribute('aria-pressed','true');
+  await expect(layer(page,1).getByRole('heading',{name:'Изображение',exact:true})).toBeFocused();
   await expect(layer(page,1).getByLabel('width',{exact:true})).toHaveValue('60');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
 });
@@ -146,18 +150,54 @@ test('canvas remains usable in a narrow desktop window',async({page})=>{
 
 test('importing an image preserves the selected existing layer',async({page})=>{
   await setup(page);
-  await page.getByLabel('Выбранный слой',{exact:true}).selectOption('3');
+  await page.locator('.layer-row[data-layer-index="3"]').click();
+  await page.getByText('Добавить слой',{exact:true}).click();
   await page.getByLabel('+ Изображение',{exact:true}).setInputFiles({
     name:'new-image.png',mimeType:'image/png',
     buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')
   });
-  await expect(page.locator('.editor article.layer')).toHaveCount(5);
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(5);
   await ready(page);
-  await expect(page.getByLabel('Выбранный слой',{exact:true})).toHaveValue('4');
+  await expect(page.locator('.layer-row[data-layer-index="4"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.getByRole('button',{name:'Выбрать слой 5: Текст',exact:true})).toHaveAttribute('aria-pressed','true');
   const handle=page.getByRole('button',{name:'Изменить размер выбранного слоя',exact:true});
   await handle.focus();await page.keyboard.press('Control+ArrowRight');await ready(page);
   await expect(layer(page,4).getByLabel('X',{exact:true})).toHaveValue('130');
+  await page.locator('.layer-row[data-layer-index="3"]').click();
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
+});
+
+
+test('compact stack preserves layer metadata, visibility, lock and explicit display Apply',async({page})=>{
+  await setup(page);
+  await page.getByText('Добавить слой',{exact:true}).click();
+  for(let i=0;i<3;i++)await page.getByRole('button',{name:'+ Текст',exact:true}).click();
+  await page.getByText('Добавить слой',{exact:true}).click();
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(7);
+  await expect(page.locator('.inspector')).toHaveCount(1);
+  await page.getByLabel('Имя слоя',{exact:true}).fill('GPU caption');
+  const row=page.locator('.layer-row[data-layer-index="6"]');
+  await expect(row).toContainText('GPU caption');
+  await page.getByRole('button',{name:'Блокировка слоя 7',exact:true}).click();
+  await expect(page.locator('.inspector').getByLabel('Текст',{exact:true})).toBeDisabled();
+  await page.getByRole('button',{name:'Блокировка слоя 7',exact:true}).click();
+  await page.getByRole('button',{name:'Видимость слоя 7',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Выбрать слой 7: Текст',exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Дублировать',exact:true}).click();
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(8);
+  await page.getByRole('button',{name:'Отменить правку',exact:true}).click();
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(7);
+  await page.getByLabel('Ориентация экрана',{exact:true}).selectOption('90');
+  expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
+  await ready(page);await page.evaluate(()=>{(document.activeElement as HTMLElement)?.blur();window.scrollTo(0,0);});
+  await page.screenshot({path:test.info().outputPath('editor-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:1024,height:768});
+  await page.screenshot({path:test.info().outputPath('editor-narrow.png'),fullPage:true});
+  await expect(page.locator('body')).toHaveJSProperty('scrollWidth',1024);
+  await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Reflect.get(window,'canvasWrites').length)).toBe(2);
+  const writes=await page.evaluate(()=>Reflect.get(window,'canvasWrites'));
+  expect(writes[0].theme.layers[6].editor).toMatchObject({name:'GPU caption',hidden:true,locked:false});
+  expect(writes[1]).toMatchObject({dev:'test',patch:{rotation_degrees:90}});
 });

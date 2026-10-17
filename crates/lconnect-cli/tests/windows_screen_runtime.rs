@@ -62,14 +62,17 @@ fn literal(theme: &LcdTheme, label: &str, value: &str, unit: &str) -> LcdTheme {
     let mut expected = theme.clone();
     expected.layers = vec![
         ThemeLayer::Text {
+            editor: None,
             text: value.into(),
             style: style.clone(),
         },
         ThemeLayer::Text {
+            editor: None,
             text: label.into(),
             style: parts.label.clone(),
         },
         ThemeLayer::Text {
+            editor: None,
             text: unit.into(),
             style: parts.unit.clone(),
         },

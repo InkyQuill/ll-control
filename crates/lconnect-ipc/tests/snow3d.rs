@@ -56,6 +56,7 @@ fn snow3d_theme_and_cached_page_are_independent_and_only_active_scene_streams() 
         profile
     );
     theme.layers.push(ThemeLayer::Snow3d {
+        editor: None,
         effect: Snow3dEffect::default(),
     });
     assert!(theme.validate().is_err());

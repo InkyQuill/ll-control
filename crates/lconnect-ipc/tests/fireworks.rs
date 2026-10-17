@@ -149,6 +149,7 @@ fn fireworks_theme_is_single_leading_scene_and_roundtrips_in_an_inactive_profile
         profile
     );
     theme.layers.push(ThemeLayer::Fireworks {
+        editor: None,
         effect: FireworksEffect::default(),
     });
     assert!(theme.validate().is_err());

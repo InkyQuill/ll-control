@@ -454,6 +454,7 @@ fn prepare_inner(
             ));
         };
         theme.layers.push(ThemeLayer::Image {
+            editor: None,
             asset,
             x: 0,
             y: 0,
@@ -623,6 +624,7 @@ fn parts(
 }
 fn sensor_layer(sensor: ThemeSensor, style: TextStyle, parts: SensorParts) -> ThemeLayer {
     ThemeLayer::Sensor {
+        editor: None,
         parts: Some(parts),
         sensor_id: sensor.sensor_id,
         label: sensor.label,
@@ -673,7 +675,11 @@ fn overlay(
                 .filter(|line| !line.is_empty())
                 .collect::<Vec<_>>()
                 .join("\n");
-            theme.layers.push(ThemeLayer::Text { text, style: s });
+            theme.layers.push(ThemeLayer::Text {
+                editor: None,
+                text,
+                style: s,
+            });
         }
         Overlay::Time { layout } => {
             let layout = one(layout, 3)?;
@@ -692,6 +698,7 @@ fn overlay(
                 (ClockFormat::Period, 2, small + size, &sub, small),
             ] {
                 theme.layers.push(ThemeLayer::Clock {
+                    editor: None,
                     format,
                     twenty_four_hour: false,
                     show_seconds: false,
@@ -723,6 +730,7 @@ fn overlay(
                 .map(|role| context.sensor(role))
                 .collect::<Result<_, _>>()?;
             theme.layers.push(ThemeLayer::SensorCycle {
+                editor: None,
                 parts: Some(parts),
                 sensors,
                 interval_seconds: seconds,
@@ -822,6 +830,7 @@ fn grid(
     // Bounds observed from the frozen Full-mode component/CSS. Native explicit
     // geometry remains editable; font/value-dependent flex reflow is not implied.
     let line = |axis, x, y, length| ThemeLayer::Divider {
+        editor: None,
         axis,
         x,
         y,
