@@ -13,6 +13,58 @@
  const canonical=value=>JSON.stringify(value&&typeof value==='object'?(Array.isArray(value)?value.map(item=>JSON.parse(canonical(item))):Object.fromEntries(Object.keys(value).sort().map(key=>[key,JSON.parse(canonical(value[key]))]))):value);
  const set=(input,value)=>{if(!input)throw new Error('Missing language fixture field');input.value=value;input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));};
  try{
+  if(desktopPhase?.startsWith('core|')){
+   const [,operation,fault,language]=desktopPhase.split('|'),english=language==='en';
+   const text=(en,ru)=>english?en:ru,assert=(ok,why)=>{if(!ok)throw new Error(why);};
+   await wait(async()=>(await rpc('list_devices')).length===1,'core device');
+   const dev=(await rpc('list_devices'))[0].id;
+   await click(text('Pump screen','Экран помпы'));
+   set(field(text('Name','Название')),'R2 local draft');
+   const draft=()=>field(text('Name','Название'))?.value;
+   let action;
+   if(operation==='image-delete'){
+    await click(text('Library','Библиотека'));await click(text('Image library','Библиотека изображений'));
+    field(text('Show all image files for management','Показать все файлы изображений для управления')).click();
+    await click(text('Delete Delete me…','Удалить Delete me…'));
+    action=text('Confirm image deletion','Подтвердить удаление изображения');
+   }else if(operation==='video-delete'){
+    await click(text('Library','Библиотека'));await click(text('Video library','Библиотека роликов'));
+    field(text('Show all video files for management','Показать все файлы видео для управления')).click();
+    await wait(()=>[...field(text('Saved video','Сохранённый ролик'))?.options??[]].some(o=>o.value==='a'.repeat(32)),'video selection');
+    set(field(text('Saved video','Сохранённый ролик')),'a'.repeat(32));
+    await click(text('Delete video…','Удалить ролик…'));action=text('Confirm video deletion','Подтвердить удаление ролика');
+   }else if(operation==='profile-save'){
+    await click(text('Saved profiles','Сохранённые профили'));await click(text('Refresh profile list','Обновить список профилей'));
+    await wait(()=>field(text('Profile slot','Слот профиля'))&&field(text('Profile name','Имя профиля')),'loaded profile controls');
+    set(field(text('Profile slot','Слот профиля')),'0');set(field(text('Profile name','Имя профиля')),'R2 saved draft');
+    action=text('Save draft to slot','Сохранить черновик в слот');
+   }else if(operation==='screen-reset'){
+    await click(text('LCD screen reset','Сброс экрана LCD'));await click(text('Reset screen…','Сбросить экран…'));
+    action=text('Confirm screen reset','Подтвердить сброс экрана');
+   }else action=operation==='lcd-apply'?text('Apply to LCD','Применить к LCD'):text('Restore LocalUI','Вернуть LocalUI');
+   const started=performance.now();
+   if(fault==='close')await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,ready:true,operation,fault,language,dev}});
+   await click(action);
+   if(fault==='close')return;
+   const detail=fault==='timeout'?'Request timed out; applied state must be checked':'response dropped';
+   await wait(()=>[...document.querySelectorAll('[role=alert],[role=status]')].some(e=>e.getClientRects().length&&e.textContent.includes(detail)),'visible operation '+fault);
+   const elapsed=performance.now()-started;
+   if(fault==='timeout')assert(elapsed>=9500,'real bridge deadline');
+   assert(draft()==='R2 local draft','operation fault replaced draft');
+   if(operation==='profile-save'){
+    assert(button(action)?.disabled,'uncertain profile write must require readback');
+    await click(text('Refresh profile list','Обновить список профилей'));
+    await wait(()=>!!button(text('Replace profile with draft','Заменить профиль черновиком'))&&!button(text('Replace profile with draft','Заменить профиль черновиком')).disabled,'profile readback');
+   }else if(operation==='screen-reset'){
+    await click(text('Check reset result','Проверить результат сброса'));
+    await wait(()=>!!button(text('Reset screen…','Сбросить экран…'))&&!button(text('Reset screen…','Сбросить экран…')).disabled,'reset receipt recovery');
+   }
+   if(operation==='image-delete')await wait(()=>!button(text('Delete Delete me…','Удалить Delete me…')),'deleted image absent after catalog readback');
+   if(operation==='video-delete')await wait(()=>![...field(text('Saved video','Сохранённый ролик')).options].some(o=>o.value==='a'.repeat(32)),'deleted video absent after catalog readback');
+   const theme=await rpc('get_lcd_theme',{dev}),library=await rpc('list_profiles');
+   assert(draft()==='R2 local draft','readback replaced draft');
+   await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,operation,fault,language,dev,elapsed,theme,library,draft_preserved:true}});return;
+  }
   if(desktopPhase==='cooling-errors'){
    await click('Cooling');
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'cooling language');};

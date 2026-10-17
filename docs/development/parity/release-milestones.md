@@ -106,7 +106,7 @@ Windows intrinsic grid reconstruction, new hardware and a timeline editor.
 **Depends on:** R0; final pass includes R1. **Owner areas:** daemon actors/storage,
 IPC/Tauri jobs, existing UI, native harnesses. Do not rewrite working subsystems.
 
-- [ ] Cover image/video import→edit→review→Save→gallery→preview→Apply→replace/stop;
+- [x] Cover image/video import→edit→review→Save→gallery→preview→Apply→replace/stop;
   ordinary, transparent/EXIF, GIF and MP4 inputs; source deletion after managed
   import; thumbnail/output agreement and protected defaults.
 - [ ] Close core lost-reply/disconnect/timeout/close cases for publication,
@@ -114,24 +114,28 @@ IPC/Tauri jobs, existing UI, native harnesses. Do not rewrite working subsystems
   active state and references; read back committed operations before any retry.
   Extend the already-passed image membership cases to plain/video/replacement
   and reconnect timing, rather than rerunning only the same image fixture.
-- [ ] Complete storage boundaries: atomicity, fsync failures, partial installation,
+- [x] Complete storage boundaries: atomicity, fsync failures, partial installation,
   disk-full/quotas, crash/startup recovery and stale revisions. Keep unknown outcomes
   visible, retain recovery resources, and avoid duplicate commits.
-- [ ] Qualify existing cooling modes/defaults, source fallback/manual override,
+- [x] Qualify existing cooling modes/defaults, source fallback/manual override,
   RGB catalogs/parameters/dynamic source-unit settings, thermal priority/grace,
   sync/topology and persisted Disable across GUI navigation and daemon restart.
-- [ ] Check long/large media within advertised bounds, slow first read, cancellation
+- [x] Check long/large media within advertised bounds, slow first read, cancellation
   before first frame, corruption during playback and joined cleanup. Establish
   measurable CPU/RSS/queue/sensor-age budgets for the release workload before
   acceptance; preserve the existing minimum20fps reference for the nominal24
   video+four-sensor case, and report actual rates rather than rounding to target.
 - [ ] Finish supported EN/RU errors and recovery states, keyboard/focus, readable
   diagnostics and meaningful accessible state. Inventory counts are not coverage.
-- [ ] Retained optional flows must not corrupt core state or leave daemon workers
+- [x] Retained optional flows must not corrupt core state or leave daemon workers
   behind when cancelled/closed. Experimental status never excuses a core safety bug.
 - [ ] Run exact-source Rust fmt/strict Clippy/tests/rustdoc, frontend checks/build,
   localization/theme contracts and browser/native core flows. Record ignored tests
   and limitations; only broaden testing for changed paths or unresolved failures.
+
+**Current qualification:** five component work items are qualified in the
+[core ledger](r2-core-qualification.md#component-reconciliation). Recovery,
+accessibility reconciliation and final integrated acceptance remain open.
 
 **Exit:** reproducible integrated core flows and bounded failure recovery on one
 source snapshot; every open core defect resolved or shown outside the release
