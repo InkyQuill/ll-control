@@ -7,13 +7,18 @@ Unavailable sensor values appear as a dash; they are not zero.
 
 1. Choose a ready-made layout, or add an image/video from **Library**.
 2. Edit text, clocks, sensor bindings and appearance in **Composition**.
-3. Enable **Edit on canvas** to select, drag and resize layers, or use the numeric
-   controls. The layer list reaches overlapping items. **Undo edit** restores a draft.
-   Preview changes do not change the device.
+3. Select a layer on the live canvas or in **Layers**, then drag, resize or edit its
+   properties. Only the selected layer’s controls are shown. Use the eye to hide a
+   layer, the lock to protect it, and **Undo edit** to restore a draft.
 4. Choose **Apply to LCD** when the composition is ready.
 
 Canvas arrows move a layer; Shift + arrows resize it. Escape cancels a drag.
-Open **Canvas controls** for the remaining shortcuts.
+Open **Canvas controls** for the remaining shortcuts. Animation plays automatically;
+**Pause animation** freezes it while you edit.
+
+**Screen orientation** rotates the whole canvas. Brightness is under **Display
+settings**. These settings reach the device only when you choose **Apply to LCD**.
+Brightness does not dim the editing canvas.
 
 **Save** stores a profile. **Load** puts a profile into the editor.
 **Apply** changes the device. These are separate actions.

@@ -150,13 +150,13 @@ not a reopening of historical R1 results and not deferred wholesale to R9 polish
 
 ### UX1 — Compact authoring workspace (critical)
 
-- [ ] Split route responsibilities into canvas toolbar, layer stack and inspector.
-- [ ] Make canvas the default; remove duplicated preview modes/refresh workflow.
-- [ ] Implement compact selection/reorder/add/duplicate/delete and contextual fields.
-- [ ] Add stable layer identity and persisted names/visibility/lock with explicit
+- [x] Split route responsibilities into canvas toolbar, layer stack and inspector.
+- [x] Make canvas the default; remove duplicated preview modes/refresh workflow.
+- [x] Implement compact selection/reorder/add/duplicate/delete and contextual fields.
+- [x] Add stable layer identity and persisted names/visibility/lock with explicit
       schema compatibility; update renderer, validation, profiles and import handling.
-- [ ] Preserve every inspector capability in the table and existing page/editor state.
-- [ ] Add local screen orientation and brightness drafts with truthful Apply outcomes.
+- [x] Preserve every inspector capability in the table and existing page/editor state.
+- [x] Add local screen orientation and brightness drafts with truthful Apply outcomes.
 
 Exit: author a seven-layer scene, find/edit any layer, reorder/duplicate/hide/lock,
 undo/redo, save/reload and apply without expanding seven forms or losing settings.
@@ -166,9 +166,9 @@ Old native profiles and Windows imports still load without silent conversion los
 
 - [ ] Prove the rendering-session approach with text, imported font, transparent
       image, independent sensor parts, video and procedural background.
-- [ ] Implement local pixel movement/resizing plus authoritative render reconciliation.
-- [ ] Replace one-second snapshots with bounded live playback and coalesced changes.
-- [ ] Handle stale work, disconnect, missing assets, cancellation and hidden windows.
+- [x] Implement local pixel movement/resizing plus authoritative render reconciliation.
+- [x] Replace one-second snapshots with bounded live playback and coalesced changes.
+- [x] Handle stale work, disconnect, missing assets, cancellation and hidden windows.
 - [ ] Measure the stated latency/frame-rate/resource targets on the production app.
 
 Exit: text/image pixels follow dragging, typing and numeric edits feel immediate,
@@ -177,11 +177,11 @@ A seven-layer and a32-layer stress case both remain navigable and recoverable.
 
 ### UX3 — Target-session acceptance (important; required for cutover)
 
-- [ ] Test keyboard-only authoring, focus retention, shortcuts, EN/RU and long labels.
+- [x] Test keyboard-only authoring, focus retention, shortcuts, EN/RU and long labels.
 - [ ] Test desktop sizes and actual115% Plasma Wayland scaling with a production build.
 - [ ] Check screen orientation controls against visible output on static and animated
       sources; close the static-JPEG defect before claiming universal orientation.
-- [ ] Check Save/reload/restart, Apply failure, reconnect and active-output replacement.
+- [x] Check Save/reload/restart, Apply failure, reconnect and active-output replacement.
 - [ ] Run one batched visual review and at most one refinement confirmation round;
       keep screenshots/logs outside Git and track results in the qualification ledger.
 - [ ] Update concise user guidance and commit each implementation milestone separately.
@@ -209,3 +209,30 @@ This is not UX1 or release closure: remaining work includes broader affected-flo
 regressions, native/visual review, live pixels during gestures, rendering sessions,
 performance qualification and physical orientation acceptance. Screenshots/logs
 remain ignored; user documentation will change when the shipped workflow is tested.
+
+
+## UX2 implementation and acceptance checkpoint — `81f2944`
+
+Implemented live Rust-rendered layer surfaces, local gesture compositing, automatic
+bounded playback, decoder cleanup, generation fencing and retained image-crop state.
+The background row stays reachable; Apply is above the canvas and the selected
+inspector has its own bounded scroll area. See [rendering notes](lcd-editor-live-rendering.md).
+
+Verification on2026-10-17:
+
+- Affected Rust crates:865 passed,6 external-fixture tests ignored; strict Clippy and
+  formatting passed. Svelte check:0 errors/warnings;1172/1172 static English resources.
+- 773 browser scenarios passed across the broad run and focused correction reruns.
+  The final18-test rerun covers reconnect, both basic-editor viewport/language pairs,
+  layer metadata, live pixels, Escape cancellation and smaller-document selection.
+- Native WebKit/X11: seven-layer EN/RU pointer and keyboard editing, profile save,
+  Apply to MockBackend, decoded output and restart all passed. No physical HID.
+- Actual Plasma Wayland configuration is115%; WebKit reports a device pixel ratio
+  of2. Logical viewport checks and screenshots are being reviewed separately.
+- Optimized daemon-only video/four-sensor preview measured p50 29.20ms, p95 36.45ms,
+  32.68 requests/s over120 samples. This is not end-to-end canvas frame rate or a
+  gesture/property latency result; production-session performance remains open.
+
+The source implementation is committed. UX2 performance and UX3 installed-user /
+physical output acceptance remain open. Static-JPEG rotation and intermediate
+backlight steps are not closed by this editor work. Raw evidence remains outside Git.
