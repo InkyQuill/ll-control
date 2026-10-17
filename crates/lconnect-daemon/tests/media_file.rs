@@ -27,6 +27,58 @@ fn fixture(root: &Path) -> std::path::PathBuf {
     path
 }
 #[test]
+fn full_hour_index_survives_reopen_and_rejects_an_extra_frame_without_damage() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("hour.lcm");
+    let mut writer = MediaFileWriter::new(root.path(), "One hour".into()).unwrap();
+    writer.append(&first()).unwrap();
+    for _ in 1..lconnect_ipc::MAX_MEDIA_UPLOAD_FRAMES {
+        writer.append(&next()).unwrap();
+    }
+    assert_eq!(
+        writer.append(&next()).unwrap_err().to_string(),
+        "media frame count exceeds resource budget"
+    );
+    writer.finish(&path).unwrap();
+    let mut reader = MediaFile::open(&path).unwrap();
+    assert_eq!(reader.fps(), 24);
+    assert_eq!(reader.frames(), 24 * 60 * 60);
+    assert_eq!(reader.read_unit(0).unwrap(), first());
+    for index in [1, reader.frames() / 2, reader.frames() - 1] {
+        assert_eq!(reader.read_unit(index).unwrap(), next());
+    }
+    assert!(reader.read_unit(reader.frames()).is_err());
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
+}
+
+#[test]
+fn full_payload_budget_survives_reopen_and_rejects_an_extra_unit_without_damage() {
+    // Structural H.264 units exercise storage boundaries; real codec acceptance
+    // is covered separately. Do not claim these padded units are decodable video.
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("full.lcm");
+    let mut unit = first();
+    unit.bytes.resize(128 * 1024, 0xff);
+    let frames = lconnect_ipc::MAX_MEDIA_UPLOAD_BYTES as usize / unit.bytes.len();
+    let mut writer = MediaFileWriter::new(root.path(), "Full payload".into()).unwrap();
+    for _ in 0..frames {
+        writer.append(&unit).unwrap();
+    }
+    assert_eq!(
+        writer.append(&next()).unwrap_err().to_string(),
+        "media payload exceeds resource budget"
+    );
+    writer.finish(&path).unwrap();
+    let mut reader = MediaFile::open(&path).unwrap();
+    assert_eq!(reader.encoded_bytes(), lconnect_ipc::MAX_MEDIA_UPLOAD_BYTES);
+    assert_eq!(reader.frames(), frames);
+    for index in [0, frames / 2, frames - 1] {
+        assert_eq!(reader.read_unit(index).unwrap(), unit);
+    }
+    assert!(reader.read_unit(frames).is_err());
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
+}
+#[test]
 fn staged_media_cancels_on_drop_and_never_overwrites() {
     let root = tempfile::tempdir().unwrap();
     {

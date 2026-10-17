@@ -248,3 +248,36 @@ These directly assert queue/ownership behavior rather than inferring it from RSS
 This closes the declared short-workload budget measurement only. Maximum-size/
 duration inputs, quota boundaries, long soak and the remaining integrated R2
 requirements still need qualification. It is not physical playback acceptance.
+
+
+## Long-media, storage limits and quota batch
+
+Two new storage boundary cases write, publish and reopen the exact maximums:
+86,400 index entries (one hour at 24fps), and 256MiB encoded payload. Each rejects
+the next unit with the specific resource-budget error, then publishes the valid
+prefix unchanged; indexed reads at start/middle/end and staging cleanup pass.
+The padded byte-limit units are structural fixtures, not claimed decodable video.
+
+A separate real-codec qualification creates an owned one-hour MP4, runs the
+production preparer, deletes the source, reads every prepared unit and decodes
+the entire H.264 stream. All 86,400 frames decode at 480×480 with no FFprobe error
+diagnostics. The final run passed in 18.07 seconds; this is processing time, not
+a one-hour real-time playback soak. The source is intentionally simple (32×32
+blue at 1fps), while output preparation still produces 480×480 at 24fps.
+
+Run this costly boundary explicitly:
+
+```sh
+cargo test -p lconnect-media --locked --test hour_boundary -- --ignored
+```
+
+It is excluded from routine test execution with an explicit reason, but was
+executed and passed here. Ten daemon media-file/reader/upload tests also passed,
+including four-session admission, oversized declarations/AUs, cancel/retry,
+64-asset quota failure without partial publication, and receipt recovery.
+Formatting, strict Clippy for both changed test targets and both crates' rustdoc
+passed. Review tightened specific error and decoder-diagnostic assertions.
+
+This qualifies host preparation at the duration limit and storage at the byte
+limit; it does not imply worst-case source complexity, one-hour hardware playback
+or every remaining storage I/O/operation-interruption boundary. R2 remains open.

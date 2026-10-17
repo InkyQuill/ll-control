@@ -162,3 +162,11 @@ The 60-second release run passed at 23.3765fps, 0.4948 average CPU cores,
 151,932,928-byte sampled peak RSS and 201ms maximum sensor age. Full captured
 stream decoded; codec children joined after Clear. Six reader lifetime tests
 passed. Large/long-media and remaining R2 gates stay open.
+
+
+R2 long-media batch: exact 86,400-entry and 256MiB storage boundaries passed,
+including overflow rejection without damaging the valid prefix. Real one-hour
+preparation decoded all 86,400 output frames after source removal, with no decoder
+errors. Ten media storage/reader/upload tests passed, including quota cleanup;
+fmt, strict targeted Clippy and rustdoc passed. The costly codec test remains
+explicit release qualification; raw evidence is ignored. R2 is still in progress.
