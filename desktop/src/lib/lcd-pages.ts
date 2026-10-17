@@ -8,7 +8,7 @@ export function lcdPageKind(theme:Theme):LcdPageKind {
   if(theme.layers.some(layer=>layer.kind==='meteor'))return 'meteor';
   const weather=theme.layers.find(layer=>layer.kind==='weather');return weather?.effect.kind??'basic';
 }
-export function themePages(theme:Theme):Theme[] {return [theme,...(theme.page_cache??[]).map(page=>page.theme)];}
+export function themePages(theme:Theme):Theme[] {return [theme,...(theme.page_cache??[]).map(page=>page.theme)].flatMap(page=>[page,...(page.basic_editor?.banks??[]).flatMap(bank=>bank.overlays.map(item=>item.theme))]);}
 function snapshot(theme:Theme):Theme {
   const copy=structuredClone(theme);delete copy.page_cache;
   const weather=copy.layers.find(layer=>layer.kind==='weather');if(weather)delete weather.effect.presets;
@@ -32,6 +32,7 @@ export function switchLcdPage(theme:Theme,target:LcdPageKind):Theme {
   else {
     next=snapshot(theme);next.layers=next.layers.filter(layer=>!isProcedural(layer));
     if(target!=='basic') {
+      delete next.basic_editor;
       if(next.layers.length>=32)throw new Error('Для нового эффекта нужен свободный слой.');
       if(target==='meteor')next.layers.unshift({kind:'meteor',effect:{speed:2,colors:[[0,255,0],[0,0,255]],dynamic:false,sensor:null,seed:42}});
       else if(target==='fireworks')next.layers.unshift({kind:'fireworks',effect:{intensity:1,colors:fireworksColors(),dynamic:false,sensor:null,seed:42}});

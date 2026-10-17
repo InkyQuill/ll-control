@@ -14,8 +14,9 @@ test.beforeEach(async ({ page }) => {
       { kind: 'image', asset: 'fixture-image', x: 0, y: 0, width: 100, height: 100, fit: 'contain', opacity: 255, watermark_position: { horizontal: 50, vertical: 50 }, shadow: style.shadow }
     ] };
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: { method: string; params?: { delete?: boolean } }) => {
+        if (_ === 'desktop_set_language') return null;
       switch (req.method) {
-        case 'list_devices': return [{ id: 'A', display_name: 'LCD' }];
+        case 'list_devices': return [{ id: 'A', display_name: 'LCD', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid', age_ms: 0 }];
         case 'get_lcd_state': return { source: 'Theme', requested: {}, last_error: null };
         case 'get_lcd_theme': return theme;
@@ -31,12 +32,13 @@ test.beforeEach(async ({ page }) => {
       }
     } } });
   });
-  await page.goto('/'); await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display'); await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button', { name: 'Загрузить активную тему' }).click();
   await expect(page.getByLabel('Название', { exact: true })).toHaveValue('Expanded controls');
 });
 
 test('expanded layer, profile, font and cleanup controls have names and readable text', async ({ page }) => {
+  await page.getByRole('button',{name:'Библиотека',exact:true}).click();
   for (const text of ['Пользовательские шрифты', 'Лицензии встроенных шрифтов', 'Сохранённые профили', 'Очистка неиспользуемых шрифтов', 'Очистка неиспользуемых изображений']) {
     await page.getByText(text, { exact: true }).click();
   }

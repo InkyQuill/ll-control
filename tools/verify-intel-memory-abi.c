@@ -1,4 +1,4 @@
-/* Compile-only UAPI check; never opens a GPU. See docs/parity/intel-memory-query.md. */
+/* Compile-only UAPI check; never opens a GPU. See docs/development/parity/intel-memory-query.md. */
 #include <stddef.h>
 #include <stdio.h>
 #include "i915_drm.h"

@@ -5,10 +5,11 @@ test.beforeEach(async({page})=>{
     const f={keys:['a'.repeat(32),'b'.repeat(32)],writes:[] as unknown[],lose:false,hold:false,release:null as (()=>void)|null};
     const png=Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
     Object.assign(window,{imageDelete:f,__TAURI_INTERNALS__:{invoke:async(command:string,r:{method:string;params:Record<string,unknown>})=>{
+        if (command === 'desktop_set_language') return null;
       if(command==='media_status')return null;
       switch(r.method){
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle'};
         case 'list_named_theme_assets':return f.keys.map(key=>({key,name:key[0]==='a'?'Garden':'Logo',revision:1,is_default:key.startsWith("builtin-")}));
@@ -23,7 +24,8 @@ test.beforeEach(async({page})=>{
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека изображений',{exact:true}).click();
 });
 test('confirmation deletes only selected image, restores focus and protects draft images',async({page})=>{

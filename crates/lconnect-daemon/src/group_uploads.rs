@@ -22,9 +22,14 @@ const IDLE: Duration = Duration::from_secs(300);
 #[derive(Default)]
 struct Data {
     file: Option<File>,
+    windows: Option<crate::profile_archive::StagedWindowsScreen>,
 }
 struct Entry {
     state: Mutex<State>,
+    windows: Option<(
+        lconnect_ipc::WindowsScreenSource,
+        crate::profile_group::GroupProfile,
+    )>,
     data: Mutex<Data>,
     busy: Arc<Semaphore>,
     cancel: AtomicBool,
@@ -123,6 +128,19 @@ impl FinishSource {
             let _admission = self._admission;
             let current = state(&self.entry);
             let mut data = lock(&self.entry.data);
+            if self.entry.windows.is_some() {
+                let staged = data
+                    .windows
+                    .take()
+                    .ok_or_else(|| invalid("missing private Windows Screen preparation"))?;
+                if Some(staged.source_sha256()) != current.source_sha256.as_deref() {
+                    return Err(invalid("private Windows Screen identity changed"));
+                }
+                return staged
+                    .publish(&archives, Some(publication), &self.entry.cancel)
+                    .map(Arc::new)
+                    .map_err(invalid);
+            }
             let file = data
                 .file
                 .as_mut()
@@ -201,6 +219,18 @@ impl GroupUploads {
         size: u64,
         expected: &str,
     ) -> Result<Option<State>> {
+        self.existing_source(dev, group, id, size, expected, None)
+            .await
+    }
+    pub(crate) async fn existing_source(
+        &self,
+        dev: &DeviceId,
+        group: FullProfileGroup,
+        id: &str,
+        size: u64,
+        expected: &str,
+        source: Option<&lconnect_ipc::WindowsScreenSource>,
+    ) -> Result<Option<State>> {
         valid_id(id)?;
         let registry = self.registry.lock().await;
         let Some(e) = registry.entries.get(id) else {
@@ -211,6 +241,7 @@ impl GroupUploads {
             || current.target.group != group
             || current.target.expected != expected
             || current.size != size
+            || e.windows.as_ref().map(|(options, _)| options) != source
         {
             return Err(invalid("group upload id has different parameters"));
         }
@@ -223,6 +254,23 @@ impl GroupUploads {
         target: GroupArchiveSnapshot,
         size: u64,
     ) -> Result<State> {
+        self.begin_source(id, target, size, None).await
+    }
+    pub(crate) async fn begin_source(
+        &self,
+        id: String,
+        target: GroupArchiveSnapshot,
+        size: u64,
+        windows: Option<(
+            lconnect_ipc::WindowsScreenSource,
+            crate::profile_group::GroupProfile,
+        )>,
+    ) -> Result<State> {
+        if windows.as_ref().is_some_and(|(_, profile)| {
+            target.group != FullProfileGroup::Screen || profile.kind() != GroupKind::Screen
+        }) {
+            return Err(invalid("Windows Screen source requires a Screen target"));
+        }
         valid_id(&id)?;
         if !(44..=MAX).contains(&size) {
             return Err(invalid("group upload size outside archive limit"));
@@ -231,7 +279,11 @@ impl GroupUploads {
         let mut registry = self.registry.lock().await;
         if let Some(e) = registry.entries.get(&id) {
             let current = state(e);
-            if current.target != target || current.size != size {
+            if current.target != target
+                || current.size != size
+                || e.windows.as_ref().map(|(options, _)| options)
+                    != windows.as_ref().map(|(options, _)| options)
+            {
                 return Err(invalid("group upload id has different parameters"));
             }
             return Ok(current);
@@ -258,6 +310,7 @@ impl GroupUploads {
         }
         let entry = Arc::new(Entry {
             cleanup_owner: Some(self.jobs.admission().enter().map_err(busy)?),
+            windows,
             state: Mutex::new(State {
                 id: id.clone(),
                 target,
@@ -397,6 +450,15 @@ impl GroupUploads {
         group: FullProfileGroup,
         id: &str,
     ) -> Result<State> {
+        self.inspect_source(dev, group, id, None).await
+    }
+    pub(crate) async fn inspect_source(
+        &self,
+        dev: &DeviceId,
+        group: FullProfileGroup,
+        id: &str,
+        target_archives: Option<ProfileArchives>,
+    ) -> Result<State> {
         let active = self.get(dev, group, id).await?;
         let current = state(&active.0);
         if matches!(current.phase, Phase::Inspecting | Phase::Prepared) {
@@ -425,6 +487,40 @@ impl GroupUploads {
                         .ok_or_else(|| invalid("missing group archive"))?;
                     file.sync_all().map_err(invalid)?;
                     file.seek(SeekFrom::Start(0)).map_err(invalid)?;
+                    if let Some((options, target)) = &entry.windows {
+                        let archives = target_archives
+                            .as_ref()
+                            .ok_or_else(|| invalid("missing target resource stores"))?;
+                        let bindings = lconnect_profile::linux_screen::parse_bindings(
+                            options.bindings_json.as_bytes(),
+                        )
+                        .map_err(invalid)?;
+                        let resources = lconnect_profile::screen_plan::parse_resource_map(
+                            options.resources_json.as_bytes(),
+                        )
+                        .map_err(invalid)?;
+                        let (source, plan) = lconnect_profile::screen_plan::inspect_and_prepare(
+                            file,
+                            options.record,
+                            &bindings,
+                            &resources,
+                            &entry.cancel,
+                        )
+                        .map_err(invalid)?;
+                        let staged = archives
+                            .stage_windows_screen(&source, plan, target, &entry.cancel)
+                            .map_err(invalid)?;
+                        let summary = crate::group_exports::summary(staged.profile())?;
+                        let source_sha256 = staged.source_sha256().to_owned();
+                        data.windows = Some(staged);
+                        let mut current = lock(&entry.state);
+                        if !entry.cancel.load(Ordering::Acquire) {
+                            current.summary = Some(summary);
+                            current.source_sha256 = Some(source_sha256);
+                            current.phase = Phase::Prepared;
+                        }
+                        return Ok(());
+                    }
                     // Validate in a private quarantine: Inspect must not add
                     // uploads to the target's legacy/shared gallery catalog.
                     let quarantine = tempfile::tempdir().map_err(invalid)?;
@@ -963,3 +1059,5 @@ mod finish_tests {
         .unwrap();
     }
 }
+
+pub(crate) mod preview;

@@ -13,7 +13,17 @@
   interface Job { id: string; name: string; total: number; received: number; phase: Phase; key: string | null; message: string | null; metadata?:SourceMetadata|null }
   const terminal = (phase: Phase) => ['complete', 'cancelled', 'failed'].includes(phase);
   const labels: Record<Phase, string> = { uploading: 'Загрузка файла', inspecting: 'Проверка файла', source_ready: 'Исходник проверен', encoding: 'Конвертация для LCD', validating: 'Проверка результата', remuxing: 'Подготовка просмотра', review_ready: 'Ролик готов к просмотру', cancelling: 'Отмена импорта', transferring: 'Передача ролика в библиотеку', publishing: 'Сохранение в библиотеке', complete: 'Ролик сохранён в библиотеке', cancelled: 'Импорт отменён', failed: 'Импорт не завершён' };
-  let job = $state<Job | null>(null), error = $state(''), fit = $state<'contain' | 'cover' | 'stretch'>('contain');
+  type ImportFailure={detail:string;context:'direct'|'confirm'|'upload'|'prepare'|'validation'};
+  let job = $state<Job | null>(null), error = $state<ImportFailure|null>(null), fit = $state<'contain' | 'cover' | 'stretch'>('contain');
+  function setError(cause:unknown,context:ImportFailure['context']='direct') {error={detail:message(cause),context};}
+  function errorText():string {
+    if(error?.context==='validation')return t('Выберите непустой GIF или MP4 размером до 256 MiB.');
+    if(error?.context==='confirm')return t('{0} Проверьте состояние импорта перед повторным подтверждением.',error.detail);
+    if(error?.context==='upload')return t('{0} Проверьте состояние импорта и библиотеку перед повторной загрузкой.',error.detail);
+    if(error?.context==='prepare')return t('{0} Проверьте состояние подготовки.',error.detail);
+    // Unknown diagnostics are data, including exact resource-key collisions.
+    return error?.detail || pollError;
+  }
   let mounted = false, announced: string | null = null;
   let ownedId=$state<string|null>(null);
   const sourceReady=$derived(job?.phase==='source_ready' && job.id===ownedId);
@@ -95,9 +105,10 @@
   const cutValid = $derived(!cutEnabled || (segments.every(s=>!s.crop || normalizedCrop(s.crop)!==null) && cut.segments.length>0 && cut.segments.length<=64 && cutDuration<=180000 && cut.segments.every(s=>Number.isSafeInteger(s.start_ms) && Number.isSafeInteger(s.end_ms) && s.start_ms>=0 && s.start_ms<s.end_ms && s.end_ms<=3600000 && (sourceDuration===null || s.end_ms<=Math.floor(sourceDuration*1000)))));
   let pollError = $state('');
   let reads = 0;
-  let ready = $state(false), uploading = $state(false), cancelRequested = $state(false), confirming=$state(false);
+  let ready = $state(false), uploading = $state(false), cancelRequested = $state(false), cancelling=$state(false), confirming=$state(false);
+  let cancelTarget:string|null=null;
   let importTarget: string | null = null;
-  const active = $derived(uploading || (job !== null && !terminal(job.phase) && !sourceReady));
+  const active = $derived(cancelling || uploading || (job !== null && !terminal(job.phase) && !sourceReady));
   $effect(()=>{const busy=active || sourceReady || recording;untrack(()=>onbusy(busy));});
   async function removeSegment(id:number) {
     if(active || recording || (!recordMode && segments.length===1)) return;
@@ -122,17 +133,22 @@
       const next = await invoke<Job | null>('media_status');
       if (!mounted || uploading || request !== reads) return;
       accept(next); ready = true; pollError = '';
+      // A failed/ambiguous cancellation is retriable only after readback of
+      // that same job. Never unlock a newer job or overlap the pending RPC.
+      if(cancelRequested && !cancelling && next?.id===cancelTarget && next.phase!=='publishing') {
+        cancelRequested=false;cancelTarget=null;
+      }
     } catch (e) { if (mounted && request === reads) { ready = false; pollError = message(e); } }
   }
   function confirmationFailed(id:string, cause:unknown) {
     // Polling may already have resolved the outcome or moved to another job.
     if(mounted && job?.id===id && job.phase!=='complete')
-      error=`${message(cause)} Проверьте состояние импорта перед повторным подтверждением.`;
+      setError(cause,'confirm');
   }
   async function confirmReview() {
     if(!job || job.phase!=='review_ready' || confirming || cancelRequested || !ready)return;
     const id=job.id;
-    confirming=true;reads++;error='';
+    confirming=true;reads++;error=null;
     try {
       await invoke('media_confirm',{id});
     } catch(e) {
@@ -142,25 +158,30 @@
     }
   }
   async function cancel() {
-    cancelRequested = true; reads++;
+    if(cancelling)return;
+    cancelRequested = true; reads++;error=null;
     const id = ownedId ?? job?.id;
     if (!id) return;
+    cancelTarget=id;cancelling=true;
     try {
       const next = await invoke<Job>('media_cancel', { id });
       if (mounted) accept(next);
     } catch (e) {
       // begin may still be in flight; the upload loop cancels again after its reply.
-      if (mounted && !uploading) error = message(e);
+      if (mounted && !uploading) setError(e);
+    } finally {
+      cancelling=false;
+      if(mounted && !uploading) {ready=false;await refresh();}
     }
   }
   async function importFile(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0]; input.value = '';
     if (!file || active || sourceReady || recording || !ready) return;
-    error = '';
+    error = null;
     if(editing)clearSource();
     if (!/\.(gif|mp4)$/i.test(file.name) || file.size === 0 || file.size > 256 * 1024 * 1024) {
-      error = 'Выберите непустой GIF или MP4 размером до 256 MiB.'; return;
+      setError('','validation'); return;
     }
     if(rangeEnabled) {clearSource();selectedFile=file;await uploadFile(file,true);return;}
     if(editing) {clearSource();selectedFile=file;return;}
@@ -169,9 +190,9 @@
   async function uploadFile(file:File,inspectOnly=false) {
     if(active || sourceReady || recording || !ready || (!inspectOnly && (!effectsValid || !cutValid || !rangeValid))) return;
     let inspectionStarted=false;
-    error='';
+    error=null;
     const id = crypto.randomUUID().replaceAll('-', '');
-    reads++; ownedId = id; importTarget = device; uploading = true; cancelRequested = false;
+    reads++; ownedId = id; importTarget = device; uploading = true; cancelRequested = false;cancelTarget=null;
     try {
       const initial = await invoke<Job>('media_begin', { id, name: file.name, total: file.size, fit, cut:cutEnabled ? cut : null, ...(adjustments ? {adjustments} : {}) });
       if (mounted) accept(initial);
@@ -190,7 +211,7 @@
         else accept(inspected);
       } else await invoke('media_start', { id, review:editing });
     } catch (e) {
-      if (mounted && !cancelRequested) error = `${message(e)} Проверьте состояние импорта и библиотеку перед повторной загрузкой.`;
+      if (mounted && !cancelRequested) setError(e,'upload');
       // A lost upload acknowledgement must not leave staging permanently admitted.
       // Publishing rejects cancellation; the owned native task still records its result.
       if(!inspectionStarted)try { await invoke('media_cancel', { id }); } catch { /* recover through status */ }
@@ -205,9 +226,9 @@
   async function prepareInspected() {
     if(!sourceReady || !job || active || !ready || !rangeValid || !effectsValid)return;
     const id=job.id;
-    uploading=true;reads++;error='';cancelRequested=false;
+    uploading=true;reads++;error=null;cancelRequested=false;cancelTarget=null;
     try {await invoke('media_prepare_inspected',{id,fit,range,...(adjustments ? {adjustments}:{})});}
-    catch(e) {if(mounted)error=`${message(e)} Проверьте состояние подготовки.`;}
+    catch(e) {if(mounted)setError(e,'prepare');}
     finally {
       uploading=false;
       if(!mounted || cancelRequested)await invoke('media_cancel',{id}).catch(()=>{});
@@ -217,11 +238,11 @@
   async function prepareExisting() {
     if(!existing || active || recording || !ready || !effectsValid || !cutValid || !rangeValid)return;
     const id=crypto.randomUUID().replaceAll('-','');
-    reads++;ownedId=id;importTarget=device;uploading=true;cancelRequested=false;error='';
+    reads++;ownedId=id;importTarget=device;uploading=true;cancelRequested=false;cancelTarget=null;error=null;
     try {
       await invoke('media_source_prepare',{sourceId:existing.id,id,name:existing.name.replace(/\.[^.]+$/,'')+'.mp4',fit,cut:cutEnabled ? cut : null,...(range ? {range}:{}),...(adjustments ? {adjustments} : {})});
     } catch(e) {
-      if(mounted && !cancelRequested)error=`${message(e)} Проверьте состояние подготовки.`;
+      if(mounted && !cancelRequested)setError(e,'prepare');
     } finally {
       uploading=false;
       if(!mounted || cancelRequested)await invoke('media_cancel',{id}).catch(()=>{});
@@ -296,7 +317,7 @@
       <fieldset disabled={active || recording || !ready}>
         <legend>{t("Область следующей записи, % исходника")}</legend>
         {#each [{key:'x',label:'Слева'},{key:'y',label:'Сверху'},{key:'width',label:'Ширина'},{key:'height',label:'Высота'}] as field (field.key)}
-          <label>{field.label}{t(", % — запись")}<input type="number" min="0" max="100" step="0.01" bind:value={recordCrop[field.key as keyof CropFields]} /></label>
+          <label>{t(field.label)}{t(", % — запись")}<input type="number" min="0" max="100" step="0.01" bind:value={recordCrop[field.key as keyof CropFields]} /></label>
         {/each}
       </fieldset>
       {#if !previewCrop}<p role="alert">{t("Область записи должна быть непустой и помещаться внутри исходника.")}</p>{/if}
@@ -317,10 +338,10 @@
           <button disabled={sourcePosition===null} onclick={()=>markSegment(segment,'end')}>{t("Конец по текущему кадру")} {i+1}</button>
           <button bind:this={segment.cropButton} aria-pressed={cropSegmentId===segment.id} onclick={()=>chooseCrop(segment.id)}>{t("Выбрать область фрагмента")} {i+1}</button>
           {#if segment.crop}
-            <fieldset aria-label={`Область фрагмента ${i+1}`}>
+            <fieldset aria-label={t('Область фрагмента {0}',i+1)}>
               <legend>{t("Область фрагмента")} {i+1}{t(", % исходника")}</legend>
               {#each [{key:'x',label:'Слева'},{key:'y',label:'Сверху'},{key:'width',label:'Ширина'},{key:'height',label:'Высота'}] as field (field.key)}
-                <label>{field.label}{t(", % — фрагмент")} {i+1}<input type="number" min="0" max="100" step="0.01" bind:value={segment.crop[field.key as keyof CropFields]} /></label>
+                <label>{t(field.label)}{t(", % — фрагмент")} {i+1}<input type="number" min="0" max="100" step="0.01" bind:value={segment.crop[field.key as keyof CropFields]} /></label>
               {/each}
               {#if !normalizedCrop(segment.crop)}<p role="alert">{t("Область должна иметь положительный размер и помещаться внутри исходника.")}</p>{/if}
               <button onclick={()=>resetCrop(segment.id)}>{t("Весь кадр — фрагмент")} {i+1}</button>
@@ -365,10 +386,10 @@
     {#if job.phase === 'publishing'}<p>{t("Сохранение уже началось. Дождитесь результата перед повторным импортом.")}</p>{/if}
   {/if}
   {#if active || sourceReady}<button disabled={cancelRequested || job?.phase === 'publishing'} onclick={cancel}>{t("Отменить импорт")}</button>{/if}
-  {#if error || pollError}<p role="alert">{t(error || pollError)}</p><button onclick={refresh}>{t("Проверить импорт")}</button>{/if}
+  {#if error || pollError}<p role="alert">{errorText()}</p><button onclick={refresh}>{t("Проверить импорт")}</button>{/if}
 </section>
 <style>
-  .media-import { margin:16px 0; padding:12px; border:1px solid #33445b; border-radius:8px; }
+  .media-import { margin:16px 0; padding:12px; border:1px solid var(--border); border-radius:8px; }
   label { display:grid; gap:6px; margin:10px 0; }
   fieldset { min-width:0; }
   .segment { margin:12px 0; }

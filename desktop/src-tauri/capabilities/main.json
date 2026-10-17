@@ -7,11 +7,13 @@
   "permissions": [
     "allow-daemon-call",
     "allow-cooling-preset",
+    "allow-cooling-mode-default",
     "allow-import-image",
     "allow-image-editor",
     "allow-capture-screenshot",
     "allow-begin-screenshot",
     "allow-cancel-screenshot",
+    "allow-pending-screenshot-cleanup",
     "allow-media-playback-url",
     "allow-media-begin",
     "allow-media-append",
@@ -41,9 +43,11 @@
     "allow-profile-archive-recover",
     "allow-profile-archive-dismiss",
     "allow-group-archive-start",
+    "allow-group-windows-prepare",
     "allow-group-archive-status",
     "allow-group-archive-action",
     "allow-desktop-settings-get",
+    "allow-desktop-set-language",
     "allow-desktop-settings-save",
     "allow-desktop-exit"
   ]

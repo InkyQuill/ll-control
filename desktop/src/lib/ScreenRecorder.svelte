@@ -11,7 +11,11 @@
   let { device, onclose, onsave }: {device:string;onclose:()=>void;onsave:(key:string,target:string)=>Promise<void>}=$props();
   let capture=$state<RecordingSession|null>(null), review=$state<RecordingReview|null>(null);
   let status=$state<RecordingStatus|null>(null), result=$state<RecordingReviewStatus|null>(null);
-  let busy=$state(false), closing=$state(false), returning=$state(false), error=$state(''), sourceUrl=$state('');
+  type RecordingFailure={detail:string;context:'direct'|'return'|'close'};
+  let cleanupRequested=$state(false);
+  let busy=$state(false), closing=$state(false), returning=$state(false), error=$state<RecordingFailure|null>(null), sourceUrl=$state('');
+  const blocked=$derived(busy || closing || cleanupRequested);
+  function setError(cause:unknown,context:RecordingFailure['context']='direct') {error={detail:message(cause),context};}
   let name=$state(t('Запись экрана')), fit=$state<'contain'|'cover'|'stretch'>('contain'), clearAsked=$state(false);
   let heading=$state<HTMLHeadingElement>();
   const fullRegion=()=>({x:0,y:0,width:100,height:100});
@@ -27,7 +31,7 @@
     captureRegion={x:appliedRegion.x*100,y:appliedRegion.y*100,width:appliedRegion.width*100,height:appliedRegion.height*100};
   }
   async function applyRegion() {
-    if(!status || !['setup','paused'].includes(status.phase) || !requestedRegion || !regionDirty || busy || closing)return;
+    if(!status || !['setup','paused'].includes(status.phase) || !requestedRegion || !regionDirty || blocked)return;
     await control({set_region:requestedRegion});
   }
 
@@ -74,7 +78,7 @@
   }
   function dismissLimit() {limitDialog?.close();finishButton?.focus();}
   async function offerOperations() {
-    if(busy || closing || !capture)return;
+    if(blocked || !capture)return;
     const epoch=generation;
     if(status?.phase==='recording')await control('pause');
     if(!mounted || epoch!==generation || closing || !status || !['paused','limit_reached'].includes(status.phase))return;
@@ -83,7 +87,7 @@
     if(mounted && epoch===generation && !closing)limitDialog?.showModal();
   }
   async function acceptOperation(operation:'edit'|'import') {
-    if(busy || closing || !status || !['paused','limit_reached'].includes(status.phase))return;
+    if(blocked || !status || !['paused','limit_reached'].includes(status.phase))return;
     pendingOperation=operation;
     dismissLimit();
     await control('finish');
@@ -95,12 +99,28 @@
     if(text.startsWith('Recording worker response timed out') || text.startsWith('Recording worker exit timed out'))return t('Процесс записи не отвечает. Запись остановлена. Выберите источник заново.');
     if(text.startsWith('Recording worker connection closed') || text.startsWith('Connection reset by peer'))return t('Процесс записи завершился. Выберите источник заново.');
     if(text.startsWith('Invalid recording worker message') || text.startsWith('Invalid recording startup acknowledgement') || text.startsWith('Invalid recording status reply') || text.startsWith('Invalid recording command acknowledgement') || text.startsWith('Invalid recording snapshot reply') || text.startsWith('Invalid recording finish reply'))return t('Процесс записи вернул некорректный ответ. Выберите источник заново.');
-    if(text.startsWith('ScreenCast session closed while recording'))return t('Сеанс захвата экрана закрыт. Выберите источник заново.');
+    if(text.startsWith('ScreenCast session closed while recording') || text.startsWith('PipeWire connection closed while recording'))return t('Сеанс захвата экрана закрыт. Выберите источник заново.');
     if(text==='Recording cancelled')return t('Запись отменена');
+    if(text.startsWith('No source frame yet'))return t('Источник ещё не передал кадр. Обновите кадр и повторите попытку.');
+    if(text.startsWith('Capture source ended unexpectedly'))return t('Источник захвата завершил передачу кадров. Выберите источник заново.');
+    if(text.startsWith('Recording time limit reached'))return t('Достигнут лимит 180 секунд');
+    if(text.startsWith('Recording contains no frames'))return t('Запись не содержит кадров. Выберите источник заново.');
+    if(text.startsWith('Recording exceeds output size limit') || text.startsWith('Recording exceeds file size limit'))return t('Размер записи превышает допустимый лимит. Выберите меньшую область или сократите запись.');
+    if(text.startsWith('Pause recording before changing capture region'))return t('Приостановите запись перед изменением области захвата.');
+    if(text.startsWith('ScreenCast selection timed out'))return t('Истекло время выбора источника. Выберите экран или окно заново.');
+    if(text.startsWith('ScreenCast portal rejected request (1)'))return t('Выбор источника отменён.');
+    if(text.startsWith('PipeWire plugin lacks'))return t('Установленный модуль PipeWire не поддерживает запись экрана. Обновите модуль GStreamer для PipeWire.');
     if(text.startsWith('Start isolated recording worker'))return t('Не удалось запустить процесс записи. Выберите источник заново.');
-    return t(text);
+    // Unclassified diagnostics are data, even if they equal a resource key.
+    return text;
+  }
+  function failureText():string {
+    if(error?.context==='return')return t('Не удалось отменить подготовленный вариант: {0}. Повторите возврат к редактированию.',recordingError(error.detail));
+    if(error?.context==='close')return t('Не удалось подтвердить завершение: {0}. Повторите закрытие.',recordingError(error.detail));
+    return recordingError(error?.detail ?? status?.message);
   }
   async function refresh() {
+    if(cleanupRequested)return;
     const epoch=generation, revision=++refreshRevision, owner=capture, output=review;
     const current=()=>mounted && epoch===generation && revision===refreshRevision;
     try {
@@ -128,31 +148,31 @@
         announced=nextResult.id;
         await onsave(nextResult.key,device);
       }
-    }catch(e){if(current())error=message(e);}
+    }catch(e){if(current())setError(e);}
   }
   async function start() {
-    if(busy || capture)return;
-    const epoch=generation;busy=true;error='';
+    if(blocked || capture)return;
+    const epoch=generation;busy=true;error=null;
     const owner=new RecordingSession(crypto.randomUUID().replaceAll('-',''),invoke);
     capture=owner;
     try {const next=await owner.begin();if(mounted && epoch===generation)status=next;}
-    catch(e){if(mounted && epoch===generation)error=message(e);}
+    catch(e){if(mounted && epoch===generation)setError(e);}
     finally{if(mounted && epoch===generation){busy=false;await refresh();}}
   }
   async function control(action:RecordingAction) {
-    if(!capture || busy)return;
+    if(!capture || blocked)return;
     refreshRevision++;
-    const epoch=generation;busy=true;error='';
-    try{await capture.control(action);}catch(e){if(mounted && epoch===generation)error=message(e);}
+    const epoch=generation;busy=true;error=null;
+    try{await capture.control(action);}catch(e){if(mounted && epoch===generation)setError(e);}
     finally{if(mounted && epoch===generation){busy=false;await refresh();}}
   }
   async function prepare() {
-    if(busy || review || status?.phase!=='ready' || !capture || !name.trim() || !validCut)return;
-    const epoch=generation;busy=true;error='';
+    if(blocked || review || status?.phase!=='ready' || !capture || !name.trim() || !validCut)return;
+    const epoch=generation;busy=true;error=null;
     const output=new RecordingReview(crypto.randomUUID().replaceAll('-',''),capture.id,invoke);
     review=output;
     try{await output.prepare({name:name.trim()+'.mp4',fit,cut:editEnabled ? cut : null});}
-    catch(e){if(mounted && epoch===generation)error=message(e);}
+    catch(e){if(mounted && epoch===generation)setError(e);}
     finally{if(mounted && epoch===generation){busy=false;await refresh();}}
   }
   const canReturnToEdit=$derived(!!review && (
@@ -160,21 +180,21 @@
     (!!error && !['publishing','complete'].includes(result?.phase ?? ''))
   ));
   async function returnToEdit() {
-    if(!review || busy || closing || !canReturnToEdit)return;
+    if(!review || blocked || !canReturnToEdit)return;
     const epoch=++generation, output=review;
-    returning=true;busy=true;error='';
+    returning=true;busy=true;error=null;
     try {
       await output.dispose();
       if(!mounted || epoch!==generation)return;
       review=null;result=null;returning=false;
       await tick();heading?.focus();
-    }catch(e){if(mounted && epoch===generation)error=`Не удалось отменить подготовленный вариант: ${message(e)}. Повторите возврат к редактированию.`;}
+    }catch(e){if(mounted && epoch===generation)setError(e,'return');}
     finally{if(mounted && epoch===generation)busy=false;}
   }
   async function save() {
-    if(!review || busy || returning || result?.phase!=='review_ready')return;
-    const epoch=generation;busy=true;error='';
-    try{await review.confirm();}catch(e){if(mounted && epoch===generation)error=message(e);}
+    if(!review || blocked || returning || result?.phase!=='review_ready')return;
+    const epoch=generation;busy=true;error=null;
+    try{await review.confirm();}catch(e){if(mounted && epoch===generation)setError(e);}
     finally{if(mounted && epoch===generation){busy=false;await refresh();}}
   }
   async function release() {
@@ -185,13 +205,13 @@
   }
   async function close(clear=false) {
     if(closing)return;
-    closing=true;generation++;pendingOperation=null;error='';limitDialog?.close();
+    cleanupRequested=true;closing=true;generation++;pendingOperation=null;error=null;limitDialog?.close();
     try {
       await release();
       if(!mounted)return;
-      if(clear){captureRegion=fullRegion();capture=null;review=null;status=null;result=null;sourceUrl='';clearAsked=false;announced=null;offeredLimit=null;busy=false;returning=false;editEnabled=false;fragments=[freshFragment(undefined)];selectedId=fragments[0].id;position=null;}
+      if(clear){cleanupRequested=false;captureRegion=fullRegion();capture=null;review=null;status=null;result=null;sourceUrl='';clearAsked=false;announced=null;offeredLimit=null;busy=false;returning=false;editEnabled=false;fragments=[freshFragment(undefined)];selectedId=fragments[0].id;position=null;}
       else onclose();
-    }catch(e){if(mounted)error=`Не удалось подтвердить завершение: ${message(e)}. Повторите закрытие.`;}
+    }catch(e){if(mounted)setError(e,'close');}
     finally{if(mounted)closing=false;}
   }
   onMount(()=>{
@@ -204,8 +224,8 @@
 <dialog bind:this={limitDialog} aria-labelledby={limitTitle} oncancel={event=>{event.preventDefault();dismissLimit();}}>
   <h3 id={limitTitle}>{operationReason==='limit' ? "" + t("Достигнут лимит записи") + "" : "" + t("Что сделать с записью?") + ""}</h3>
   <p>{operationReason==='limit' ? "" + t("Записано 180 секунд.") + " " : ''}{t("Запись приостановлена. Можно отредактировать её или подготовить целиком для LCD.")}</p>
-  <button disabled={busy || closing} onclick={()=>acceptOperation('edit')}>{t("Редактировать запись")}</button>
-  <button disabled={busy || closing} onclick={()=>acceptOperation('import')}>{t("Подготовить запись целиком")}</button>
+  <button disabled={blocked} onclick={()=>acceptOperation('edit')}>{t("Редактировать запись")}</button>
+  <button disabled={blocked} onclick={()=>acceptOperation('import')}>{t("Подготовить запись целиком")}</button>
   <button disabled={closing} onclick={dismissLimit}>{t("Вернуться к записи")}</button>
 </dialog>
 <section aria-label="{t("Запись экрана")}">
@@ -213,16 +233,16 @@
   <p>{t("Выберите экран или окно в системном диалоге. Звук не записывается. Паузы не входят в лимит 180 секунд.")}</p>
   <p>{t("До начала записи выберите область или оставьте весь источник. На паузе область можно изменить для следующих кадров.")}</p>
   {#if status}<p role="status">{t(labels[status.phase])} · {(status.recordedMillis/1000).toFixed(1)} {t("с")}</p>{/if}
-  {#if !capture}<button disabled={busy || closing} onclick={start}>{t("Выбрать экран или окно")}</button>{/if}
-  {#if status?.phase==='setup'}<button disabled={busy || closing || regionDirty} onclick={()=>control('resume')}>{t("Начать запись экрана")}</button>{/if}
-  {#if status?.phase==='recording'}<button disabled={busy || closing} onclick={()=>control('pause')}>{t("Приостановить запись")}</button>{/if}
-  {#if status?.phase==='paused'}<button disabled={busy || closing || regionDirty} onclick={()=>control('resume')}>{t("Продолжить запись")}</button>{/if}
+  {#if !capture}<button disabled={blocked} onclick={start}>{t("Выбрать экран или окно")}</button>{/if}
+  {#if status?.phase==='setup'}<button disabled={blocked || regionDirty} onclick={()=>control('resume')}>{t("Начать запись экрана")}</button>{/if}
+  {#if status?.phase==='recording'}<button disabled={blocked} onclick={()=>control('pause')}>{t("Приостановить запись")}</button>{/if}
+  {#if status?.phase==='paused'}<button disabled={blocked || regionDirty} onclick={()=>control('resume')}>{t("Продолжить запись")}</button>{/if}
   {#if status && ['setup','recording','paused','limit_reached'].includes(status.phase)}
     <p aria-label="{t("Применённая область захвата")}">{t("Область: X")} {(appliedRegion.x*100).toFixed(1)}%, Y {(appliedRegion.y*100).toFixed(1)}{t("%, ширина")} {(appliedRegion.width*100).toFixed(1)}{t("%, высота")} {(appliedRegion.height*100).toFixed(1)}%.</p>
   {/if}
   {#if status && ['setup','paused'].includes(status.phase) && capture}
-    {#key capture.id}<RecordingRegionPreview session={capture} crop={requestedRegion} disabled={busy || closing} onchange={region=>captureRegion={x:region.x*100,y:region.y*100,width:Math.min(region.width*100,100-region.x*100),height:Math.min(region.height*100,100-region.y*100)}}/>{/key}
-    <fieldset disabled={busy || closing}>
+    {#key capture.id}<RecordingRegionPreview session={capture} crop={requestedRegion} disabled={blocked} onchange={region=>captureRegion={x:region.x*100,y:region.y*100,width:Math.min(region.width*100,100-region.x*100),height:Math.min(region.height*100,100-region.y*100)}}/>{/key}
+    <fieldset disabled={blocked}>
       <legend>{status.phase==='setup'?"" + t("Область записи") + "":"" + t("Область следующего интервала") + ""}</legend>
       <p>{t("Координаты — в процентах от выбранного экрана или окна. Область растягивается до постоянного размера записи.")}</p>
       <label>{t("Захват X, %")}<input type="number" min="0" max="100" step="0.1" bind:value={captureRegion.x}/></label>
@@ -236,12 +256,12 @@
       <button disabled={!regionDirty} onclick={useAppliedRegion}>{t("Вернуть применённую область")}</button>
     </fieldset>
   {/if}
-  {#if status && ['recording','paused','limit_reached'].includes(status.phase)}<button bind:this={finishButton} disabled={busy || closing} onclick={offerOperations}>{t("Завершить и просмотреть запись")}</button>{/if}
+  {#if status && ['recording','paused','limit_reached'].includes(status.phase)}<button bind:this={finishButton} disabled={blocked} onclick={offerOperations}>{t("Завершить и просмотреть запись")}</button>{/if}
   {#if sourceUrl && status?.phase==='ready' && !review}
-    <VideoSourcePreview external={{url:sourceUrl,name:t('Запись экрана')}} disabled={busy || closing} crop={editEnabled ? crop : null} {fit}
+    <VideoSourcePreview external={{url:sourceUrl,name:t('Запись экрана')}} disabled={blocked} crop={editEnabled ? crop : null} {fit}
       onposition={value=>position=value} onmetadata={()=>{}}
       oncrop={value=>selected.region={x:value.x*100,y:value.y*100,width:value.width*100,height:value.height*100}}/>
-    <fieldset disabled={busy || closing}>
+    <fieldset disabled={blocked}>
       <legend>{t("Редактирование записи")}</legend>
       <label><input type="checkbox" bind:checked={editEnabled} onchange={toggleEdit}/>{t("Обрезать готовую запись")}</label>
       {#if editEnabled}
@@ -262,26 +282,26 @@
         {#if !validCut}<p role="status">{t("Проверьте все фрагменты: непустые интервалы внутри записи, области внутри кадра и общая длина не более 180 секунд.")}</p>{/if}
       {/if}
     </fieldset>
-    <label>{t("Название записи")}<input bind:value={name} maxlength="100" disabled={busy || closing}/></label>
-    <label for={limitTitle+'-fit'}>{t("Размещение записи")}</label><select id={limitTitle+'-fit'} bind:value={fit} disabled={busy || closing}><option value="contain">{t("Вписать")}</option><option value="cover">{t("Заполнить с обрезкой")}</option><option value="stretch">{t("Растянуть")}</option></select>
-    <button disabled={busy || closing || !name.trim() || !validCut} onclick={prepare}>{t("Подготовить запись для LCD")}</button>
+    <label>{t("Название записи")}<input bind:value={name} maxlength="100" disabled={blocked}/></label>
+    <label for={limitTitle+'-fit'}>{t("Размещение записи")}</label><select id={limitTitle+'-fit'} bind:value={fit} disabled={blocked}><option value="contain">{t("Вписать")}</option><option value="cover">{t("Заполнить с обрезкой")}</option><option value="stretch">{t("Растянуть")}</option></select>
+    <button disabled={blocked || !name.trim() || !validCut} onclick={prepare}>{t("Подготовить запись для LCD")}</button>
   {/if}
   {#if review}
     {#if result?.phase==='review_ready'}
-      <PreparedVideoPreview id={review.id} disabled={busy || closing || returning}/>
-      <button disabled={busy || closing || returning} onclick={save}>{t("Сохранить запись в библиотеку")}</button>
+      <PreparedVideoPreview id={review.id} disabled={blocked || returning}/>
+      <button disabled={blocked || returning} onclick={save}>{t("Сохранить запись в библиотеку")}</button>
     {:else if result?.phase==='complete'}<p role="status">{t("Запись сохранена в библиотеке.")}</p>
     {:else}<p role="status">{t(result?.message ?? (result?.phase==='failed' ? 'Подготовка не завершена.' : result?.phase==='cancelled' ? 'Подготовка отменена.' : 'Подготовка или сохранение записи…'))}</p>{/if}
-    {#if canReturnToEdit}<button disabled={busy || closing} onclick={returnToEdit}>{t("Вернуться к редактированию записи")}</button>{/if}
+    {#if canReturnToEdit}<button disabled={blocked} onclick={returnToEdit}>{t("Вернуться к редактированию записи")}</button>{/if}
   {/if}
-  {#if error || status?.message}<p role="alert">{recordingError(error || status?.message)}</p>{/if}
+  {#if error || status?.message}<p role="alert">{failureText()}</p>{/if}
   {#if capture && !clearAsked}<button disabled={closing || result?.phase==='publishing'} onclick={()=>clearAsked=true}>{t("Очистить запись…")}</button>{/if}
-  {#if clearAsked}<p>{t("Удалить текущую несохранённую запись?")}</p><button disabled={closing} onclick={()=>close(true)}>{t("Подтвердить очистку записи")}</button><button disabled={closing} onclick={()=>clearAsked=false}>{t("Сохранить текущую запись")}</button>{/if}
+  {#if clearAsked}<p>{t("Удалить текущую несохранённую запись?")}</p><button disabled={closing} onclick={()=>close(true)}>{t("Подтвердить очистку записи")}</button><button disabled={closing || cleanupRequested} onclick={()=>clearAsked=false}>{t("Сохранить текущую запись")}</button>{/if}
   <button disabled={closing} onclick={()=>close()}>{t("Закрыть запись экрана")}</button>
 </section>
 <style>
-  dialog{max-width:440px;color:inherit;background:#172130;border:1px solid #64748b;border-radius:12px;padding:20px;}
+  dialog{max-width:440px;color:inherit;background:var(--surface);border:1px solid var(--border-strong);border-radius:12px;padding:20px;}
   dialog::backdrop{background:#0009;}
-  section{border:1px solid #33445b;padding:16px;border-radius:12px;margin:12px 0;}
+  section{border:1px solid var(--border);padding:16px;border-radius:12px;margin:12px 0;}
   label{display:grid;gap:6px;margin:12px 0;} button{margin:4px 8px 4px 0;}
 </style>

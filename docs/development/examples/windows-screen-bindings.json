@@ -1,0 +1,16 @@
+{
+  "name": "Imported Windows runtime",
+  "sensors": {
+    "CPUTemperature": {"sensor_id":"REPLACE_WITH_CPU_TEMPERATURE_ID","label":"CPU","unit":"celsius","temperature_unit":"system","decimals":1},
+    "GPUTemperature": {"sensor_id":"REPLACE_WITH_GPU_TEMPERATURE_ID","label":"GPU","unit":"celsius","temperature_unit":"system","decimals":1},
+    "CPULoad": {"sensor_id":"REPLACE_WITH_CPU_LOAD_ID","label":"CPU","unit":"percent","temperature_unit":"system","decimals":1},
+    "GPULoad": {"sensor_id":"REPLACE_WITH_GPU_LOAD_ID","label":"GPU","unit":"percent","temperature_unit":"system","decimals":1},
+    "PumpRPM": {"sensor_id":"REPLACE_WITH_PUMP_RPM_ID","label":"PUMP","unit":"rpm","temperature_unit":"system","decimals":0},
+    "CoolantTemp": {"sensor_id":"REPLACE_WITH_COOLANT_TEMPERATURE_ID","label":"COOL","unit":"celsius","temperature_unit":"system","decimals":1}
+  },
+  "fonts": {
+    "HyperspaceRace_BoldItalic": {"font":"sans","font_asset":null},
+    "NotoSansTC_Bold": {"font":"noto_sans_tc_bold","font_asset":null}
+  },
+  "resources": {}
+}

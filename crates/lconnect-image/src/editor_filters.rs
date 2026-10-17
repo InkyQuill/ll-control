@@ -1,5 +1,5 @@
 //! Point colour operations derived from the GA2LCD editor's shader contract.
-//! See docs/parity/ga2lcd-editor.md; this is not WPF raster qualification.
+//! See docs/development/parity/ga2lcd-editor.md; this is not WPF raster qualification.
 use image::RgbaImage;
 
 /// Windows image-editor UI values; each starts at zero.

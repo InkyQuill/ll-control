@@ -4,9 +4,10 @@ test('disconnect and missing device preserve the draft without redirecting Apply
   await page.addInitScript(() => {
     const fixture = { online: true, ids: ['A', 'B'], writes: [] as string[], polls: 0 };
     Object.assign(window, { fixture, __TAURI_INTERNALS__: { invoke: async (_: string, req: {method: string; params: {dev: string}}) => {
+        if (_ === 'desktop_set_language') return null;
       if (!fixture.online) throw new Error('fixture disconnected');
       switch (req.method) {
-        case 'list_devices': fixture.polls++; return fixture.ids.map(id => ({id, display_name: `LCD ${id}`}));
+        case 'list_devices': fixture.polls++; return fixture.ids.map(id => ({id, display_name: `LCD ${id}`, family:'galahad2-lcdv2'}));
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source: 'Idle'};
         case 'set_lcd_theme': fixture.writes.push(req.params.dev); return {source: 'Theme'};
@@ -14,7 +15,7 @@ test('disconnect and missing device preserve the draft without redirecting Apply
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByLabel('Устройство', {exact: true})).toHaveValue('A');
   const connection = page.locator('#connection-status');
   await expect(connection).toHaveAttribute('aria-live', 'polite');
@@ -54,8 +55,9 @@ test('disconnect and missing device preserve the draft without redirecting Apply
 test('late active-theme load cannot replace edits made while waiting', async ({page}) => {
   await page.addInitScript(() => {
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: {method: string}) => {
+        if (_ === 'desktop_set_language') return null;
       switch(req.method) {
-        case 'list_devices': return [{id: 'A', display_name: 'LCD A'}];
+        case 'list_devices': return [{id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source: 'Theme'};
         case 'get_lcd_theme': return new Promise(resolve => Object.assign(window, {finishLoad: () => resolve({version:1,name:'Old daemon theme',background:[0,0,0],layers:[]})}));
@@ -63,7 +65,7 @@ test('late active-theme load cannot replace edits made while waiting', async ({p
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await page.getByRole('button', {name: 'Загрузить активную тему'}).click();
   await page.getByLabel('Название', {exact: true}).fill('New local edits');
   await page.evaluate(() => (window as unknown as {finishLoad: () => void}).finishLoad());
@@ -74,8 +76,9 @@ test('late active-theme load cannot replace edits made while waiting', async ({p
 test('late LCD status from the previous device is discarded', async ({page}) => {
   await page.addInitScript(() => {
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: {method: string; params: {dev: string}}) => {
+        if (_ === 'desktop_set_language') return null;
       switch(req.method) {
-        case 'list_devices': return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices': return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state':
           if(req.params.dev === 'A') return new Promise(resolve => Object.assign(window, {finishState: () => resolve({source:'Theme',last_error:'A error'})}));
@@ -84,10 +87,10 @@ test('late LCD status from the previous device is discarded', async ({page}) => 
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByLabel('Устройство', {exact: true})).toHaveValue('A');
   await page.getByLabel('Устройство', {exact: true}).selectOption('B');
   await page.evaluate(() => (window as unknown as {finishState: () => void}).finishState());
-  await expect(page.getByText('Источник: Idle')).toBeVisible();
+  await expect(page.getByText('Источник: Нет программного потока')).toBeVisible();
   await expect(page.getByText('A error')).toHaveCount(0);
 });

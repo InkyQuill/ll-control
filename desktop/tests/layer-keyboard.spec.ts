@@ -2,9 +2,10 @@ import {test,expect} from '@playwright/test';
 test('keyboard reorder and deletion keep focus on the edited layer or add action',async({page})=>{
   await page.addInitScript(()=>{
     Object.assign(window,{__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string})=>{
+        if (_ === 'desktop_set_language') return null;
       const style={x:0,y:0,size:24,color:[255,255,255],align:'left'};
       switch(req.method){
-        case 'list_devices':return [{id:'test',display_name:'LCD'}];
+        case 'list_devices':return [{id:'test',display_name:'LCD', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Theme',requested:{},last_error:null};
         case 'get_lcd_theme':return {version:1,name:'Keyboard layers',background:[0,0,0],layers:[{kind:'text',text:'A',style},{kind:'text',text:'B',style}]};
@@ -12,7 +13,7 @@ test('keyboard reorder and deletion keep focus on the edited layer or add action
       }
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button',{name:'Загрузить активную тему'}).focus();await page.keyboard.press('Enter');
   const editor=page.getByRole('region',{name:'Редактор темы'});
   await expect(editor.getByLabel('Текст',{exact:true}).first()).toHaveValue('A');
@@ -32,10 +33,11 @@ test('keyboard reorder and deletion keep focus on the edited layer or add action
 test('deleting cycle readings keeps keyboard focus on the remaining source', async ({ page }) => {
   await page.addInitScript(() => {
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: { method: string }) => {
+        if (_ === 'desktop_set_language') return null;
       const style = { x: 240, y: 200, size: 32, color: [255, 255, 255], align: 'center' };
       const sensor = (id: string) => ({ sensor_id: id, label: id, unit: 'celsius', temperature_unit: 'celsius', decimals: 1 });
       switch (req.method) {
-        case 'list_devices': return [{ id: 'test', display_name: 'LCD' }];
+        case 'list_devices': return [{ id: 'test', display_name: 'LCD', family:'galahad2-lcdv2' }];
         case 'list_sensors': return ['CPU', 'GPU', 'Water'].map(id => ({ id, label: id, unit: 'celsius', value: 42, status: 'valid' }));
         case 'get_lcd_state': return { source: 'Theme', requested: {}, last_error: null };
         case 'get_lcd_theme': return { version: 1, name: 'Cycle keyboard', background: [0, 0, 0], layers: [
@@ -45,7 +47,7 @@ test('deleting cycle readings keeps keyboard focus on the remaining source', asy
       }
     } } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button', { name: 'Загрузить активную тему', exact: true }).click();
   const removeLast = page.getByRole('button', { name: 'Удалить показатель 3', exact: true });

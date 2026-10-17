@@ -206,6 +206,20 @@ async fn portal_receives_localized_profile_and_group_titles_and_filters_without_
             "Импорт группы настроек L-Connect Linux",
             "Группа настроек L-Connect Linux",
         ),
+        (
+            InterfaceLanguage::English,
+            true,
+            false,
+            "Import Windows L-Connect3 settings",
+            "Windows L-Connect3 ZIP",
+        ),
+        (
+            InterfaceLanguage::Russian,
+            true,
+            false,
+            "Импорт настроек Windows L-Connect3",
+            "Windows L-Connect3 ZIP",
+        ),
     ] {
         let bus = Bus::start();
         let service = bus.connect().await;
@@ -237,6 +251,7 @@ async fn portal_receives_localized_profile_and_group_titles_and_filters_without_
             Dialog {
                 save,
                 group,
+                windows: title.contains("Windows"),
                 language,
             },
         )
@@ -261,6 +276,7 @@ fn local_grant_errors_use_the_dialog_language_and_valid_names_are_not_translated
         let dialog = Dialog {
             save: false,
             group: false,
+            windows: false,
             language,
         };
         for uri in [
@@ -333,6 +349,7 @@ async fn open_and_save_accept_early_responses_and_reject_nonlocal_or_multiple_pa
             Dialog {
                 save,
                 group: false,
+                windows: false,
                 language: InterfaceLanguage::English,
             },
         )
@@ -379,6 +396,7 @@ async fn cancellation_closes_a_silent_dialog_without_selecting_a_file() {
             Dialog {
                 save: false,
                 group: false,
+                windows: false,
                 language: InterfaceLanguage::English,
             },
         )

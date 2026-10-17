@@ -32,7 +32,7 @@ select another GPU. Invalid or future config is preserved until an explicit
 reset. The configuration dialog edits only its draft until Plasma applies it.
 Network RX/TX and RAM values require complete fresh pairs. FPS supports an explicitly selected daemon MangoHud per-frame source;
 without a configured fresh source it remains unavailable. See the
-[FPS contract](../../docs/parity/fps-source.md).
+[FPS contract](../../docs/development/parity/fps-source.md).
 
 The package requires both the compiled QML module and `lconnectctl` on PATH.
 Installing only the applet directory is insufficient. Release packaging must
@@ -55,12 +55,26 @@ session or prove real desktop/panel/login/upgrade behavior.
 Development validation used Plasma 6.7.5 / Qt 6.12.0. The source declares Plasma 6
 API and Qt >=6.6 build requirements; these are not a fully qualified supported
 version matrix. GNOME Shell, FPS capture/game qualification and real session acceptance remain open in the
-[Mini contract](../../docs/parity/mini-system-info.md).
+[Mini contract](../../docs/development/parity/mini-system-info.md).
 
 References: [Plasma configuration](https://develop.kde.org/docs/plasma/widget/configuration/),
 [widget setup](https://develop.kde.org/docs/plasma/widget/setup/),
 [QML JavaScript modules](https://doc.qt.io/qt-6/qtqml-javascript-imports.html).
 
 FPS source selection uses the shared daemon cache and explicit file-session ID;
-see the [source contract](../../docs/parity/fps-source.md). Capture configuration,
+see the [source contract](../../docs/development/parity/fps-source.md). Capture configuration,
 real-game compatibility and full shell/session qualification remain open.
+
+
+## Verify the shipped package
+
+From the repository root, after building an Arch package, run
+`python3 tools/test-distribution-mini.py target/distribution --gjs /usr/bin/gjs --plasma-native`.
+This checks the extracted production CLI, shared model and QML module without
+installing into the active desktop. `--plasma-native` requires plasmawindowed,
+kpackagetool6, Openbox, Xvfb, xdotool and ImageMagick. The native fixture accepts
+`--package-root PREFIX --cli BINARY` to select the exact shipped inputs; its
+private XDG directories are set before session D-Bus starts. It verifies both
+packaged QML libraries are mapped, EN/RU and helper teardown. The default CI
+mode omits the Plasma host and still runs Qt config/feed/model and GJS checks.
+Real panels, GNOME Shell and version/session qualification remain separate.

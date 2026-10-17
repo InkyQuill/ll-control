@@ -25,7 +25,7 @@
     <option value="vertical">{t("Вертикальный градиент")}</option><option value="radial">{t("Радиальный градиент")}</option>
   </select></label>
   {#if theme.background_video}
-    <MediaThumbnail clipKey={theme.background_video} name="Видео фона"/>
+    <MediaThumbnail clipKey={theme.background_video} name={t('Видео фона')}/>
     <p>{t("Видео выбрано фоном темы. Для замены используйте библиотеку роликов. Preview показывает первый кадр с текущими показаниями; движение начнётся после применения к LCD.")}</p>
   {:else if theme.background_image}
     <p>{t("Изображение выбрано фоном темы. Замените его в библиотеке изображений, выбрав назначение «Фон».")}</p>
@@ -42,5 +42,6 @@
   {/if}
 </fieldset>
 <style>
-  fieldset{display:flex;flex-wrap:wrap;gap:16px;border:1px solid #38485c;border-radius:8px;padding:16px;margin:16px 0}legend{padding:0 6px}label{display:flex;gap:8px;align-items:center}
+  fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:16px;border:1px solid var(--border);border-radius:8px;padding:16px;margin:16px 0}
+  legend{padding:0 6px}label{display:grid;gap:8px;min-width:0}select{min-width:0;width:100%}p{grid-column:1/-1;margin:0;line-height:1.5}
 </style>

@@ -50,10 +50,16 @@ def result_for(gui):
 
 try:
  launch(['openbox'],'wm');start_fixture()
+ display=rpc('get_display_settings');display['interface_language']='ru-RU'
+ rpc('set_display_settings',{'settings':display})
  gui=launch([repo/'target/debug/lconnect-gui'],'gui',dict(env,LCONNECT_NATIVE_CONTROL_RESET='1'))
  first=result_for(gui);close_gui(gui,'gui');(root/'result.json').unlink()
  stop_fixture();start_fixture()
  assert rpc('list_profiles')==first['library']
+ bank=rpc('get_cooling_modes',{'dev':first['dev']})
+ for key in ['revision','fan','pump']:assert bank[key]==first['reset_bank'][key],key
+ cooling=rpc('get_cooling_state',{'dev':first['dev']})
+ assert cooling['fan'].get('mode_id') is None and cooling['pump']['mode_id']=='PWMQuiet'
  recovered=rpc('read_group_import',{'dev':first['dev'],'group':'fan_and_lighting','operation_id':first['operation']})
  assert not recovered['selected_content_current']
  assert rpc('get_lcd_theme',{'dev':first['dev']})==first['screen']

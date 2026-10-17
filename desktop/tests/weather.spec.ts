@@ -9,10 +9,11 @@ test.beforeEach(async({page})=>{
   await page.addInitScript(()=>{
     const f={calls:[] as {method:string;params:Record<string,unknown>}[],fail:false,missing:false,unitChanged:false,preferred:null as string|null,defaultMode:'one' as 'one'|'none'|'ambiguous',delayDefaults:false,failDefaults:false,resolveDefaults:undefined as undefined|(()=>void),active:null as Theme|null};
     Object.assign(window,{weatherFixture:f,__TAURI_INTERNALS__:{invoke:async(command:string,request:{method:string;params:Record<string,unknown>}={method:'',params:{}})=>{
+        if (command === 'desktop_set_language') return null;
       if(command!=='daemon_call')return null;
       f.calls.push(structuredClone(request));
       switch(request.method){
-        case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2'}];
+        case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors':return f.missing?[]:[{id:'cpu/temp',label:'CPU temperature',unit:f.unitChanged?'rpm':'celsius',status:'valid',value:40,age_ms:0},{id:'cpu/load',label:'CPU load',unit:'percent',status:'valid',value:45,age_ms:0},{id:'pump/rpm',label:'Pump RPM',unit:'rpm',status:'valid',value:1000,age_ms:0}];
         case 'get_sensor_defaults':{
           if(f.failDefaults)throw new Error('Defaults read failed');
@@ -37,7 +38,7 @@ test.beforeEach(async({page})=>{
       }
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён')).toBeVisible();
 });
 test('weather source and thresholds survive mode switches Apply and active-theme reload',async({page})=>{
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('rain');
@@ -67,7 +68,7 @@ test('weather Apply failure retains draft and never retries automatically',async
   await page.getByRole('combobox',{name:'Интенсивность эффекта',exact:true}).selectOption('2');
   await page.evaluate(()=>window.weatherFixture.fail=true);
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
-  await expect(page.getByText('Weather Apply failed',{exact:true})).toBeVisible();
+  await expect(page.getByRole('alert').filter({hasText:'Weather Apply failed'})).toContainText('Применение темы не подтверждено');
   await expect(page.getByRole('combobox',{name:'Эффект LCD',exact:true})).toHaveValue('snow');
   await expect(page.getByRole('combobox',{name:'Интенсивность эффекта',exact:true})).toHaveValue('2');
   expect(await page.evaluate(()=>window.weatherFixture.calls.filter(call=>call.method==='set_lcd_theme').length)).toBe(1);
@@ -347,13 +348,16 @@ test('inactive Basic video cannot be deleted until its draft reference is remove
   await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('rain');
   await page.getByRole('combobox',{name:'Тип фона',exact:true}).selectOption('solid');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await page.getByLabel('Показать все файлы видео для управления',{exact:true}).check();
   await expect(page.getByRole('combobox',{name:'Сохранённый ролик',exact:true})).toHaveValue('a'.repeat(32));
   await expect(page.getByRole('button',{name:'Удалить ролик…',exact:true})).toBeDisabled();
   await expect(page.getByText('Ролик используется в черновике страницы LCD. Замените его фон перед удалением.',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('none');
   await page.getByRole('combobox',{name:'Тип фона',exact:true}).selectOption('solid');
+  await page.getByRole('button',{name:'Библиотека',exact:true}).click();
   await expect(page.getByRole('button',{name:'Удалить ролик…',exact:true})).toBeEnabled();
   expect(await page.evaluate(()=>window.weatherFixture.calls.filter(call=>call.method==='delete_prepared_clip').length)).toBe(0);
 });

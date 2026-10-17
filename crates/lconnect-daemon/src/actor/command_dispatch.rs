@@ -21,6 +21,7 @@ use crate::persistence::{
     DeviceSettings, FanSection, LcdSection, LightingState, PersistenceStore, PumpLightingState,
     PumpSection,
 };
+use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -130,6 +131,35 @@ struct PendingSettings {
     retrying: bool,
 }
 impl PendingSettings {
+    async fn persist_cooling_modes(
+        &mut self,
+        banks: lconnect_ipc::CoolingModeBanks,
+        store: &Arc<PersistenceStore>,
+        key: &str,
+        status: &tokio::sync::watch::Sender<lconnect_ipc::SettingsSaveState>,
+    ) -> Result<lconnect_ipc::CoolingModeLibrary, String> {
+        let Some(next_revision) = self
+            .latest
+            .cooling_modes_revision
+            .checked_add(1)
+            .filter(|v| *v <= i64::MAX as u64)
+        else {
+            return Err("cooling mode revision exhausted".into());
+        };
+        self.latest.cooling_banks = Some(banks);
+        self.latest.cooling_modes_revision = next_revision;
+        self.dirty = true;
+        status.send_modify(|state| state.pending = true);
+        let result = write_observed(store, key, &self.latest, status).await;
+        self.retrying = result.is_err();
+        if result.is_ok() {
+            self.dirty = false;
+        }
+        result.map_err(|error| error.to_string()).and_then(|()| {
+            cooling_library(&self.latest, status.borrow().clone())?
+                .ok_or("stored cooling modes disappeared".into())
+        })
+    }
     /// False means recovery cannot prove the committed state: stop this writer
     /// rather than flushing its old snapshot over a pending reset transaction.
     async fn accept(
@@ -140,6 +170,94 @@ impl PendingSettings {
         status: &tokio::sync::watch::Sender<lconnect_ipc::SettingsSaveState>,
     ) -> bool {
         let update = match update {
+            SettingsUpdate::ReadCoolingModes { reply } => {
+                let result = cooling_library(&self.latest, status.borrow().clone());
+                let _ = reply.send(result);
+                return true;
+            }
+            SettingsUpdate::InitializeCoolingModes { sensor, reply } => {
+                let result = if self.latest.cooling_banks.is_some() {
+                    Err("stored cooling modes already exist; read them before editing".into())
+                } else {
+                    match lconnect_ipc::lcdv2_default_cooling_modes(&sensor) {
+                        Ok(banks) => self.persist_cooling_modes(banks, store, key, status).await,
+                        Err(error) => Err(error.to_string()),
+                    }
+                };
+                let _ = reply.send(result);
+                return true;
+            }
+            SettingsUpdate::ResolveCoolingMode {
+                target,
+                expected_revision,
+                id,
+                reply,
+            } => {
+                let result = (|| {
+                    let library = cooling_library(&self.latest, status.borrow().clone())?
+                        .ok_or("no stored cooling modes")?;
+                    if library.revision != expected_revision {
+                        return Err("cooling modes changed; read them before applying".into());
+                    }
+                    let modes = match target {
+                        lconnect_ipc::CoolingTarget::Fan => library.fan,
+                        lconnect_ipc::CoolingTarget::Pump => library.pump,
+                    };
+                    modes
+                        .into_iter()
+                        .find(|mode| mode.id == id)
+                        .ok_or("stored cooling mode no longer exists".into())
+                })();
+                let _ = reply.send(result);
+                return true;
+            }
+            SettingsUpdate::SaveCoolingMode {
+                target,
+                expected_revision,
+                profile,
+                reply,
+            } => {
+                let prepared = (|| {
+                    if expected_revision.len() != 64
+                        || !expected_revision
+                            .bytes()
+                            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+                    {
+                        return Err("invalid cooling mode revision".to_owned());
+                    }
+                    let current = cooling_library(&self.latest, status.borrow().clone())?
+                        .ok_or("no stored cooling modes")?;
+                    if current.revision != expected_revision {
+                        return Err("cooling modes changed; read them before saving".into());
+                    }
+                    let mut banks = self
+                        .latest
+                        .cooling_banks
+                        .clone()
+                        .ok_or("no stored cooling modes")?;
+                    let modes = match target {
+                        lconnect_ipc::CoolingTarget::Fan => &mut banks.fan,
+                        lconnect_ipc::CoolingTarget::Pump => &mut banks.pump,
+                    };
+                    let mode = modes
+                        .iter_mut()
+                        .find(|mode| mode.id == profile.id)
+                        .ok_or("stored cooling mode no longer exists")?;
+                    *mode = profile;
+                    banks.validate().map_err(|error| error.to_string())?;
+                    Ok::<_, String>(banks)
+                })();
+                let banks = match prepared {
+                    Ok(banks) => banks,
+                    Err(error) => {
+                        let _ = reply.send(Err(error));
+                        return true;
+                    }
+                };
+                let result = self.persist_cooling_modes(banks, store, key, status).await;
+                let _ = reply.send(result);
+                return true;
+            }
             SettingsUpdate::MigrateCollections { migration, reply } => {
                 if self.latest.screen_collections.is_some() {
                     let _ = reply.send(Err("collections already initialized; reload".into()));
@@ -545,6 +663,28 @@ fn reset_screen(
     }
 }
 
+fn cooling_library(
+    settings: &DeviceSettings,
+    persistence: lconnect_ipc::SettingsSaveState,
+) -> Result<Option<lconnect_ipc::CoolingModeLibrary>, String> {
+    settings
+        .cooling_banks
+        .as_ref()
+        .map(|banks| {
+            banks.validate().map_err(|error| error.to_string())?;
+            let bytes = serde_json::to_vec(&(settings.cooling_modes_revision, banks))
+                .map_err(|error| error.to_string())?;
+            Ok(lconnect_ipc::CoolingModeLibrary {
+                version: 1,
+                revision: format!("{:x}", Sha256::digest(bytes)),
+                fan: banks.fan.clone(),
+                pump: banks.pump.clone(),
+                persistence,
+            })
+        })
+        .transpose()
+}
+
 async fn write_observed(
     store: &Arc<PersistenceStore>,
     key: &str,
@@ -590,6 +730,28 @@ pub enum ScreenResetError {
 /// Independent settings deltas prevent unrelated concurrent writes from being lost.
 #[derive(Debug)]
 pub enum SettingsUpdate {
+    /// Read and CAS-resolve while the cooling owner holds ordinary command
+    /// ordering; coordinated group import cannot freeze it midway through Apply.
+    ResolveCoolingMode {
+        target: lconnect_ipc::CoolingTarget,
+        expected_revision: String,
+        id: String,
+        reply: tokio::sync::oneshot::Sender<Result<lconnect_ipc::CoolingModeProfile, String>>,
+    },
+    InitializeCoolingModes {
+        sensor: String,
+        reply: tokio::sync::oneshot::Sender<Result<lconnect_ipc::CoolingModeLibrary, String>>,
+    },
+    ReadCoolingModes {
+        reply:
+            tokio::sync::oneshot::Sender<Result<Option<lconnect_ipc::CoolingModeLibrary>, String>>,
+    },
+    SaveCoolingMode {
+        target: lconnect_ipc::CoolingTarget,
+        expected_revision: String,
+        profile: lconnect_ipc::CoolingModeProfile,
+        reply: tokio::sync::oneshot::Sender<Result<lconnect_ipc::CoolingModeLibrary, String>>,
+    },
     ReadGroupImport {
         operation_id: String,
         reply: tokio::sync::oneshot::Sender<
@@ -692,6 +854,10 @@ impl SettingsUpdate {
     ) {
         match self {
             Self::ReadGroupImport { .. }
+            | Self::ReadCoolingModes { .. }
+            | Self::ResolveCoolingMode { .. }
+            | Self::InitializeCoolingModes { .. }
+            | Self::SaveCoolingMode { .. }
             | Self::CommitProfileGroup { .. }
             | Self::ReadProfileGroup { .. }
             | Self::ReadScreenReset { .. }
@@ -712,11 +878,13 @@ impl SettingsUpdate {
             } => match target {
                 lconnect_ipc::CoolingTarget::Fan => {
                     settings.cooling.fan = None;
+                    settings.cooling.fan_mode = None;
                     settings.fan.pwm_percent = percent;
                     settings.fan.manual_zero = percent == 0;
                 }
                 lconnect_ipc::CoolingTarget::Pump => {
                     settings.cooling.pump = None;
+                    settings.cooling.pump_mode = None;
                     settings.pump.pwm_percent = percent;
                     settings.pump.source = if motherboard { "application" } else { "mcu" }.into();
                 }

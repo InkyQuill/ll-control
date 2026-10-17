@@ -1,5 +1,23 @@
 use super::*;
 
+#[test]
+fn closed_worker_socket_has_the_same_recovery_error_on_read_and_write() {
+    for writing in [false, true] {
+        let (mut socket, peer) = UnixStream::pair().unwrap();
+        drop(peer);
+        let error = transfer(&mut socket, &mut [0], writing, &|| Ok(())).unwrap_err();
+        assert_eq!(error.to_string(), "Recording worker connection closed");
+        if writing {
+            // Keep the original errno available for diagnostics while callers
+            // receive the same stable recovery class as a zero-byte read.
+            assert_eq!(
+                error.downcast_ref::<std::io::Error>().unwrap().kind(),
+                std::io::ErrorKind::BrokenPipe
+            );
+        }
+    }
+}
+
 // Re-exec the ordinary Rust test executable so cargo test needs no prebuilt GUI
 // or extra installed worker binary. Production re-execs lconnect-gui before Tauri.
 #[test]
@@ -247,4 +265,52 @@ fn unrelated_non_cloexec_descriptor_is_excluded_but_parent_keeps_it() {
     drop(recorder);
     reaped(child);
     assert!(unsafe { libc::fcntl(sentinel.as_raw_fd(), libc::F_GETFD) } >= 0);
+}
+
+#[test]
+fn pipewire_connection_poll_does_not_consume_pending_protocol_bytes() {
+    use std::{
+        io::{Read, Write},
+        os::unix::net::UnixStream,
+    };
+    let (socket, mut remote) = UnixStream::pair().unwrap();
+    let mut reader = socket.try_clone().unwrap();
+    let fd: OwnedFd = socket.into();
+    assert!(pipewire_connected(&fd).unwrap());
+    remote.write_all(b"protocol").unwrap();
+    assert!(pipewire_connected(&fd).unwrap());
+    let mut bytes = [0; 8];
+    reader.read_exact(&mut bytes).unwrap();
+    assert_eq!(&bytes, b"protocol");
+    remote.write_all(b"pending").unwrap();
+    drop(remote);
+    assert!(!pipewire_connected(&fd).unwrap());
+    let mut bytes = Vec::new();
+    reader.read_to_end(&mut bytes).unwrap();
+    assert_eq!(&bytes, b"pending");
+}
+
+#[test]
+fn disconnected_remote_interrupts_stalled_worker_before_command_deadline() {
+    let mut recorder =
+        Recorder::open(Source::Fault("command".into()), None, true, None, None).unwrap();
+    let (socket, remote) = UnixStream::pair().unwrap();
+    recorder.remote = Some(socket.into());
+    let child = pid(&recorder);
+    let root = recorder.directory.as_ref().unwrap().path().to_owned();
+    let closer = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(100));
+        drop(remote);
+    });
+    let now = Instant::now();
+    let status = recorder.status();
+    assert!(
+        matches!(status.phase, Phase::Failed(ref text) if text.contains("PipeWire connection closed"))
+    );
+    assert!(now.elapsed() < Duration::from_secs(2));
+    closer.join().unwrap();
+    reaped(child);
+    assert!(root.exists()); // Parent still owns the lease until Recorder drops.
+    drop(recorder);
+    assert!(!root.exists());
 }

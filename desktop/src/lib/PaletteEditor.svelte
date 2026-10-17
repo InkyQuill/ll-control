@@ -100,7 +100,7 @@
 </fieldset>
 {/if}
 <style>
-  fieldset{border:1px solid #38485c;border-radius:8px;padding:16px;margin:16px 0}
+  fieldset{border:1px solid var(--border);border-radius:8px;padding:16px;margin:16px 0}
   label{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
   select,input{max-width:100%}
 </style>

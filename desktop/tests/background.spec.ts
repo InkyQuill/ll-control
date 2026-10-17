@@ -5,9 +5,10 @@ test('gradient settings survive mode changes and explicit save/load without appl
     let theme: unknown = null;
     const calls: {method:string;params:Record<string,unknown>}[] = [];
     Object.assign(window, { gradientCalls:calls, __TAURI_INTERNALS__: { invoke:async (_:string, request:{method:string;params:Record<string,unknown>}) => {
+        if (_ === 'desktop_set_language') return null;
       calls.push(structuredClone(request));
       switch(request.method) {
-        case 'list_devices': return [{id:'lcd:test',display_name:'LCDV2'}];
+        case 'list_devices': return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source:'Theme',last_error:null,requested:{mode:'Application',brightness_percent:100,rotation_degrees:0}};
         case 'set_lcd_theme': theme=structuredClone(request.params.theme); return {source:'Theme',last_error:null};
@@ -16,7 +17,7 @@ test('gradient settings survive mode changes and explicit save/load without appl
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   const type = page.getByRole('combobox', {name:'Тип фона', exact:true});
   await expect(type).toHaveValue('solid');

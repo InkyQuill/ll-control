@@ -323,6 +323,8 @@ async fn joined_tree_transfers_pinned_image_on_the_original_hid_handle_without_k
     use actor::firmware_update::{CoolingHold, Phase, Progress, ValidatedImage};
     let h = harness(false);
     let saved_intent = lconnect_ipc::CoolingConfig {
+        fan_mode: None,
+        pump_mode: None,
         pump: Some(lconnect_ipc::CoolingPolicy::Motherboard { percent: 80 }),
         fan: None,
     };

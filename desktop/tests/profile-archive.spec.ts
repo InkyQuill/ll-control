@@ -9,6 +9,7 @@ async function setup(page:Page,language='ru-RU'){
   const f={language,job:null as null|Record<string,unknown>,calls:[] as {command:string;args:unknown}[],writes:[] as string[],failStart:false};
   const complete=()=>{const j=f.job!;const imported=profile(j.slot as number,'Imported screen');if(j.mode==='import')library={version:1,revision:2,profiles:[...library.profiles.filter(p=>p.slot!==j.slot),imported]};j.phase='complete';j.transferred=1000;j.total=1000;j.result={state:{id:j.id,direction:j.mode,group:j.group,slot:j.slot,expected_revision:1,phase:j.mode==='import'?'imported':'ready',size:1000,received:j.mode==='import'?1000:0,profile:j.mode==='import'?imported:null,library:j.mode==='import'?structuredClone(library):null,last_error:null,committed_revision:j.mode==='import'?2:null},eof:false,bytes:[]};};
   Object.assign(window,{archiveFixture:f,completeArchive:complete,__TAURI_INTERNALS__:{invoke:async(command:string,args:{method?:string;request?:{id:string;mode:string;group:string;slot:number};id?:string;group?:string;slot?:number})=>{
+        if (command === 'desktop_set_language') return null;
    if(command.startsWith('profile_archive_')){
     f.calls.push({command,args:structuredClone(args)});
     if(command==='profile_archive_status')return structuredClone(f.job);
@@ -18,10 +19,10 @@ async function setup(page:Page,language='ru-RU'){
     if(command==='profile_archive_recover'){f.job={id:args.id,mode:'import',group:args.group,slot:args.slot,phase:'recovering',transferred:0,total:0,file_name:null,message:null,result:null};complete();return structuredClone(f.job);}
    }
    if(args.method?.startsWith('set_')||args.method==='edit_profile')f.writes.push(args.method);
-   switch(args.method){case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':return [{id:'test',display_name:'LCDV2'}];case 'list_sensors':return [];case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'}};case 'list_profiles':return structuredClone(library);case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];default:return null;}
+   switch(args.method){case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];case 'list_sensors':return [];case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'}};case 'list_profiles':return structuredClone(library);case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];default:return null;}
   }}});
  },language);
- await page.goto('/');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible();await open(page,language);
+ await page.goto('/?view=display');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible();await open(page,language);
 }
 async function open(page:Page,language='ru-RU'){await page.getByText(language==='en-US'?'Saved profiles':'Сохранённые профили',{exact:true}).click();await page.getByRole('button',{name:language==='en-US'?'Refresh profile list':'Обновить список профилей',exact:true}).click();await page.getByText(language==='en-US'?'Profile import and export':'Импорт и экспорт профиля',{exact:true}).click();}
 const panel=(page:Page)=>page.getByText('Импорт и экспорт профиля',{exact:true}).locator('..');

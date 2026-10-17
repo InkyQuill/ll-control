@@ -46,10 +46,10 @@
 </section>
 
 <style>
-  section{max-width:760px;display:grid;gap:14px;margin-block:20px;padding:20px;border:1px solid #33445b;border-radius:12px}
-  h2{font-size:19px}p{line-height:1.6;color:#b6c5d8}button{justify-self:start}button[aria-disabled=true]{opacity:.6}
+  section{max-width:760px;display:grid;gap:14px;margin-block:20px;padding:20px;border:1px solid var(--border);border-radius:12px}
+  h2{font-size:19px}p{line-height:1.6;color:var(--text-muted)}button{justify-self:start}button[aria-disabled=true]{opacity:.6}
   dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:10px}dd{margin:0;overflow-wrap:anywhere}
   code,pre{user-select:text;overflow-wrap:anywhere}pre{white-space:pre-wrap}summary{cursor:pointer}
-  [role=alert]{color:#ffb8c5}[role=status]{color:#8adbc0}
+  [role=alert]{color:var(--danger)}[role=status]{color:var(--success)}
   @media(max-width:560px){dl{grid-template-columns:1fr}}
 </style>

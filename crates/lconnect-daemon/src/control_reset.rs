@@ -4,8 +4,8 @@ use crate::{
     profile_group::{GroupKind, GroupProfile},
 };
 use lconnect_ipc::{
-    lighting_catalog, CoolingConfig, FanPreset, LightingKind, NamedProfile, ProfileGroup,
-    ProfileLibrary, PumpPreset,
+    lighting_catalog, CoolingConfig, CoolingTarget, LightingKind, NamedProfile, ProfileGroup,
+    ProfileLibrary,
 };
 
 pub(crate) fn profile(sensor: &str) -> anyhow::Result<GroupProfile> {
@@ -15,9 +15,22 @@ pub(crate) fn profile(sensor: &str) -> anyhow::Result<GroupProfile> {
     );
     let mut settings = DeviceSettings {
         cooling: CoolingConfig {
-            fan: Some(FanPreset::Standard.policy(sensor.into(), 2.0, 100)),
-            pump: Some(PumpPreset::Quiet.policy(sensor.into(), 2.0, 100)),
+            fan_mode: Some("StandardSpeed".into()),
+            pump_mode: Some("PWMQuiet".into()),
+            fan: Some(
+                lconnect_ipc::lcdv2_default_cooling_mode(
+                    CoolingTarget::Fan,
+                    "StandardSpeed",
+                    sensor,
+                )?
+                .policy,
+            ),
+            pump: Some(
+                lconnect_ipc::lcdv2_default_cooling_mode(CoolingTarget::Pump, "PWMQuiet", sensor)?
+                    .policy,
+            ),
         },
+        cooling_banks: Some(lconnect_ipc::lcdv2_default_cooling_modes(sensor)?),
         ..Default::default()
     };
     let color = |c: lconnect_ipc::Rgb| format!("#{:02x}{:02x}{:02x}", c.r, c.g, c.b);
@@ -72,6 +85,7 @@ pub(crate) fn profile(sensor: &str) -> anyhow::Result<GroupProfile> {
 mod tests {
     use super::*;
     use crate::profile_group::GroupSettings;
+    use lconnect_ipc::{FanPreset, PumpPreset};
     #[test]
     fn reset_restores_active_and_inactive_defaults_and_requires_explicit_binding() {
         for invalid in ["", " ", "cpu\0temp", "cpu\ntemp"] {
@@ -83,11 +97,11 @@ mod tests {
         };
         assert_eq!(
             g.cooling.fan,
-            Some(FanPreset::Standard.policy("hwmon:cpu:Tctl".into(), 2.0, 100))
+            Some(FanPreset::Standard.policy("hwmon:cpu:Tctl".into(), 0.0, 100))
         );
         assert_eq!(
             g.cooling.pump,
-            Some(PumpPreset::Quiet.policy("hwmon:cpu:Tctl".into(), 2.0, 100))
+            Some(PumpPreset::Quiet.policy("hwmon:cpu:Tctl".into(), 0.0, 100))
         );
         let fan = g.lighting.fan.as_ref().unwrap();
         let pump = g.lighting.pump.as_ref().unwrap();
@@ -106,6 +120,12 @@ mod tests {
         assert_eq!(g.lighting.fan_modes.len(), 6);
         assert_eq!(g.lighting.pump_modes.len(), 16);
         assert!(g.dynamic_rgb.is_none() && g.dynamic_rgb_profiles.is_empty());
+        assert_eq!(
+            g.cooling_banks,
+            Some(lconnect_ipc::lcdv2_default_cooling_modes("hwmon:cpu:Tctl").unwrap())
+        );
+        assert_eq!(g.cooling.fan_mode.as_deref(), Some("StandardSpeed"));
+        assert_eq!(g.cooling.pump_mode.as_deref(), Some("PWMQuiet"));
         assert!(!g.fan.has_manual_setting() && !g.pump.has_manual_setting());
         assert_eq!(p.profiles.len(), 8);
         for slot in &p.profiles {

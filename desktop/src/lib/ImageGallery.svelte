@@ -1,5 +1,6 @@
 <script lang="ts">
-  import {t} from './i18n.svelte';
+  import { ValidationError, type UiDiagnostic } from './validation-error';
+  import {t, diagnosticText} from './i18n.svelte';
   import { tick } from 'svelte';
   import ImageEditor from './ImageEditor.svelte';
   import { readCollectionMembership, imageInCollection } from './collection-membership';
@@ -13,12 +14,13 @@
   let membership = $state<ScreenCollections | null>(null);
   const keys = $derived(assets.filter(asset => (!asset.contexts || asset.contexts.includes(context)) && (catalogMode || imageInCollection(membership, asset.key, context))).map(asset => asset.key));
   const builtin = (key: string) => assets.find(asset => asset.key === key)?.is_default === true;
-  const title = (key: string) => assets.find(asset => asset.key === key)?.name ?? `Изображение ${key.slice(0,8)}`;
-  let edit = $state<AssetInfo | null>(null), saving = $state(false), renameError = $state('');
-  let confirmDelete = $state<AssetInfo | null>(null), deleteNotice = $state(''), deleteReadback = $state(false);
+  const title = (key: string) => assets.find(asset => asset.key === key)?.name ?? t('Изображение {0}',key.slice(0,8));
+  type Diagnostic = {detail:string};
+  let edit = $state<AssetInfo | null>(null), saving = $state(false), renameError = $state<Diagnostic|null>(null), renameReadback = $state(false);
+  let confirmDelete = $state<AssetInfo | null>(null), deleteNotice = $state<string|Diagnostic>(''), deleteReadback = $state(false);
   let summaryElement: HTMLElement | undefined = $state();
   let generation = 0, mutationEpoch = 0;
-  $effect(() => { void device; void collectionEpoch; void connected; void open; void context; generation++; edit = null; renameError = ''; confirmDelete = null; deleteNotice = ''; });
+  $effect(() => { void device; void collectionEpoch; void connected; void open; void context; generation++; edit = null; renameError = null; renameReadback = false; confirmDelete = null; deleteNotice = ''; });
   async function publishEdit(key: string, png: number[], name: string) {
     const target=device, purpose=context, focused=document.activeElement;
     try { return await onedit(key,purpose,png,name); }
@@ -29,13 +31,13 @@
     }
   }
   async function rename() {
-    if (!edit || edit.is_default || saving) return;
+    if (!edit || edit.is_default || saving || disabled || !connected || loading || renameReadback || deleteReadback || !edit.name?.trim()) return;
     const request = {...edit}, started = generation;
-    saving = true; renameError = '';
+    saving = true; renameError = null; renameReadback = true;
     try {
       await rpc('rename_theme_asset', {key:request.key, name:request.name, expected_revision:request.revision});
       if (started === generation) edit = null;
-    } catch (e) { if (started === generation) renameError = `${message(e)}. Обновлённые данные будут загружены; перед повтором выберите переименование заново.`; }
+    } catch (e) { if (started === generation) renameError = {detail:message(e)}; }
     finally { saving = false; if (started === generation) revision++; }
   }
   async function deleteImage() {
@@ -47,7 +49,7 @@
       await rpc('delete_theme_asset', {key:target.key, expected_revision:target.revision, keep:[...keep]});
       if (started === generation) deleteNotice = 'Изображение удалено. Исходный файл сохранён.';
     } catch (e) {
-      if (started === generation) deleteNotice = `Удаление не подтверждено: ${message(e)}. Проверьте обновлённый список перед повтором.`;
+      if (started === generation) deleteNotice = {detail:message(e)};
     } finally {
       mutationEpoch++;
       saving = false;
@@ -59,7 +61,7 @@
     }
   }
   let open = $state(false), page = $state(0), revision = $state(0);
-  let loading = $state(false), error = $state('');
+  let loading = $state(false), error = $state<UiDiagnostic>('');
   let previews = $state<Record<string, string>>({}), failures = $state<Record<string, string>>({});
   const pages = $derived(Math.max(1, Math.ceil(keys.length / 8)));
   const currentPage = $derived(Math.min(page, pages - 1));
@@ -73,7 +75,7 @@
     loading = true; error = '';
     assets = [];
     Promise.all([rpc<AssetInfo[]>('list_named_theme_assets'), readCollectionMembership(target)]).then(([result, collections]) => { if (active && epoch === mutationEpoch) { assets = result; membership = collections; if (!saving) deleteReadback = false; } })
-      .catch(e => { if (active && epoch === mutationEpoch) { error = message(e); assets = []; } })
+      .catch(e => { if (active && epoch === mutationEpoch) { error = e instanceof ValidationError ? e : message(e); assets = []; } })
       .finally(() => { if (active && epoch === mutationEpoch) loading = false; });
     return () => { active = false; };
   });
@@ -110,7 +112,7 @@
     </select></label>
     <p>{context === 'background' ? "" + t("Выбранное изображение заменит фон, сохранив все слои. Видео для фона доступно в библиотеке роликов.") + "" : context === 'watermark' ? "" + t("Водяной знак добавится поверх остальных слоёв. Размер, положение и прозрачность можно изменить в редакторе.") + "" : "" + t("Изображение добавится отдельным слоем.") + ""}</p>
     <button disabled={loading || saving} onclick={() => revision++}>{t("Обновить изображения")}</button>
-    {#if error}<p role="alert">{t("Не удалось загрузить изображения:")} {t(error)}</p>{/if}
+    {#if error}<p role="alert">{t("Не удалось загрузить изображения:")} {diagnosticText(error)}</p>{/if}
     {#if loading}<p role="status">{t("Загрузка изображений…")}</p>
     {:else if !keys.length && !error}<p>{t("Сохранённых изображений пока нет. Импортируйте файл кнопкой «+ Изображение».")}</p>{/if}
     <div class="images">
@@ -126,24 +128,24 @@
           {#key `${device}:${context}:${key}`}
             <ImageEditor existing={{key, name:title(key)}} disabled={disabled || saving || deleteReadback || builtin(key) || !imageInCollection(membership,key,context)} onpublish={(png,name) => publishEdit(key,png,name)}/>
           {/key}
-          <button disabled={disabled || saving || deleteReadback || builtin(key)} onclick={() => { confirmDelete = null; edit = {...assets.find(asset => asset.key === key)!}; renameError = ''; }}>{t("Переименовать")} {title(key)}</button>
+          <button disabled={disabled || saving || loading || deleteReadback || builtin(key)} onclick={() => { confirmDelete = null; edit = {...assets.find(asset => asset.key === key)!}; renameError = null; renameReadback = false; }}>{t("Переименовать")} {title(key)}</button>
           <button disabled={disabled || saving || loading || deleteReadback || builtin(key) || keep.includes(key)} onclick={() => { confirmDelete = {...assets.find(asset => asset.key === key)!}; edit = null; deleteNotice = ''; }}>{t("Удалить")} {title(key)}…</button>
           {#if keep.includes(key)}<p>{t("Изображение используется в черновике темы.")}</p>{/if}
         </article>
       {/each}
     </div>
     {#if confirmDelete}
-      <p>{t("Удалить «")}{confirmDelete.name ?? `Изображение ${confirmDelete.key.slice(0,8)}`}{t("» из библиотеки? Исходный файл останется на диске.")}</p>
+      <p>{t("Удалить «")}{confirmDelete.name ?? t('Изображение {0}',confirmDelete.key.slice(0,8))}{t("» из библиотеки? Исходный файл останется на диске.")}</p>
       <button disabled={disabled || saving || deleteReadback || keep.includes(confirmDelete.key)} onclick={deleteImage}>{t("Подтвердить удаление изображения")}</button>
       <button disabled={saving} onclick={() => confirmDelete = null}>{t("Отмена удаления изображения")}</button>
     {/if}
-    {#if deleteNotice}<p role="status">{t(deleteNotice)}</p>{/if}
+    {#if deleteNotice}<p role="status">{typeof deleteNotice==='string'?t(deleteNotice):t('Удаление не подтверждено: {0}. Проверьте обновлённый список перед повтором.',deleteNotice.detail)}</p>{/if}
     {#if edit}<form onsubmit={event => { event.preventDefault(); void rename(); }}>
       <label>{t("Имя изображения")}<input bind:value={edit.name} required maxlength="256" disabled={saving}/></label>
-      <button disabled={saving || !edit.name?.trim()}>{t("Сохранить имя изображения")}</button>
-      <button type="button" disabled={saving} onclick={() => { edit = null; renameError = ''; }}>{t("Отмена переименования")}</button>
+      <button disabled={saving || disabled || !connected || loading || renameReadback || !edit.name?.trim()}>{t("Сохранить имя изображения")}</button>
+      <button type="button" disabled={saving} onclick={() => { edit = null; renameError = null; renameReadback = false; }}>{t("Отмена переименования")}</button>
     </form>{/if}
-    {#if renameError}<p role="alert">{t(renameError)}</p>{/if}
+    {#if renameError}<p role="alert">{t('Переименование не подтверждено: {0}. Обновлённые данные будут загружены; перед повтором выберите переименование заново.',renameError.detail)}</p>{/if}
     {#if keys.length}<nav aria-label="{t("Страницы изображений")}">
       <button disabled={currentPage === 0} onclick={() => page = currentPage - 1}>{t("Предыдущие изображения")}</button>
       <span role="status">{t("Страница")} {currentPage + 1} {t("из")} {pages}</span>
@@ -152,10 +154,10 @@
   {/if}
 </details>
 <style>
-  details { padding:16px; border:1px solid #33445b; border-radius:12px; margin:16px 0; }
+  details { padding:16px; border:1px solid var(--border); border-radius:12px; margin:16px 0; }
   summary { cursor:pointer; font-weight:600; }
   .images { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr)); gap:12px; }
-  article { min-width:0; border:1px solid #64748b; border-radius:10px; padding:10px; }
+  article { min-width:0; border:1px solid var(--border-strong); border-radius:10px; padding:10px; }
   img { display:block; max-width:100%; height:144px; object-fit:contain; }
   p, button { overflow-wrap:anywhere; }
   nav { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:16px; }

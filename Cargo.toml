@@ -8,6 +8,8 @@ members = [
     "crates/lconnect-image",
     "crates/lconnect-intel-memory",
     "crates/lconnect-ipc",
+    "crates/lconnect-profile",
+    "crates/lconnect-media",
     "crates/protocol",
     "tools/verify-galahad",
     "xtask",

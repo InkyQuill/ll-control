@@ -41,7 +41,7 @@ pub const LCD_FPS: u32 = 24;
 #[non_exhaustive]
 pub enum FitMode {
     /// Scale uniformly to cover the target, then centre-crop the excess.
-    /// Best for circular displays where edges are clipped anyway.
+    /// Fills the square LCDV2 canvas; source edges may be cropped.
     Crop,
     /// Scale uniformly to fit inside the target, fill remainder with `bg`.
     Letterbox {
@@ -53,7 +53,7 @@ pub enum FitMode {
 }
 
 impl Default for FitMode {
-    /// `Crop` is the right default for a circular pump-cap LCD.
+    /// Fill the LCDV2 canvas by default; Letterbox preserves the entire source.
     fn default() -> Self {
         FitMode::Crop
     }

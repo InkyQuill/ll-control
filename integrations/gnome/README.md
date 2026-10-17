@@ -63,5 +63,18 @@ but do not qualify full pointer/keyboard/screen-reader flows. Full parity also
 requires FPS capture/game qualification and the remaining shared sensor coverage.
 
 FPS source selection uses the shared daemon cache and explicit file-session ID;
-see the [source contract](../../docs/parity/fps-source.md). Capture configuration,
+see the [source contract](../../docs/development/parity/fps-source.md). Capture configuration,
 real-game compatibility and full shell/session qualification remain open.
+
+
+## Verify the shipped package
+
+The maintained package-consumer command is
+`python3 tools/test-distribution-mini.py target/distribution --gjs /usr/bin/gjs`
+from the repository root. It extracts a built Arch package to a private prefix,
+checks file hashes and runs the packaged shared model, GJS feed, real production
+CLI/read-only Unix peer, GTK preferences and cross-process persistence checks.
+Qt config/feed tests run in the same command. Add `--plasma-native` only where
+its test-host dependencies are available. GJS may be an explicit private-runtime
+wrapper; no runtime or system package is installed by this tool. GitHub workflow
+source invokes the default mode. This does not run GNOME Shell panel code.

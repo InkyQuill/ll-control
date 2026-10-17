@@ -11,9 +11,10 @@ for (const thermal of [false, true]) for (const outcome of ['lost-reply', 'rejec
       const fixture: Fixture = { online: true, finish: () => {}, writes: [], reads: 0 };
       Object.assign(window, { interruptedLighting: fixture, __TAURI_INTERNALS__: {
         invoke: async (_: string, req: { method: string; params: Omit<Write, 'method'> }) => {
+        if (_ === 'desktop_set_language') return null;
           if (!fixture.online) throw new Error('offline');
           switch (req.method) {
-            case 'list_devices': return [{ id: 'A', display_name: 'LCD A' }, { id: 'B', display_name: 'LCD B' }];
+            case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }, { id: 'B', display_name: 'LCD B', family:'galahad2-lcdv2' }];
             case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid', age_ms: 1 }];
             case 'get_lcd_state': return { source: 'Idle', requested: {} };
             case 'get_lighting_info': return { modes: ['static_color'] };
@@ -38,7 +39,7 @@ for (const thermal of [false, true]) for (const outcome of ['lost-reply', 'rejec
         }
       } });
     });
-    await page.goto('/'); await expect(page.getByText('Daemon подключён')).toBeVisible();
+    await page.goto('/?view=display'); await expect(page.getByText('Daemon подключён')).toBeVisible();
     await page.getByRole('button', { name: 'Подсветка', exact: true }).click();
     const load = page.getByRole('button', { name: 'Загрузить текущие оповещения' });
     await expect(load).toBeEnabled(); await load.click();

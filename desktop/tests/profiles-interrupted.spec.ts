@@ -24,10 +24,11 @@ for (const action of Object.keys(actions) as (keyof typeof actions)[]) {
         };
         Object.assign(window, { interruptedProfiles: f, __TAURI_INTERNALS__: {
           invoke: async (_: string, req: { method: string; params: { edit: ProfileEdit; expected_revision: number } }) => {
+        if (_ === 'desktop_set_language') return null;
             if (!f.online) throw new Error('offline');
             switch (req.method) {
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
-              case 'list_devices': return [{ id: 'A', display_name: 'LCD A' }];
+              case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
               case 'list_sensors': return [];
               case 'get_lcd_state': return { source: 'Idle', last_error: null };
               case 'list_profiles': return structuredClone(f.library);
@@ -56,7 +57,7 @@ for (const action of Object.keys(actions) as (keyof typeof actions)[]) {
           },
         } });
       }, outcome.startsWith('rejected'));
-      await page.goto('/');
+      await page.goto('/?view=display');
       await expect(page.getByText('Daemon подключён')).toBeVisible();
       const title = page.getByLabel('Название', { exact: true });
       await title.fill('Submitted theme');

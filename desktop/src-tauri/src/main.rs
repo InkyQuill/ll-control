@@ -59,6 +59,8 @@ fn allowed(method: &str) -> bool {
             | "set_lcd_media"
             | "get_lcd_state"
             | "get_lcd_theme"
+            | "get_imported_lcd_editor"
+            | "preview_windows_screen_upload"
             | "set_lcd_theme"
             | "preview_lcd_theme"
             | "list_named_theme_assets"
@@ -72,7 +74,11 @@ fn allowed(method: &str) -> bool {
             | "patch_lcd_config"
             | "clear_lcd"
             | "get_cooling_state"
+            | "get_cooling_modes"
+            | "save_cooling_mode"
             | "set_cooling_policy"
+            | "apply_cooling_mode"
+            | "initialize_cooling_modes"
             | "get_lighting_info"
             | "set_lighting"
             | "get_dynamic_rgb"
@@ -92,6 +98,19 @@ async fn group_archive_start(
         lconnect_ipc::socket::default_socket_path().map_err(error)?,
         request,
         language.unwrap_or_default(),
+    )
+    .map_err(archive_error)
+}
+#[tauri::command]
+async fn group_windows_prepare(
+    jobs: tauri::State<'_, lconnect_gui::group_jobs::Groups>,
+    request: lconnect_gui::group_jobs::Start,
+    options: lconnect_gui::group_jobs::WindowsPreparation,
+) -> Result<lconnect_gui::group_jobs::Status, BridgeError> {
+    jobs.prepare_windows_request(
+        lconnect_ipc::socket::default_socket_path().map_err(error)?,
+        request,
+        options,
     )
     .map_err(archive_error)
 }
@@ -654,9 +673,15 @@ async fn begin_screenshot(
 async fn cancel_screenshot(
     id: String,
     capture: tauri::State<'_, lconnect_gui::screenshot::Screenshots>,
-) -> Result<(), BridgeError> {
-    capture.cancel(&id).await;
-    Ok(())
+) -> Result<lconnect_gui::screenshot::CancelOutcome, BridgeError> {
+    capture.cancel(&id).await.map_err(error)
+}
+
+#[tauri::command]
+async fn pending_screenshot_cleanup(
+    capture: tauri::State<'_, lconnect_gui::screenshot::Screenshots>,
+) -> Result<Option<String>, BridgeError> {
+    Ok(capture.pending_cleanup().await)
 }
 
 #[tauri::command]
@@ -727,6 +752,14 @@ fn cooling_preset(
     };
     policy.validate(target).map_err(error)?;
     Ok(policy)
+}
+#[tauri::command]
+fn cooling_mode_default(
+    target: lconnect_ipc::CoolingTarget,
+    id: String,
+    sensor_id: String,
+) -> Result<lconnect_ipc::CoolingModeProfile, BridgeError> {
+    lconnect_ipc::lcdv2_default_cooling_mode(target, &id, &sensor_id).map_err(error)
 }
 #[derive(Default)]
 struct Closing {
@@ -879,6 +912,14 @@ async fn desktop_settings_save(
         .map_err(error)
 }
 #[tauri::command]
+fn desktop_set_language(
+    state: tauri::State<'_, Arc<lconnect_gui::desktop_runtime::Desktop>>,
+    language: lconnect_ipc::InterfaceLanguage,
+) -> Result<(), BridgeError> {
+    state.set_language(language).map_err(error)
+}
+
+#[tauri::command]
 fn desktop_exit(app: tauri::AppHandle) {
     request_exit(&app);
 }
@@ -925,9 +966,11 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             desktop_settings_get,
+            desktop_set_language,
             desktop_settings_save,
             desktop_exit,
             group_archive_start,
+            group_windows_prepare,
             group_archive_status,
             group_archive_action,
             daemon_call,
@@ -937,11 +980,13 @@ fn main() {
             profile_archive_recover,
             profile_archive_dismiss,
             cooling_preset,
+            cooling_mode_default,
             import_image,
             image_editor,
             capture_screenshot,
             begin_screenshot,
             cancel_screenshot,
+            pending_screenshot_cleanup,
             screen_record_begin,
             screen_record_start,
             screen_record_status,
@@ -996,6 +1041,19 @@ mod tests {
                 .is_err()
         );
         assert!(super::cooling_preset(CoolingTarget::Fan, "high".into(), "".into()).is_err());
+        let mode =
+            super::cooling_mode_default(CoolingTarget::Pump, "FixRPM".into(), "".into()).unwrap();
+        assert_eq!(mode.policy, CoolingPolicy::FixedRpm { rpm: 2200 });
+        assert!(mode.use_default_name);
+        assert!(super::cooling_mode_default(
+            CoolingTarget::Fan,
+            "FixRPM".into(),
+            "cpu:test".into()
+        )
+        .is_err());
+        assert!(
+            super::cooling_mode_default(CoolingTarget::Pump, "PWMQuiet".into(), "".into()).is_err()
+        );
     }
     #[test]
     fn maintenance_and_raw_commands_are_not_exposed() {
@@ -1080,6 +1138,15 @@ async fn native_media_step(sequence: u32, action: String) -> Result<(), String> 
                 | "seed_long_v2"
                 | "long_loop"
                 | "close_worker"
+                | "recording_stall"
+                | "recording_crash"
+                | "recording_cancel"
+                | "recording_close"
+                | "recording_reaped"
+                | "recording_recovered"
+                | "recovery_ready"
+                | "recovery_allow"
+                | "owner_loss_new_ready"
         )
     {
         return Err("Unsupported media fixture step".into());
@@ -1141,6 +1208,12 @@ fn native_keyboard_step(sequence: u32, key: String, probe: Option<String>) -> Re
                 | "fixture_file_font_select"
                 | "fixture_file_font_invalid"
                 | "fixture_file_font_large"
+                | "image_crop_x"
+                | "image_crop_y"
+                | "image_crop_side"
+                | "image_crop_pointer"
+                | "capture_region_pointer"
+                | "video_region_pointer"
         )
     }) {
         return Err("unsupported fixture probe".into());
@@ -1224,7 +1297,7 @@ fn main() {
         Some(root.as_os_str())
     );
     with_media_preview(desktop_builder()).manage(lconnect_gui::group_jobs::Groups::default()).manage(lconnect_gui::archive_jobs::Archives::default()).manage(Bridge::default()).manage(lconnect_gui::screenshot::Screenshots::default()).manage(lconnect_gui::screen_record_jobs::Recordings::default()).manage(lconnect_gui::image_editor::Editor::default()).manage(MediaImports::default()).manage(MediaSources::default()).manage(lconnect_gui::media_http::MediaHttp::default()).manage(Thumbnails::default()).manage(Closing::default()).on_window_event(close_after_media)
-        .invoke_handler(tauri::generate_handler![desktop_settings_get,desktop_settings_save,desktop_exit,group_archive_start,group_archive_status,group_archive_action,daemon_call,profile_archive_start,profile_archive_status,profile_archive_cancel,profile_archive_recover,profile_archive_dismiss,cooling_preset,import_image,image_editor,capture_screenshot,begin_screenshot,cancel_screenshot,screen_record_begin,screen_record_start,screen_record_status,screen_record_snapshot,screen_record_control,screen_record_cancel,screen_record_prepare,screen_record_admit,media_playback_url,media_begin,media_append,media_inspect,media_prepare_inspected,media_start,media_source_prepare,media_source_start,media_source_status,media_source_cancel,media_confirm,media_status,media_cancel,media_thumbnail,media_thumbnail_cancel,native_smoke_result,native_keyboard_step,native_media_step,native_desktop_step])
+        .invoke_handler(tauri::generate_handler![desktop_set_language,desktop_settings_get,desktop_settings_save,desktop_exit,group_archive_start,group_windows_prepare,group_archive_status,group_archive_action,daemon_call,profile_archive_start,profile_archive_status,profile_archive_cancel,profile_archive_recover,profile_archive_dismiss,cooling_preset,cooling_mode_default,import_image,image_editor,capture_screenshot,begin_screenshot,cancel_screenshot,pending_screenshot_cleanup,screen_record_begin,screen_record_start,screen_record_status,screen_record_snapshot,screen_record_control,screen_record_cancel,screen_record_prepare,screen_record_admit,media_playback_url,media_begin,media_append,media_inspect,media_prepare_inspected,media_start,media_source_prepare,media_source_start,media_source_status,media_source_cancel,media_confirm,media_status,media_cancel,media_thumbnail,media_thumbnail_cancel,native_smoke_result,native_keyboard_step,native_media_step,native_desktop_step])
         .setup(|app| {
             lconnect_gui::desktop_runtime::setup(app, request_exit)?;
             app.add_capability(r#"{"identifier":"smoke","windows":["main"],"permissions":["allow-native-smoke-result","allow-native-keyboard-step","allow-native-media-step","allow-native-desktop-step"]}"#)?;
@@ -1251,10 +1324,14 @@ fn main() {
                 }
                 let group_kind = if std::env::var("LCONNECT_NATIVE_GROUP_KIND").as_deref()==Ok("fan_and_lighting") {"fan_and_lighting"} else {"screen"};
                 webview.eval(format!("window.__nativeGroupKind={group_kind:?};")).expect("expose fixture group");
+                let recover_windows=std::env::var("LCONNECT_NATIVE_WINDOWS_RECOVER").as_deref()==Ok("1");
+                webview.eval(format!("window.__nativeWindowsRecover={recover_windows};")).expect("Windows fixture phase");
                 let recover_reset = std::env::var("LCONNECT_NATIVE_CONTROL_RESET_RECOVER").as_deref()==Ok("1");
                 webview.eval(format!("window.__nativeResetRecover={recover_reset};")).expect("expose reset fixture phase");
                 let desktop_phase=std::env::var("LCONNECT_NATIVE_DESKTOP_PHASE").unwrap_or_else(|_| "1".into());
                 webview.eval(format!("window.__nativeDesktopPhase={desktop_phase:?};")).expect("desktop fixture phase");
+                let desktop_language=if std::env::var("LCONNECT_NATIVE_DESKTOP_LANGUAGE").as_deref()==Ok("en-US") {"en-US"} else {"ru-RU"};
+                webview.eval(format!("window.__nativeDesktopLanguage={desktop_language:?};")).expect("desktop fixture language");
                 let fps_log=std::env::var("LCONNECT_NATIVE_FPS_LOG").unwrap_or_default();
                 webview.eval(format!("window.__nativeFpsLog={};",serde_json::to_string(&fps_log).expect("encode private FPS log"))).expect("expose private FPS log");
                 let script = if std::env::var("LCONNECT_NATIVE_RECOVERY").as_deref()==Ok("1") {
@@ -1263,6 +1340,8 @@ fn main() {
                     include_str!("../../scripts/native-fps-settings.js")
                 } else if std::env::var("LCONNECT_NATIVE_FIRMWARE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-firmware-preflight.js")
+                } else if std::env::var("LCONNECT_NATIVE_IMAGE_EDITOR").as_deref()==Ok("1") {
+                    include_str!("../../scripts/native-image-editor.js")
                 } else if std::env::var("LCONNECT_NATIVE_LANGUAGE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-interface-language.js")
                 } else if std::env::var("LCONNECT_NATIVE_UNITS").as_deref()==Ok("1") {
@@ -1271,6 +1350,12 @@ fn main() {
                     include_str!("../../scripts/native-system-spec.js")
                 } else if std::env::var("LCONNECT_NATIVE_DESKTOP").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-desktop.js")
+                } else if std::env::var("LCONNECT_NATIVE_BASIC_EDITORS").as_deref()==Ok("1") {
+                    include_str!("../../scripts/native-basic-editors.js")
+                } else if std::env::var("LCONNECT_NATIVE_WINDOWS_SCREEN").as_deref()==Ok("1") {
+                    include_str!("../../scripts/native-windows-screen.js")
+                } else if std::env::var("LCONNECT_NATIVE_WINDOWS_CONTROL").as_deref()==Ok("1") {
+                    include_str!("../../scripts/native-windows-control.js")
                 } else if std::env::var("LCONNECT_NATIVE_CONTROL_RESET").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-control-reset.js")
                 } else if std::env::var("LCONNECT_NATIVE_GROUP_ARCHIVE").as_deref()==Ok("1") {
@@ -1282,7 +1367,9 @@ fn main() {
                 } else if std::env::var("LCONNECT_NATIVE_WEATHER").as_deref() == Ok("1") {
                     include_str!("../../scripts/native-weather.js")
                 } else if std::env::var("LCONNECT_NATIVE_RECORDING").as_deref() == Ok("1") {
-                    if std::env::var("LCONNECT_NATIVE_RECORDING_LIMIT").as_deref() == Ok("1") {
+                    if std::env::var("LCONNECT_NATIVE_RECORDING_FAULTS").as_deref() == Ok("1") {
+                        include_str!("../../scripts/native-recording-faults.js")
+                    } else if std::env::var("LCONNECT_NATIVE_RECORDING_LIMIT").as_deref() == Ok("1") {
                         include_str!("../../scripts/native-recording-limit.js")
                     } else {
                         include_str!("../../scripts/native-recording.js")
@@ -1296,6 +1383,8 @@ fn main() {
                 } else {
                     include_str!("../../scripts/native-smoke.js")
                 };
+                let cooling_defaults=std::env::var("LCONNECT_NATIVE_COOLING_DEFAULTS").as_deref()==Ok("1");
+                let _=webview.eval(format!("window.__nativeCoolingDefaults={cooling_defaults};"));
                 let _=webview.eval(script);
             }
         })

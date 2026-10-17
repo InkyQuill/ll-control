@@ -2,7 +2,7 @@
 //!
 //! No HID, configuration, privilege escalation or GPU allocation. Call only in
 //! a process with a supervising timeout: a DRM ioctl may block in the kernel.
-//! ABI and limitations: docs/parity/intel-memory-query.md.
+//! ABI and limitations: docs/development/parity/intel-memory-query.md.
 #![deny(unsafe_op_in_unsafe_fn)]
 #![deny(unsafe_code)]
 

@@ -57,6 +57,15 @@
   }
   function select(event:PointerEvent) {
     if(disabled || loading || !picture || !drag || drag.id!==event.pointerId)return;
+    const button=event.currentTarget as HTMLButtonElement;
+    const captured=button.hasPointerCapture(event.pointerId);
+    // A missed release must not extend the last selection on the next move.
+    // Normal pointerup has buttons=0 and still finalizes the captured gesture.
+    if(!captured || (event.type==='pointermove' && (event.buttons&1)===0)) {
+      drag=null;
+      if(captured)button.releasePointerCapture(event.pointerId);
+      return;
+    }
     const end=point(event), w=Math.abs(end.x-drag.x), h=Math.abs(end.y-drag.y);
     if(w>0 && h>0)onchange({x:Math.min(end.x,drag.x),y:Math.min(end.y,drag.y),width:w,height:h});
   }
@@ -94,6 +103,6 @@
 <style>
   canvas{display:block;max-width:100%;height:auto;background:#000;}
   .source{display:block;width:fit-content;max-width:100%;padding:0;border:0;touch-action:none;cursor:crosshair;}
-  .source:focus-visible{outline:3px solid #7dd3fc;outline-offset:3px;}
+  .source:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}
   p{overflow-wrap:anywhere;}
 </style>

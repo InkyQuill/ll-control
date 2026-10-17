@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ValidationError } from './validation-error';
   import {t} from './i18n.svelte';
   import { tick } from 'svelte';
   import ProfileArchive from './ProfileArchive.svelte';
@@ -14,33 +15,40 @@
   let groupResetButton: HTMLButtonElement | undefined = $state();
   $effect(() => { void group; void connected; void resetSensor; confirmGroupReset = false; });
   let archiveBusy=$state(false);
-  let busy = $state(false), error = $state(''), notice = $state('');
+  type Failure = { operation: 'refresh' | 'edit'; detail: string };
+  let busy = $state(false), error = $state<Failure | ValidationError | null>(null), notice = $state('');
+  function errorText(failure: Failure | ValidationError): string {
+    if (failure instanceof ValidationError) return t(failure.resource, ...failure.values);
+    return failure.operation === 'refresh'
+      ? t('Не удалось загрузить список профилей: {0}', failure.detail)
+      : t('Изменение профилей не подтверждено: {0}. Проверьте библиотеку перед повторной записью.', failure.detail);
+  }
   let selected = $derived(library?.profiles.find(p => p.slot === slot && profileGroup(p.content) === group));
   let unavailable = $derived(busy || archiveBusy || disabled || !connected || needsRefresh);
   let generation = 0;
   $effect(() => {
     void refreshEpoch; void group; void connected;
-    generation++; library = null; needsRefresh = false; error = ''; notice = '';
+    generation++; library = null; needsRefresh = false; error = null; notice = '';
     return () => { generation++; };
   });
   async function refresh() {
     const started = generation;
-    busy = true; error = ''; notice = ''; confirmGroupReset = false;
+    busy = true; error = null; notice = ''; confirmGroupReset = false;
     try { const result = await rpc<ProfileLibrary>('list_profiles'); if (started === generation) { library = result; needsRefresh = false; } }
-    catch (e) { if (started === generation) { error = message(e); library = null; } }
+    catch (e) { if (started === generation) { error = {operation:'refresh',detail:message(e)}; library = null; } }
     finally { busy = false; }
   }
   async function edit(action: 'save' | 'save_media' | 'rename' | 'delete' | 'reset' | 'reset_group') {
     if (!library || unavailable) return;
     const started = generation;
-    busy = true; error = ''; notice = '';
+    busy = true; error = null; notice = '';
     try {
       let change: ProfileEdit;
       if (action === 'reset_group') change = { action, group, sensor_id: group === 'screen' ? null : resetSensor };
       else if (action === 'reset') change = { action, group, slot, sensor_id: group === 'screen' ? null : resetSensor };
       else if (action === 'save' || action === 'save_media') {
         const content: ProfileContent = action === 'save_media' ? {kind:'screen_media', value:mediaKey} : draft();
-        if (profileGroup(content) !== group) throw new Error('Канал профиля изменился; повторите сохранение');
+        if (profileGroup(content) !== group) throw new ValidationError('Канал профиля изменился; повторите сохранение');
         change = { action: 'save', profile: { slot, name, content } };
       } else if (action === 'rename') change = { action, group, slot, name };
       else change = { action, group, slot };
@@ -50,7 +58,7 @@
       notice = 'Библиотека сохранена. Настройки устройства не изменены.';
     } catch (e) {
       if (started === generation) {
-        error = message(e);
+        error = e instanceof ValidationError ? e : {operation:'edit',detail:message(e)};
         // A failed reply does not prove the mutation failed. Require readback.
         needsRefresh = true;
       }
@@ -74,7 +82,7 @@
   {#if library}
     <label>{t("Слот профиля")}<select bind:value={slot} disabled={unavailable} onchange={event => { const next = Number(event.currentTarget.value); name = library?.profiles.find(p => p.slot === next && profileGroup(p.content) === group)?.name ?? ''; notice = ''; }}>
       {#each Array.from({ length: group === 'screen' ? 8 : 4 }, (_, i) => i) as index}
-        <option value={index}>{index + 1} · {library.profiles.find(p => p.slot === index && profileGroup(p.content) === group)?.name ?? 'Пусто'}</option>
+        <option value={index}>{index + 1} · {library.profiles.find(p => p.slot === index && profileGroup(p.content) === group)?.name ?? t('Пусто')}</option>
       {/each}
     </select></label>
     <label>{t("Имя профиля")}<input bind:value={name} maxlength="128" disabled={unavailable}/></label>
@@ -99,11 +107,11 @@
   {#if library}<ProfileArchive {group} {slot} revision={library.revision} name={selected?.name??name} hasProfile={!!selected} {connected} disabled={busy||disabled||needsRefresh} bind:busy={archiveBusy}
     onrequireRefresh={()=>needsRefresh=true}
     onlibrary={(result,target)=>{if(result.revision<(library?.revision??0))return;library=result;needsRefresh=false;if(target.group===group&&target.slot===slot)name=result.profiles.find(p=>p.slot===slot&&profileGroup(p.content)===group)?.name??name;}}/>{/if}
-  {#if error}<p role="alert">{t(error)} {t("Обновите список перед повтором.")}</p>{/if}
+  {#if error}<p role="alert">{errorText(error)} {t("Обновите список перед повтором.")}</p>{/if}
   {#if notice}<p role="status">{t(notice)}</p>{/if}
 </details>
 <style>
-  .profiles { border:1px solid #33445b; border-radius:12px; padding:14px; margin:16px 0; }
+  .profiles { border:1px solid var(--border); border-radius:12px; padding:14px; margin:16px 0; }
   summary { cursor:pointer; font-weight:600; }
   label { display:grid; gap:6px; margin:12px 0; }
   .buttons { display:flex; flex-wrap:wrap; gap:8px; }

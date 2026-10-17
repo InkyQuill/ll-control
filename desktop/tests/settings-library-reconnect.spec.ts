@@ -5,10 +5,11 @@ test.beforeEach(async({page})=>{
   await page.addInitScript(()=>{
     const fixture:Fixture={online:true,hold:'',finish:()=>{}};
     Object.assign(window,{raceFixture:fixture,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string})=>{
+        if (_ === 'desktop_set_language') return null;
       if(!fixture.online)throw new Error('offline');
       let result:unknown;
       switch(req.method){
-        case 'list_devices': return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices': return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors': return [];
         case 'get_lcd_state': return {source:'Theme',last_error:null,requested:{mode:'Application',brightness_percent:60,rotation_degrees:90}};
         case 'get_lcd_theme': return {version:1,name:'Image draft',background:[0,0,0],layers:[{kind:'image',asset:'draftasset',x:0,y:0,width:480,height:480,fit:'contain',opacity:255}]};
@@ -21,7 +22,7 @@ test.beforeEach(async({page})=>{
       return result;
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён')).toBeVisible();
 });
 
 for(const fail of [false,true])test(`settings ignores old-device ${fail?'failure':'success'} and preserves draft`,async({page})=>{
@@ -60,11 +61,14 @@ test('profile edit result after disconnect requires fresh library and preserves 
 test('cleanup discards scan after draft asset set changes and requires rescan',async({page})=>{
   await page.getByRole('button',{name:'Загрузить активную тему'}).click();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Image draft');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Очистка неиспользуемых изображений',{exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {raceFixture:Fixture}).raceFixture.hold='cleanup_theme_assets';});
   const scan=page.getByRole('button',{name:'Проверить неиспользуемые изображения'});
   await scan.click();await expect(scan).toBeDisabled();
+  await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека',exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {raceFixture:Fixture}).raceFixture.finish();});
   await expect(scan).toBeEnabled();
   await expect(page.getByText('Можно удалить:',{exact:false})).toHaveCount(0);

@@ -1,41 +1,6 @@
 import {test,expect,type Page} from '@playwright/test';
 import type {GroupStatus} from '../src/lib/group-archive';
-interface Fixture {job:GroupStatus|null;calls:{command:string;args:Record<string,unknown>}[];lost:boolean;lostFinish?:boolean}
-const panel=(p:Page)=>p.getByText('Резервная копия группы настроек',{exact:true}).locator('..');
-async function setup(page:Page,language='ru-RU'){
- await page.addInitScript(language=>{
-  localStorage.setItem('lconnect.interface-language',language);
-  const summary={version:1,slots:[{group:'screen',slot:7,name:'Ночной экран'}],lcd:{mode:'Application',brightness_percent:42,rotation_degrees:90},theme_name:'Часы и температура',media_key:null,fan_manual_percent:0,pump_manual:{percent:55,source:'mcu'},fan_led_mode:'static',pump_led_mode:'rainbow',cooling:{fan:{mode:'fixed',percent:0},pump:{mode:'motherboard',percent:55}},dynamic_rgb:null};
-  const f={language,job:null as null|Record<string,unknown>,calls:[] as {command:string;args:Record<string,unknown>}[],lost:false,lostFinish:false};
-  function committed(){const j=f.job!;j.phase='complete';j.readback={dev:j.dev,group:j.group,operation_id:j.id,receipt:'opaque durable receipt',selected_content_current:true,summary:j.summary??summary,runtime:{revision:'opaque runtime token',last_error:null,recovery_required:false}};}
-  Object.assign(window,{groupFixture:f,commitGroup:committed,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
-   if(command.startsWith('group_archive_')){
-    f.calls.push({command,args:structuredClone(args)});
-    if(command==='group_archive_status')return structuredClone(f.job);
-    if(command==='group_archive_start'){const r=args.request as Record<string,unknown>;f.job={...r,phase:r.mode==='export'?'downloading':'prepared',transferred:1024,total:1024,file_name:r.mode==='reset'?null:'backup.lcg',message:null,summary,readback:null,snapshot:{expected:'opaque original token'}};if(f.lost){f.lost=false;throw {message:'Start reply lost'};}return structuredClone(f.job);}
-    if(command==='group_archive_action'){
-     const r=args.request as Record<string,unknown>;
-     if(args.action==='dismiss'){f.job=null;return null;}
-     if(args.action==='recover'){f.job={...r,transferred:1024,total:1024,file_name:null,message:null,summary,readback:null};committed();}
-     if(args.action==='finish'||args.action==='reapply'){committed();if(f.lostFinish){f.lostFinish=false;f.job!.phase='uncertain';f.job!.readback=null;throw {message:'Finish reply lost'};}}
-     if(args.action==='cancel')f.job!.phase='cancelling';
-     return structuredClone(f.job);
-    }
-   }
-   switch(args.method){
-    case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
-    case 'list_devices':return [{id:'test',display_name:'LCDV2'},{id:'other',display_name:'Other mock device'}];
-    case 'list_sensors':return [{id:'cpu:test',label:'Test CPU',unit:'celsius',value:40,status:'valid',age_ms:0}];
-    case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];
-    case 'get_lcd_state':return {source:'Idle',requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'},last_error:null};
-    case 'list_profiles':return {version:1,revision:0,profiles:[]};
-    default:return null;
-   }
-  }}});
- },language);
- await page.goto('/');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible({timeout:15000});
- await page.getByRole('button',{name:language==='en-US'?'Settings':'Настройки',exact:true}).click();await page.getByText(language==='en-US'?'Settings group backup':'Резервная копия группы настроек',{exact:true}).click();
-}
+import {setup,panel,type Fixture} from './fixtures/group-archive';
 async function calls(p:Page,action:string){return p.evaluate(a=>(window as unknown as {groupFixture:Fixture}).groupFixture.calls.filter(c=>c.args.action===a),action);}
 const choose=(p:Page)=>panel(p).getByRole('button',{name:'Выбрать архив группы…',exact:true});
 test('inspection displays actual LCD values and zero PWM before explicit target-bound Apply; preserves editor',async({page})=>{
@@ -152,3 +117,31 @@ test('typed group action rejection preserves raw diagnostic and never infers not
  await expect(english.getByRole('alert').filter({hasText:'Настройки'})).toBeVisible();
  expect(await calls(page,'finish')).toHaveLength(0);
 });
+
+for(const language of ['en-US','ru-RU']) {
+ test(`${language}: full reset preview exposes all factory modes and selected IDs before confirmation`,async({page})=>{
+  await setup(page,language);
+  const en=language==='en-US',area=page.locator('details').filter({has:page.locator('summary').filter({hasText:en?'Settings group backup':'Резервная копия группы настроек'})}).first();
+  await area.getByRole('combobox',{name:en?'Settings group':'Группа настроек',exact:true}).selectOption('fan_and_lighting');
+  await area.getByRole('combobox',{name:en?'CPU temperature sensor for reset':'Температурный датчик CPU для сброса',exact:true}).selectOption('cpu:test');
+  await area.getByRole('button',{name:en?'Prepare full cooling and lighting reset…':'Подготовить полный сброс охлаждения и подсветки…',exact:true}).click();
+  await page.evaluate(()=>{
+   const f=(window as unknown as {groupFixture:Fixture}).groupFixture;
+   const summary=f.job!.summary!;
+   summary.slots=Array.from({length:8},(_,i)=>({group:i<4?'fan':'pump',slot:i%4,name:`Slot ${i%4+1}`}));
+   summary.lcd=null;summary.theme_name=null;summary.fan_manual_percent=null;summary.pump_manual=null;
+   summary.cooling={fan_mode:'StandardSpeed',pump_mode:'PWMQuiet',fan:{mode:'fan_curve',sensor_id:'cpu:test',points:[{celsius:0,percent:10},{celsius:100,percent:100}],hysteresis_c:0,fallback_percent:100},pump:{mode:'curve_rpm',sensor_id:'cpu:test',points:[{celsius:30,rpm:2000},{celsius:100,rpm:3600}],hysteresis_c:0,fallback_percent:100}};
+   summary.cooling_modes={
+    fan:['Quiet','StandardSpeed','HighSpeed','FullSpeed','UserDefine1','UserDefine2','UserDefine3','UserDefine4'].map(id=>({id,name:id,policy:{mode:'fixed',percent:50}})),
+    pump:['FixRPM','PWMPerformance','PWMQuiet'].map(id=>({id,name:id,policy:{mode:'fixed_rpm',rpm:2200}}))
+   };
+  });
+  const bank=area.locator('details.bank-summary');await expect(bank).toBeVisible();await bank.locator('summary').click();
+  await expect(bank.locator('p')).toHaveCount(11);
+  await expect(area.getByText(/StandardSpeed,.*PWMQuiet/)).toBeVisible();expect(await calls(page,'finish')).toHaveLength(0);
+  for(const [width,height] of [[1280,1000],[1024,900]]) {
+   await page.setViewportSize({width,height});await bank.scrollIntoViewIfNeeded();expect(await area.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
+   await page.screenshot({path:`../.impeccable/review/control-reset-bank-${language}-${width}.png`});
+  }
+ });
+}

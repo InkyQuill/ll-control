@@ -1,5 +1,5 @@
 //! Intel i915/xe read-only GT clock telemetry, independent of PMU permissions.
-//! Source paths and semantics: docs/parity/sensor-provider-inventory.md.
+//! Source paths and semantics: docs/development/parity/sensor-provider-inventory.md.
 use super::{number, reading};
 use lconnect_ipc::{SensorReading, SensorStatus, SensorUnit};
 use std::{

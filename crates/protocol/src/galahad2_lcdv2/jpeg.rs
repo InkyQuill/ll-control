@@ -14,7 +14,7 @@
 //! can read directly.
 //!
 //! **Cmd 14 (`SendJpeg`) is now live-verified on FW 1.6.** See
-//! `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`: the
+//! `docs/development/protocol/captures/2026-04-25-jpeg-upload-live.txt`: the
 //! presumed wire shape — chunked BCommandPacket with raw JPEG bytes
 //! starting at offset 11, no frame header — drives the LCD reliably.
 //! Empirically the firmware decodes and displays within ~50 ms but
@@ -68,7 +68,7 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 /// # Caveats
 ///
 /// **Cmd 14 is verified live on FW 1.6** (capture file
-/// `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`). The wire
+/// `docs/development/protocol/captures/2026-04-25-jpeg-upload-live.txt`). The wire
 /// shape — chunked BCommandPacket with raw JPEG bytes starting at
 /// offset 11, per-chunk Command and DataSize replicated, PacketNumber
 /// incrementing from 0, no `isFanLed` flag and no zero pad — matches
@@ -152,7 +152,7 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 ///
 /// **Cmd 15's visible behaviour is currently unknown on FW 1.6.** Live
 /// runs (capture file
-/// `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`) show the
+/// `docs/development/protocol/captures/2026-04-25-jpeg-upload-live.txt`) show the
 /// device accepts 56-packet transfers and ACKs every 1024-byte write,
 /// but no visible LCD change occurs in either default mode or after
 /// `LCDControl{mode=Application}` preflight. Plausible (unverified)

@@ -4,9 +4,10 @@ test('voltage, clocks, network and storage stay typed from Sensors to LCD Apply'
     const calls: { method: string; params: Record<string, unknown> }[] = [];
     Object.assign(window, { electricalCalls: calls, __TAURI_INTERNALS__: {
       invoke: async (_: string, request: { method: string; params: Record<string, unknown> }) => {
+        if (_ === 'desktop_set_language') return null;
         calls.push(request);
         switch (request.method) {
-          case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2' }];
+          case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [
             { id: 'gpu:voltage', label: 'GPU voltage', unit: 'volts', value: 0.975, status: 'valid', age_ms: 10 },
             { id: 'gpu:clock', label: 'GFX clock', unit: 'hertz', value: 1500000000, status: 'valid', age_ms: 10 },
@@ -20,7 +21,7 @@ test('voltage, clocks, network and storage stay typed from Sensors to LCD Apply'
       }
     } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button', { name: 'Датчики', exact: true }).click();
   await expect(page.getByText('0.97 V', { exact: true })).toBeVisible();
@@ -28,7 +29,7 @@ test('voltage, clocks, network and storage stay typed from Sensors to LCD Apply'
   await expect(page.getByText('1000.0 B/s', { exact: true })).toBeVisible();
   await expect(page.getByText('2.0 GiB', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Экран помпы', exact: true }).click();
-  await page.getByText('Готовые темы — редактируемые раскладки').click();
+  await page.getByRole('button',{name:'Готовые темы',exact:true}).click();
   await page.getByLabel('Раскладка', { exact: true }).selectOption('quad');
   await page.getByRole('checkbox', { name: 'GPU voltage · volts' }).check();
   await page.getByRole('checkbox', { name: 'GFX clock · hertz' }).check();

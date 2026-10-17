@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -26,8 +26,10 @@ test.beforeEach(async ({ page }) => {
     const metadata:Metadata={width:64,height:64,durationSeconds:2,averageFrameRate:{numerator:24,denominator:1},nominalFrameRate:{numerator:24,denominator:1}};
     type Job = {id:string;name:string;total:number;received:number;phase:string;key:string|null;message:string|null;metadata?:Metadata};
     type Collections = {version:number;revision:number;images:string[];watermarks:string[];backgrounds:{kind:string;key:string}[]};
-    const fixture = {delayPostEditCatalog:false,completedCatalogReads:0,catalogRelease:null as null|(()=>void),metadata,delayInspect:false,lostInspect:false,inspectRelease:null as null|(()=>void),source:null as null|{id:string;key:string;phase:string;message:string|null;metadata?:Metadata},clips:[] as {key:string;name:string;fps:number;frames:number;encoded_bytes:number;is_default?:boolean}[],collections:null as Collections|null,membershipDevices:[] as string[],job:null as Job|null, calls:[] as {command:string;offset?:number;length?:number;fit?:string;cut?:unknown;adjustments?:unknown;range?:unknown}[], complete:false, reviewReady:false, delayConfirm:false, lostConfirm:false, confirmRelease:null as null|(()=>void), delayBegin:false, release:null as null|(()=>void)};
+    const fixture = {language:'ru-RU',cancelFailure:false,delayCancel:false,cancelRelease:null as null|(()=>void),statusReads:0,failStatus:false,diagnostic:'Настройки',failCommand:'',delayPostEditCatalog:false,completedCatalogReads:0,catalogRelease:null as null|(()=>void),metadata,delayInspect:false,lostInspect:false,inspectRelease:null as null|(()=>void),source:null as null|{id:string;key:string;phase:string;message:string|null;metadata?:Metadata},clips:[] as {key:string;name:string;fps:number;frames:number;encoded_bytes:number;is_default?:boolean}[],collections:null as Collections|null,membershipDevices:[] as string[],job:null as Job|null, calls:[] as {command:string;offset?:number;length?:number;fit?:string;cut?:unknown;adjustments?:unknown;range?:unknown}[], complete:false, reviewReady:false, delayConfirm:false, lostConfirm:false, confirmRelease:null as null|(()=>void), delayBegin:false, release:null as null|(()=>void)};
     Object.assign(window,{fixture,__TAURI_INTERNALS__:{convertFileSrc:(id:string,protocol='media-preview')=>`http://${protocol}.localhost/${id}`,invoke:async(command:string,args:Record<string,unknown> = {})=>{
+        if (command === 'desktop_set_language') return null;
+      if(command===fixture.failCommand){fixture.failCommand='';fixture.calls.push({command});throw new Error(fixture.diagnostic);}
       if(command==='media_playback_url')return `http://${args.kind==='source' ? 'media-source' : 'media-preview'}.localhost/${args.id}`;
       if(command==='media_source_start') {fixture.calls.push({command});fixture.source={id:args.id as string,key:args.key as string,phase:'ready',message:null,metadata:fixture.metadata};return {...fixture.source};}
       if(command==='media_source_status')return fixture.source ? {...fixture.source}:null;
@@ -36,6 +38,8 @@ test.beforeEach(async ({ page }) => {
       if(command === 'media_thumbnail_cancel') return null;
       if(command === 'media_thumbnail') return Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg=='), c=>c.charCodeAt(0));
       if(command==='media_status') {
+        fixture.statusReads++;
+        if(fixture.failStatus)throw new Error(fixture.diagnostic);
         if(fixture.complete && fixture.job?.phase==='encoding') {fixture.job.phase='complete';fixture.job.key='a'.repeat(32);}
         return fixture.job ? {...fixture.job}:null;
       }
@@ -75,13 +79,13 @@ test.beforeEach(async ({ page }) => {
         if(fixture.lostConfirm)throw new Error('Lost confirmation reply');
         return null;
       }
-      if(command==='media_cancel') {fixture.calls.push({command});if(fixture.job)fixture.job.phase='cancelled';return fixture.job?{...fixture.job}:null;}
+      if(command==='media_cancel') {fixture.calls.push({command});if(fixture.delayCancel)await new Promise<void>(resolve=>fixture.cancelRelease=resolve);if(fixture.cancelFailure){fixture.cancelFailure=false;throw new Error(fixture.diagnostic);}if(fixture.job)fixture.job.phase='cancelled';return fixture.job?{...fixture.job}:null;}
       if(command==='daemon_call') {
         switch(args.method){
-        case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
+        case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:fixture.language};
           case 'get_screen_collections': return {collections:fixture.collections,persistence:{pending:false,saved:false,last_error:null}};
         case 'set_screen_collections': {const params=args.params as {dev:string;expected_revision:number;collections:Collections};if(fixture.collections && params.expected_revision!==fixture.collections.revision)throw new Error('Collection revision conflict');fixture.membershipDevices.push(params.dev);fixture.collections=params.collections;return fixture.collections;}
-        case 'list_devices': return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices': return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
           case 'list_sensors': return [];
           case 'get_lcd_state': return {source:'Idle'};
           case 'get_lcd_media': return null;
@@ -94,7 +98,8 @@ test.beforeEach(async ({ page }) => {
       throw new Error(command);
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect(page.getByLabel('Импортировать GIF/MP4')).toBeEnabled();
 });
@@ -128,6 +133,7 @@ test('closing panel during delayed begin cancels its eventual upload without sta
   await page.evaluate(()=>{(window as unknown as {fixture:{delayBegin:boolean}}).fixture.delayBegin=true;});
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'x.gif',mimeType:'image/gif',buffer:Buffer.from('fixture')});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{release:unknown}}).fixture.release!==null)).toBe(true);
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {fixture:{release:()=>void}}).fixture.release();});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}|null}}).fixture.job?.phase)).toBe('cancelled');
@@ -208,6 +214,7 @@ test('local source preview seeks real frames under app CSP and sets cut boundari
     await route.fulfill({response,headers:{...response.headers(),'content-security-policy':`${config.app.security.csp}; script-src 'self' ${hashes.join(' ')}`}});
   });
   await page.reload();
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await page.getByLabel('Выбрать фрагменты видео').check();
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'preview.mp4',mimeType:'video/mp4',buffer:videoFixture});
@@ -251,6 +258,7 @@ test('changing and closing local preview releases URLs and an unreadable source 
   await expect(page.getByRole('button',{name:'Подготовить выбранные фрагменты'})).toBeEnabled();
   expect(await page.evaluate(()=>(window as unknown as {previewRevoked:string[]}).previewRevoked)).toContain(first);
   const second=await video.getAttribute('src');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {previewRevoked:string[]}).previewRevoked)).toContain(second);
   expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.some(c=>c.command==='media_begin'))).toBe(false);
@@ -350,6 +358,7 @@ test('prepared movie streams bounded ranges and publication requires one explici
     await route.fulfill({response,headers:{...response.headers(),'content-security-policy':`${config.app.security.csp}; script-src 'self' ${hashes.join(' ')}`}});
   });
   await page.reload();
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   const ranges:string[]=[];
   await page.route('http://media-preview.localhost/**',async route=>{
@@ -392,6 +401,7 @@ test('closing a ready review cancels staging without publication even if the pla
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'prepared.mp4',mimeType:'video/mp4',buffer:videoFixture});
   await page.getByRole('button',{name:'Подготовить выбранные фрагменты'}).click();
   await expect(page.getByText('Не удалось воспроизвести готовый ролик в этом окне.',{exact:false})).toBeVisible();
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('cancelled');
   const commands=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.map(c=>c.command));
@@ -504,6 +514,7 @@ async function openSavedEditor(page:import('@playwright/test').Page) {
     await route.fulfill({response,headers:{...response.headers(),'content-security-policy':`${config.app.security.csp}; script-src 'self' ${hashes.join(' ')}`}});
   });
   await page.reload();
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await page.route('http://media-source.localhost/**',route=>route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*'},contentType:'video/mp4',body:videoFixture}));
   await page.route('http://media-preview.localhost/**',route=>route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*'},contentType:'video/mp4',body:videoFixture}));
@@ -667,6 +678,7 @@ test('VideoEdit unknown FPS blocks preparation and close during inspection cance
   await page.evaluate(()=>{(window as unknown as {fixture:{delayInspect:boolean}}).fixture.delayInspect=true;});
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'delayed.mp4',mimeType:'video/mp4',buffer:videoFixture});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{inspectRelease:unknown}}).fixture.inspectRelease!==null)).toBe(true);
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {fixture:{inspectRelease:()=>void}}).fixture.inspectRelease();});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('cancelled');
@@ -704,3 +716,215 @@ test('gallery edit restores focus after the reopened import panel refreshes the 
   await expect(edit).toBeEnabled();
   await expect(edit).toBeFocused();
 });
+
+
+async function mediaLanguage(page:Page,language:string) {
+  await page.evaluate(language=>{(window as unknown as {fixture:{language:string}}).fixture.language=language;},language);
+  await expect(page.getByRole('region',{name:language==='en-US'?'Video import':'Импорт ролика',exact:true})).toBeVisible();
+}
+
+for(const language of ['en-US','ru-RU'])test(`failed cancel permits explicit retry after status readback (${language})`,async({page})=>{
+  await mediaLanguage(page,language);
+  const english=language==='en-US';
+  await page.evaluate(()=>{(window as unknown as {fixture:{cancelFailure:boolean}}).fixture.cancelFailure=true;});
+  await page.getByLabel(english?'Import GIF/MP4':'Импортировать GIF/MP4',{exact:true}).setInputFiles({name:'Настройки.mp4',mimeType:'video/mp4',buffer:videoFixture});
+  const cancel=page.getByRole('button',{name:english?'Cancel import':'Отменить импорт',exact:true});
+  await cancel.click();
+  await expect(page.getByRole('region',{name:english?'Video import':'Импорт ролика',exact:true}).getByRole('alert')).toHaveText('Настройки');
+  await expect(cancel).toBeEnabled();
+  const before=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[];job:{id:string;phase:string}}}).fixture);
+  expect(before.job.phase).toBe('encoding');
+  expect(before.calls.filter(c=>c.command==='media_cancel')).toHaveLength(1);
+  await cancel.click();
+  await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('cancelled');
+  const after=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[];job:{id:string}}}).fixture);
+  expect(after.job.id).toBe(before.job.id);
+  expect(after.calls.filter(c=>c.command==='media_cancel')).toHaveLength(2);
+  expect(after.calls.some(c=>c.command==='media_confirm')).toBe(false);
+});
+
+
+test('cancel retry waits for readable matching state and stays blocked for publishing',async({page})=>{
+  await mediaLanguage(page,'en-US');
+  await page.getByLabel('Import GIF/MP4',{exact:true}).setInputFiles({name:'Настройки.mp4',mimeType:'video/mp4',buffer:videoFixture});
+  const original=await page.evaluate(()=>{
+    const f=(window as unknown as {fixture:{job:{id:string;phase:string};cancelFailure:boolean;failStatus:boolean}}).fixture;
+    f.cancelFailure=true;f.failStatus=true;return {...f.job};
+  });
+  const cancel=page.getByRole('button',{name:'Cancel import',exact:true}),check=page.getByRole('button',{name:'Check import',exact:true});
+  await cancel.click();
+  await expect(page.getByRole('region',{name:'Video import',exact:true}).getByRole('alert')).toHaveText('Настройки');
+  await expect(cancel).toBeDisabled();
+  await page.evaluate(()=>{
+    const f=(window as unknown as {fixture:{failStatus:boolean;job:{id:string}}}).fixture;
+    f.failStatus=false;f.job.id='f'.repeat(32);
+  });
+  await check.click();await expect(cancel).toBeDisabled();
+  await page.evaluate(original=>{
+    const f=(window as unknown as {fixture:{job:unknown}}).fixture;
+    f.job={...original,phase:'publishing'};
+  },original);
+  await check.click();await expect(cancel).toBeDisabled();
+  await page.evaluate(original=>{(window as unknown as {fixture:{job:unknown}}).fixture.job=original;},original);
+  await check.click();await expect(cancel).toBeEnabled();
+  expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.filter(c=>c.command==='media_cancel').length)).toBe(1);
+  await cancel.click();
+  await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('cancelled');
+  expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.filter(c=>c.command==='media_cancel').length)).toBe(2);
+});
+
+
+for(const context of ['upload','prepare','confirm'] as const)for(const language of ['en-US','ru-RU']) {
+  test(`import ${context} recovery copy follows language and retries explicitly (${language})`,async({page})=>{
+    await page.route('http://media-preview.localhost/**',route=>route.fulfill({status:200,contentType:'video/mp4',body:videoFixture}));
+    await mediaLanguage(page,language);
+    const english=language==='en-US',fileName='Настройки.mp4';
+    const diagnostic=context==='confirm'?'Настройки':'probe {0} <diagnostic>';
+    if(context==='upload') {
+      await page.getByLabel(english?'Import GIF/MP4':'Импортировать GIF/MP4',{exact:true}).setInputFiles({name:'empty.mp4',mimeType:'video/mp4',buffer:Buffer.alloc(0)});
+      await expect(page.getByRole('region',{name:english?'Video import':'Импорт ролика',exact:true}).getByRole('alert')).toHaveText(english?'Select a nonempty GIF or MP4 up to 256 MiB.':'Выберите непустой GIF или MP4 размером до 256 MiB.');
+    } else if(context==='prepare') {
+      await page.getByLabel(english?'Single VideoEdit range':'Один диапазон VideoEdit',{exact:true}).check();
+    } else {
+      await page.getByLabel(english?'Select video segments':'Выбрать фрагменты видео',{exact:true}).check();
+      await page.getByLabel(english?'Segment end 1, s':'Конец фрагмента 1, с',{exact:true}).fill('1');
+      await page.getByRole('button',{name:english?'Choose segment region 1':'Выбрать область фрагмента 1',exact:true}).click();
+      const region=page.getByRole('group',{name:english?'Segment region 1':'Область фрагмента 1',exact:true});
+      for(const [en,ru] of [['Left','Слева'],['Top','Сверху'],['Width','Ширина'],['Height','Высота']]) {
+        await expect(region.getByLabel(english?`${en}, % — segment 1`:`${ru}, % — фрагмент 1`,{exact:true})).toBeVisible();
+      }
+    }
+    await page.evaluate(({context,diagnostic})=>{
+      const f=(window as unknown as {fixture:{failCommand:string;diagnostic:string;reviewReady:boolean}}).fixture;
+      f.reviewReady=true;f.diagnostic=diagnostic;
+      f.failCommand=context==='upload'?'media_append':context==='prepare'?'media_prepare_inspected':'media_confirm';
+    },{context,diagnostic});
+    await page.getByLabel(english?'Import GIF/MP4':'Импортировать GIF/MP4',{exact:true}).setInputFiles({name:fileName,mimeType:'video/mp4',buffer:videoFixture});
+    const action=(en:boolean)=>context==='prepare'?(en?'Prepare VideoEdit range':'Подготовить диапазон VideoEdit'):(en?'Save prepared video':'Сохранить готовый ролик');
+    if(context==='prepare') {
+      await page.getByLabel(english?'VideoEdit start, s':'Начало VideoEdit, с',{exact:true}).fill('0.25');
+      await page.getByLabel(english?'VideoEdit end, s':'Конец VideoEdit, с',{exact:true}).fill('1.5');
+      await page.getByRole('button',{name:action(english),exact:true}).click();
+    } else if(context==='confirm') {
+      await page.getByRole('button',{name:english?'Prepare selected segments':'Подготовить выбранные фрагменты',exact:true}).click();
+      await page.getByRole('button',{name:action(english),exact:true}).click();
+    }
+    const expected=(en:boolean)=>context==='upload'?
+      `${diagnostic} ${en?'Check the import status and library before uploading again.':'Проверьте состояние импорта и библиотеку перед повторной загрузкой.'}`:
+      context==='prepare'?`${diagnostic} ${en?'Check the preparation status.':'Проверьте состояние подготовки.'}`:
+      `${diagnostic} ${en?'Check the import status before confirming again.':'Проверьте состояние импорта перед повторным подтверждением.'}`;
+    const panel=(en:boolean)=>page.getByRole('region',{name:en?'Video import':'Импорт ролика',exact:true});
+    await expect(panel(english).getByRole('alert')).toHaveText(expected(english));
+    const before=await page.evaluate(()=>(window as unknown as {fixture:{job:{id:string};calls:{command:string}[]}}).fixture);
+    for(const next of [english?'ru-RU':'en-US',language]) {
+      await mediaLanguage(page,next);await expect(panel(next==='en-US').getByRole('alert')).toHaveText(expected(next==='en-US'));
+    }
+    const afterSwitch=await page.evaluate(()=>(window as unknown as {fixture:{job:{id:string;name:string};calls:{command:string}[]}}).fixture);
+    expect(afterSwitch.job.id).toBe(before.job.id);expect(afterSwitch.job.name).toBe(fileName);
+    expect(afterSwitch.calls.filter(c=>c.command==='media_begin')).toHaveLength(1);
+    expect(afterSwitch.calls.filter(c=>c.command==='media_confirm')).toHaveLength(context==='confirm'?1:0);
+    if(context==='upload') {
+      await page.getByLabel(english?'Import GIF/MP4':'Импортировать GIF/MP4',{exact:true}).setInputFiles({name:fileName,mimeType:'video/mp4',buffer:videoFixture});
+      await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('encoding');
+    } else {
+      if(context==='prepare') {
+        await expect(page.getByLabel(english?'VideoEdit start, s':'Начало VideoEdit, с',{exact:true})).toHaveValue('0.25');
+        await expect(page.getByLabel(english?'VideoEdit end, s':'Конец VideoEdit, с',{exact:true})).toHaveValue('1.5');
+      }
+      await page.getByRole('button',{name:action(english),exact:true}).click();
+      await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe(context==='confirm'?'complete':'review_ready');
+    }
+    const result=await page.evaluate(()=>(window as unknown as {fixture:{job:{id:string;name:string};calls:{command:string}[]}}).fixture);
+    expect(result.job.name).toBe(fileName);
+    expect(result.calls.filter(c=>c.command==='media_confirm')).toHaveLength(context==='confirm'?2:0);
+    expect(result.calls.filter(c=>c.command==='media_begin')).toHaveLength(context==='upload'?2:1);
+  });
+}
+
+
+test('pending cancellation blocks VideoEdit prepare even after successful status polls',async({page})=>{
+  await mediaLanguage(page,'en-US');
+  await page.getByLabel('Single VideoEdit range',{exact:true}).check();
+  await page.getByLabel('Import GIF/MP4',{exact:true}).setInputFiles({name:'Настройки.mp4',mimeType:'video/mp4',buffer:videoFixture});
+  const prepare=page.getByRole('button',{name:'Prepare VideoEdit range',exact:true});
+  await expect(prepare).toBeEnabled();
+  await page.evaluate(()=>{(window as unknown as {fixture:{delayCancel:boolean}}).fixture.delayCancel=true;});
+  const cancel=page.getByRole('button',{name:'Cancel import',exact:true});
+  await cancel.click();
+  const baseline=await page.evaluate(()=>(window as unknown as {fixture:{statusReads:number}}).fixture.statusReads);
+  await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{statusReads:number}}).fixture.statusReads)).toBeGreaterThan(baseline+1);
+  await expect(cancel).toBeDisabled();await expect(prepare).toBeDisabled();
+  await page.evaluate(()=>{
+    const f=(window as unknown as {fixture:{delayCancel:boolean;cancelRelease:null|(()=>void)}}).fixture;
+    f.delayCancel=false;f.cancelRelease?.();
+  });
+  await expect(page.getByLabel('Import GIF/MP4',{exact:true})).toBeEnabled();
+  const result=await page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string};calls:{command:string}[]}}).fixture);
+  expect(result.job.phase).toBe('cancelled');
+  expect(result.calls.filter(c=>c.command==='media_cancel')).toHaveLength(1);
+  expect(result.calls.some(c=>['media_prepare_inspected','media_confirm'].includes(c.command))).toBe(false);
+});
+
+test('video crop capture loss cancels the pending rectangle and a fresh gesture works',async({page})=>{
+  await page.getByLabel('Выбрать фрагменты видео').check();
+  await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'split.mp4',mimeType:'video/mp4',buffer:splitFixture});
+  await page.getByLabel('Конец фрагмента 1, с',{exact:true}).fill('1');
+  await page.getByRole('button',{name:'Выбрать область фрагмента 1',exact:true}).click();
+  const surface=page.getByRole('button',{name:'Выбор области видео',exact:true});
+  await expect(surface).toBeVisible();await surface.scrollIntoViewIfNeeded();const box=(await surface.boundingBox())!;
+  await surface.evaluate(element=>element.addEventListener('pointerdown',event=>element.setAttribute('data-last-pointer',String((event as PointerEvent).pointerId)),{once:true}));
+  const left=page.getByLabel('Слева, % — фрагмент 1',{exact:true});const before=await left.inputValue();
+  await page.mouse.move(box.x+box.width*.1,box.y+box.height*.1);await page.mouse.down();
+  const id=Number(await surface.getAttribute('data-last-pointer'));
+  await surface.evaluate((element,id)=>element.releasePointerCapture(id),id);
+  await page.mouse.move(box.x+box.width*.8,box.y+box.height*.8);await page.mouse.up();
+  await expect(left).toHaveValue(before);
+  await page.mouse.move(box.x+box.width*.2,box.y+box.height*.2);await page.mouse.down();
+  await page.mouse.move(box.x+box.width*.7,box.y+box.height*.7);await page.mouse.up();
+  expect(Number(await left.inputValue())).toBeCloseTo(20,0);
+  expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.filter(c=>['media_begin','media_confirm'].includes(c.command)))).toEqual([]);
+});
+
+for(const language of ['en-US','ru-RU']) {
+  test(`source notices follow language without replaying recording (${language})`,async({page})=>{
+    await mediaLanguage(page,language);const en=language==='en-US';
+    await page.getByLabel(en?'Select video segments':'Выбрать фрагменты видео',{exact:true}).check();
+    await page.getByLabel(en?'Import GIF/MP4':'Импортировать GIF/MP4',{exact:true}).setInputFiles({name:'Настройки {0}.mp4',mimeType:'video/mp4',buffer:videoFixture});
+    await page.getByLabel(en?'Segment selection method':'Способ выбора фрагментов').selectOption('true');
+    const video=page.getByLabel(en?'Source video':'Исходное видео',{exact:true});
+    const record=()=>page.getByRole('button',{name:language==='en-US'?'Record segment':'Записать фрагмент',exact:true});
+    await expect(record()).toBeEnabled();
+    await video.evaluate(v=>{Object.assign(v,{play:()=>Promise.reject(new Error('decoder unavailable'))});});
+    await record().click();
+    const failure=(english:boolean)=>english?'Could not start playback. No segment was added.':'Не удалось начать воспроизведение. Фрагмент не добавлен.';
+    await expect(page.getByRole('status').filter({hasText:failure(en)})).toBeVisible();
+    await mediaLanguage(page,en?'ru-RU':'en-US');
+    await expect(page.getByRole('status').filter({hasText:failure(!en)})).toBeVisible();
+    await mediaLanguage(page,language);
+    await video.evaluate(v=>{Object.assign(v,{play:HTMLMediaElement.prototype.play});});
+    await record().click();
+    await expect.poll(()=>video.evaluate(v=>(v as HTMLVideoElement).currentTime)).toBeGreaterThan(.2);
+    await page.getByRole('button',{name:en?'Pause recording':'Пауза записи',exact:true}).click();
+    const added=(english:boolean)=>english?'Segment added.':'Фрагмент добавлен.';
+    await expect(page.getByText(added(en),{exact:true})).toBeVisible();
+    await mediaLanguage(page,en?'ru-RU':'en-US');
+    await expect(page.getByText(added(!en),{exact:true})).toBeVisible();
+    const calls=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls);
+    expect(calls.some(c=>['media_begin','media_confirm'].includes(c.command))).toBe(false);
+  });
+  test(`color preview failure follows language without preparing media (${language})`,async({page})=>{
+    await mediaLanguage(page,language);const en=language==='en-US';
+    await page.getByLabel(en?'Select video segments':'Выбрать фрагменты видео',{exact:true}).check();
+    await page.getByLabel(en?'Import GIF/MP4':'Импортировать GIF/MP4',{exact:true}).setInputFiles({name:'Настройки.mp4',mimeType:'video/mp4',buffer:videoFixture});
+    await expect(page.getByLabel(en?'Source video':'Исходное видео',{exact:true})).toBeVisible();
+    await page.evaluate(()=>{CanvasRenderingContext2D.prototype.getImageData=()=>{throw new Error('readback unavailable');};});
+    await page.getByLabel(en?'Video color correction':'Цветокоррекция видео',{exact:true}).check();
+    await page.getByLabel(en?'Video brightness value':'Яркость видео — значение',{exact:true}).fill('1');
+    const message=(english:boolean)=>english?'Color preview is unavailable. Check the prepared video after conversion.':'Цветовой preview недоступен. Проверьте готовый ролик после подготовки.';
+    await expect(page.getByText(message(en),{exact:true})).toBeVisible();
+    await mediaLanguage(page,en?'ru-RU':'en-US');
+    await expect(page.getByText(message(!en),{exact:true})).toBeVisible();
+    const calls=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls);
+    expect(calls.some(c=>['media_begin','media_confirm'].includes(c.command))).toBe(false);
+  });
+}

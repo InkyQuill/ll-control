@@ -146,6 +146,16 @@ impl IpcServerImpl {
             crate::profile_archive::PreparedGroup::control_reset(&sensor)
                 .map_err(|e| IpcError::InvalidArgument(e.to_string()))?,
         );
+        self.commit_control_profile(dev, id, expected, prepared)
+            .await
+    }
+    pub(super) async fn commit_control_profile(
+        &self,
+        dev: DeviceId,
+        id: String,
+        expected: GroupRevision,
+        prepared: Arc<crate::profile_archive::PreparedGroup>,
+    ) -> Result<FullGroupCommit> {
         let handles = self.handles(&dev).await?;
         let permit = self
             .theme_jobs
@@ -162,7 +172,7 @@ impl IpcServerImpl {
                     || previous.receipt.source_sha256 != prepared.source_sha256()
                 {
                     return Err(IpcError::InvalidArgument(
-                        "reset operation id already has different parameters".into(),
+                        "control operation id already has different parameters".into(),
                     ));
                 }
                 return Ok(FullGroupCommit {
@@ -520,6 +530,9 @@ impl IpcServerImpl {
 }
 
 #[cfg(test)]
+use crate::windows_screen_fixture as windows_fixture;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::profile_archive::ProfileArchives;
@@ -839,6 +852,11 @@ mod tests {
             threshold_c: 92.0,
             color: lconnect_ipc::Rgb { r: 255, g: 0, b: 0 },
         });
+        let mut custom_banks = lconnect_ipc::lcdv2_default_cooling_modes("cpu:old").unwrap();
+        custom_banks.fan[4].name = "Old renamed mode".into();
+        custom_banks.fan[4].use_default_name = false;
+        custom_banks.pump[0].policy = CoolingPolicy::FixedRpm { rpm: 3000 };
+        initial.cooling_banks = Some(custom_banks);
         store.write(&key, &initial).unwrap();
         let screen = NamedProfile::defaults(ProfileGroup::Screen, 3, None).unwrap();
         store
@@ -866,6 +884,10 @@ mod tests {
         let c = h.client().await;
         let dev = h.dev.clone();
         let expected = reset_snapshot(&c, &dev).await;
+        let old_bank = c
+            .call("get_cooling_modes", json!({"dev":dev}))
+            .await
+            .unwrap();
         let id = "88888888888888888888888888888888";
         let params =
             json!({"dev":dev,"operation_id":id,"expected":expected,"sensor_id":"cpu:test"});
@@ -880,11 +902,11 @@ mod tests {
         let cooling = reset.readback.runtime.cooling.as_ref().unwrap();
         assert_eq!(
             cooling.fan.requested,
-            Some(lconnect_ipc::FanPreset::Standard.policy("cpu:test".into(), 2.0, 100))
+            Some(lconnect_ipc::FanPreset::Standard.policy("cpu:test".into(), 0.0, 100))
         );
         assert_eq!(
             cooling.pump.requested,
-            Some(lconnect_ipc::PumpPreset::Quiet.policy("cpu:test".into(), 2.0, 100))
+            Some(lconnect_ipc::PumpPreset::Quiet.policy("cpu:test".into(), 0.0, 100))
         );
         assert!(cooling.fan.fallback_active && cooling.pump.fallback_active);
         assert_eq!(
@@ -892,6 +914,18 @@ mod tests {
             (Some(100), Some(100))
         );
         let saved = store.read(&key).unwrap();
+        assert_eq!(
+            saved.cooling_banks,
+            Some(lconnect_ipc::lcdv2_default_cooling_modes("cpu:test").unwrap())
+        );
+        assert_eq!(cooling.fan.mode_id.as_deref(), Some("StandardSpeed"));
+        assert_eq!(cooling.pump.mode_id.as_deref(), Some("PWMQuiet"));
+        assert_eq!(saved.cooling.fan_mode.as_deref(), Some("StandardSpeed"));
+        assert_eq!(saved.cooling.pump_mode.as_deref(), Some("PWMQuiet"));
+        assert!(c.call("save_cooling_mode", json!({
+            "dev":dev,"target":"pump","expected_revision":old_bank["revision"],
+            "profile":{"id":"FixRPM","name":"Stale editor","policy":{"mode":"fixed_rpm","rpm":3000}}
+        })).await.is_err(), "reset must invalidate pre-reset editor snapshots");
         let library = store.profiles().list().unwrap();
         assert_eq!(library.revision, 2);
         assert_eq!(library.profiles.len(), 9);
@@ -960,6 +994,332 @@ mod tests {
             Some(CoolingPolicy::Fixed { percent: 37 })
         );
         assert_eq!(store.read(&key).unwrap().thermal, initial.thermal);
+        drop(c);
+        h.stop().await;
+    }
+    fn windows_options() -> lconnect_ipc::WindowsScreenSource {
+        lconnect_ipc::WindowsScreenSource {
+            record: 0,
+            bindings_json: windows_fixture::bindings().to_string(),
+            resources_json: windows_fixture::mapping().to_string(),
+        }
+    }
+    async fn windows_upload(c: &IpcClient, d: &DeviceId, id: &str, bytes: &[u8]) -> S {
+        let snap: GroupArchiveReply = serde_json::from_value(
+            c.call(
+                "group_archive",
+                json!({"dev":d,"group":"screen","request":{"action":"snapshot"}}),
+            )
+            .await
+            .unwrap(),
+        )
+        .unwrap();
+        let GroupArchiveReply::Snapshot { snapshot } = snap else {
+            panic!()
+        };
+        upload(
+            c,
+            d,
+            G::Screen,
+            U::BeginWindowsScreen {
+                id: id.into(),
+                size: bytes.len() as u64,
+                expected: snapshot.expected,
+                source: windows_options(),
+            },
+        )
+        .await;
+        for (index, bytes) in bytes
+            .chunks(lconnect_ipc::PROFILE_ARCHIVE_CHUNK_BYTES)
+            .enumerate()
+        {
+            upload(
+                c,
+                d,
+                G::Screen,
+                U::Chunk {
+                    id: id.into(),
+                    offset: (index * lconnect_ipc::PROFILE_ARCHIVE_CHUNK_BYTES) as u64,
+                    bytes: bytes.to_vec(),
+                },
+            )
+            .await;
+        }
+        upload(c, d, G::Screen, U::Inspect { id: id.into() }).await;
+        wait(c, d, G::Screen, id, P::Prepared).await
+    }
+    #[tokio::test]
+    async fn windows_screen_public_upload_preview_finish_retry_and_restart_keep_editor_and_library()
+    {
+        let root = tempfile::tempdir().unwrap();
+        let store = Arc::new(PersistenceStore::new_with_root(
+            root.path().join("settings"),
+        ));
+        let profile: lconnect_ipc::NamedProfile=serde_json::from_value(json!({"slot":2,"name":"Native library","content":{"kind":"screen","value":{"version":1,"name":"Keep me","background":[4,5,6],"layers":[]}}})).unwrap();
+        let library = store
+            .profiles()
+            .edit(0, lconnect_ipc::ProfileEdit::Save { profile })
+            .unwrap();
+        let info = DeviceInfo::new(
+            DeviceFamilyId::new("galahad2-lcdv2"),
+            0x0416,
+            0x7395,
+            Some("windows-screen".into()),
+            PathBuf::from("/mock/windows-screen"),
+        );
+        let key = settings_key(&info);
+        let mock = MockBackend::new();
+        mock.add_device(info);
+        let h = Harness::start(&root.path().join("runtime"), store.clone(), mock.clone()).await;
+        let c = h.client().await;
+        assert!(c
+            .call("get_imported_lcd_editor", json!({"dev":h.dev}))
+            .await
+            .unwrap()
+            .is_null());
+        let catalog = store.theme_assets().list().unwrap();
+        let before = serde_json::to_value(store.read(&key).unwrap()).unwrap();
+        let id = "b1111111111111111111111111111111";
+        let bytes = windows_fixture::archive(|_| {}, &[]);
+        assert!(c
+            .call(
+                "preview_windows_screen_upload",
+                json!({"dev":h.dev,"id":id,"source":"scene"})
+            )
+            .await
+            .is_err());
+        let ready = windows_upload(&c, &h.dev, id, &bytes).await;
+        assert!(ready.summary.is_some() && ready.source_sha256.is_some());
+        let lcd_before = c.call("get_lcd_state", json!({"dev":h.dev})).await.unwrap();
+        let mut frames = Vec::new();
+        for source in ["scene", "editor"] {
+            let bytes: Vec<u8> = serde_json::from_value(
+                c.call(
+                    "preview_windows_screen_upload",
+                    json!({"dev":h.dev,"id":id,"source":source}),
+                )
+                .await
+                .unwrap(),
+            )
+            .unwrap();
+            let frame = lconnect_image::assets::decode_asset(&bytes).unwrap();
+            assert_eq!((frame.width(), frame.height()), (480, 480));
+            frames.push(bytes);
+        }
+        assert_ne!(frames[0], frames[1]);
+        assert_eq!(
+            c.call("get_lcd_state", json!({"dev":h.dev})).await.unwrap(),
+            lcd_before
+        );
+        assert!(c
+            .call(
+                "preview_windows_screen_upload",
+                json!({"dev":h.dev,"id":id,"source":"other"})
+            )
+            .await
+            .is_err());
+        assert!(c
+            .call(
+                "preview_windows_screen_upload",
+                json!({"dev":"unrelated-device","id":id,"source":"scene"})
+            )
+            .await
+            .is_err());
+        assert_eq!(store.theme_assets().list().unwrap(), catalog);
+        assert_eq!(
+            serde_json::to_value(store.read(&key).unwrap()).unwrap(),
+            before
+        );
+        assert_eq!(store.profiles().list().unwrap().profiles, library.profiles);
+        // Format and binding changes cannot reuse a previously admitted id.
+        for request in [
+            U::Begin {
+                id: id.into(),
+                size: bytes.len() as u64,
+                expected: ready.target.expected.clone(),
+            },
+            U::BeginWindowsScreen {
+                id: id.into(),
+                size: bytes.len() as u64,
+                expected: ready.target.expected.clone(),
+                source: lconnect_ipc::WindowsScreenSource {
+                    record: 1,
+                    ..windows_options()
+                },
+            },
+        ] {
+            assert!(c
+                .call(
+                    "group_upload",
+                    json!({"dev":h.dev,"group":"screen","request":request})
+                )
+                .await
+                .is_err());
+        }
+        // Hold publication after preview. Finish's admitted worker must survive
+        // loss of the connection while waiting for the target asset catalog.
+        let assets = store.theme_assets();
+        let (entered, ready) = oneshot::channel();
+        let (release, hold) = std::sync::mpsc::channel();
+        let gate = tokio::task::spawn_blocking(move || {
+            assets.with_catalog(move |_| {
+                entered.send(()).unwrap();
+                hold.recv_timeout(Duration::from_secs(8)).unwrap();
+                Ok(())
+            })
+        });
+        ready.await.unwrap();
+        upload(&c, &h.dev, G::Screen, U::Finish { id: id.into() }).await;
+        drop(c);
+        release.send(()).unwrap();
+        gate.await.unwrap().unwrap();
+        let c = h.client().await;
+        let state = wait(&c, &h.dev, G::Screen, id, P::Imported).await;
+        let committed = state.committed.unwrap();
+        assert!(!committed.repeated);
+        assert!(committed.readback.selected_content_current);
+        assert_eq!(committed.readback.runtime.recovery_required, Some(false));
+        let generation = committed.readback.runtime.lcd.unwrap().generation;
+        let saved = store.read(&key).unwrap();
+        assert!(saved.theme.is_some() && saved.screen_editor.as_ref().unwrap().theme.is_some());
+        assert!(c
+            .call(
+                "preview_windows_screen_upload",
+                json!({"dev":h.dev,"id":id,"source":"scene"})
+            )
+            .await
+            .is_err());
+        assert_ne!(saved.theme, saved.screen_editor.as_ref().unwrap().theme);
+        let editable: Option<lconnect_ipc::LcdTheme> = serde_json::from_value(
+            c.call("get_imported_lcd_editor", json!({"dev":h.dev}))
+                .await
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(editable, saved.screen_editor.as_ref().unwrap().theme);
+        assert_eq!(store.read(&key).unwrap().theme, saved.theme);
+        let observed = readback(&c, &h.dev, G::Screen, id).await;
+        assert_eq!(observed.runtime.lcd.unwrap().generation, generation);
+
+        assert_eq!(store.profiles().list().unwrap().profiles, library.profiles);
+        drop(c);
+        let c = h.client().await;
+        let repeat = upload(&c, &h.dev, G::Screen, U::Finish { id: id.into() })
+            .await
+            .committed
+            .unwrap();
+        assert!(repeat.repeated);
+        assert_eq!(repeat.readback.runtime.lcd.unwrap().generation, generation);
+        drop(c);
+        h.stop().await;
+        let h = Harness::start(&root.path().join("restart"), store.clone(), mock).await;
+        let c = h.client().await;
+        let recovered = readback(&c, &h.dev, G::Screen, id).await;
+        assert!(recovered.selected_content_current);
+        let editable: Option<lconnect_ipc::LcdTheme> = serde_json::from_value(
+            c.call("get_imported_lcd_editor", json!({"dev":h.dev}))
+                .await
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(editable, saved.screen_editor.as_ref().unwrap().theme);
+
+        assert_eq!(store.read(&key).unwrap().screen_editor, saved.screen_editor);
+        assert_eq!(store.profiles().list().unwrap().profiles, library.profiles);
+        drop(c);
+        h.stop().await;
+    }
+    #[tokio::test]
+    async fn windows_screen_preview_cancel_and_stale_finish_leave_target_catalog_and_settings_unchanged(
+    ) {
+        let root = tempfile::tempdir().unwrap();
+        let store = Arc::new(PersistenceStore::new_with_root(
+            root.path().join("settings"),
+        ));
+        let info = DeviceInfo::new(
+            DeviceFamilyId::new("galahad2-lcdv2"),
+            0x0416,
+            0x7395,
+            Some("windows-cancel".into()),
+            PathBuf::from("/mock/windows-cancel"),
+        );
+        let key = settings_key(&info);
+        let mock = MockBackend::new();
+        mock.add_device(info);
+        let h = Harness::start(&root.path().join("runtime"), store.clone(), mock).await;
+        let c = h.client().await;
+        let catalog = store.theme_assets().list().unwrap();
+        let before = serde_json::to_value(store.read(&key).unwrap()).unwrap();
+        let bytes = windows_fixture::archive(|_| {}, &[]);
+        let cancelled = "c1111111111111111111111111111111";
+        windows_upload(&c, &h.dev, cancelled, &bytes).await;
+        upload(
+            &c,
+            &h.dev,
+            G::Screen,
+            U::Cancel {
+                id: cancelled.into(),
+            },
+        )
+        .await;
+        tokio::time::timeout(Duration::from_secs(3), async {
+            loop {
+                let state = upload(
+                    &c,
+                    &h.dev,
+                    G::Screen,
+                    U::Status {
+                        id: cancelled.into(),
+                    },
+                )
+                .await;
+                if state.phase == P::Cancelled {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(store.theme_assets().list().unwrap(), catalog);
+        assert_eq!(
+            serde_json::to_value(store.read(&key).unwrap()).unwrap(),
+            before
+        );
+        assert!(c
+            .call(
+                "preview_windows_screen_upload",
+                json!({"dev":h.dev,"id":cancelled,"source":"scene"})
+            )
+            .await
+            .is_err());
+        let stale = "d1111111111111111111111111111111";
+        windows_upload(&c, &h.dev, stale, &bytes).await;
+        c.call(
+            "patch_lcd_config",
+            json!({"dev":h.dev,"patch":{"brightness_percent":47}}),
+        )
+        .await
+        .unwrap();
+        let newer = serde_json::to_value(store.read(&key).unwrap()).unwrap();
+        upload(&c, &h.dev, G::Screen, U::Finish { id: stale.into() }).await;
+        tokio::time::timeout(Duration::from_secs(3), async {
+            loop {
+                let state = upload(&c, &h.dev, G::Screen, U::Status { id: stale.into() }).await;
+                if state.phase == P::Failed {
+                    break;
+                }
+                assert_ne!(state.phase, P::Imported);
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(store.theme_assets().list().unwrap(), catalog);
+        assert_eq!(
+            serde_json::to_value(store.read(&key).unwrap()).unwrap(),
+            newer
+        );
         drop(c);
         h.stop().await;
     }

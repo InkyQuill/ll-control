@@ -5,8 +5,9 @@ async function setup(page:Page) {
     const f={holdNext:false,release:null as null|(()=>void),missing:false,legacy:false,failNext:false,writes:0,reads:0};
     const modes=['static','runway','meteor'];
     Object.assign(window,{lightingLoad:f,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params:{kind:string}})=>{
+        if (_ === 'desktop_set_language') return null;
       switch(req.method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle',requested:{}};
         case 'get_lighting_info':{
@@ -22,7 +23,7 @@ async function setup(page:Page) {
       }
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Подсветка',exact:true}).click();
   await expect(page.getByRole('combobox',{name:'Эффект',exact:true})).toHaveValue('static');
 }

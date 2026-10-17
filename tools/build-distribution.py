@@ -45,7 +45,8 @@ def source_inputs():
             paths.extend(Path(base) / file for file in files)
     paths.extend(REPO / name for name in ["Cargo.toml", "Cargo.lock", "LICENSE",
                                           "tools/build-distribution.py", "tools/test-distribution.py",
-                                          "tools/test-distribution-gui.py", "tools/tests/test_distribution.py",
+                                          "tools/test-distribution-gui.py", "tools/test-distribution-mini.py",
+                                          "tools/tests/test_distribution.py",
                                           ".github/workflows/linux.yml"])
     return {p.relative_to(REPO).as_posix(): digest(p) for p in sorted(paths) if p.is_file()}
 
@@ -153,6 +154,8 @@ def main():
         copy(REPO / "desktop/src-tauri/icons/icon.png", stage,
              "usr/share/icons/hicolor/32x32/apps/net.inkyquill.lconnect.png")
         copy(REPO / "LICENSE", stage, "usr/share/licenses/lconnect-linux/LICENSE")
+        copy(REPO / "desktop/static/fonts/OFL.txt", stage,
+             "usr/share/licenses/lconnect-linux/fonts/Exo2-OFL.txt")
         for source in sorted((REPO / "crates/lconnect-image/assets").glob("*.txt")):
             copy(source, stage, f"usr/share/licenses/lconnect-linux/fonts/{source.name}")
         # Both integrations are installed system-wide. Each shell discovers only

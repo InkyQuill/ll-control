@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Provision Arch build environment
         run: |
-          pacman -Syu --noconfirm --needed git rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils
+          pacman -Syu --noconfirm --needed git rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils kirigami gjs gtk4 libadwaita dconf xorg-server-xvfb xorg-xauth
           rustup toolchain install 1.96.0 --profile minimal --component rustfmt --component clippy
           rustup default 1.96.0
           npm install --global pnpm@12.9.1
@@ -50,6 +50,7 @@ jobs:
           cargo test --locked --workspace --all-features
           RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --all-features --no-deps
           pnpm --dir desktop check
+          pnpm --dir desktop test:localization
           pnpm --dir desktop check:locales
           pnpm --dir desktop check:contracts
           python3 -m unittest discover -s tools/tests -p test_distribution.py -v
@@ -63,6 +64,8 @@ jobs:
           runuser -u builder -- makepkg --nodeps --noconfirm
       - name: Private install, upgrade and removal
         run: python3 tools/test-distribution.py target/distribution
+      - name: Packaged Mini model, Qt and GJS integration
+        run: python3 tools/test-distribution-mini.py target/distribution --gjs /usr/bin/gjs
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: lconnect-linux-arch-x86_64

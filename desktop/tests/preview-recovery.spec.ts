@@ -18,10 +18,11 @@ for (const transition of ['draft', 'device', 'reconnect'] as const) {
         window.previewRecovery = fixture;
         Object.assign(window, { __TAURI_INTERNALS__: {
           invoke: async (_: string, request: PreviewFixture['calls'][number]) => {
+        if (_ === 'desktop_set_language') return null;
             if (!fixture.online) throw new Error('fixture offline');
             fixture.calls.push(request);
             switch (request.method) {
-              case 'list_devices': return [{ id: 'A', display_name: 'LCD A' }, { id: 'B', display_name: 'LCD B' }];
+              case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }, { id: 'B', display_name: 'LCD B', family:'galahad2-lcdv2' }];
               case 'list_sensors': return [];
               case 'get_lcd_state': return { source: 'Idle', last_error: null };
               case 'preview_lcd_theme': {
@@ -37,7 +38,7 @@ for (const transition of ['draft', 'device', 'reconnect'] as const) {
           },
         } });
       });
-      await page.goto('/');
+      await page.goto('/?view=display');
       await expect(page.getByText('Daemon подключён')).toBeVisible();
       const preview = page.getByRole('button', { name: 'Обновить preview', exact: true });
       const title = page.getByLabel('Название', { exact: true });

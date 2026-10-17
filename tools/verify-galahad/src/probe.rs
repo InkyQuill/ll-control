@@ -4,7 +4,7 @@
 //! framing classes (A/B/C) and dumps the response as hex. Used by
 //! Phase 0e's targeted-probe set to confirm or refute hypotheses
 //! sourced from sibling device families surveyed in
-//! `docs/protocol/cross-device-survey.md`.
+//! `docs/development/protocol/cross-device-survey.md`.
 //!
 //! Owns the framing-class types, hex-payload parser, and HID round-trip
 //! helper [`run_probe`]. The CLI dispatch (clap argument struct, safety
@@ -15,14 +15,14 @@
 //! Each invocation should target a command byte that has been
 //! reviewed as **read-only** by hid-safety-reviewer. The CLI does not
 //! enforce this — the caller is responsible for choosing a safe cmd
-//! byte. See `docs/protocol/captures/2026-04-26-cross-device-probes.txt`
+//! byte. See `docs/development/protocol/captures/2026-04-26-cross-device-probes.txt`
 //! for the curated probe set.
 //!
 //! # See also
 //!
 //! - `tools/verify-galahad/src/main.rs` — CLI dispatch
-//! - `docs/protocol/cross-device-survey.md` section 6.4 — risky-area flagging
-//! - `docs/superpowers/plans/2026-04-26-phase-0e-cross-device-survey.md` — Phase 0e plan
+//! - `docs/development/protocol/cross-device-survey.md` section 6.4 — risky-area flagging
+//! - `docs/development/superpowers/plans/2026-04-26-phase-0e-cross-device-survey.md` — Phase 0e plan
 
 use anyhow::{anyhow, Context, Result};
 use hidapi::HidDevice;
@@ -45,7 +45,7 @@ use hidapi::HidDevice;
 /// - `crates/protocol/src/galahad2_lcdv2/bpacket.rs` — B-class
 ///   `OUTPUT_LEN = 1024`, `INPUT_LEN = 512`, `REPORT_ID = 0x02`
 /// - C-class (Phase 1+) — `OUTPUT_LEN = INPUT_LEN = 512`, `REPORT_ID = 0x03`,
-///   per `docs/protocol/galahad2-lcdv2.md` framing notes
+///   per `docs/development/protocol/galahad2-lcdv2.md` framing notes
 ///
 /// If those constants change, update `Framing` to match.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
@@ -215,7 +215,7 @@ const READ_TIMEOUT_MS: i32 = 500;
 /// # See also
 ///
 /// - `tools/verify-galahad/src/main.rs::Cmd::Probe` — CLI dispatch
-/// - `docs/protocol/captures/2026-04-26-cross-device-probes.txt` — curated probe set
+/// - `docs/development/protocol/captures/2026-04-26-cross-device-probes.txt` — curated probe set
 pub fn run_probe(device: &HidDevice, args: &ProbeArgs) -> Result<Vec<u8>> {
     let out_len = args.framing.output_len();
     let in_len = args.framing.input_len();

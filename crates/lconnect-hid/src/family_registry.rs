@@ -9,7 +9,7 @@
 //!
 //! - [`crate::hidapi_backend::HidApiBackend`] — consults the registry to
 //!   filter `enumerate` results by known VID/PID
-//! - `docs/protocol/cross-device-survey.md` section 4.6 — VID-clustering
+//! - `docs/development/protocol/cross-device-survey.md` section 4.6 — VID-clustering
 //!   matrix that drives Phase 3+ family additions
 
 use crate::DeviceFamilyId;

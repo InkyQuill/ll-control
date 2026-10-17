@@ -20,9 +20,10 @@ for (const operation of ['set_lcd_theme', 'clear_lcd', 'get_lcd_theme'] as const
         };
         Object.assign(window, { interruptedDisplay: fixture, __TAURI_INTERNALS__: {
           invoke: async (_: string, req: { method: string; params: { theme?: Theme } }) => {
+        if (_ === 'desktop_set_language') return null;
             if (!fixture.online) throw new Error('offline');
             switch (req.method) {
-              case 'list_devices': return [{ id: 'A', display_name: 'LCD A' }];
+              case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
               case 'list_sensors': return [];
               case 'get_lcd_state': return { source: fixture.active ? 'Theme' : 'Idle', last_error: null };
               case 'set_lcd_theme': fixture.active = structuredClone(req.params.theme!); break;
@@ -40,7 +41,7 @@ for (const operation of ['set_lcd_theme', 'clear_lcd', 'get_lcd_theme'] as const
           },
         } });
       });
-      await page.goto('/');
+      await page.goto('/?view=display');
       await expect(page.getByText('Daemon подключён')).toBeVisible();
       const title = page.getByLabel('Название', { exact: true });
       await title.fill('Submitted draft');

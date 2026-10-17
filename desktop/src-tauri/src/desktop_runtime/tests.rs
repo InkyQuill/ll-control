@@ -25,14 +25,7 @@ async fn lost_settings_caller_keeps_io_owned_and_shutdown_waits_for_the_actual_f
         std::env::current_exe().unwrap(),
     )
     .unwrap();
-    let desktop = Arc::new(Desktop {
-        store,
-        preferences: Mutex::new(None),
-        ready: AtomicBool::new(false),
-        tray_error: Mutex::new(None),
-        closed: AtomicBool::new(false),
-        jobs: Arc::new(tokio::sync::Semaphore::new(JOBS as usize)),
-    });
+    let desktop = test_desktop(store);
     let wanted = Preferences {
         autostart: true,
         start_minimized: true,
@@ -94,4 +87,50 @@ async fn lost_settings_caller_keeps_io_owned_and_shutdown_waits_for_the_actual_f
         .save(persisted.revision, Preferences::default())
         .await
         .is_err());
+}
+
+fn test_desktop(store: Store) -> Arc<Desktop> {
+    Arc::new(Desktop {
+        store,
+        menu: Mutex::new(NativeMenu::default()),
+        preferences: Mutex::new(None),
+        ready: AtomicBool::new(false),
+        tray_error: Mutex::new(None),
+        closed: AtomicBool::new(false),
+        jobs: Arc::new(tokio::sync::Semaphore::new(JOBS as usize)),
+    })
+}
+
+#[tokio::test]
+async fn tray_readback_tags_owned_causes_without_classifying_raw_diagnostics_by_text() {
+    let root = tempfile::tempdir().unwrap();
+    let desktop = test_desktop(
+        Store::new(
+            root.path().join("app"),
+            root.path().join("config"),
+            std::env::current_exe().unwrap(),
+        )
+        .unwrap(),
+    );
+    *desktop.tray_error.lock().unwrap() = Some(TrayIssue::HostUnconfirmed);
+    let owned = serde_json::to_value(desktop.clone().read().await.unwrap()).unwrap();
+    assert_eq!(owned["trayErrorCode"], "host_unconfirmed");
+    assert_eq!(owned["trayError"], LEGACY_HOST_ERROR);
+    *desktop.tray_error.lock().unwrap() = Some(TrayIssue::Unavailable(LEGACY_HOST_ERROR.into()));
+    let diagnostic = serde_json::to_value(desktop.clone().read().await.unwrap()).unwrap();
+    assert_eq!(diagnostic["trayErrorCode"], "unavailable");
+    assert_eq!(diagnostic["trayError"], owned["trayError"]);
+    // The watcher sets readiness before it clears the previous issue.
+    *desktop.tray_error.lock().unwrap() = Some(TrayIssue::HostUnconfirmed);
+    desktop.ready.store(true, Ordering::Release);
+    let restored = serde_json::to_value(desktop.clone().read().await.unwrap()).unwrap();
+    assert_eq!(restored["trayReady"], true);
+    assert!(restored["trayErrorCode"].is_null());
+    assert!(restored["trayError"].is_null());
+    *desktop.tray_error.lock().unwrap() = None;
+    let recovered = serde_json::to_value(desktop.clone().read().await.unwrap()).unwrap();
+    assert!(recovered["trayErrorCode"].is_null());
+    assert!(recovered["trayError"].is_null());
+    assert_eq!(recovered["revision"], 0);
+    assert!(desktop.hide_on_close());
 }

@@ -1,9 +1,10 @@
+import { ValidationError } from './validation-error';
 import { rpc } from './api';
 export interface FontChoice { key: string; name: string }
 interface UploadState { id: string; size: number; received: number; asset: string | null; cancelled: boolean }
 const CHUNK = 64 * 1024;
 export async function uploadFont(file: File, signal: AbortSignal, progress: (received: number) => void): Promise<string> {
-  if (!file.size || file.size > 16 * 1024 * 1024) throw new Error('Шрифт должен быть размером от 1 байта до 16 MiB');
+  if (!file.size || file.size > 16 * 1024 * 1024) throw new ValidationError('Шрифт должен быть размером от 1 байта до 16 MiB');
   let id: string | undefined;
   const call = (request: object) => rpc<UploadState>('font_upload', { request });
   try {
@@ -16,7 +17,7 @@ export async function uploadFont(file: File, signal: AbortSignal, progress: (rec
       const bytes = Array.from(new Uint8Array(await file.slice(offset, offset + CHUNK).arrayBuffer()));
       signal.throwIfAborted();
       const state = await call({ action: 'chunk', id, offset, bytes });
-      if (state.received !== offset + bytes.length) throw new Error('Неверное смещение загрузки шрифта');
+      if (state.received !== offset + bytes.length) throw new ValidationError('Неверное смещение загрузки шрифта');
       progress(state.received);
     }
     signal.throwIfAborted();
@@ -29,7 +30,7 @@ export async function uploadFont(file: File, signal: AbortSignal, progress: (rec
       if (!finished.asset) throw error;
     }
     signal.throwIfAborted();
-    if (!finished.asset || !/^[0-9a-f]{32}$/.test(finished.asset)) throw new Error('Шрифт не сохранён');
+    if (!finished.asset || !/^[0-9a-f]{32}$/.test(finished.asset)) throw new ValidationError('Шрифт не сохранён');
     return finished.asset;
   } finally {
     // Cancel releases the session, including completed uploads, without deleting the asset.

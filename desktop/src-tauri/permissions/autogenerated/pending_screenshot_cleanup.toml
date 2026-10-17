@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pending-screenshot-cleanup"
+description = "Enables the pending_screenshot_cleanup command without any pre-configured scope."
+commands.allow = ["pending_screenshot_cleanup"]
+
+[[permission]]
+identifier = "deny-pending-screenshot-cleanup"
+description = "Denies the pending_screenshot_cleanup command without any pre-configured scope."
+commands.deny = ["pending_screenshot_cleanup"]

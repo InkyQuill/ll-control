@@ -30,6 +30,25 @@ async fn policy_ipc_manual_override_atomic_persistence_and_restart_do_not_replay
         PathBuf::from("/mock/m2"),
     );
     let key = settings_key(&info);
+    let banks = lconnect_ipc::CoolingModeBanks {
+        version: 1,
+        fan: vec![lconnect_ipc::CoolingModeProfile {
+            use_default_name: false,
+            id: "Saved".into(),
+            name: "Inactive fan mode".into(),
+            policy: CoolingPolicy::Fixed { percent: 55 },
+        }],
+        pump: vec![],
+        source: Some(lconnect_ipc::CoolingBankSource::Windows2128 {
+            fan_json: r#"{"OwnedPrivateMetadata":"not-for-mode-list"}"#.into(),
+            pump_json: "{}".into(),
+        }),
+    };
+    let initial = DeviceSettings {
+        cooling_banks: Some(banks.clone()),
+        ..Default::default()
+    };
+    store.write(&key, &initial).unwrap();
     let mock = MockBackend::new();
     mock.add_device(info.clone());
     let cache = SensorCache::default();
@@ -72,6 +91,32 @@ async fn policy_ipc_manual_override_atomic_persistence_and_restart_do_not_replay
     let (a, b) = mem_pair();
     let server = tokio::spawn(async move { IpcServer::new(Arc::new(rpc)).serve_stream(b).await });
     let client = IpcClient::from_stream(a).await.unwrap();
+    let profile_path = tmp.path().join("profiles.json");
+    let previous_profiles = std::fs::read(&profile_path).ok();
+    std::fs::write(&profile_path, b"{broken unrelated named profile library").unwrap();
+    let modes = client
+        .call("get_cooling_modes", json!({"dev":dev}))
+        .await
+        .unwrap();
+    if let Some(bytes) = previous_profiles {
+        std::fs::write(&profile_path, bytes).unwrap();
+    } else {
+        std::fs::remove_file(&profile_path).unwrap();
+    }
+    assert!(
+        modes.get("source").is_none(),
+        "mode list omits historical source metadata"
+    );
+    assert!(!modes.to_string().contains("not-for-mode-list"));
+    let modes: lconnect_ipc::CoolingModeLibrary = serde_json::from_value(modes).unwrap();
+    assert_eq!(modes.fan, banks.fan);
+    assert_eq!(modes.pump, banks.pump);
+    assert_eq!(modes.revision.len(), 64);
+    assert_eq!(
+        store.read(&key).unwrap().cooling_banks,
+        Some(banks.clone()),
+        "read-only projection must not strip persisted provenance"
+    );
     let policy = json!({"mode":"curve","sensor_id":"cpu:test","points":[{"celsius":30,"percent":30},{"celsius":70,"percent":100}],"hysteresis_c":2,"fallback_percent":100});
     let value = client
         .call(
@@ -114,12 +159,18 @@ async fn policy_ipc_manual_override_atomic_persistence_and_restart_do_not_replay
     assert_eq!(saved.fan.pwm_percent, 75);
     assert!(saved.cooling.fan.is_none());
     assert_eq!(saved.cooling.pump, Some(rpm_policy.clone()));
+    assert_eq!(
+        saved.cooling_banks,
+        Some(banks.clone()),
+        "manual PWM and later policy updates retain inactive banks"
+    );
     // Seed an active policy plus a conflicting legacy value, then reattach.
     let mut saved = DeviceSettings::default();
     saved.fan.pwm_percent = 17;
     saved.pump.pwm_percent = 22;
     saved.cooling.pump = Some(rpm_policy);
     saved.cooling.fan = Some(CoolingPolicy::Fixed { percent: 85 });
+    saved.cooling_banks = Some(banks.clone());
     store.write(&key, &saved).unwrap();
     let fresh = MockBackend::new();
     fresh.add_device(info.clone());
@@ -139,6 +190,7 @@ async fn policy_ipc_manual_override_atomic_persistence_and_restart_do_not_replay
     tokio::time::sleep(Duration::from_millis(30)).await;
     manager.shutdown().await;
     let writes = fresh.write_history(&info);
+    assert_eq!(store.read(&key).unwrap().cooling_banks, Some(banks));
     let fan: Vec<_> = writes.iter().filter(|w| w.get(1) == Some(&139)).collect();
     assert!(!fan.is_empty());
     assert!(fan.iter().all(|w| w[7] == 85));

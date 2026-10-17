@@ -10,6 +10,7 @@ fn screen(slot: u8) -> ProfileEdit {
             name: "Экран".into(),
             content: ProfileContent::Screen(LcdTheme {
                 page_cache: Vec::new(),
+                basic_editor: None,
                 version: 1,
                 name: "Clock".into(),
                 background: [0, 0, 0],

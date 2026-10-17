@@ -364,3 +364,34 @@ fn queued_neighbor_edits_are_kept_while_same_group_changes_reject_stale_token() 
         .is_err());
     assert_eq!(store.profiles().list().unwrap(), library);
 }
+
+#[test]
+fn target_mode_epoch_changes_group_cas_but_never_enters_portable_group() {
+    let root = tempfile::tempdir().unwrap();
+    let store = PersistenceStore::new_with_root(root.path().into());
+    let library = store.profiles().list().unwrap();
+    let mut settings = DeviceSettings::default();
+    let before = GroupProfile::capture(&settings, &library, GroupKind::FanAndLighting).unwrap();
+    let screen = GroupProfile::capture(&settings, &library, GroupKind::Screen).unwrap();
+    settings.cooling_modes_revision = 1;
+    let after = GroupProfile::capture(&settings, &library, GroupKind::FanAndLighting).unwrap();
+    assert_eq!(
+        json(&before.profile),
+        json(&after.profile),
+        "target intent is never portable"
+    );
+    assert_ne!(
+        before.revision, after.revision,
+        "no-op bank intent invalidates old group CAS/receipts"
+    );
+    assert_eq!(
+        screen.revision,
+        GroupProfile::capture(&settings, &library, GroupKind::Screen)
+            .unwrap()
+            .revision,
+        "screen tokens ignore cooling-only changes"
+    );
+    settings.cooling_modes_revision = i64::MAX as u64 + 1;
+    assert!(store.write("range", &settings).is_err());
+    assert!(!root.path().join("devices/range.toml").exists());
+}

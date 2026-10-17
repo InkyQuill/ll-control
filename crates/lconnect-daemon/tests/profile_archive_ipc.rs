@@ -185,6 +185,32 @@ async fn unix_archive_roundtrip_lost_finish_and_daemon_restart_keep_one_import_a
     .await
     .unwrap();
     drop(lost);
+    // The durable library revision can become visible before Finish releases
+    // its owned transaction. Observe completion through read-only status before
+    // explicitly testing the idempotent Finish; do not blindly replay a busy write.
+    tokio::time::timeout(Duration::from_secs(10), async {
+        loop {
+            match client
+                .call(
+                    "profile_archive",
+                    json!({"request":{"action":"status","id":id}}),
+                )
+                .await
+            {
+                Ok(value) => {
+                    let reply: ProfileArchiveReply = serde_json::from_value(value).unwrap();
+                    if reply.state.phase == ProfileArchivePhase::Imported {
+                        break;
+                    }
+                }
+                Err(IpcError::DeviceBusy(_)) => {}
+                Err(error) => panic!("archive status after lost Finish: {error}"),
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
     let first = call(&client, json!({"action":"finish","id":id})).await;
     assert_eq!(first.state.phase, ProfileArchivePhase::Imported);
     assert_eq!(first.state.committed_revision, Some(1));

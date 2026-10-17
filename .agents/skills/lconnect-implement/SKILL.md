@@ -23,7 +23,7 @@ Complete the requested change through appropriate verification. Resolve routine 
 
 Use a focused regression test when it captures a real failure: malformed packet rejection, preserved neighboring settings, socket interoperability, cancellation, or persistence behavior. Run affected crate tests and relevant formatting/lint checks. Broaden to workspace checks for shared interfaces or cross-crate changes. A docs-only edit needs document validation, not hardware execution.
 
-Do not start a daemon merely to test compilation: startup may replay saved settings. For live verification, consult `docs/parity/lcdv2-hardware-acceptance.md` and the `lconnect-hardware` skill. If hardware is unavailable, finish host-side work and report the unverified acceptance scenario precisely.
+Do not start a daemon merely to test compilation: startup may replay saved settings. For live verification, consult `docs/development/parity/lcdv2-hardware-acceptance.md` and the `lconnect-hardware` skill. If hardware is unavailable, finish host-side work and report the unverified acceptance scenario precisely.
 
 Report changed behavior, checks actually run, and remaining limitations. Never describe codec/mock success as hardware acceptance. Commit, publish, or install only within the user's requested scope.
 

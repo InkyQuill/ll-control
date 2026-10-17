@@ -11,9 +11,10 @@ for (const fail of [false, true]) {
       const f: Fixture = { library: { version: 1, revision: 0, profiles: [] }, calls: [], finish: () => {} };
       Object.assign(window, { switchedProfiles: f, __TAURI_INTERNALS__: {
         invoke: async (_: string, req: { method: string; params: { edit: ProfileEdit; expected_revision: number } }) => {
+        if (_ === 'desktop_set_language') return null;
           switch (req.method) {
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
-            case 'list_devices': return [{ id: 'A', display_name: 'LCD A' }];
+            case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
             case 'list_sensors': return [];
             case 'get_lcd_state': return { source: 'Idle', last_error: null };
             case 'get_cooling_state': {
@@ -39,7 +40,7 @@ for (const fail of [false, true]) {
         },
       } });
     });
-    await page.goto('/');
+    await page.goto('/?view=display');
     await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
     await expect(page.getByText('Applied: 80%')).toBeVisible();
     await page.getByLabel('PWM, %', { exact: true }).fill('70');

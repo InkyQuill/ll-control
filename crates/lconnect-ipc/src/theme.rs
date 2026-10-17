@@ -22,6 +22,9 @@ pub struct LcdTheme {
     /// Inactive editor pages. Children cannot contain another page cache.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub page_cache: Vec<SavedLcdPage>,
+    /// Independent basic background/text editors; inactive templates never render.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub basic_editor: Option<Box<BasicEditorState>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -41,6 +44,87 @@ pub enum LcdPageKind {
 pub struct SavedLcdPage {
     pub page: LcdPageKind,
     pub theme: Box<LcdTheme>,
+}
+
+/// Separate Windows-compatible basic editor identities, also usable by native drafts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BasicBackground {
+    ImageVideo,
+    BackgroundColor,
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BasicOverlay {
+    None,
+    SliderSensor,
+    DuoSensor,
+    ThreeSensor,
+    FourSensor,
+    Time,
+    Custom,
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BasicOverlayTheme {
+    pub overlay: BasicOverlay,
+    pub theme: Box<LcdTheme>,
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BasicEditorBank {
+    pub background: BasicBackground,
+    pub selected_overlay: BasicOverlay,
+    pub overlays: Vec<BasicOverlayTheme>,
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BasicEditorState {
+    pub selected_background: BasicBackground,
+    pub banks: Vec<BasicEditorBank>,
+}
+impl BasicEditorState {
+    pub fn themes(&self) -> impl Iterator<Item = &LcdTheme> {
+        self.banks
+            .iter()
+            .flat_map(|bank| bank.overlays.iter().map(|item| item.theme.as_ref()))
+    }
+    pub fn validate(&self) -> Result<()> {
+        let invalid = |s: &str| IpcError::InvalidArgument(s.into());
+        if self.banks.is_empty() || self.banks.len() > 2 {
+            return Err(invalid("basic editor requires one or two background banks"));
+        }
+        let mut backgrounds = Vec::new();
+        for bank in &self.banks {
+            if backgrounds.contains(&bank.background) || bank.overlays.len() != 7 {
+                return Err(invalid(
+                    "duplicate basic background or incomplete overlay bank",
+                ));
+            }
+            backgrounds.push(bank.background);
+            let mut overlays = Vec::new();
+            for item in &bank.overlays {
+                if overlays.contains(&item.overlay)
+                    || !item.theme.page_cache.is_empty()
+                    || item.theme.basic_editor.is_some()
+                    || item.theme.page_kind() != LcdPageKind::Basic
+                {
+                    return Err(invalid(
+                        "duplicate overlay, nested cache or non-basic editor template",
+                    ));
+                }
+                overlays.push(item.overlay);
+                item.theme.validate()?;
+            }
+            if !overlays.contains(&bank.selected_overlay) {
+                return Err(invalid("selected basic overlay is absent"));
+            }
+        }
+        if !backgrounds.contains(&self.selected_background) {
+            return Err(invalid("selected basic background is absent"));
+        }
+        Ok(())
+    }
 }
 
 /// Full-canvas image background; alpha reveals the saved color/gradient.
@@ -221,6 +305,18 @@ pub struct WatermarkPosition {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ThemeLayer {
+    /// Editable axis-aligned decoration. Fractional coordinates retain half-pixel source bounds.
+    Divider {
+        axis: DividerAxis,
+        x: f32,
+        y: f32,
+        length: f32,
+        thickness: f32,
+        color: [u8; 3],
+        opacity: u8,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        shadow: Option<TextShadow>,
+    },
     Fireworks {
         effect: crate::FireworksEffect,
     },
@@ -280,6 +376,13 @@ pub enum ThemeLayer {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+pub enum DividerAxis {
+    Horizontal,
+    Vertical,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ImageFit {
     Crop,
     Contain,
@@ -304,9 +407,96 @@ impl LcdTheme {
             None => LcdPageKind::Basic,
         }
     }
-    /// Active page plus the bounded direct cache; never traverses nested input.
+    /// Switch a prepared basic editor while first retaining edits to its active
+    /// template. Does not publish assets or change a hardware setting.
+    pub fn select_basic_editor(
+        &self,
+        background: BasicBackground,
+        overlay: BasicOverlay,
+    ) -> Result<Self> {
+        self.validate()?;
+        let invalid = |s: &str| IpcError::InvalidArgument(s.into());
+        let mut editor = self
+            .basic_editor
+            .clone()
+            .ok_or_else(|| invalid("theme has no basic editor banks"))?;
+        let mut current = self.clone();
+        current.basic_editor = None;
+        current.page_cache.clear();
+        let active = editor
+            .banks
+            .iter_mut()
+            .find(|bank| bank.background == editor.selected_background)
+            .ok_or_else(|| invalid("selected basic background is absent"))?;
+        // Windows editor background and watermark sit outside its seven text DTOs.
+        // Retain them across text selection; ordinary native image layers remain
+        // local to their text/composition template.
+        let marks: Vec<_> = current
+            .layers
+            .iter()
+            .filter(|layer| {
+                matches!(
+                    layer,
+                    ThemeLayer::Image {
+                        watermark_position: Some(_),
+                        ..
+                    }
+                )
+            })
+            .cloned()
+            .collect();
+        for item in &mut active.overlays {
+            item.theme.version = current.version;
+            item.theme.background = current.background;
+            item.theme.background_image = current.background_image.clone();
+            item.theme.background_video = current.background_video.clone();
+            item.theme.background_fill = current.background_fill.clone();
+            item.theme.layers.retain(|layer| {
+                !matches!(
+                    layer,
+                    ThemeLayer::Image {
+                        watermark_position: Some(_),
+                        ..
+                    }
+                )
+            });
+            item.theme.layers.extend(marks.iter().cloned());
+        }
+        let selected = active
+            .overlays
+            .iter_mut()
+            .find(|item| item.overlay == active.selected_overlay)
+            .ok_or_else(|| invalid("selected basic overlay is absent"))?;
+        *selected.theme = current;
+        let target = editor
+            .banks
+            .iter_mut()
+            .find(|bank| bank.background == background)
+            .ok_or_else(|| invalid("requested basic background is absent"))?;
+        let mut next = target
+            .overlays
+            .iter()
+            .find(|item| item.overlay == overlay)
+            .ok_or_else(|| invalid("requested basic overlay is absent"))?
+            .theme
+            .as_ref()
+            .clone();
+        target.selected_overlay = overlay;
+        editor.selected_background = background;
+        next.name = self.name.clone();
+        next.basic_editor = Some(editor);
+        next.page_cache = self.page_cache.clone();
+        next.validate()?;
+        Ok(next)
+    }
+    /// Active page, direct effect pages and their bounded basic templates; never recursively traverses input.
     pub fn pages(&self) -> impl Iterator<Item = &LcdTheme> {
-        std::iter::once(self).chain(self.page_cache.iter().map(|page| page.theme.as_ref()))
+        std::iter::once(self)
+            .chain(self.page_cache.iter().map(|page| page.theme.as_ref()))
+            .flat_map(|page| {
+                std::iter::once(page)
+                    .chain(page.basic_editor.iter().flat_map(|editor| editor.themes()))
+            })
     }
     pub fn video_assets(&self) -> std::collections::BTreeSet<&str> {
         self.pages()
@@ -380,7 +570,8 @@ impl LcdTheme {
                     }
                     style
                 }
-                ThemeLayer::Image { .. }
+                ThemeLayer::Divider { .. }
+                | ThemeLayer::Image { .. }
                 | ThemeLayer::Weather { .. }
                 | ThemeLayer::Meteor { .. }
                 | ThemeLayer::Snow3d { .. }
@@ -398,6 +589,12 @@ impl LcdTheme {
         let invalid = |s: &str| IpcError::InvalidArgument(s.into());
         if self.page_cache.len() > 5 {
             return Err(invalid("at most five inactive LCD pages"));
+        }
+        if let Some(editor) = &self.basic_editor {
+            if self.page_kind() != LcdPageKind::Basic {
+                return Err(invalid("basic editor state must belong to a basic page"));
+            }
+            editor.validate()?;
         }
         let mut kinds = vec![self.page_kind()];
         for page in &self.page_cache {
@@ -486,6 +683,36 @@ impl LcdTheme {
                 validate_style(&parts.unit)?;
             }
             let style = match layer {
+                ThemeLayer::Divider {
+                    axis,
+                    x,
+                    y,
+                    length,
+                    thickness,
+                    opacity,
+                    shadow,
+                    ..
+                } => {
+                    let (width, height) = match axis {
+                        DividerAxis::Horizontal => (*length, *thickness),
+                        DividerAxis::Vertical => (*thickness, *length),
+                    };
+                    if ![x, y, length, thickness].into_iter().all(|v| v.is_finite())
+                        || *x < 0.0
+                        || *y < 0.0
+                        || *length <= 0.0
+                        || *length > 480.0
+                        || *thickness < 0.25
+                        || *thickness > 16.0
+                        || x + width > 480.0
+                        || y + height > 480.0
+                        || *opacity > 100
+                        || shadow.as_ref().is_some_and(|s| !s.valid())
+                    {
+                        return Err(invalid("invalid divider geometry, opacity or shadow"));
+                    }
+                    continue;
+                }
                 ThemeLayer::Fireworks { effect } => {
                     effect.validate()?;
                     continue;

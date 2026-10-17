@@ -11,10 +11,11 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
       let attempt = 0, received = 0, size = 0, asset: string | null = null;
       const state = () => ({ id: attempt.toString(16).padStart(32, '0'), size, received, asset, cancelled: false });
       Object.assign(window, { fontRecovery: fixture, __TAURI_INTERNALS__: { invoke: async (_: string, call: Call) => {
+        if (_ === 'desktop_set_language') return null;
         fixture.calls.push(structuredClone(call));
         if (fixture.offline && call.method !== 'font_upload') throw new Error('Disconnected');
         switch (call.method) {
-          case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2' }];
+          case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [];
           case 'get_lcd_state': return { source: 'Theme', last_error: null, requested: { mode: 'Application', brightness_percent: 100, rotation_degrees: 0 } };
           case 'preview_lcd_theme': return [255, 216, 255, 217];
@@ -35,10 +36,11 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
         }
       } } });
     }, { mode });
-    await page.goto('/');
+    await page.goto('/?view=display');
     await expect(page.getByText('Daemon подключён')).toBeVisible();
     await page.getByLabel('Название', { exact: true }).fill('Keep my draft');
-    await page.getByText('Пользовательские шрифты', { exact: true }).click();
+    await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
+  await page.getByText('Пользовательские шрифты', { exact: true }).click();
     const file = page.getByLabel('Загрузить шрифт', { exact: true });
     await file.setInputFiles({ name: 'First.ttf', mimeType: 'font/ttf', buffer: Buffer.alloc(70000, 1) });
     if (mode === 'disconnect') {
@@ -55,10 +57,12 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
     }
     await expect(file).toBeEnabled();
     await expect(page.getByLabel('Название', { exact: true })).toHaveValue('Keep my draft');
-    await expect(page.getByRole('combobox', { name: 'Шрифт', exact: true }).first()).toHaveValue('sans');
+    await expect(page.getByRole('combobox', { name: 'Шрифт', exact: true, includeHidden:true }).first()).toHaveValue('sans');
     await file.setInputFiles({ name: 'Retry.ttf', mimeType: 'font/ttf', buffer: Buffer.alloc(70000, 1) });
     await expect(page.getByText('Шрифт загружен.', { exact: false })).toBeVisible();
-    await page.getByRole('combobox', { name: 'Шрифт', exact: true }).first().selectOption('asset:00000000000000000000000000000002');
+  await page.getByRole('button',{name:'Композиция',exact:true}).click();
+    await page.getByRole('combobox', { name: 'Шрифт', exact: true, includeHidden:true }).first().selectOption('asset:00000000000000000000000000000002');
+  await page.getByRole('button',{name:'Библиотека',exact:true}).click();
     const calls = await page.evaluate(() => (window as unknown as FixtureWindow).fontRecovery.calls);
     expect(calls.filter(c => c.method === 'set_lcd_theme')).toHaveLength(0);
     expect(calls.filter(c => c.params.request?.action === 'begin')).toHaveLength(2);

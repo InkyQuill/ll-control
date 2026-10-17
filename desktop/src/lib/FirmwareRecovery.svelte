@@ -73,6 +73,6 @@
  {#if diagnostic}<details><summary>{t('Техническая диагностика')}</summary><pre>{diagnostic}</pre></details>{/if}
 </section>
 <style>
- section{max-width:760px;display:grid;gap:14px;margin-block:20px;padding:20px;border:1px solid #33445b;border-radius:12px}h2{font-size:19px}h3{font-size:16px}p{line-height:1.6;color:#b6c5d8}button{justify-self:start}button[aria-disabled=true]{opacity:.6}dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:10px}dd{margin:0;overflow-wrap:anywhere}ul{padding-left:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere}textarea{box-sizing:border-box;width:100%;font-family:monospace;background:#101b2a;color:inherit;resize:vertical}button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #53d5e6;outline-offset:3px}
+ section{max-width:760px;display:grid;gap:14px;margin-block:20px;padding:20px;border:1px solid var(--border);border-radius:12px}h2{font-size:19px}h3{font-size:16px}p{line-height:1.6;color:var(--text-muted)}button{justify-self:start}button[aria-disabled=true]{opacity:.6}dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:10px}dd{margin:0;overflow-wrap:anywhere}ul{padding-left:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere}textarea{box-sizing:border-box;width:100%;font-family:monospace;background:var(--canvas);color:inherit;resize:vertical}button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
  @media(max-width:540px){dl{grid-template-columns:1fr}}
 </style>

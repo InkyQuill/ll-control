@@ -29,6 +29,8 @@ impl GroupKind {
 pub struct ScreenGroup {
     pub lcd: LcdSection,
     pub theme: Option<lconnect_ipc::LcdTheme>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub editor: Option<crate::screen_editor::StoredScreenEditor>,
     pub media_clip: Option<String>,
     /// None retains legacy shared-catalog semantics; archive export must
     /// materialize that catalog before collecting its file dependencies.
@@ -41,6 +43,8 @@ pub struct FanAndLightingGroup {
     pub fan: FanSection,
     pub pump: PumpSection,
     pub cooling: lconnect_ipc::CoolingConfig,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cooling_banks: Option<lconnect_ipc::CoolingModeBanks>,
     pub lighting: LightingSection,
     pub dynamic_rgb: Option<lconnect_ipc::DynamicRgbConfig>,
     pub dynamic_rgb_profiles: lconnect_ipc::DynamicRgbProfiles,
@@ -113,6 +117,7 @@ impl GroupProfile {
             GroupKind::Screen => GroupSettings::Screen(Box::new(ScreenGroup {
                 lcd: latest.lcd.clone(),
                 theme: latest.theme.clone(),
+                editor: latest.screen_editor.clone(),
                 media_clip: latest.media_clip.clone(),
                 collections: latest.screen_collections.clone(),
             })),
@@ -121,6 +126,7 @@ impl GroupProfile {
                     fan: latest.fan.clone(),
                     pump: latest.pump.clone(),
                     cooling: latest.cooling.clone(),
+                    cooling_banks: latest.cooling_banks.clone(),
                     lighting: latest.lighting.clone(),
                     dynamic_rgb: latest.dynamic_rgb.clone(),
                     dynamic_rgb_profiles: latest.dynamic_rgb_profiles.clone(),
@@ -149,9 +155,15 @@ impl GroupProfile {
             profiles,
         };
         profile.validate()?;
+        let mut hash = Sha256::new();
+        hash.update(serde_json::to_vec(&profile)?);
+        if kind == GroupKind::FanAndLighting && latest.cooling_modes_revision > 0 {
+            hash.update(b"cooling-mode-intent-v1");
+            hash.update(latest.cooling_modes_revision.to_be_bytes());
+        }
         let revision = GroupRevision {
             profile_revision: library.revision,
-            settings_sha256: format!("{:x}", Sha256::digest(serde_json::to_vec(&profile)?)),
+            settings_sha256: format!("{:x}", hash.finalize()),
         };
         Ok(GroupSnapshot { profile, revision })
     }
@@ -184,6 +196,7 @@ impl GroupProfile {
                 matches!(group.pump.source.as_str(), "" | "mcu" | "application"),
                 "invalid pump source"
             );
+            lconnect_ipc::validate_cooling_selection(&group.cooling, group.cooling_banks.as_ref())?;
             for (policy, target) in [
                 (&group.cooling.fan, lconnect_ipc::CoolingTarget::Fan),
                 (&group.cooling.pump, lconnect_ipc::CoolingTarget::Pump),
@@ -261,6 +274,7 @@ impl GroupProfile {
             GroupSettings::Screen(group) => {
                 next.lcd = group.lcd.clone();
                 next.theme = group.theme.clone();
+                next.screen_editor = group.editor.clone();
                 next.media_clip = group.media_clip.clone();
                 next.screen_collections = group.collections.clone();
             }
@@ -268,6 +282,7 @@ impl GroupProfile {
                 next.fan = group.fan.clone();
                 next.pump = group.pump.clone();
                 next.cooling = group.cooling.clone();
+                next.cooling_banks = group.cooling_banks.clone();
                 next.lighting = group.lighting.clone();
                 next.dynamic_rgb = group.dynamic_rgb.clone();
                 next.dynamic_rgb_profiles = group.dynamic_rgb_profiles.clone();
@@ -291,6 +306,13 @@ impl GroupProfile {
         );
         let mut next = latest.clone();
         self.copy_settings(&mut next);
+        if self.kind() == GroupKind::FanAndLighting {
+            next.cooling_modes_revision = latest
+                .cooling_modes_revision
+                .checked_add(1)
+                .filter(|v| *v <= i64::MAX as u64)
+                .context("cooling mode revision exhausted")?;
+        }
         if self.kind() == GroupKind::Screen {
             // Source counters and receipts must not become target concurrency
             // tokens or revive an old reset. Advance even when source is legacy.

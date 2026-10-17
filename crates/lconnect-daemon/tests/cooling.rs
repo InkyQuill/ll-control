@@ -245,6 +245,8 @@ async fn rpm_binding_rejected_and_write_failure_retains_intent_without_applied_c
 async fn persisted_curve_uses_fallback_before_first_sample_and_invalid_policy_does_not_write() {
     let mut h = Harness::new(
         CoolingConfig {
+            fan_mode: None,
+            pump_mode: None,
             fan: Some(curve()),
             pump: None,
         },
@@ -255,6 +257,8 @@ async fn persisted_curve_uses_fallback_before_first_sample_and_invalid_policy_do
     h.stop().await;
     let mut h = Harness::new(
         CoolingConfig {
+            fan_mode: None,
+            pump_mode: None,
             fan: None,
             pump: Some(CoolingPolicy::Fixed { percent: 0 }),
         },
@@ -277,6 +281,8 @@ async fn queued_manual_wins_after_a_slow_failed_policy_write() {
             host: Default::default(),
             device: Default::default(),
             initial: CoolingConfig {
+                fan_mode: None,
+                pump_mode: None,
                 fan: Some(CoolingPolicy::Fixed { percent: 70 }),
                 pump: None,
             },
@@ -319,6 +325,8 @@ async fn queued_manual_wins_after_a_slow_failed_policy_write() {
 async fn persisted_known_wrong_unit_is_disabled_with_visible_error() {
     let mut h = Harness::new(
         CoolingConfig {
+            fan_mode: None,
+            pump_mode: None,
             fan: Some(curve()),
             pump: None,
         },
@@ -532,7 +540,18 @@ fn fan_presets_match_reference_knots_truncation_and_limits() {
         }
         assert_eq!(
             cooling::evaluate(&policy, &[row(-20.0)], &mut None),
-            (points[0].1, false, false)
+            (10, false, false),
+            "Windows ToRPMConfigPhases prepends 0C/MinSpeed, not the first UI knot"
+        );
+        let at_ten = match preset {
+            FanPreset::Quiet | FanPreset::Standard => 14,
+            FanPreset::High => 24,
+            FanPreset::Full => 46,
+        };
+        assert_eq!(
+            cooling::evaluate(&policy, &[row(10.9)], &mut None),
+            (at_ten, false, false),
+            "Windows casts Celsius before interpolating from its implicit endpoint"
         );
         assert_eq!(
             cooling::evaluate(&policy, &[row(120.0)], &mut None),
@@ -572,9 +591,13 @@ fn fan_presets_match_reference_knots_truncation_and_limits() {
 #[tokio::test(start_paused = true)]
 async fn fan_reference_policy_writes_pwm_fallback_and_retains_serialized_intent() {
     let mut h = Harness::new(Default::default(), false);
-    h.cache.publish(Instant::now(), vec![row(26.9)]);
+    h.cache.publish(Instant::now(), vec![row(10.9)]);
     let policy = FanPreset::Quiet.policy("cpu:test".into(), 2.0, 100);
     let state = h.set(CoolingTarget::Fan, policy.clone()).await.unwrap();
+    let packet = h.write().await;
+    assert_eq!((packet[1], packet[7]), (139, 14));
+    assert_eq!(state.fan.requested, Some(policy.clone()));
+    h.cache.publish(Instant::now(), vec![row(26.9)]);
     let packet = h.write().await;
     assert_eq!((packet[1], packet[7]), (139, 21));
     assert_eq!(state.fan.requested, Some(policy.clone()));
@@ -600,6 +623,34 @@ async fn fan_reference_policy_writes_pwm_fallback_and_retains_serialized_intent(
     assert!(!recovered.fallback_active);
     assert_eq!(recovered.requested, Some(policy));
     h.stop().await;
+}
+
+#[test]
+fn explicit_custom_fan_curve_keeps_its_own_endpoint_intent() {
+    let policy = CoolingPolicy::FanCurve {
+        sensor_id: "cpu:test".into(),
+        points: vec![
+            CurvePoint {
+                celsius: 25.0,
+                percent: 20,
+            },
+            CurvePoint {
+                celsius: 70.0,
+                percent: 60,
+            },
+        ],
+        hysteresis_c: 0.0,
+        fallback_percent: 100,
+    };
+    policy.validate(CoolingTarget::Fan).unwrap();
+    assert_eq!(
+        cooling::evaluate(&policy, &[row(10.9)], &mut None),
+        (20, false, false)
+    );
+    assert_eq!(
+        cooling::evaluate(&policy, &[row(110.0)], &mut None),
+        (60, false, false)
+    );
 }
 #[test]
 fn fan_reference_curve_rejects_fractional_knots_and_roundtrips() {

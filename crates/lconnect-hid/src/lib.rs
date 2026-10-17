@@ -9,8 +9,8 @@
 //!
 //! # See also
 //!
-//! - `docs/superpowers/specs/2026-04-26-phase-1-daemon-design.md` — Phase 1 spec
-//! - `docs/protocol/cross-device-survey.md` section 6.1 — framing extension points
+//! - `docs/development/superpowers/specs/2026-04-26-phase-1-daemon-design.md` — Phase 1 spec
+//! - `docs/development/protocol/cross-device-survey.md` section 6.1 — framing extension points
 
 #![forbid(unsafe_code)]
 

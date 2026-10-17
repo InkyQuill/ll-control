@@ -1,3 +1,4 @@
+import { ValidationError } from './validation-error';
 import { invoke } from '@tauri-apps/api/core';
 import { message } from './api';
 
@@ -40,7 +41,7 @@ async function pump() {
 
 export function requestThumbnail(key: string, signal: AbortSignal): Promise<number[]> {
   if (signal.aborted) return Promise.reject(cancelled());
-  if (queue.length + Number(!!active) >= 32) return Promise.reject(new Error('Очередь миниатюр заполнена. Повторите позже.'));
+  if (queue.length + Number(!!active) >= 32) return Promise.reject(new ValidationError('Очередь миниатюр заполнена. Повторите позже.'));
   return new Promise((resolve, reject) => {
     const job: Job = {id: crypto.randomUUID().replaceAll('-', ''), key, signal, resolve, reject, abort: () => {}};
     job.abort = () => {

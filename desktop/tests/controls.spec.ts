@@ -4,9 +4,10 @@ test.beforeEach(async ({ page }) => {
     const calls: { method: string; params: Record<string, unknown> }[] = [];
     const thermal = { requested: { cpu: null, gpu: { sensor_id: 'gpu:test', threshold_c: 90, color: { r: 255, g: 0, b: 0 } } }, active_source: null, degraded_sources: [], grace_remaining_ms: 0, blocked_reason: null, fan: { last_error: null }, pump: { last_error: null } };
     Object.assign(window, { bridgeCalls: calls, __TAURI_INTERNALS__: { invoke: async (_command: string, request: { method: string; params: Record<string, unknown> }) => {
+        if (_command === 'desktop_set_language') return null;
       calls.push(request);
       switch (request.method) {
-        case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2' }];
+        case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [{ id: 'cpu:test', label: 'CPU package', unit: 'celsius', value: 42, status: 'valid', age_ms: 10 }, { id: 'gpu:test', label: 'GPU edge', unit: 'celsius', value: 45, status: 'valid', age_ms: 10 }];
         case 'get_lcd_state': case 'patch_lcd_config': return { source: 'Theme', last_error: null, requested: { mode: 'Application', brightness_percent: 65, rotation_degrees: 90 } };
         case 'get_lighting_info': return { modes: ['static_color', 'breathing'], max_speed: 100, max_brightness: 100 };
@@ -17,7 +18,7 @@ test.beforeEach(async ({ page }) => {
       }
     } } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
 });
 test('LCD settings send field patches without changing source', async ({ page }) => {

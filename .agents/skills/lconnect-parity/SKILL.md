@@ -13,10 +13,10 @@ Carry the requested investigation through to a usable finding or plan. Make rout
 
 Paths below are relative to the repository root. Read `roadmap.md` first, then only the relevant sections of:
 
-- `docs/2026-09-08-reference-2.1.28-and-ll-connect3.md` for reference locations, assembly provenance, and decompilation limits.
-- `docs/parity/lcdv2-2.1.28-matrix.md` for scenario coverage.
-- `docs/parity/lcdv2-baseline-gaps.md` for recorded implementation gaps.
-- `docs/protocol/lcdv2-screen-pipeline-2.1.28.md` for display-path investigation.
+- `docs/development/2026-09-08-reference-2.1.28-and-ll-connect3.md` for reference locations, assembly provenance, and decompilation limits.
+- `docs/development/parity/lcdv2-2.1.28-matrix.md` for scenario coverage.
+- `docs/development/parity/lcdv2-baseline-gaps.md` for recorded implementation gaps.
+- `docs/development/protocol/lcdv2-screen-pipeline-2.1.28.md` for display-path investigation.
 
 The recorded baseline is Windows 2.1.28.0 for Galahad II LCDV2 `0416:7395`. Verify the applicable reference version before using it; do not silently mix older decompilation with this baseline. Treat the root roadmap as the current ordering, and old phase plans as historical context unless the user selects them.
 

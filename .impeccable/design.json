@@ -1,0 +1,388 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T13:43:49.764103+00:00",
+  "title": "Design System: L-Connect Linux Device Studio",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Background",
+        "canonical": "#101115",
+        "tonalRamp": [
+          "oklch(15.00% 0.00837 274.41)",
+          "oklch(26.43% 0.00837 274.41)",
+          "oklch(37.86% 0.00837 274.41)",
+          "oklch(49.29% 0.00837 274.41)",
+          "oklch(60.71% 0.00837 274.41)",
+          "oklch(72.14% 0.00837 274.41)",
+          "oklch(83.57% 0.00837 274.41)",
+          "oklch(95.00% 0.00837 274.41)"
+        ]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Sidebar",
+        "canonical": "#15161c",
+        "tonalRamp": [
+          "oklch(15.00% 0.01206 277.81)",
+          "oklch(26.43% 0.01206 277.81)",
+          "oklch(37.86% 0.01206 277.81)",
+          "oklch(49.29% 0.01206 277.81)",
+          "oklch(60.71% 0.01206 277.81)",
+          "oklch(72.14% 0.01206 277.81)",
+          "oklch(83.57% 0.01206 277.81)",
+          "oklch(95.00% 0.01206 277.81)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#14161c",
+        "tonalRamp": [
+          "oklch(15.00% 0.01242 270.73)",
+          "oklch(26.43% 0.01242 270.73)",
+          "oklch(37.86% 0.01242 270.73)",
+          "oklch(49.29% 0.01242 270.73)",
+          "oklch(60.71% 0.01242 270.73)",
+          "oklch(72.14% 0.01242 270.73)",
+          "oklch(83.57% 0.01242 270.73)",
+          "oklch(95.00% 0.01242 270.73)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#191b22",
+        "tonalRamp": [
+          "oklch(15.00% 0.01398 272.68)",
+          "oklch(26.43% 0.01398 272.68)",
+          "oklch(37.86% 0.01398 272.68)",
+          "oklch(49.29% 0.01398 272.68)",
+          "oklch(60.71% 0.01398 272.68)",
+          "oklch(72.14% 0.01398 272.68)",
+          "oklch(83.57% 0.01398 272.68)",
+          "oklch(95.00% 0.01398 272.68)"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Surface Raised",
+        "canonical": "#232630",
+        "tonalRamp": [
+          "oklch(15.00% 0.01912 271.97)",
+          "oklch(26.43% 0.01912 271.97)",
+          "oklch(37.86% 0.01912 271.97)",
+          "oklch(49.29% 0.01912 271.97)",
+          "oklch(60.71% 0.01912 271.97)",
+          "oklch(72.14% 0.01912 271.97)",
+          "oklch(83.57% 0.01912 271.97)",
+          "oklch(95.00% 0.01912 271.97)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "#30323e",
+        "tonalRamp": [
+          "oklch(15.00% 0.02151 277.68)",
+          "oklch(26.43% 0.02151 277.68)",
+          "oklch(37.86% 0.02151 277.68)",
+          "oklch(49.29% 0.02151 277.68)",
+          "oklch(60.71% 0.02151 277.68)",
+          "oklch(72.14% 0.02151 277.68)",
+          "oklch(83.57% 0.02151 277.68)",
+          "oklch(95.00% 0.02151 277.68)"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Border Strong",
+        "canonical": "#787b8c",
+        "tonalRamp": [
+          "oklch(15.00% 0.02613 277.63)",
+          "oklch(26.43% 0.02613 277.63)",
+          "oklch(37.86% 0.02613 277.63)",
+          "oklch(49.29% 0.02613 277.63)",
+          "oklch(60.71% 0.02613 277.63)",
+          "oklch(72.14% 0.02613 277.63)",
+          "oklch(83.57% 0.02613 277.63)",
+          "oklch(95.00% 0.02613 277.63)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "canonical": "#eff0f6",
+        "tonalRamp": [
+          "oklch(15.00% 0.00808 278.64)",
+          "oklch(26.43% 0.00808 278.64)",
+          "oklch(37.86% 0.00808 278.64)",
+          "oklch(49.29% 0.00808 278.64)",
+          "oklch(60.71% 0.00808 278.64)",
+          "oklch(72.14% 0.00808 278.64)",
+          "oklch(83.57% 0.00808 278.64)",
+          "oklch(95.00% 0.00808 278.64)"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "canonical": "#adb2c2",
+        "tonalRamp": [
+          "oklch(15.00% 0.02347 271.97)",
+          "oklch(26.43% 0.02347 271.97)",
+          "oklch(37.86% 0.02347 271.97)",
+          "oklch(49.29% 0.02347 271.97)",
+          "oklch(60.71% 0.02347 271.97)",
+          "oklch(72.14% 0.02347 271.97)",
+          "oklch(83.57% 0.02347 271.97)",
+          "oklch(95.00% 0.02347 271.97)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent",
+        "canonical": "#b9a7ff",
+        "tonalRamp": [
+          "oklch(15.00% 0.12456 292.65)",
+          "oklch(26.43% 0.12456 292.65)",
+          "oklch(37.86% 0.12456 292.65)",
+          "oklch(49.29% 0.12456 292.65)",
+          "oklch(60.71% 0.12456 292.65)",
+          "oklch(72.14% 0.12456 292.65)",
+          "oklch(83.57% 0.12456 292.65)",
+          "oklch(95.00% 0.12456 292.65)"
+        ]
+      },
+      "accent-text": {
+        "role": "primary",
+        "displayName": "Accent Text",
+        "canonical": "#ded3ff",
+        "tonalRamp": [
+          "oklch(15.00% 0.06090 296.60)",
+          "oklch(26.43% 0.06090 296.60)",
+          "oklch(37.86% 0.06090 296.60)",
+          "oklch(49.29% 0.06090 296.60)",
+          "oklch(60.71% 0.06090 296.60)",
+          "oklch(72.14% 0.06090 296.60)",
+          "oklch(83.57% 0.06090 296.60)",
+          "oklch(95.00% 0.06090 296.60)"
+        ]
+      },
+      "accent-surface": {
+        "role": "primary",
+        "displayName": "Accent Surface",
+        "canonical": "#2c263d",
+        "tonalRamp": [
+          "oklch(15.00% 0.04207 295.61)",
+          "oklch(26.43% 0.04207 295.61)",
+          "oklch(37.86% 0.04207 295.61)",
+          "oklch(49.29% 0.04207 295.61)",
+          "oklch(60.71% 0.04207 295.61)",
+          "oklch(72.14% 0.04207 295.61)",
+          "oklch(83.57% 0.04207 295.61)",
+          "oklch(95.00% 0.04207 295.61)"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Accent Ink",
+        "canonical": "#211a35",
+        "tonalRamp": [
+          "oklch(15.00% 0.05091 294.18)",
+          "oklch(26.43% 0.05091 294.18)",
+          "oklch(37.86% 0.05091 294.18)",
+          "oklch(49.29% 0.05091 294.18)",
+          "oklch(60.71% 0.05091 294.18)",
+          "oklch(72.14% 0.05091 294.18)",
+          "oklch(83.57% 0.05091 294.18)",
+          "oklch(95.00% 0.05091 294.18)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Primary Hover",
+        "canonical": "#cbbdff",
+        "tonalRamp": [
+          "oklch(15.00% 0.09237 294.03)",
+          "oklch(26.43% 0.09237 294.03)",
+          "oklch(37.86% 0.09237 294.03)",
+          "oklch(49.29% 0.09237 294.03)",
+          "oklch(60.71% 0.09237 294.03)",
+          "oklch(72.14% 0.09237 294.03)",
+          "oklch(83.57% 0.09237 294.03)",
+          "oklch(95.00% 0.09237 294.03)"
+        ]
+      },
+      "success": {
+        "role": "neutral",
+        "displayName": "Success",
+        "canonical": "#a0dfbc",
+        "tonalRamp": [
+          "oklch(15.00% 0.08063 159.76)",
+          "oklch(26.43% 0.08063 159.76)",
+          "oklch(37.86% 0.08063 159.76)",
+          "oklch(49.29% 0.08063 159.76)",
+          "oklch(60.71% 0.08063 159.76)",
+          "oklch(72.14% 0.08063 159.76)",
+          "oklch(83.57% 0.08063 159.76)",
+          "oklch(95.00% 0.08063 159.76)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "canonical": "#ffb8c5",
+        "tonalRamp": [
+          "oklch(15.00% 0.08369 6.88)",
+          "oklch(26.43% 0.08369 6.88)",
+          "oklch(37.86% 0.08369 6.88)",
+          "oklch(49.29% 0.08369 6.88)",
+          "oklch(60.71% 0.08369 6.88)",
+          "oklch(72.14% 0.08369 6.88)",
+          "oklch(83.57% 0.08369 6.88)",
+          "oklch(95.00% 0.08369 6.88)"
+        ]
+      },
+      "danger-surface": {
+        "role": "neutral",
+        "displayName": "Danger Surface",
+        "canonical": "#3a222d",
+        "tonalRamp": [
+          "oklch(15.00% 0.04060 350.95)",
+          "oklch(26.43% 0.04060 350.95)",
+          "oklch(37.86% 0.04060 350.95)",
+          "oklch(49.29% 0.04060 350.95)",
+          "oklch(60.71% 0.04060 350.95)",
+          "oklch(72.14% 0.04060 350.95)",
+          "oklch(83.57% 0.04060 350.95)",
+          "oklch(95.00% 0.04060 350.95)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline"
+      },
+      "title": {
+        "displayName": "Title"
+      },
+      "body": {
+        "displayName": "Body"
+      },
+      "label": {
+        "displayName": "Label"
+      },
+      "caption": {
+        "displayName": "Caption"
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "studio-stack",
+        "value": "1100px"
+      },
+      {
+        "name": "navigation-stack",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Apply",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary Apply from the production Device Studio.",
+      "html": "<button class=\"ds-primary\">Apply lighting</button>",
+      "css": ".ds-primary{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;background:#b9a7ff;color:#211a35;padding:10px 14px;min-height:38px;line-height:1.4;border:1px solid transparent;border-radius:8px;font-weight:600;}.ds-primary:hover{background:#cbbdff}.ds-primary:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary button from the production Device Studio.",
+      "html": "<button class=\"ds-secondary\">Refresh preview</button>",
+      "css": ".ds-secondary{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;background:#232630;color:#eff0f6;padding:10px 14px;min-height:38px;line-height:1.4;border:1px solid #787b8c;border-radius:8px;}.ds-secondary:hover{background:#32333f}.ds-secondary:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Text field from the production Device Studio.",
+      "html": "<label class=\"ds-label\">Name<input class=\"ds-field\" value=\"My screen\"></label>",
+      "css": ".ds-label{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;display:grid;gap:8px;color:#adb2c2;font-size:13px}.ds-field{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:9px;border:1px solid #787b8c;background:#14161c;color:#eff0f6;border-radius:7px;caret-color:#b9a7ff}.ds-field:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
+    },
+    {
+      "name": "Selected device navigation",
+      "kind": "nav",
+      "refersTo": "navigation-selected",
+      "description": "Selected device navigation from the production Device Studio.",
+      "html": "<button class=\"ds-nav\" aria-current=\"page\">Galahad II LCDV2</button>",
+      "css": ".ds-nav{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:10px 14px;min-height:38px;border:1px solid transparent;border-radius:8px;background:#2c263d;color:#ded3ff;text-align:left}.ds-nav:hover{background:#32333f;border-color:#7c768f}.ds-nav:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
+    },
+    {
+      "name": "Device card",
+      "kind": "card",
+      "refersTo": "device-card",
+      "description": "Device card from the production Device Studio.",
+      "html": "<article class=\"ds-card\"><h2>Galahad II LCDV2</h2><p>Device connected</p></article>",
+      "css": ".ds-card{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;background:#191b22;color:#eff0f6;border-radius:14px;padding:32px}.ds-card h2{font-family:Exo,Segoe UI,sans-serif;font-size:24px;font-weight:600;letter-spacing:-.025em;margin:0 0 12px}.ds-card p{color:#adb2c2;line-height:1.7}"
+    },
+    {
+      "name": "LCD peer panels",
+      "kind": "nav",
+      "refersTo": "navigation-selected",
+      "description": "LCD peer panels from the production Device Studio.",
+      "html": "<nav class=\"ds-panels\" aria-label=\"LCD workspace\"><button>Ready-made themes</button><button aria-pressed=\"true\">Composition</button><button>Library</button></nav>",
+      "css": ".ds-panels{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid #30323e}.ds-panels button{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:10px 14px;border:1px solid #787b8c;border-radius:8px;background:#232630;color:#eff0f6;min-height:38px}.ds-panels button[aria-pressed=true]{background:#2c263d;color:#ded3ff;border-color:#b9a7ff}.ds-panels button:hover{background:#32333f}.ds-panels button:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Graphite device workbench",
+    "overview": "The user approved the interactive Device Studio prototype on 2026-10-16 (\"Мне нравится. выглядит хорошо.\"). That visual direction is now migrated into the production Svelte/Tauri interface. This document records the implemented production system; the prototype remains provenance for the direction, not the token source.\n\nDark graphite surfaces frame pale text and restrained lilac actions. Device schematics provide visual focus without turning the application into a multicolored gallery. The selected device determines its workspaces; LCD is an optional capability rather than the application shell. Interface evidence and previews do not establish physical hardware acceptance.",
+    "keyCharacteristics": [
+      "Graphite tonal layers and restrained lilac actions.",
+      "Self-hosted Exo 2 headings with system body text.",
+      "English default and Russian localization.",
+      "Device capability navigation and explicit application of drafts.",
+      "Stable local editing panels with visible connection and error states."
+    ],
+    "rules": [
+      {
+        "name": "The Preview Color Rule",
+        "body": "Editable RGB colors belong to device schematics and content; ordinary navigation keeps the lilac interface accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Capability Rule",
+        "body": "Expose editors from the implemented family registry; do not infer support from a device name or use LCD as a universal shell.",
+        "section": "components"
+      },
+      {
+        "name": "The Explicit Apply Rule",
+        "body": "Distinguish local draft, preview, saved profile and device command; editing a draft must not silently write hardware.",
+        "section": "components"
+      },
+      {
+        "name": "Display geometry",
+        "body": "GALAHAD II LCDV2 has a square 480×480 LCD. Preview and device glyph share model metadata; preserve square corners and use a circular mask only for explicitly round displays. Do not register unsupported families to demonstrate shapes.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** use the production stylesheet and components as the token and behavior source.",
+      "**Do** preserve English and Russian labels, visible keyboard focus and reduced-motion support.",
+      "**Do** keep capability navigation under its device and ready-made themes, composition and library equally reachable.",
+      "**Do** preserve local drafts and distinguish preview, storage and explicit device application."
+    ],
+    "donts": [
+      "**Don't** present schematic output, fixtures or browser screenshots as physical hardware acceptance.",
+      "**Don't** give unknown device families implemented editors or assume every device has an LCD.",
+      "**Don't** spread user-selected RGB colors through ordinary navigation and controls.",
+      "**Don't** reintroduce prototype-only token values, animations or demo Apply semantics into production documentation."
+    ]
+  }
+}

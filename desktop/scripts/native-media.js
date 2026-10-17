@@ -8,6 +8,12 @@
   const wait = async (predicate,why) => {for(let i=0;i<300;i++){if(await predicate())return;await delay(50);}throw new Error(why);};
   const field = name => [...document.querySelectorAll('label')].find(e=>e.textContent.trim().startsWith(name))?.querySelector('input,select');
   const button = name => [...document.querySelectorAll('button')].find(e=>e.textContent.trim()===name);
+  const studio=async panel=>{
+    const name={library:'Библиотека',composition:'Композиция',presets:'Готовые темы'}[panel];
+    await wait(()=>button(name)&&!button(name).disabled,'studio '+panel);
+    button(name).click();
+    await wait(()=>{const node=document.querySelector(`[data-studio-panel="${panel}"]`);return node&&!node.hidden;},'visible studio '+panel);
+  };
   let sequence=0;
   const step = action => invoke('native_media_step',{sequence:++sequence,action});
   const status = () => invoke('media_status');
@@ -19,6 +25,9 @@
     let devices;
     await wait(async()=>{devices=await rpc('list_devices');return devices.length===1;},'mock attachment');
     const dev=devices[0].id;
+    await wait(()=>button('Экран помпы')&&!button('Экран помпы').disabled,'device display studio');
+    button('Экран помпы').click();
+    await studio('library');
     const source=(await rpc('get_lcd_state',{dev})).source;
     const imageBytes=Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAARUlEQVR4nGMQlFD5P5CYYdQBoyEw6EMg7/o+DDzqgNEQGA2B0RAYDYHREBgNAVIx1avjUQeMrBAY8DbhqANGQ0BwuCdCAKUbOY2RZryEAAAAAElFTkSuQmCC'),c=>c.charCodeAt(0));
     const imageKey=await invoke('import_image',{bytes:imageBytes,name:'Native garden.png'});
@@ -70,6 +79,7 @@
     assert(button('Удалить ролик…')?.disabled,'builtin video delete disabled');
     button('Выбрать ролик для LCD').click();
     await wait(async()=>await rpc('get_lcd_media',{dev})===builtin.key,'builtin explicit Apply');
+    await studio('library');
     await wait(()=>button('Остановить ролик и вернуть LocalUI')&&!button('Остановить ролик и вернуть LocalUI').disabled,'builtin stop enabled after Apply settles');
     button('Остановить ролик и вернуть LocalUI').click();
     await wait(async()=>await rpc('get_lcd_media',{dev})===null,'builtin Clear');
@@ -164,6 +174,7 @@
     galleryToggle.click();
     await wait(()=>!document.querySelector('.cards'),'gallery teardown');
     await wait(()=>{const img=document.querySelector('img[alt="Первый кадр: fixture.gif"]');return img?.complete&&img.naturalWidth===144;},'selected preview after gallery');
+    await studio('composition');
     [...document.querySelectorAll('summary')].find(e=>e.textContent==='Сохранённые профили').click();
     button('Обновить список профилей').click();
     await wait(()=>field('Слот профиля'),'profile library');
@@ -178,18 +189,21 @@
     assert(await rpc('get_lcd_media',{dev})===null,'loading profile applied it');
     button('Применить ролик из профиля').click();
     await wait(async()=>await rpc('get_lcd_media',{dev})===keys[1],'explicit profile Apply');
+    await studio('library');
     await wait(()=>button('Остановить ролик и вернуть LocalUI')&&!button('Остановить ролик и вернуть LocalUI').disabled,'profile stop enabled after Apply settles');
     button('Остановить ролик и вернуть LocalUI').click();
     await wait(async()=>await rpc('get_lcd_media',{dev})===null,'clear applied media profile');
     let retained=false;
     try { await rpc('delete_prepared_clip',{key:keys[1]}); } catch { retained=true; }
     assert(retained,'profile reference must prevent deletion');
+    await studio('composition');
     await wait(()=>button('Сбросить слот к базовым настройкам')&&!button('Сбросить слот к базовым настройкам').disabled,'reset enabled after Clear');
     button('Сбросить слот к базовым настройкам').click();
     await wait(async()=>(await rpc('list_profiles')).profiles.some(p=>p.slot===7&&p.content.kind==='screen'),'reset removes media profile reference');
     await wait(async()=>{const p=(await rpc('get_lcd_state',{dev})).persistence;return p?.saved&&!p.pending;},'Clear committed before delete');
     await wait(async()=>{try {const c=await rpc('get_screen_collections',{dev});return !c.persistence?.pending;}catch{return false;}},'profile reset collections durable');
     const deletedKey=keys.pop();
+    await studio('library');
     await wait(()=>button('Обновить ролики')&&!button('Обновить ролики').disabled,'catalog refresh after profile reset');
     button('Обновить ролики').click();
     await wait(()=>field('Сохранённый ролик')&&!field('Сохранённый ролик').disabled,'profile reset catalog readback');
@@ -236,13 +250,15 @@
     assert(await rpc('get_lcd_media',{dev:currentDev})===null,'thumbnail must not select playback');
     thumbnails.push({v2:true,frames:586,width:144,height:144,pixel});
     // Exercise the real WebKit -> Tauri -> daemon composition path, on MockBackend.
-    [...document.querySelectorAll('summary')].find(e=>e.textContent==='Готовые темы — редактируемые раскладки').click();
+    await studio('presets');
     const layout=field('Раскладка');layout.value='clock';layout.dispatchEvent(new Event('change',{bubbles:true}));
     await wait(()=>button('Создать черновик из раскладки')&&!button('Создать черновик из раскладки').disabled,'clock draft enabled');
     button('Создать черновик из раскладки').click();
     const beforeComposition=await rpc('get_lcd_state',{dev:currentDev});
+    await studio('library');
     await wait(()=>button('Использовать фоном темы')&&!button('Использовать фоном темы').disabled,'background selection enabled');
     button('Использовать фоном темы').click();
+    await studio('composition');
     await wait(()=>field('Тип фона').value==='video','video draft selected');
     assert((await rpc('get_lcd_state',{dev:currentDev})).source===beforeComposition.source,'background draft applied implicitly');
     button('Обновить preview').click();
@@ -261,6 +277,7 @@
     const backgroundMode=field('Тип фона');backgroundMode.value='solid';backgroundMode.dispatchEvent(new Event('change',{bubbles:true}));
 
     await wait(async()=>{const c=await rpc('get_screen_collections',{dev:currentDev});return !c.persistence?.pending;},'collections settled after composition');
+    await studio('library');
     await wait(()=>button('Обновить ролики')&&!button('Обновить ролики').disabled,'refresh after composition');
     button('Обновить ролики').click();
     await wait(()=>[...(field('Сохранённый ролик')?.options ?? [])].some(o=>o.value==='d'.repeat(32)),'v2 remains in catalog after composition');

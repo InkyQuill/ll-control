@@ -88,6 +88,27 @@ impl PreparedGroup {
             },
         })
     }
+    pub(crate) fn windows_control(
+        draft: &lconnect_profile::control::PreparedControl,
+        target: &GroupProfile,
+    ) -> anyhow::Result<Self> {
+        let profile = crate::windows_control::profile(draft, target)?;
+        let source_sha256 = format!(
+            "{:x}",
+            Sha256::digest(serde_json::to_vec(&("lconnect-windows-control-v1", draft))?)
+        );
+        Ok(Self {
+            source_sha256,
+            profile,
+            uploads: Uploads::default(),
+            _assets: PublishedAssets {
+                publication: None,
+                mapping: BTreeMap::new(),
+                _images: vec![],
+                _media: vec![],
+            },
+        })
+    }
     /// Stable identity of original contents before generated asset-key remapping.
     pub fn source_sha256(&self) -> &str {
         &self.source_sha256
@@ -118,8 +139,33 @@ impl GroupManifest {
             keys.extend(dependencies(p));
         }
         if let GroupSettings::Screen(group) = &self.profile.content {
-            if let Some(theme) = &group.theme {
+            for theme in group.theme.iter().chain(
+                group
+                    .editor
+                    .iter()
+                    .filter_map(|editor| editor.theme.as_ref()),
+            ) {
                 add_theme(theme, &mut keys);
+            }
+            if let Some(editor) = &group.editor {
+                keys.extend(
+                    editor
+                        .image_keys()
+                        .into_iter()
+                        .map(|key| (Kind::Image, key.to_owned())),
+                );
+                keys.extend(
+                    editor
+                        .video_keys()
+                        .into_iter()
+                        .map(|key| (Kind::Media, key.to_owned())),
+                );
+                keys.extend(
+                    editor
+                        .font_keys()
+                        .into_iter()
+                        .map(|key| (Kind::Font, key.to_owned())),
+                );
             }
             if let Some(key) = &group.media_clip {
                 keys.insert((Kind::Media, key.clone()));
@@ -197,7 +243,12 @@ impl GroupManifest {
             Ok(())
         };
         if let GroupSettings::Screen(group) = &self.profile.content {
-            if let Some(theme) = &group.theme {
+            for theme in group.theme.iter().chain(
+                group
+                    .editor
+                    .iter()
+                    .filter_map(|editor| editor.theme.as_ref()),
+            ) {
                 check_theme(theme)?;
             }
         }
@@ -382,6 +433,21 @@ fn remap_group(
         if let Some(theme) = &mut group.theme {
             remap_page(theme, mapping)?;
         }
+        if let Some(theme) = group
+            .editor
+            .as_mut()
+            .and_then(|editor| editor.theme.as_mut())
+        {
+            remap_page(theme, mapping)?;
+        }
+        if let Some(editor) = &mut group.editor {
+            for asset in editor.resources.values_mut() {
+                match asset {
+                    ScreenBackgroundAsset::Image(key) => mapped(key, Kind::Image, mapping)?,
+                    ScreenBackgroundAsset::Video(key) => mapped(key, Kind::Media, mapping)?,
+                }
+            }
+        }
         if let Some(key) = &mut group.media_clip {
             mapped(key, Kind::Media, mapping)?;
         }
@@ -434,3 +500,6 @@ fn remap_group(
 
     Ok((profile, uploads))
 }
+
+mod windows;
+pub(crate) use windows::{StagedWindowsScreen, WindowsPreview};

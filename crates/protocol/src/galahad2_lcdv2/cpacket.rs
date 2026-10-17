@@ -8,7 +8,7 @@
 //! # See also
 //!
 //! - [`super::bpacket`] -- the 1024-byte sibling for larger uploads.
-//! - Phase 0e static survey (`docs/protocol/captures/phase-0e/`) for the
+//! - Phase 0e static survey (`docs/development/protocol/captures/phase-0e/`) for the
 //!   classification of C-class commands across the slv3 / lcd207 SDKs.
 
 /// HID Report ID byte for C-class output packets.

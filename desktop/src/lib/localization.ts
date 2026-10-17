@@ -7,7 +7,7 @@ export function translate(source:string|null|undefined,language:InterfaceLanguag
  if(source===null||source===undefined)return '';
  if(language==='ru-RU')return values.length?format(source,values):source;
  const key=source.trim().replace(/\s+/g,' ');
- const resource=english[key];
+ const resource=Object.hasOwn(english,key)?english[key]:undefined;
  if(resource===undefined)return values.length?format(source,values):source;
  const leading=source.match(/^\s*/)?.[0]??'',trailing=source.match(/\s*$/)?.[0]??'';
  return leading+format(resource,values)+trailing;

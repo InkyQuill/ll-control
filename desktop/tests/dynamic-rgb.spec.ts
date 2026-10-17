@@ -8,11 +8,12 @@ test('dynamic RGB loads named channels, validates draft device and shows output 
       low_speed_percent:null,high_speed_percent:null};
     let requested: unknown=config;
     Object.assign(window,{bridgeCalls:calls,__TAURI_INTERNALS__:{invoke:async (_command:string,request:{method:string;params:Record<string,unknown>})=>{
+        if (_command === 'desktop_set_language') return null;
       calls.push(request);
       const state=()=>({base_mode:'static',color_count:1,speed_supported:false,requested,
         applied:null,degraded:true,suppressed_by_thermal:false,last_error:null});
       switch(request.method){
-        case 'list_devices':return [{id:'lcd:a',display_name:'LCD A'},{id:'lcd:b',display_name:'LCD B'}];
+        case 'list_devices':return [{id:'lcd:a',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'lcd:b',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu:test',label:'CPU package',unit:'celsius',value:42,status:'valid',age_ms:10},{id:'power:test',label:'CPU power',unit:'watts',value:50,status:'valid',age_ms:10}];
         case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{}};
         case 'get_lighting_info':return {modes:['static'],max_speed:100,max_brightness:100};
@@ -26,7 +27,7 @@ test('dynamic RGB loads named channels, validates draft device and shows output 
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button',{name:'Подсветка',exact:true}).click();
   await page.getByText('Подсветка помпы по датчику',{exact:true}).click();
@@ -49,7 +50,7 @@ test('dynamic RGB loads named channels, validates draft device and shows output 
   await load.click();
   await page.getByLabel('Нижний порог (°C)').fill('70');
   await apply.click();
-  await expect(page.getByRole('alert')).toContainText('Пороги должны быть');
+  await expect(page.getByRole('alert')).toContainText('Пороги температуры должны соответствовать целым °C');
   expect(await page.evaluate(()=>(window as unknown as {bridgeCalls:{method:string}[]}).bridgeCalls.filter(c=>c.method==='set_dynamic_rgb').length)).toBe(0);
   await page.getByLabel('Нижний порог (°C)').fill('35');
   await apply.click();
@@ -69,9 +70,10 @@ test('dynamic RGB loads named channels, validates draft device and shows output 
 test('missing sensor status respects thermal ownership and updates after recovery', async ({ page }) => {
   await page.addInitScript(() => {
     Object.assign(window, { rgbHealth: { degraded: true, suppressed: true }, __TAURI_INTERNALS__: { invoke: async (_: string, request: { method: string }) => {
+        if (_ === 'desktop_set_language') return null;
       const health = (window as unknown as { rgbHealth: { degraded: boolean; suppressed: boolean } }).rgbHealth;
       switch (request.method) {
-        case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2' }];
+        case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [];
         case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };
         case 'get_lighting_info': return { modes: ['static'] };
@@ -81,7 +83,7 @@ test('missing sensor status respects thermal ownership and updates after recover
       }
     } } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Подсветка', exact: true }).click();
   await page.getByText('Подсветка помпы по датчику', { exact: true }).click();
   const base = page.getByText('Датчик недоступен — используется обычная подсветка.', { exact: true });
