@@ -22,7 +22,7 @@ qualification for changed code. No release tag or remote publication is implied.
 | Entry point | First-release disposition | Required qualification |
 |---|---|---|
 | Device overview, sensors, Spec, units and EN/RU | Core candidate, not yet hardware-qualified | R2/R3 supported providers, stale/unavailable, session/accessibility |
-| LCD image/video playback, basic composition, presets, fonts, galleries | Core candidate; direct canvas editing required | R1/R2/R3 input, persistence, output and resources |
+| LCD image/video playback, basic composition, presets, fonts, galleries | Core candidate; R1 direct canvas editing implemented | R1/R2/R3 input, persistence, output and resources |
 | Cooling, manual/dynamic RGB, thermal alerts, topology | Core candidate | R2/R3 physical channels, source fallback, lifecycle and zones |
 | Native profile save/load/backup/restore and group resets | Core candidate | R2/R3 data retention, errors and recovery |
 | Tray/autostart/single instance/install/upgrade/remove | Core candidate | R3 real Plasma Wayland session |
@@ -50,4 +50,6 @@ GNOME51 is a candidate, not supported. Recorded package platform is Arch x86_64.
 Actual shell, firmware, host ABI and supported source/provider versions must be
 recorded during R3, with fan wiring and known restoration settings established.
 
-R0 contract/baseline is complete. R1 may proceed; R2/R3 acceptance remains open.
+R0 contract/baseline and R1 software/native canvas acceptance are complete.
+R2 integrated stability and R3 package/session/hardware acceptance remain open.
+[R1 implementation and verification](r1-canvas-editor.md).
