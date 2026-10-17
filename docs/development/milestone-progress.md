@@ -170,3 +170,12 @@ preparation decoded all 86,400 output frames after source removal, with no decod
 errors. Ten media storage/reader/upload tests passed, including quota cleanup;
 fmt, strict targeted Clippy and rustdoc passed. The costly codec test remains
 explicit release qualification; raw evidence is ignored. R2 is still in progress.
+
+
+R2 integrated recovery batch: complete native fault workflow passed, including
+mode/default lost ACKs, profile mutations, Apply/Clear, cleanup/dependency recovery
+and six page reconnects without automatic duplicate writes. Fourteen recorder
+fault/cancel/close cases passed in EN/RU with joined children and unchanged device
+write counters. Twelve codec lifetime tests passed; one paced benchmark remained
+explicitly ignored. The R2 ledger now has an active closure queue; remaining
+requirements are not waived.

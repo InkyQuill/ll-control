@@ -17,6 +17,22 @@ remain authoritative. Historical passes locate coverage; they do not qualify thi
 | Optional isolation | Native recording faults, archive/Windows imports, weather; owner and cancellation tests | Retained experimental paths cannot corrupt core state or leak workers when cancelled/closed |
 | Final source | Rust fmt/strict Clippy/tests/rustdoc; Svelte/build/locales/theme contracts; browser/native | Execute on integrated final implementation; record ignored cases and precise limitations |
 
+## Remaining closure work after the recorded batches
+
+This is the active queue; the batch sections below preserve the scope of completed
+checks. Do not repeat their workflows unless the relevant implementation changes.
+
+| Area | Work still needed before closure |
+|---|---|
+| Media inputs | Qualify EXIF-oriented input through normalization/output; reconcile image/video happy-path assertions with the first milestone requirement |
+| Recovery | Integrated native fault workflow passed; map publication/replacement/delete/profile Save/Apply/both resets to concrete lost-reply, timeout, disconnect and close evidence; add only missing cases |
+| Storage | Reconcile actual syscall/journal/quota checks with publication/import ownership and partial-cleanup paths; resolve uncovered boundaries rather than treating generic test counts as proof |
+| Cooling/RGB | Integrated mode/default Save and recovery passed; reconcile with native controls, restart and thermal backend assertions before final snapshot checks |
+| Media lifetime/resources | Fixed budget, exact storage/one-hour preparation and codec-fault/queued-stop assertions passed; reconcile with milestone scope. Physical/real-time soak belongs to R3 |
+| EN/RU/accessibility | Retain Russian keyboard/AT-SPI proof and EN/RU recovery matrices; audit missing supported recovery states and current scale coverage |
+| Optional isolation | Recording fault/cancel/close passed in EN/RU; qualify retained archive/Windows/weather isolation checks and inspect core-state/worker cleanup assertions |
+| Integrated snapshot | Once gaps above close, run exact-source Rust/frontend/contracts/browser checks and relevant native flows; record ignores without converting them to passes |
+
 ## Execution order
 
 1. Recheck native image/video happy paths and inventory actual assertions.
@@ -281,3 +297,34 @@ passed. Review tightened specific error and decoder-diagnostic assertions.
 This qualifies host preparation at the duration limit and storage at the byte
 limit; it does not imply worst-case source complexity, one-hour hardware playback
 or every remaining storage I/O/operation-interruption boundary. R2 remains open.
+
+
+## Integrated recovery and optional recorder isolation
+
+The complete native smoke workflow passed with both cooling-mode/default flags
+enabled. Actual proxy counters confirm one request and one lost reply for each
+theme Apply, Clear, profile Save, profile rename/reset/delete, and brightness
+mutation; the timeout case was withheld once and not replayed. Profile rejection
+before forwarding, source Save lost reply, partial font cancellation and font
+publication-status recovery also passed. The driver verifies six page reconnects,
+saved and restart dependency faults, cleanup corruption/partial-unlink retry,
+retained offline/profile/draft resources, stale sensor recovery, and LCD/PWM/RGB
+transport recovery. Mode initialization and Save reconcile lost acknowledgements
+without a second write; banks and active controls survive daemon restart.
+
+Reproduce with `LCONNECT_NATIVE_COOLING_MODES=1
+LCONNECT_NATIVE_COOLING_DEFAULTS=1 /usr/bin/python3 desktop/scripts/native-smoke.py`
+(the environment assignments belong on the same command line).
+
+All 14 `native-recording-faults.py` cases passed: stall, crash, cancel, close,
+cleanup failure, review cleanup failure and lost cleanup acknowledgement, each
+in EN/RU. Assertions inspect actual owned child PIDs, empty staging after cleanup,
+joined normal close, absence of unintended device writes, and no publication
+before explicit Save. This uses a synthetic recorder source, not host PipeWire.
+
+Twelve `media_composition::tests` passed: live sensor/loop output, source pin
+release, decoder timeout/oversize, blocked/crashed codec termination, full-queue
+stop, handoff and rotation. One 30-second paced test is ignored by this ordinary
+run; it is not counted as passed. The separately executed four-widget resource
+contract covers the release workload budget. Raw native logs and receipts stay
+ignored. No production defect was demonstrated by this batch.
