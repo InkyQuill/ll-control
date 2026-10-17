@@ -272,3 +272,17 @@ Still open: exact installed-app/user acceptance, gesture/property p95 latency,
 prolonged resource checks, and physical static/animated orientation acceptance.
 Static-JPEG rotation and intermediate backlight levels remain separate hardware
 issues. This editor implementation does not close the broader release milestone.
+
+
+### Packaged delivery checkpoint — `e6d72d7`
+
+The final focus regression suite passed all 11 canvas scenarios and Svelte remained
+at zero errors/warnings. The exact committed source produced the production
+Arch package (GUI custom protocol; no native-smoke instrumentation).
+Isolated package install, upgrade, removal, payload reproducibility and retention
+of user intent passed. The extracted production GUI launched and closed cleanly
+with a private mock session and no hardware writes.
+
+The existing user window has not been replaced while its unsaved-draft status is
+unknown. GitHub run 39068310079 is in progress; a passing remote run is not yet
+claimed. This checkpoint does not close installed-user or physical acceptance.
