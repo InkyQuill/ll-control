@@ -1,0 +1,403 @@
+{
+  "background": [
+    0,
+    0,
+    0
+  ],
+  "background_video": "bcf5a102bf2a426286d34310cad4a001",
+  "layers": [
+    {
+      "decimals": 1,
+      "kind": "sensor",
+      "label": "CPU0",
+      "parts": {
+        "label": {
+          "align": "right",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 125,
+          "y": 148
+        },
+        "unit": {
+          "align": "left",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 141,
+          "y": 148
+        }
+      },
+      "sensor_id": "fixture:cpu",
+      "style": {
+        "align": "center",
+        "color": [
+          235,
+          245,
+          255
+        ],
+        "line_box": true,
+        "shadow": {
+          "blur": 2,
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "opacity": 20,
+          "x": 0,
+          "y": 3
+        },
+        "size": 114,
+        "x": 133,
+        "y": 34
+      },
+      "temperature_unit": "celsius",
+      "unit": "celsius"
+    },
+    {
+      "decimals": 1,
+      "kind": "sensor",
+      "label": "CPU1",
+      "parts": {
+        "label": {
+          "align": "right",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 339,
+          "y": 148
+        },
+        "unit": {
+          "align": "left",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 355,
+          "y": 148
+        }
+      },
+      "sensor_id": "fixture:cpu",
+      "style": {
+        "align": "center",
+        "color": [
+          235,
+          245,
+          255
+        ],
+        "line_box": true,
+        "shadow": {
+          "blur": 2,
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "opacity": 20,
+          "x": 0,
+          "y": 3
+        },
+        "size": 114,
+        "x": 347,
+        "y": 34
+      },
+      "temperature_unit": "celsius",
+      "unit": "celsius"
+    },
+    {
+      "decimals": 1,
+      "kind": "sensor",
+      "label": "CPU2",
+      "parts": {
+        "label": {
+          "align": "right",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 125,
+          "y": 384
+        },
+        "unit": {
+          "align": "left",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 141,
+          "y": 384
+        }
+      },
+      "sensor_id": "fixture:cpu",
+      "style": {
+        "align": "center",
+        "color": [
+          235,
+          245,
+          255
+        ],
+        "line_box": true,
+        "shadow": {
+          "blur": 2,
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "opacity": 20,
+          "x": 0,
+          "y": 3
+        },
+        "size": 114,
+        "x": 133,
+        "y": 270
+      },
+      "temperature_unit": "celsius",
+      "unit": "celsius"
+    },
+    {
+      "decimals": 1,
+      "kind": "sensor",
+      "label": "CPU3",
+      "parts": {
+        "label": {
+          "align": "right",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 339,
+          "y": 384
+        },
+        "unit": {
+          "align": "left",
+          "color": [
+            71,
+            201,
+            137
+          ],
+          "line_box": true,
+          "shadow": {
+            "blur": 2,
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "opacity": 20,
+            "x": 0,
+            "y": 3
+          },
+          "size": 46,
+          "x": 355,
+          "y": 384
+        }
+      },
+      "sensor_id": "fixture:cpu",
+      "style": {
+        "align": "center",
+        "color": [
+          235,
+          245,
+          255
+        ],
+        "line_box": true,
+        "shadow": {
+          "blur": 2,
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "opacity": 20,
+          "x": 0,
+          "y": 3
+        },
+        "size": 114,
+        "x": 347,
+        "y": 270
+      },
+      "temperature_unit": "celsius",
+      "unit": "celsius"
+    },
+    {
+      "axis": "vertical",
+      "color": [
+        71,
+        201,
+        137
+      ],
+      "kind": "divider",
+      "length": 169.0,
+      "opacity": 100,
+      "shadow": {
+        "blur": 5,
+        "color": [
+          0,
+          0,
+          0
+        ],
+        "opacity": 100,
+        "x": 0,
+        "y": 0
+      },
+      "thickness": 2.0,
+      "x": 239.0,
+      "y": 53.0
+    },
+    {
+      "axis": "horizontal",
+      "color": [
+        71,
+        201,
+        137
+      ],
+      "kind": "divider",
+      "length": 412.0,
+      "opacity": 100,
+      "shadow": {
+        "blur": 5,
+        "color": [
+          0,
+          0,
+          0
+        ],
+        "opacity": 100,
+        "x": 0,
+        "y": 0
+      },
+      "thickness": 2.0,
+      "x": 34.0,
+      "y": 242.0
+    },
+    {
+      "axis": "vertical",
+      "color": [
+        71,
+        201,
+        137
+      ],
+      "kind": "divider",
+      "length": 166.0,
+      "opacity": 100,
+      "shadow": {
+        "blur": 5,
+        "color": [
+          0,
+          0,
+          0
+        ],
+        "opacity": 100,
+        "x": 0,
+        "y": 0
+      },
+      "thickness": 2.0,
+      "x": 239.0,
+      "y": 264.0
+    }
+  ],
+  "name": "Owned live quad with dividers",
+  "version": 2
+}
