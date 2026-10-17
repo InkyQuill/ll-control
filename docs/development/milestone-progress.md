@@ -209,3 +209,24 @@ ledger now lists concrete remaining operation cells. Integrated Rust verificatio
 passed 1,378 tests/10 routine ignores before the added explicit deadline case;
 its shared helper received targeted regression/Clippy checks. Frontend build and
 contracts passed. Full browser acceptance is still running; R2 remains open.
+
+
+## R2 complete
+
+Qualified at `53ef291` on 2026-10-17. This entry supersedes the intermediate
+pending statements above. All eight R2 requirements are reconciled in the
+[core ledger](parity/r2-core-qualification.md) and
+[operation matrix](parity/r2-recovery-coverage.md).
+
+Final native batch: 36 cases across six operations, three interruption modes and
+EN/RU passed, with one mutation, joined close, preserved neighbors and restart
+readback. Existing proxy behavior passed four regression cases. Full browser suite
+passed 770 tests; Rust passed 1,378 with documented ordinary ignores and explicit
+release checks, including the real 60-second group deadline. Resource measurements,
+storage faults, media boundaries, optional isolation and accessibility assertions
+are recorded in the ledger rather than inferred from counts.
+
+Tests and milestone records are committed; raw logs/receipts remain ignored.
+Developer documentation stays under `docs/development`; operational guides remain
+three concise files under `docs/user`. R3 real-session/package/physical qualification
+is next and has not been performed or authorized by this completion.
