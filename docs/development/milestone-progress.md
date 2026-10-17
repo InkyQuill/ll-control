@@ -21,3 +21,25 @@ Validation: local document links checked; tracked evidence inventory checked;
 production edits in this organization step are reference-path comments only.
 The existing candidate's saved checks are historical evidence, not a new suite run.
 R1 implementation and interaction acceptance are next and receive their own commit.
+
+## R1 — in progress: shared renderer geometry
+
+The renderer now returns layer foreground bounds alongside the same rendered
+frame. The read-only `preview_lcd_editor` request exposes that frame and geometry
+through the existing bounded preparation jobs, including decoded video previews.
+Text uses actual shaped glyph bounds; sensor parts are combined; fitted images
+retain Windows watermark placement. Backgrounds and effects have no handles.
+The original preview request remains compatible.
+
+Added native-coordinate/rotation conversion and draft-only move/resize helpers.
+Sensor parts move together, resizing retains imported styles, and all transforms
+respect the existing format limits. These helpers are not yet wired into the UI.
+
+Verified: image crate suite, two added renderer geometry regressions, three theme
+IPC scenarios, the video preview/cache/pin scenario, four transform checks,
+Svelte checking and Clippy for affected Rust packages/all targets. Raw logs remain
+local and ignored. These are foundational checks, not pointer/keyboard acceptance.
+
+Remaining R1: canvas component and selection/property integration, history/cancel,
+sensor rebinding and property reachability, translated controls, real browser and
+native input, profile/output/restart acceptance, then the completion commit.

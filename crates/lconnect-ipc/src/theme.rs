@@ -2,6 +2,37 @@
 use crate::{DisplayTemperatureUnit, IpcError, Result, SensorReading, SensorStatus, SensorUnit};
 use serde::{Deserialize, Serialize};
 
+/// Read-only canvas preview. Bounds and JPEG share one sensor/time snapshot.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LcdEditorPreview {
+    pub jpeg: Vec<u8>,
+    pub layers: Vec<Option<LayerBounds>>,
+}
+
+/// Unrotated foreground bounds in native LCD pixels, before canvas clipping.
+/// Shadows are excluded. A layer without editable foreground has no bounds.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct LayerBounds {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+}
+
+impl LayerBounds {
+    /// Smallest rectangle containing both foreground regions.
+    pub fn union(self, other: Self) -> Self {
+        let x = self.x.min(other.x);
+        let y = self.y.min(other.y);
+        Self {
+            x,
+            y,
+            width: (self.x + self.width).max(other.x + other.width) - x,
+            height: (self.y + self.height).max(other.y + other.height) - y,
+        }
+    }
+}
+
 /// A portable theme stores explicit sensor identities; missing identities never remap.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

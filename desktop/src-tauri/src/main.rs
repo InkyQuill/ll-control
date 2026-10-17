@@ -63,6 +63,7 @@ fn allowed(method: &str) -> bool {
             | "preview_windows_screen_upload"
             | "set_lcd_theme"
             | "preview_lcd_theme"
+            | "preview_lcd_editor"
             | "list_named_theme_assets"
             | "rename_theme_asset"
             | "delete_theme_asset"
