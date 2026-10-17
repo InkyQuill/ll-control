@@ -66,7 +66,7 @@
     const summary=[...document.querySelectorAll('summary')].find(e=>e.textContent.trim()==='Подсветка помпы по датчику');summary.click();
     await click('Загрузить настройки режима по датчику');
     await select('Датчик подсветки','fixture:cpu');
-    await number('Нижний порог (celsius)',45);await color('Нижний цвет 2','#112233');
+    await number('Нижний порог (°C)',45);await color('Нижний цвет 2','#112233');
     await number('Нижняя скорость',20);await number('Верхняя скорость',80);
     await number('Яркость по датчику',50);await select('Направление по датчику','reverse');
     await click('Применить режим по датчику');
@@ -77,7 +77,7 @@
     await click('Применить режим по датчику');
     await wait(async()=>{const d=await rpc('get_dynamic_rgb',{dev});return d.requested?.sensor_id==='amdgpu:2f61:utilization'&&!!d.applied&&!d.degraded&&!d.last_error;},'GPU source applied');
     await select('Датчик подсветки','fixture:cpu');
-    if(field('Нижний порог (celsius)').value!=='45'||field('Нижний цвет 2').value!=='#112233'||field('Яркость по датчику').value!=='50'||field('Направление по датчику').value!=='reverse')throw new Error('CPU source draft lost');
+    if(field('Нижний порог (°C)').value!=='45'||field('Нижний цвет 2').value!=='#112233'||field('Яркость по датчику').value!=='50'||field('Направление по датчику').value!=='reverse')throw new Error('CPU source draft lost');
     await click('Применить режим по датчику');
     await wait(async()=>(await rpc('get_dynamic_rgb',{dev})).requested?.sensor_id==='fixture:cpu','CPU selection retained');
     await select('Зона','pump');await select('Эффект','static');await click('Применить подсветку');
@@ -95,7 +95,7 @@
     await select('Эффект','meteor');await click('Применить подсветку');
     await wait(()=>[...document.querySelectorAll('p')].some(e=>e.textContent.includes('Режим помпы: meteor')),'meteor metadata');
     await click('Загрузить настройки режима по датчику');
-    await wait(()=>field('Датчик подсветки').value==='fixture:cpu'&&field('Нижний порог (celsius)')?.value==='45','stored Meteor source restored');
+    await wait(()=>field('Датчик подсветки').value==='fixture:cpu'&&field('Нижний порог (°C)')?.value==='45','stored Meteor source restored');
     if(field('Нижний цвет 2').value!=='#112233'||field('Яркость по датчику').value!=='50')throw new Error('per-mode source profile lost');
     await click('Применить режим по датчику');await wait(async()=>!!(await rpc('get_dynamic_rgb',{dev})).requested,'restored source enabled');
     await click('Отключить режим по датчику');await wait(async()=>!(await rpc('get_dynamic_rgb',{dev})).requested,'disable retains profiles');
@@ -104,6 +104,11 @@
     await wait(async()=>{const d=await rpc('get_dynamic_rgb',{dev});return d.base_mode==='static'&&d.requested?.unit==='rpm';},'inactive dynamic flag retained');
     await select('Эффект','meteor');await click('Применить подсветку');
     await wait(async()=>{const d=await rpc('get_dynamic_rgb',{dev});return d.base_mode==='meteor'&&!d.requested;},'disabled Meteor does not resurrect');
+    await click('Охлаждение');await click('Подсветка');
+    await click('Загрузить настройки подсветки');
+    await wait(()=>field('Эффект')?.value==='meteor'&&field('Управление подсветкой')?.value==='false','disabled mode survives navigation');
+    const navigated=await rpc('get_dynamic_rgb',{dev});
+    if(navigated.requested)throw new Error('Navigation resurrected disabled dynamic mode');
     const dynamic_profiles=(await rpc('get_dynamic_rgb',{dev})).profiles;
     if(dynamic_profiles.modes.length!==2||dynamic_profiles.modes.find(m=>m.mode==='meteor').bindings.length!==2)throw new Error('incomplete source profile graph');
     await invoke('native_smoke_result',{result:{ok:true,dev,pump_palette:true,fan_palette:true,native_base_load:true,native_mode_catalog:true,native_mode_drafts:true,native_mode_defaults:true,applied_mode_profiles:true,native_fan_topology:true,native_dynamic_profiles:true,native_dynamic_selection:true,dynamic_profiles,selected_rgb:[[1,2,3],[4,5,6],[7,8,9],[10,11,12]]}});
