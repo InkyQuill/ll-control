@@ -8,7 +8,12 @@ import threading
 
 
 class FaultProxy:
-    def __init__(self, path, backend, cleanup_profile_fault=None, lcd_messages=False, image_messages=False, library_messages=False, cooling_messages=False, collection_readbacks=False, cooling_modes=False, cooling_defaults=False, collection_transport=False):
+    def __init__(self, path, backend, cleanup_profile_fault=None, lcd_messages=False, image_messages=False, library_messages=False, cooling_messages=False, collection_readbacks=False, cooling_modes=False, cooling_defaults=False, collection_transport=False, operation_method=None, operation_fault=None):
+        self.operation_method = operation_method
+        self.operation_fault = operation_fault
+        self.operation_requests = []
+        self.operation_results = []
+        self.operation_ready = threading.Event()
         self.cooling_defaults = cooling_defaults
         self.cooling_default_requests = 0
         self.cooling_default_dropped = 0
@@ -84,6 +89,26 @@ class FaultProxy:
                                     line, _, rest = buffers[source].partition(b'\n')
                                     buffers[source] = bytearray(rest)
                                     obj = json.loads(line)
+                                    if owner.operation_method:
+                                        if source is self.request and obj.get('method') == owner.operation_method:
+                                            with owner.lock:
+                                                owner.operation_requests.append(copy.deepcopy(obj))
+                                                target_ids[obj['id']] = len(owner.operation_requests)
+                                        if source is upstream and obj.get('id') in target_ids:
+                                            index = target_ids.pop(obj['id'])
+                                            if 'error' in obj:
+                                                raise ValueError('operation failed before reply fault: ' + str(obj['error']))
+                                            with owner.lock:
+                                                owner.operation_results.append(copy.deepcopy(obj['result']))
+                                            if index == 1:
+                                                owner.operation_ready.set()
+                                                if owner.operation_fault == 'disconnect':
+                                                    self.request.shutdown(socket.SHUT_RDWR)
+                                                    return
+                                                # Keep the connection alive but never deliver this ACK.
+                                                continue
+                                        peers[source].sendall(line + b'\n')
+                                        continue
                                     if source is self.request and owner.collection_readbacks:
                                         if obj.get('method') == 'set_screen_collections':
                                             params = obj['params']

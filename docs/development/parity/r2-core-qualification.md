@@ -27,14 +27,14 @@ checks. Do not repeat their workflows unless the relevant implementation changes
 
 | Area | Work still needed before closure |
 |---|---|
-| Media inputs | Native EN/RU normalization of all eight EXIF orientations passed with exact pixel mapping and reopen checks; reconcile image/video happy-path assertions with the first milestone requirement |
-| Recovery | Integrated native fault workflow passed; map publication/replacement/delete/profile Save/Apply/both resets to concrete lost-reply, timeout, disconnect and close evidence; add only missing cases |
-| Storage | Publication ownership/partial-cleanup suite passed with inspected assertions; reconcile actual syscall/journal/quota checks and real ownership-link collision passed; reconcile the remaining operation recovery cells rather than treating generic test counts as proof |
-| Cooling/RGB | Integrated mode/default Save and recovery passed; reconcile with native controls, restart and thermal backend assertions before final snapshot checks |
-| Media lifetime/resources | Fixed budget, exact storage/one-hour preparation and codec-fault/queued-stop assertions passed; reconcile with milestone scope. Physical/real-time soak belongs to R3 |
-| EN/RU/accessibility | Retain Russian keyboard/AT-SPI proof and EN/RU recovery matrices; Russian 2× native keyboard/chooser/AT-SPI/reflow also passed; reconcile remaining supported recovery states |
-| Optional isolation | Recording fault/cancel/close passed in EN/RU; profile and both group archive EN/RU checks passed; Windows Screen/Control and corrupt-media EN/RU checks plus Russian effects/restart/joined-close checks passed; reconcile optional-flow cancellation coverage before closure |
-| Integrated snapshot | Once gaps above close, run exact-source Rust/frontend/contracts/browser checks and relevant native flows; record ignores without converting them to passes |
+| Media inputs | Qualified: native ordinary/transparent image workflow, all EXIF orientations, GIF/MP4 edit/review/Save/Apply/replace/stop, source removal, thumbnail/output and protected defaults. Preserve final integrated status separately |
+| Recovery | Native operation-specific disconnect/deadline/app-close matrix is running; finish it and reconcile the operation ledger |
+| Storage | Qualified: actual write/fsync/rename failures, transaction partial install/crash, quotas/maxima, stale revisions and ownership/cleanup/collision behavior |
+| Cooling/RGB | Qualified: native catalogs, controls/navigation/restart, mode/default recovery, source-unit banks and persisted Disable; full workspace confirms backend fallback/override/thermal/topology assertions |
+| Media lifetime/resources | Qualified: fixed measured budget, exact byte/frame/duration limits, backpressure, cancellation, corrupted/failed reader and joined codec cleanup. Real-time physical soak remains R3 |
+| EN/RU/accessibility | Native Russian 1×/2× keyboard/chooser/AT-SPI passed; finish full browser and native recovery-state reconciliation |
+| Optional isolation | Qualified: native recorder faults, Linux/Windows archives and corrupt media rejection; final workspace includes prepared/offline cancellation and joined worker shutdown. Fidelity/platform feature expansion stays R4/R6/R8 |
+| Integrated snapshot | Rust/frontend/contracts passed with documented ignores and targeted test-only delta checks; full 770-case browser run and new native operation matrix remain pending |
 
 ## Execution order
 
@@ -441,7 +441,7 @@ window focus recovery and no horizontal overflow at the resulting 640px viewport
 The same cooling, lighting, sensor, image/font error and screen-reset workflows
 remain operable. Actual Plasma Wayland/scaling/speech still belongs to R3.
 
-## Integrated verification in progress
+## Integrated verification
 
 The integrated Rust run passed **1,378 tests, zero failures, 10 ignored entries**
 across 195 test-result summaries. Workspace fmt, strict all-target Clippy and
@@ -460,5 +460,81 @@ They are not included in the ordinary pass count.
 Frontend check reports zero errors/warnings; production build, all 1,160 static
 translations, 39 Rust theme contracts and three localization tests passed. These
 counts are inventory checks, supplemented by behavior suites. The complete
-770-test browser run is still running and **not accepted yet**. Raw outputs and
-its live process reference remain ignored in batch-11. R2 is not complete.
+770-test browser run passed in 17.9 minutes. Raw outputs remain ignored; batch-12
+records its terminal result and supersedes the earlier live reference in batch-11.
+
+
+## Component reconciliation
+
+Five R2 checklist items are qualified; the milestone itself remains open. This
+uses inspected assertions and the recorded batches, not total test counts:
+
+- **Media:** native gallery editing checks transparent pixels, crop/transforms,
+  preview/output, one replacement, explicit Apply and cancel. The EXIF batch
+  checks all eight transforms and normalized reopen. Native media checks GIF/MP4
+  preparation/edit/review, managed playback after source removal, reference-safe
+  deletion and full output decode. Protected built-in image/video behavior is
+  also exercised in the current browser run.
+- **Storage:** real scoped syscall failures distinguish prepublication rejection
+  from post-rename uncertainty; actual SIGKILL transaction/publication tests
+  verify startup reconciliation. Quota and maximum-size tests reject excess
+  without damaging valid content. Revision gates, foreign inode preservation,
+  reference pins and retained recovery resources are checked independently.
+- **Cooling/RGB:** native palette/keyboard/integrated runs check 16 pump and six
+  fan mode catalogs, per-mode settings, defaults, source units, topology/sync,
+  persisted Disable and restart. Full workspace assertions cover stale-source
+  fallback, manual override, thermal priority/grace and restoration. Physical
+  cooling/light output is deliberately still R3.
+- **Bounded media:** measured release workload met predeclared frame/CPU/RSS/age
+  budgets, all captured output decoded, and Clear joined codec children. Exact
+  byte/frame quotas and one-hour preparation passed. Reader/composition tests
+  exercise blocked first read, backpressure, cancellation, failure/panic, source
+  pin release and shutdown; none is relabeled as a real-time hardware soak.
+- **Optional isolation:** native recorder fault/cancel/close matrices and archive
+  workflows preserve core state and join workers. The full Rust log explicitly
+  includes `prepared_group_cancellation_and_shutdown_release_session_without_owner_commit`,
+  `windows_prepared_close_and_offline_cancel_release_grant_without_daemon_transfer_cleanup`,
+  `windows_screen_native_cancel_and_shutdown_clear_remote_private_preparation`,
+  and `shutdown_waits_for_publication_and_preserves_ambiguous_failure`. These
+  close the previously pending worker-lifecycle reconciliation.
+
+Recovery has its own operation matrix. The remaining browser/native runs must
+finish before accessibility and integrated gates can close; any newly exposed
+core defect reopens its affected component.
+
+
+## Final operation recovery batch
+
+All **36 native cases** passed: image delete, video delete, profile Save, LCD
+Apply, LCD Clear and Screen reset × disconnect, real ordinary-bridge timeout,
+and app close × EN/RU. Run an individual case with:
+
+```sh
+python3 desktop/scripts/native-operation-recovery.py profile-save timeout ru
+```
+
+The proxy waits for successful backend commit before dropping/withholding its
+reply. Timeout cases measure at least 9.5 seconds; close cases request normal
+window close while that reply is withheld. Each case asserts exactly one mutation,
+joined GUI workers, preserved neighboring cooling/catalog/profile state and exact
+committed-state readback after daemon restart. Recovery cases retain the local
+draft; profile/reset uncertainty requires explicit readback. Clear intentionally
+clears active output; Apply intentionally changes it. No automatic mutation retry
+is accepted. Close cases prove durable committed state, not persistence of an
+unsaved local draft after exiting.
+
+Two initial fixture failures were corrected: deletion assets must be unreferenced
+(the product correctly rejected deleting a collection member), and profile controls
+must exist after asynchronous Refresh before filling them. No production defect
+was established. The shared proxy's existing plain-image disconnect/timeout EN/RU
+matrix also passed all four cases after adding its operation mode. Python/JavaScript
+syntax, native GUI build and diff checks passed. Raw receipts/logs are ignored in
+batch-12; the reusable harness and assertions are tracked.
+
+Publication app-close coverage combines native encoder cancellation/join and
+actual publication/readback faults with the owner shutdown assertions in the
+complete Rust run. `shutdown_waits_for_publication_and_preserves_ambiguous_failure`
+keeps shutdown pending during Publishing, refuses new work, retains the uncertain
+outcome and rejects a second completion. Sealed publication drop/cleanup tests
+cover the asset owner. This is combined lifecycle/transport evidence, not a claim
+that every publication stage received a separate native window-close injection.
