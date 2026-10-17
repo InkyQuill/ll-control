@@ -245,6 +245,14 @@
     selectedLayer=restored>=0?restored:Math.min(selectedLayer,theme.layers.length-1);
   }
   function selectCanvasLayer(index:number) {selectedLayer=index;propertiesOpen=true;lcdPanel='composition';}
+  async function selectStackLayer(index:number) {
+    selectCanvasLayer(index);
+    await tick();
+    if(selectedLayer!==index || !propertiesOpen)return;
+    const target=editorElement?.querySelector<HTMLElement>('.inspector:not([hidden]) h2')
+      ?? editorElement?.querySelector<HTMLElement>('.pane-tabs button[aria-pressed="true"]');
+    target?.focus();
+  }
   function changeCanvasLayer(index:number,layer:Layer) {
     if(index<0||index>=theme.layers.length)return;
     const identity=layerIdentity(theme.layers[index]);
@@ -573,7 +581,7 @@
           <div class="row"><label>{t("Привязать датчик")}<select bind:value={selectedSensor}><option value="">{t("Выберите источник")}</option>{#each sensors as s}<option value={s.id}>{s.label} · {s.unit}</option>{/each}</select></label><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}>{t("Добавить")}</button></div>
 </details>
           <div class="pane-tabs"><button aria-pressed={!propertiesOpen} onclick={()=>propertiesOpen=false}>{t('Слои')}</button><button aria-pressed={propertiesOpen} onclick={()=>propertiesOpen=true}>{t('Свойства')}</button></div>
-          <LayerStack collapsed={propertiesOpen} layers={theme.layers} {labels} selected={selectedLayer} onselect={selectCanvasLayer} onmove={reorderLayer} onduplicate={duplicateLayer} onremove={removeLayer} onvisibility={index=>{const meta=layerMetadata(index);meta.hidden=!meta.hidden;}} onlock={index=>{const meta=layerMetadata(index);meta.locked=!meta.locked;}}/>
+          <LayerStack collapsed={propertiesOpen} layers={theme.layers} {labels} selected={selectedLayer} onselect={selectStackLayer} onmove={reorderLayer} onduplicate={duplicateLayer} onremove={removeLayer} onvisibility={index=>{const meta=layerMetadata(index);meta.hidden=!meta.hidden;}} onlock={index=>{const meta=layerMetadata(index);meta.locked=!meta.locked;}}/>
           {#if selectedLayer>=0 && theme.layers[selectedLayer] && !isProcedural(theme.layers[selectedLayer])}
             <article hidden={!propertiesOpen} class="layer inspector" data-layer-index={selectedLayer} aria-label={t('Свойства выбранного слоя')}>
               <h2 tabindex="-1">{labels[theme.layers[selectedLayer].kind]}</h2>

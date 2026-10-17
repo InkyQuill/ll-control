@@ -1,9 +1,9 @@
 # LCD editor redesign brief
 
-Status: approved for implementation on2026-10-17; implementation in progress.
+Status: implemented on 2026-10-17; remaining cutover acceptance is listed below.
 Live canvas / explicit device Apply confirmed
 by Pavel on 2026-10-17. Based on source at `1d61c2a` and the installed-app feedback.
-This is development planning, not an implementation or hardware acceptance claim.
+The original problem inventory below records the pre-redesign state. Implementation checkpoints distinguish software verification from hardware acceptance.
 
 ## Outcome
 
@@ -182,9 +182,9 @@ A seven-layer and a32-layer stress case both remain navigable and recoverable.
 - [ ] Check screen orientation controls against visible output on static and animated
       sources; close the static-JPEG defect before claiming universal orientation.
 - [x] Check Save/reload/restart, Apply failure, reconnect and active-output replacement.
-- [ ] Run one batched visual review and at most one refinement confirmation round;
+- [x] Run one batched visual review and at most one refinement confirmation round;
       keep screenshots/logs outside Git and track results in the qualification ledger.
-- [ ] Update concise user guidance and commit each implementation milestone separately.
+- [x] Update concise user guidance and commit each implementation milestone separately.
 
 Exit: Pavel can complete the seven-layer task in the installed app without hunting
 for controls; automated checks and real-session observations agree at their scopes.
@@ -236,3 +236,39 @@ Verification on2026-10-17:
 The source implementation is committed. UX2 performance and UX3 installed-user /
 physical output acceptance remain open. Static-JPEG rotation and intermediate
 backlight steps are not closed by this editor work. Raw evidence remains outside Git.
+
+
+## Final editor implementation checkpoint — 2026-10-17
+
+Commits `ba38ec5`, `81f2944`, `7f50711` deliver the editor and review fixes;
+`d85b486` adds FFmpeg to CI. A final keyboard correction transfers focus from a
+selected stack row into Properties while preserving canvas keyboard focus.
+
+- Layers and Properties share a switchable pane. All seven rows fit at both target
+  sizes; the pinned background and actions remain reachable. Properties presents
+  content and basic transforms first, with names and advanced typography disclosed.
+- The full browser suite passed 773 scenarios in one run after the pane change.
+  Subsequent compact-field/height CSS was verified in native EN/RU runs and captures.
+  The final keyboard correction has a focused input regression.
+- Native seven-layer pointer/keyboard editing, cancellation, resizing, save/reload,
+  MockBackend Apply, decoded output and restart passed in EN/RU.
+- Actual Plasma Wayland at 115% was captured at 1280×800 and 1024×768 in EN/RU.
+  Both panes fit, with no horizontal overflow. The final visual review accepted
+  the material fixes. These used the native test build and private MockBackend.
+- Optimized native playback measured 20.79 fps over 10 seconds for video plus four
+  sensors. This measures the implemented playback path before the final pane and
+  unrelated procedural-background corrections; it is not exact-package latency
+  or long-duration resource qualification.
+- Svelte reported zero errors/warnings; English resources cover 1173/1173 entries;
+  all 39 Rust theme contracts and workspace strict Clippy passed. Final daemon
+  tests passed 262 with three external-fixture ignores; focused video seek/pause
+  and procedural-background/identity regressions passed afterward.
+
+The required Impeccable finish review and documentation handoff used available
+review agents as substitutes for its named roles. Design records and concise user
+instructions are committed. Raw screenshots, timing data and logs stay outside Git.
+
+Still open: exact installed-app/user acceptance, gesture/property p95 latency,
+prolonged resource checks, and physical static/animated orientation acceptance.
+Static-JPEG rotation and intermediate backlight levels remain separate hardware
+issues. This editor implementation does not close the broader release milestone.
