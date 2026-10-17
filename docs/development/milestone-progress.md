@@ -124,3 +124,12 @@ Six settings/media publication scenarios passed, including pending-write recover
 restart and uncertain post-publication readback without duplicate assets. No
 production defect was found in these scenarios. Group journal/import ownership
 I/O boundaries remain open; see the R2 ledger for the exact scope.
+
+
+R2 second batch: 42 native EN/RU cases passed for image/video replacement and
+ordinary GIF publication readback. Original resources, adjacent membership,
+recovery diagnostics and no implicit Apply were checked. Two added real fsync +
+SIGKILL transaction cases passed with the earlier six syscall scenarios; startup
+preserved uncommitted state or completed committed intent exactly once. Existing
+journal/transaction suites passed 22 tests, with one subprocess fixture excluded
+from direct execution. Transport loss/reconnect and remaining R2 gates stay open.

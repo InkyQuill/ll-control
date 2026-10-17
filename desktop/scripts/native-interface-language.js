@@ -7,6 +7,7 @@
  const control=name=>button(name)??[...document.querySelectorAll('summary')].find(node=>node.getClientRects().length&&node.textContent.trim()===name);
  const click=async name=>{await wait(()=>control(name)&&!control(name).disabled,name);control(name).click();};
  const field=label=>[...document.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(label))?.querySelector('input,select');
+ const canonical=value=>JSON.stringify(value&&typeof value==='object'?(Array.isArray(value)?value.map(item=>JSON.parse(canonical(item))):Object.fromEntries(Object.keys(value).sort().map(key=>[key,JSON.parse(canonical(value[key]))]))):value);
  const set=(input,value)=>{if(!input)throw new Error('Missing language fixture field');input.value=value;input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));};
  try{
   if(window.__nativeDesktopPhase==='cooling-errors'){
@@ -61,6 +62,109 @@
     cases.push({language:lang,key,finalName,revision:asset.revision});
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,libraryErrors:true,cases,actual_hardware_access:false}});return;
+  }
+  if(window.__nativeDesktopPhase==='collection-video-import-errors'){
+   await click('Pump screen');await click('Library');await click('Video library');
+   const dev=(await rpc('list_devices'))[0].id,cases=[];
+   const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'video import language');};
+   const alerts=()=>[...document.querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
+   const initialLayers=document.querySelectorAll('article.layer').length;
+   // Minimal owned one-pixel GIF. Exercise the real native decoder and publication.
+   const bytes=Uint8Array.from(atob('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'),c=>c.charCodeAt(0));
+   for(const lang of ['en','ru'])for(const mode of ['stale','missing','null','pending','pending-detail','error','malformed']){
+    await language(lang);const english=lang==='en',other=english?'ru':'en';
+    const before=await rpc('list_prepared_clips'),collections=(await rpc('get_screen_collections',{dev})).collections,name=`R2 ${lang} ${mode}.gif`;
+    await wait(()=>field(english?'Import GIF/MP4':'Импортировать GIF/MP4')&&!field(english?'Import GIF/MP4':'Импортировать GIF/MP4').disabled,'native video input ready');
+    const input=field(english?'Import GIF/MP4':'Импортировать GIF/MP4'),files=new DataTransfer();files.items.add(new File([bytes],name,{type:'image/gif'}));input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+    await wait(async()=>{const job=await invoke('media_status');return job?.phase==='complete'&&job.name===name;},'native GIF publication');
+    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
+    await wait(()=>alerts().includes(english?'The video was saved to the catalog':'Ролик сохранён в каталоге')&&alerts().includes(detail(english)),'video import recovery '+mode);
+    await language(other);await wait(()=>alerts().includes(english?'Ролик сохранён в каталоге':'The video was saved to the catalog')&&alerts().includes(detail(!english)),'video import retained translation');
+    const after=await rpc('list_prepared_clips'),added=after.filter(clip=>!before.some(old=>old.key===clip.key));
+    if(added.length!==1||added[0].name!==name)throw new Error('GIF import duplicated or name changed');
+    const state=await rpc('get_screen_collections',{dev}),expected={...collections,revision:collections.revision+1,backgrounds:[...collections.backgrounds,{kind:'video',key:added[0].key}]};
+    if(state.persistence.pending||canonical(state.collections)!==canonical(expected))throw new Error('Video import changed adjacent collection state: '+JSON.stringify({state,expected}));
+    if(document.querySelectorAll('article.layer').length!==initialLayers||await rpc('get_lcd_media',{dev})!==null||(await rpc('get_lcd_state',{dev})).source!=='Idle')throw new Error('Video import changed draft/output');
+    cases.push({language:lang,mode,key:added[0].key,revision:state.collections.revision});
+   }
+   await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,videoImportErrors:true,cases,actual_hardware_access:false}});return;
+  }
+  if(window.__nativeDesktopPhase==='collection-video-errors'){
+   await click('Pump screen');await click('Library');await click('Video library');
+   const dev=(await rpc('list_devices'))[0].id,cases=[];
+   const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'video replacement language');};
+   const alerts=()=>[...document.querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
+   const panel=()=>document.querySelector('section[aria-label="Saved video editor"],section[aria-label="Редактор сохранённого ролика"]');
+   const initialActive=JSON.stringify(await rpc('get_lcd_theme',{dev}));
+   for(const lang of ['en','ru'])for(const mode of ['stale','missing','null','pending','pending-detail','error','malformed']){
+    await language(lang);const english=lang==='en',other=english?'ru':'en';
+    await click(english?'Refresh videos':'Обновить ролики');
+    const before=await rpc('list_prepared_clips'),collections=(await rpc('get_screen_collections',{dev})).collections;
+    const original=before.find(clip=>clip.name==='R2 source.mp4'&&collections.backgrounds.some(item=>item.kind==='video'&&item.key===clip.key));
+    if(!original)throw new Error('Current video replacement source missing');
+    await wait(()=>field(english?'Saved video':'Сохранённый ролик')?.querySelector(`option[value="${original.key}"]`),'source listed');
+    set(field(english?'Saved video':'Сохранённый ролик'),original.key);
+    await click(english?'Edit selected video':'Редактировать выбранный ролик');
+    await wait(()=>panel()?.querySelector('video'),'managed video source loaded');
+    await wait(()=>field(english?'Single VideoEdit range':'Один диапазон VideoEdit'),'range control');
+    field(english?'Single VideoEdit range':'Один диапазон VideoEdit').click();
+    await click(english?'Prepare video edits':'Подготовить изменения ролика');
+    await wait(()=>panel()?.querySelector('video[aria-label="Prepared video"],video[aria-label="Готовый ролик"]'),'video review ready');
+    const review=panel().querySelector('video[aria-label="Prepared video"],video[aria-label="Готовый ролик"]');
+    review.scrollIntoView({block:'center'});await review.play();await wait(()=>review.readyState>=2&&review.videoWidth===480,'native review decode');review.pause();
+    await click(english?'Save prepared video':'Сохранить готовый ролик');
+    await wait(async()=>(await rpc('list_prepared_clips')).length===before.length+1,'one new video publication');
+    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Replacement requires checking collection membership.':'Замена требует проверки состава коллекций.');
+    await wait(()=>alerts().includes(english?'The new video was saved to the catalog':'Новый ролик сохранён в каталоге')&&alerts().includes(detail(english)),'video replacement diagnostic '+mode);
+    await language(other);await wait(()=>alerts().includes(english?'Новый ролик сохранён в каталоге':'The new video was saved to the catalog')&&alerts().includes(detail(!english)),'video replacement retained translation');
+    const after=await rpc('list_prepared_clips'),added=after.filter(clip=>!before.some(old=>old.key===clip.key));
+    if(added.length!==1||added[0].name!==original.name||!after.some(clip=>clip.key===original.key))throw new Error('Video duplicated or original lost');
+    const state=await rpc('get_screen_collections',{dev}),expected={...collections,revision:collections.revision+1,backgrounds:collections.backgrounds.map(item=>item.kind==='video'&&item.key===original.key?{...item,key:added[0].key}:item)};
+    if(state.persistence.pending||JSON.stringify(state.collections)!==JSON.stringify(expected))throw new Error('Video replacement changed adjacent collection state');
+    if(JSON.stringify(await rpc('get_lcd_theme',{dev}))!==initialActive||await rpc('get_lcd_media',{dev})!==null)throw new Error('Video replacement applied without user Apply');
+    await wait(()=>!panel(),'video editor joined close');
+    cases.push({language:lang,mode,key:added[0].key,oldKey:original.key,revision:state.collections.revision});
+   }
+   await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,videoReplacementErrors:true,cases,actual_hardware_access:false}});return;
+  }
+  if(window.__nativeDesktopPhase==='collection-replacement-errors'){
+   await click('Pump screen');await click('Library');await click('Image library');
+   const dev=(await rpc('list_devices'))[0].id,cases=[];
+   const name='R2 original {0} <CPU>.png';
+   const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'replacement language');};
+   const alerts=()=>[...document.querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
+   const panel=()=>document.querySelector('section[aria-label="Image editor"],section[aria-label="Редактор изображения"]');
+   const draft=()=>JSON.stringify([...document.querySelectorAll('article.layer')].map(node=>[node.textContent,[...node.querySelectorAll('input,select,textarea')].map(input=>[input.value,input.checked])]));
+   const initialDraft=draft(),initialActive=JSON.stringify(await rpc('get_lcd_theme',{dev}));
+   for(const lang of ['en','ru'])for(const mode of ['stale','missing','null','pending','pending-detail','error','malformed']){
+    await language(lang);const english=lang==='en',other=english?'ru':'en';
+    // Localized headings change with language; retain the inputs separately.
+    const beforeDraft=draft(),before=await rpc('list_named_theme_assets'),collections=(await rpc('get_screen_collections',{dev})).collections;
+    const original=before.find(asset=>asset.name===name&&collections.images.includes(asset.key));
+    if(!original)throw new Error('Current replacement source missing');
+    await click(english?`Edit ${name}…`:`Редактировать ${name}…`);
+    await wait(()=>panel()?.querySelector('img')?.complete,'replacement source decode');
+    const brightness=field(english?'Image brightness':'Яркость изображения');set(brightness,cases.length+1);
+    await click(english?'Prepare image preview':'Подготовить preview изображения');
+    await wait(()=>panel()?.querySelector('img.preview')?.naturalWidth===480,'replacement preview');
+    await click(english?'Save image to gallery':'Сохранить изображение в галерею');
+    await wait(async()=> (await rpc('list_named_theme_assets')).length===before.length+1,'one replacement asset published');
+    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Replacement requires checking collection membership.':'Замена требует проверки состава коллекций.');
+    await wait(()=>alerts().includes(english?'Replacement was not confirmed':'Замена не подтверждена')&&alerts().includes(detail(english)),'replacement recovery diagnostic '+mode);
+    if(draft()!==beforeDraft)throw new Error('Unconfirmed replacement changed draft');
+    await language(other);await wait(()=>alerts().includes(english?'Замена не подтверждена':'Replacement was not confirmed')&&alerts().includes(detail(!english)),'replacement translated retained error');
+    const after=await rpc('list_named_theme_assets'),added=after.filter(asset=>!before.some(old=>old.key===asset.key));
+    if(added.length!==1||added[0].name!==name||!after.some(asset=>asset.key===original.key))throw new Error('Replacement lost original or duplicated publication');
+    const state=await rpc('get_screen_collections',{dev}),expected={...collections,revision:collections.revision+1,images:collections.images.map(key=>key===original.key?added[0].key:key)};
+    if(state.persistence.pending||JSON.stringify(state.collections)!==JSON.stringify(expected))throw new Error('Real replacement or adjacent membership differs');
+    if(JSON.stringify(await rpc('get_lcd_theme',{dev}))!==initialActive)throw new Error('Replacement implicitly applied');
+    if(panel()){
+     const save=button(english?'Сохранить изображение в галерею':'Save image to gallery');if(save&&!save.disabled)throw new Error('Unconfirmed replacement offered duplicate Save');
+     await click(english?'Закрыть редактор изображения':'Close image editor');
+    }
+    cases.push({language:lang,mode,key:added[0].key,oldKey:original.key,revision:state.collections.revision});
+   }
+   await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,collectionReplacementErrors:true,cases,initialDraft,actual_hardware_access:false}});return;
   }
   if(['collection-readback-errors','collection-plain-errors'].includes(window.__nativeDesktopPhase)){
    const plain=window.__nativeDesktopPhase==='collection-plain-errors';
