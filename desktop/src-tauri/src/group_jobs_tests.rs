@@ -103,7 +103,11 @@ impl Harness {
     }
 }
 async fn idle(jobs: &Groups) -> Status {
-    tokio::time::timeout(Duration::from_secs(30), async {
+    idle_with_timeout(jobs, Duration::from_secs(30)).await
+}
+
+async fn idle_with_timeout(jobs: &Groups, timeout: Duration) -> Status {
+    tokio::time::timeout(timeout, async {
         loop {
             let finished = {
                 let state = jobs.lock().unwrap();
@@ -527,9 +531,19 @@ async fn prepared_reset_close_and_stale_target_never_claim_an_unconfirmed_reset_
 
 #[tokio::test]
 async fn control_explicit_retry_after_real_unix_reply_loss_reads_receipt_without_a_second_apply() {
+    control_reply_loss_cases(&[Mode::Reset, Mode::Windows], false).await;
+}
+
+#[tokio::test]
+#[ignore = "waits for the real 60-second group worker deadline; run for release qualification"]
+async fn control_reset_deadline_reads_receipt_without_a_second_apply() {
+    control_reply_loss_cases(&[Mode::Reset], true).await;
+}
+
+async fn control_reply_loss_cases(modes: &[Mode], withhold: bool) {
     use std::sync::atomic::{AtomicBool, Ordering};
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-    for mode in [Mode::Reset, Mode::Windows] {
+    for &mode in modes {
         let root = tempfile::tempdir().unwrap();
         let h = Harness::start(root.path()).await;
         let before = h.store.profiles().list().unwrap();
@@ -553,8 +567,11 @@ async fn control_explicit_retry_after_real_unix_reply_loss_reads_receipt_without
                                 let method=request["method"].as_str().unwrap();
                                 let result=real.call(method,request["params"].clone()).await;
                                 // The production daemon has already completed the reset.
-                                // Drop only the downstream connection before its ACK.
-                                if matches!(method,"reset_fan_and_lighting"|"import_windows_control")&&result.is_ok()&&lose.swap(false,Ordering::SeqCst){break;}
+                                // Lose the downstream ACK; the deadline case holds the socket open.
+                                if matches!(method,"reset_fan_and_lighting"|"import_windows_control")&&result.is_ok()&&lose.swap(false,Ordering::SeqCst){
+                                    if withhold { tokio::time::sleep(Duration::from_secs(65)).await; }
+                                    break;
+                                }
                                 let response=match result {
                                     Ok(value)=>json!({"jsonrpc":"2.0","id":request["id"],"result":value}),
                                     Err(e)=>json!({"jsonrpc":"2.0","id":request["id"],"error":{"code":e.jsonrpc_code(),"message":e.to_string()}}),
@@ -588,9 +605,17 @@ async fn control_explicit_retry_after_real_unix_reply_loss_reads_receipt_without
                 .unwrap();
         }
         assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
+        let started = std::time::Instant::now();
         jobs.action(proxy_path.clone(), request.clone(), Action::Finish, None)
             .unwrap();
-        let lost = idle(&jobs).await;
+        let lost = idle_with_timeout(&jobs, Duration::from_secs(70)).await;
+        if withhold {
+            assert!(started.elapsed() >= Duration::from_secs(59));
+            assert_eq!(
+                lost.message.as_deref(),
+                Some("Group request timed out; read operation ID")
+            );
+        }
         assert_eq!(lost.phase, Phase::Uncertain);
         if mode == Mode::Windows {
             assert!(jobs

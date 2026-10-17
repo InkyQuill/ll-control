@@ -17,6 +17,9 @@ remain authoritative. Historical passes locate coverage; they do not qualify thi
 | Optional isolation | Native recording faults, archive/Windows imports, weather; owner and cancellation tests | Retained experimental paths cannot corrupt core state or leak workers when cancelled/closed |
 | Final source | Rust fmt/strict Clippy/tests/rustdoc; Svelte/build/locales/theme contracts; browser/native | Execute on integrated final implementation; record ignored cases and precise limitations |
 
+The [operation recovery ledger](r2-recovery-coverage.md) distinguishes measured
+deadlines, lost replies, caller loss and normal close; unresolved cells stay open.
+
 ## Remaining closure work after the recorded batches
 
 This is the active queue; the batch sections below preserve the scope of completed
@@ -26,10 +29,10 @@ checks. Do not repeat their workflows unless the relevant implementation changes
 |---|---|
 | Media inputs | Native EN/RU normalization of all eight EXIF orientations passed with exact pixel mapping and reopen checks; reconcile image/video happy-path assertions with the first milestone requirement |
 | Recovery | Integrated native fault workflow passed; map publication/replacement/delete/profile Save/Apply/both resets to concrete lost-reply, timeout, disconnect and close evidence; add only missing cases |
-| Storage | Publication ownership/partial-cleanup suite passed with inspected assertions; reconcile actual syscall/journal/quota checks and remaining link failure boundaries rather than treating generic test counts as proof |
+| Storage | Publication ownership/partial-cleanup suite passed with inspected assertions; reconcile actual syscall/journal/quota checks and real ownership-link collision passed; reconcile the remaining operation recovery cells rather than treating generic test counts as proof |
 | Cooling/RGB | Integrated mode/default Save and recovery passed; reconcile with native controls, restart and thermal backend assertions before final snapshot checks |
 | Media lifetime/resources | Fixed budget, exact storage/one-hour preparation and codec-fault/queued-stop assertions passed; reconcile with milestone scope. Physical/real-time soak belongs to R3 |
-| EN/RU/accessibility | Retain Russian keyboard/AT-SPI proof and EN/RU recovery matrices; audit missing supported recovery states and current scale coverage |
+| EN/RU/accessibility | Retain Russian keyboard/AT-SPI proof and EN/RU recovery matrices; Russian 2× native keyboard/chooser/AT-SPI/reflow also passed; reconcile remaining supported recovery states |
 | Optional isolation | Recording fault/cancel/close passed in EN/RU; profile and both group archive EN/RU checks passed; Windows Screen/Control and corrupt-media EN/RU checks plus Russian effects/restart/joined-close checks passed; reconcile optional-flow cancellation coverage before closure |
 | Integrated snapshot | Once gaps above close, run exact-source Rust/frontend/contracts/browser checks and relevant native flows; record ignores without converting them to passes |
 
@@ -402,3 +405,60 @@ connection loss, selected-group restore and stale/newer-intent protection. These
 results do not stand in for every timeout/close cell in the remaining recovery
 matrix. GUI build, driver syntax/compilation and diff checks passed. Raw evidence
 is retained under ignored batch-10; R2 remains open for its closure queue.
+
+
+## Recovery ledger, ownership-link failure and scaled native acceptance
+
+The new [recovery ledger](r2-recovery-coverage.md) names actual assertion coverage
+and unresolved cells instead of treating generic transport success as proof of
+every operation. A filesystem regression forces actual ownership `linkat` EEXIST:
+manifest unchanged, no final image or profile edit, explicit rollback preserves
+the foreign file's bytes/inode, and reopening retains the clean result. Rust
+review confirmed this is explicit cleanup plus subsequent readback, not a crash
+at the collision point. The targeted test passed.
+
+An explicit release test now withholds an accepted control-reset reply while
+keeping the Unix connection open. The production group worker reaches its real
+60-second deadline, reports Uncertain with its exact timeout diagnostic, and an
+explicit retry uses the original receipt without another committed apply. Library
+state and runtime revision stay unchanged. The passing run took 60.26 seconds.
+The original immediate-reply-loss cases for Reset and Windows still pass. This
+test is ignored in ordinary runs because it deliberately waits one minute; run:
+
+```sh
+cargo test -p lconnect-gui --locked --lib control_reset_deadline -- --ignored
+```
+
+The first run failed only its newly written error-text assertion: the test expected
+the nested Tokio cause, whereas the product exposes its outer timeout context.
+Review identified this, the assertion was corrected, and the full timed case
+passed. No production code changed. Retry may resend the same operation identity;
+the assertion is no second apply/commit, not no second request.
+
+Native keyboard acceptance passed at GTK DPI192 / effective DPR2, WebKit zoom1:
+861 trusted key steps, eight file-dialog scenarios, AT-SPI states/live events,
+window focus recovery and no horizontal overflow at the resulting 640px viewport.
+The same cooling, lighting, sensor, image/font error and screen-reset workflows
+remain operable. Actual Plasma Wayland/scaling/speech still belongs to R3.
+
+## Integrated verification in progress
+
+The integrated Rust run passed **1,378 tests, zero failures, 10 ignored entries**
+across 195 test-result summaries. Workspace fmt, strict all-target Clippy and
+rustdoc passed. This run includes the ownership-link test; the later test-only
+group-deadline addition was verified explicitly as above, with the shared
+immediate-loss regression and strict GUI/daemon all-target Clippy rerun. No
+production Rust changed between these checks. The new minute-long test adds
+one routine ignored entry, and is explicitly passed rather than silently waived.
+
+Existing ignores: four external vendor-firmware fixtures (R7), publication
+crash-child entry invoked by parent tests, paced composition benchmark (separate
+R2 measured workload passed), three recorder resource/duration/private-PipeWire
+qualifications (R6), and the one-hour media case explicitly passed earlier in R2.
+They are not included in the ordinary pass count.
+
+Frontend check reports zero errors/warnings; production build, all 1,160 static
+translations, 39 Rust theme contracts and three localization tests passed. These
+counts are inventory checks, supplemented by behavior suites. The complete
+770-test browser run is still running and **not accepted yet**. Raw outputs and
+its live process reference remain ignored in batch-11. R2 is not complete.

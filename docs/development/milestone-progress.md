@@ -200,3 +200,12 @@ joined close and restart. Publication ownership/cleanup tests passed 28 cases
 plus one explicitly invoked subprocess helper; four archive IPC tests passed.
 Updated private-session setup and effects navigation in the drivers. R4 fidelity,
 R8 full effect qualification and the remaining R2 closure queue stay open.
+
+
+R2 recovery/scaling batch: actual ownership-link collision and explicit real
+60-second control-reset deadline tests passed; normal reply-loss behavior remains
+covered. Russian native DPI192 keyboard/chooser/AT-SPI/reflow passed. The recovery
+ledger now lists concrete remaining operation cells. Integrated Rust verification
+passed 1,378 tests/10 routine ignores before the added explicit deadline case;
+its shared helper received targeted regression/Clippy checks. Frontend build and
+contracts passed. Full browser acceptance is still running; R2 remains open.
