@@ -228,3 +228,23 @@ above run with `cargo test -p lconnect-daemon --locked --test <suite>`.
 This is Russian, 1×, isolated X11 acceptance. It does not close EN/scale coverage,
 all core operation interruption matrices, real speech or Plasma Wayland.
 Resource budgets and the remaining R2 requirements remain open.
+
+
+## Media resource and reader lifetime batch
+
+The [fixed resource contract](r2-media-resource-contract.md) and reproducible
+workload were committed as `65cddf0` before measurement. The optimized MockBackend
+run passed all budgets: 1,407 new completed frames in 60.1886 seconds (23.3765fps),
+0.4948 average CPU cores including codec descendants, 151,932,928 bytes sampled
+peak combined RSS, and maximum sensor age 201ms. Every captured frame (1,433
+including warmup/tail) decoded at 480×480. Clear joined all codec children.
+No concurrent build/test workload was run during measurement.
+
+Six `media_reader::tests` passed: bounded prefetch/order, blocked-first-read
+cancellation retaining its owner until join, read failure without stale frame
+repetition, panic join, drop under backpressure, and reserved send cancellation.
+These directly assert queue/ownership behavior rather than inferring it from RSS.
+
+This closes the declared short-workload budget measurement only. Maximum-size/
+duration inputs, quota boundaries, long soak and the remaining integrated R2
+requirements still need qualification. It is not physical playback acceptance.

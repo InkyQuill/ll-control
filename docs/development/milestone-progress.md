@@ -155,3 +155,10 @@ output failure/reapply and daemon reconnect. Full control reset passed across
 desktop/daemon restart with newer intent preserved. 42 reset/transaction tests
 passed, no ignores. Updated obsolete driver expectations and private-session
 isolation; raw outputs remain ignored. R2 remains open for its unqualified gates.
+
+
+R2 resource batch: budgets and owned workload committed before measurement.
+The 60-second release run passed at 23.3765fps, 0.4948 average CPU cores,
+151,932,928-byte sampled peak RSS and 201ms maximum sensor age. Full captured
+stream decoded; codec children joined after Clear. Six reader lifetime tests
+passed. Large/long-media and remaining R2 gates stay open.
