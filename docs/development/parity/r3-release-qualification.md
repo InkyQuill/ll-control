@@ -107,3 +107,26 @@ It preserves arguments and leaves recording-worker dispatch first. The manual
 workaround is visually accepted; automatic startup needs a production build test
 with the variable unset. Rust review found a replacement transition risk, now
 covered by an explicit configuration target and regression. R3 is not complete.
+
+
+## Physical retest and editor feedback
+
+The rebuilt daemon still failed the static JPEG rotation test: Pavel observed the
+strawberry upright and apparently at full brightness despite requested30%/90°.
+Do not close that defect based on the LCDSetting wire regression.
+
+The video-background composition with CPU, CCD, GPU and coolant readings visibly
+rotated and updated its values. Pavel could not distinguish30% from full
+brightness. Setting0% then visibly darkened the screen;100% was subsequently
+requested to restore visibility. This confirms a physical backlight response,
+not intermediate brightness accuracy or static-JPEG rotation.
+
+The installed composition editor passed Pavel's add/select/drag/resize/undo and
+window-resize check at the current desktop scaling. Usability remains open:
+make canvas editing the default, consolidate live preview, and replace the long
+stack of expanded layer forms with compact navigation and selected-layer controls.
+Pavel explicitly requested Impeccable polish; preserve explicit Apply.
+
+The clean7fd3058 production package passed the packaged GUI sensor/cooling test
+with MockBackend and no instrumentation. This is package verification, not
+physical hardware acceptance. Remote Arch/browser CI remains pending.
