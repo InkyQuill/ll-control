@@ -4,8 +4,7 @@ Updated **2026-10-17** after a source/evidence audit and decisions confirmed wit
 Pavel. Baseline: **Windows L-Connect 3 2.1.28.0**, **Galahad II LCDV2 0416:7395**,
 square LCD **480×480**. Other hardware remains future scope.
 
-**R0 and R1 are complete. Next: R2 core stabilization, then R3 release
-qualification.** Exact Windows grid typography is a later import-fidelity task;
+**R0, R1 and R2 are complete. Next: R3 release qualification.** Exact Windows grid typography is a later import-fidelity task;
 it does not block native Linux authoring or the initial release.
 
 - [Complete implementation/parity audit](docs/development/parity/release-audit-2026-10-17.md)
@@ -37,7 +36,7 @@ can be a software preview only. This roadmap does not authorize hardware tests.
 |---|---|---|
 | R0 — Release contract and frozen baseline | Critical; complete | Exact source/package identity, support table and optional-feature exposure decisions |
 | R1 — Base LCD visual editor | Important; complete | Direct canvas workflow, sensor rebinding, keyboard equivalents, preserved draft/Save/Apply |
-| R2 — Integrated core stability | Critical; release blocker | Existing media/cooling/RGB/profiles recover reliably; native/software checks on one snapshot |
+| R2 — Integrated core stability | Critical; complete | Existing media/cooling/RGB/profiles recover reliably; native/software checks on one snapshot |
 | R3 — First release qualification and cutover | Critical | Actual Plasma Wayland install/lifecycle/input, LCDV2 control/display/soak and release package |
 | R4 — Faithful Windows imports | Expected to have | Genuine exports, intrinsic layout/resources, current/editor fidelity, safe unsupported cases |
 | R5 — Windows-compatible export | Expected to have | Actual Windows import and both semantic round-trips; no silent loss of Linux-only features |
@@ -72,9 +71,11 @@ this audit. [Audit verification](docs/development/parity/evidence/2026-10-17-rel
 The core software and [base canvas editor](docs/development/parity/r1-canvas-editor.md)
 now exist. R1 passed browser/native input, profile/output and restart acceptance
 at `f004cf2`; this did not rebuild or qualify the historical candidate above.
-R2 integrated failure recovery, real sessions/hardware, clean-host/CI release
-gates and full Windows fidelity remain open. Counts and historical hardware
-observations do not close them.
+R2 integrated core qualification passed at `53ef291`: see the
+[qualification ledger](docs/development/parity/r2-core-qualification.md) for
+behavior coverage, measured budgets and explicit limitations. Real sessions/hardware,
+clean-host/CI release gates and full Windows fidelity remain open. Counts and
+historical hardware observations do not close them.
 
 ## Scope discipline
 

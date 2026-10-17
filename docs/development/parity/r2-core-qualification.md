@@ -1,10 +1,11 @@
 # R2 — integrated core qualification
 
-Status: **in progress**. Starting source: `245d5eb` (R0/R1 complete).
+Status: **complete** at `53ef291` on 2026-10-17 for software/native MockBackend scope.
+Starting source: `245d5eb` (R0/R1 complete).
 The eight exit requirements in [the milestone plan](release-milestones.md#r2--stabilize-the-existing-core-as-one-application)
 remain authoritative. Historical passes locate coverage; they do not qualify this snapshot.
 
-## Acceptance ledger
+## Initial acceptance inventory
 
 | Requirement | Existing reproducible coverage to inspect/run | Remaining qualification |
 |---|---|---|
@@ -18,23 +19,24 @@ remain authoritative. Historical passes locate coverage; they do not qualify thi
 | Final source | Rust fmt/strict Clippy/tests/rustdoc; Svelte/build/locales/theme contracts; browser/native | Execute on integrated final implementation; record ignored cases and precise limitations |
 
 The [operation recovery ledger](r2-recovery-coverage.md) distinguishes measured
-deadlines, lost replies, caller loss and normal close; unresolved cells stay open.
+deadlines, lost replies, caller loss and normal close; combined coverage and its limits are explicit.
 
-## Remaining closure work after the recorded batches
+## Final closure reconciliation
 
-This is the active queue; the batch sections below preserve the scope of completed
-checks. Do not repeat their workflows unless the relevant implementation changes.
+All eight requirements are qualified. The batch sections below preserve their
+historical status; this final reconciliation supersedes their pending statements.
+Repeat checks only for changed paths or newly established concerns.
 
-| Area | Work still needed before closure |
+| Area | Final qualification |
 |---|---|
 | Media inputs | Qualified: native ordinary/transparent image workflow, all EXIF orientations, GIF/MP4 edit/review/Save/Apply/replace/stop, source removal, thumbnail/output and protected defaults. Preserve final integrated status separately |
-| Recovery | Native operation-specific disconnect/deadline/app-close matrix is running; finish it and reconcile the operation ledger |
+| Recovery | Qualified: all 36 operation-specific disconnect/deadline/app-close cases passed; publication/worker lifecycle evidence reconciled in the operation ledger |
 | Storage | Qualified: actual write/fsync/rename failures, transaction partial install/crash, quotas/maxima, stale revisions and ownership/cleanup/collision behavior |
 | Cooling/RGB | Qualified: native catalogs, controls/navigation/restart, mode/default recovery, source-unit banks and persisted Disable; full workspace confirms backend fallback/override/thermal/topology assertions |
 | Media lifetime/resources | Qualified: fixed measured budget, exact byte/frame/duration limits, backpressure, cancellation, corrupted/failed reader and joined codec cleanup. Real-time physical soak remains R3 |
-| EN/RU/accessibility | Native Russian 1×/2× keyboard/chooser/AT-SPI passed; finish full browser and native recovery-state reconciliation |
+| EN/RU/accessibility | Qualified: native Russian 1×/2× keyboard/chooser/AT-SPI, full browser suite and EN/RU native recovery states passed; real speech/Wayland remain R3 |
 | Optional isolation | Qualified: native recorder faults, Linux/Windows archives and corrupt media rejection; final workspace includes prepared/offline cancellation and joined worker shutdown. Fidelity/platform feature expansion stays R4/R6/R8 |
-| Integrated snapshot | Rust/frontend/contracts passed with documented ignores and targeted test-only delta checks; full 770-case browser run and new native operation matrix remain pending |
+| Integrated snapshot | Qualified: Rust/frontend/contracts with documented ignores and targeted test-only delta checks; all 770 browser tests and 36 native operation cases passed |
 
 ## Execution order
 
@@ -466,7 +468,8 @@ records its terminal result and supersedes the earlier live reference in batch-1
 
 ## Component reconciliation
 
-Five R2 checklist items are qualified; the milestone itself remains open. This
+The five component items below are qualified; recovery, accessibility and final
+integration are closed by the final operation batch and full browser result. This
 uses inspected assertions and the recorded batches, not total test counts:
 
 - **Media:** native gallery editing checks transparent pixels, crop/transforms,
@@ -498,9 +501,8 @@ uses inspected assertions and the recorded batches, not total test counts:
   and `shutdown_waits_for_publication_and_preserves_ambiguous_failure`. These
   close the previously pending worker-lifecycle reconciliation.
 
-Recovery has its own operation matrix. The remaining browser/native runs must
-finish before accessibility and integrated gates can close; any newly exposed
-core defect reopens its affected component.
+Recovery has its own operation matrix. All pending browser/native runs finished
+successfully; any newly exposed core defect reopens its affected component.
 
 
 ## Final operation recovery batch
@@ -538,3 +540,15 @@ keeps shutdown pending during Publishing, refuses new work, retains the uncertai
 outcome and rejects a second completion. Sealed publication drop/cleanup tests
 cover the asset owner. This is combined lifecycle/transport evidence, not a claim
 that every publication stage received a separate native window-close injection.
+
+
+## Closure and limits
+
+R2 closes at `53ef291`; the following documentation commit records this decision.
+Production application code remained unchanged during R2 qualification. Test-only
+changes after the full Rust run received the targeted checks described above;
+the final native harness was rebuilt and run, and the complete browser suite passed.
+No raw evidence is tracked. This is not a release certification: clean-host
+packaging, physical LCDV2 output/control, real Plasma Wayland input/session behavior
+and the combined hardware soak remain R3. Windows import fidelity, Windows export,
+platform integrations, firmware, additional themes and polish retain R4–R10 scope.

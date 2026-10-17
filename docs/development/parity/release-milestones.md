@@ -109,7 +109,7 @@ IPC/Tauri jobs, existing UI, native harnesses. Do not rewrite working subsystems
 - [x] Cover image/video import→edit→review→Save→gallery→preview→Apply→replace/stop;
   ordinary, transparent/EXIF, GIF and MP4 inputs; source deletion after managed
   import; thumbnail/output agreement and protected defaults.
-- [ ] Close core lost-reply/disconnect/timeout/close cases for publication,
+- [x] Close core lost-reply/disconnect/timeout/close cases for publication,
   replacement, delete, profile Save/Apply and both group resets. Preserve draft,
   active state and references; read back committed operations before any retry.
   Extend the already-passed image membership cases to plain/video/replacement
@@ -125,17 +125,18 @@ IPC/Tauri jobs, existing UI, native harnesses. Do not rewrite working subsystems
   measurable CPU/RSS/queue/sensor-age budgets for the release workload before
   acceptance; preserve the existing minimum20fps reference for the nominal24
   video+four-sensor case, and report actual rates rather than rounding to target.
-- [ ] Finish supported EN/RU errors and recovery states, keyboard/focus, readable
+- [x] Finish supported EN/RU errors and recovery states, keyboard/focus, readable
   diagnostics and meaningful accessible state. Inventory counts are not coverage.
 - [x] Retained optional flows must not corrupt core state or leave daemon workers
   behind when cancelled/closed. Experimental status never excuses a core safety bug.
-- [ ] Run exact-source Rust fmt/strict Clippy/tests/rustdoc, frontend checks/build,
+- [x] Run exact-source Rust fmt/strict Clippy/tests/rustdoc, frontend checks/build,
   localization/theme contracts and browser/native core flows. Record ignored tests
   and limitations; only broaden testing for changed paths or unresolved failures.
 
-**Current qualification:** five component work items are qualified in the
-[core ledger](r2-core-qualification.md#component-reconciliation). Recovery,
-accessibility reconciliation and final integrated acceptance remain open.
+**Complete:** qualified at `53ef291` on 2026-10-17 for software/native MockBackend
+scope. All eight requirements are reconciled in the [core ledger](r2-core-qualification.md)
+and [operation matrix](r2-recovery-coverage.md). Physical devices, real Plasma
+Wayland and the release package remain R3; full Windows parity remains R4–R10.
 
 **Exit:** reproducible integrated core flows and bounded failure recovery on one
 source snapshot; every open core defect resolved or shown outside the release
