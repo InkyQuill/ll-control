@@ -1215,6 +1215,10 @@ fn native_keyboard_step(sequence: u32, key: String, probe: Option<String>) -> Re
                 | "image_crop_pointer"
                 | "capture_region_pointer"
                 | "video_region_pointer"
+                | "canvas_move"
+                | "canvas_resize"
+                | "canvas_cancel"
+                | "canvas_no_writes"
         )
     }) {
         return Err("unsupported fixture probe".into());
@@ -1231,6 +1235,9 @@ fn native_keyboard_step(sequence: u32, key: String, probe: Option<String>) -> Re
             | "Right"
             | "End"
             | "Home"
+            | "Escape"
+            | "ctrl+Right"
+            | "shift+Right"
     ) {
         return Err("unsupported fixture key".into());
     }
@@ -1341,6 +1348,8 @@ fn main() {
                     include_str!("../../scripts/native-fps-settings.js")
                 } else if std::env::var("LCONNECT_NATIVE_FIRMWARE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-firmware-preflight.js")
+                } else if std::env::var("LCONNECT_NATIVE_CANVAS").as_deref()==Ok("1") {
+                    include_str!("../../scripts/native-canvas.js")
                 } else if std::env::var("LCONNECT_NATIVE_IMAGE_EDITOR").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-image-editor.js")
                 } else if std::env::var("LCONNECT_NATIVE_LANGUAGE").as_deref()==Ok("1") {

@@ -58,3 +58,18 @@ and resize, rotated coordinates, obscured-layer selection, reordering and the
 explicit Apply boundary. Existing preview recovery, basic banks and font flows
 also passed in the focused regression run. Native WebKitGTK input and complete
 profile/output/restart acceptance still remain; R1 is not complete.
+
+### R1 native acceptance
+
+Added a reproducible EN/RU WebKitGTK harness using private Xvfb, accessibility,
+D-Bus and MockBackend instances. Trusted pointer and keyboard input passed move,
+resize, Escape cancellation and history checks. The authored four-layer scene
+survived source replacement, profile Save/load, Apply and daemon/GUI restart.
+Decoded mock-HID output matched preview pixels; sensor-driven rendering continued
+after normal GUI close. Before Apply, LCD/fan/RGB/firmware counters remained zero.
+The initial Escape failure was traced to the test driver's modifier-clearing
+option releasing the held button; the corrected driver records the input order.
+
+The [canvas contract](parity/r1-canvas-editor.md) documents implementation semantics
+and runnable verification. Broad regression suites are still running, so the
+milestone completion audit and final R1 status update remain open.
