@@ -31,3 +31,43 @@ processes. Physical device/session/package qualification remains R3. Generated
 logs, hashes, screenshots and captures live under ignored local evidence or
 private temporary directories. Tests, fixtures, harnesses, fixes and this ledger
 are tracked; no run output is committed.
+
+
+## First qualification batch
+
+- Native gallery image editing passed in EN/RU: transparent source, crop and
+  transforms/filters, preview pixels, replacement, explicit Apply/output and close.
+- Native GIF/MP4 workflow passed, including a 586-frame video, gallery thumbnails,
+  profile Save/load/Apply, protected references, deletion/reimport, encoder cancel
+  and joined close. The harness now deletes the original GIF/MP4/editor files,
+  restarts the daemon, and confirms each managed clip still plays and stops.
+- Plain image import now has the same seven native collection-readback faults as
+  edited import: stale/missing/null/pending/pending-detail/error/malformed. EN/RU
+  checks preserve exactly one catalog asset, unchanged draft and adjacent membership,
+  original filenames, and reactive recovery messages without duplicate writes.
+- The fault proxy identifies the changed collection member from actual before/after
+  state, and verifies the complete real committed collection before corrupting its
+  reply. Both edited/plain EN/RU matrices passed against this updated proxy
+  (28 cases). This prepares video/replacement coverage; it does not claim those flows pass.
+- Twenty targeted Rust storage/media tests passed: persistence errors/retry/shutdown,
+  screen reset atomicity/revisions, media format/reader, upload/reply loss and crash.
+  These do not close the still-open precise I/O failure matrix.
+
+The media driver twice observed an empty accessibility registry in short-lived
+chooser probes. A persistent listener, already used by the keyboard harness,
+keeps a client registered throughout the media run. Chooser path/Open assertions
+remain unchanged. A separate newly added restart check exposed discovery lag
+behind socket readiness; the driver now explicitly awaits the mock attachment.
+Both are harness changes, not evidence of a production media defect. Failed logs
+are retained alongside passing runs, outside Git.
+
+Reproduce the added plain-image matrix:
+
+```sh
+cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked
+/usr/bin/python3 desktop/scripts/native-interface-language.py --collection-plain-errors
+```
+
+R2 remains in progress. Video/replacement/reconnect interruption coverage, storage
+I/O boundaries, declared resource budgets, integrated cooling/RGB/optional isolation
+and final-source qualification still require completion.

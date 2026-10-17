@@ -73,9 +73,10 @@ write('pci.ids','abcd  Fixture Vendor\n\t1234  Fixture GPU A\n\t5678  Fixture GP
 write('sys/class/dmi/id/board_name','Fixture Board')
 write('sys/block/sda/device/model','Fixture SSD');write('sys/block/sda/size','2097152')
 try:
- if any(flag in sys.argv for flag in ['--lcd-errors','--image-errors','--library-errors','--cooling-errors','--collection-readback-errors']):
+ if any(flag in sys.argv for flag in ['--lcd-errors','--image-errors','--library-errors','--cooling-errors','--collection-readback-errors','--collection-plain-errors']):
   launch(['openbox'],'wm');start_fixture(with_device=True)
-  collection_errors='--collection-readback-errors' in sys.argv
+  collection_errors=any(flag in sys.argv for flag in ['--collection-readback-errors','--collection-plain-errors'])
+  plain_errors='--collection-plain-errors' in sys.argv
   image_errors='--image-errors' in sys.argv
   library_errors='--library-errors' in sys.argv
   cooling_errors='--cooling-errors' in sys.argv
@@ -85,7 +86,7 @@ try:
   backend=root/'backend.sock';(root/'lconnectd.sock').rename(backend)
   spec=importlib.util.spec_from_file_location('lcd_fault_proxy',repo/'desktop/scripts/native-fault-proxy.py')
   proxy_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(proxy_module)
-  phase='collection-readback-errors' if collection_errors else 'cooling-errors' if cooling_errors else 'library-errors' if library_errors else 'image-errors' if image_errors else 'lcd-errors'
+  phase='collection-plain-errors' if plain_errors else 'collection-readback-errors' if collection_errors else 'cooling-errors' if cooling_errors else 'library-errors' if library_errors else 'image-errors' if image_errors else 'lcd-errors'
   proxy=proxy_module.FaultProxy(root/'lconnectd.sock',backend,lcd_messages=not (image_errors or library_errors or cooling_errors or collection_errors),collection_readbacks=collection_errors,image_messages=image_errors,library_messages=library_errors,cooling_messages=cooling_errors)
   gui=launch([repo/'target/debug/lconnect-gui'],f'gui-{phase}',dict(env,LCONNECT_NATIVE_DESKTOP_PHASE=phase))
   result=result_for(gui);close_gui(gui,f'gui-{phase}')
