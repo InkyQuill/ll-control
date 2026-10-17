@@ -1,5 +1,5 @@
 //! i915 system-wide engine busy counters. No process fdinfo aggregation.
-//! PMU ABI/provenance and remaining xe/memory work: docs/parity/sensor-provider-inventory.md.
+//! PMU ABI/provenance and remaining xe/memory work: docs/development/parity/sensor-provider-inventory.md.
 use super::{reading, text, STALE_AFTER};
 use lconnect_ipc::{SensorReading, SensorStatus, SensorUnit};
 use std::{

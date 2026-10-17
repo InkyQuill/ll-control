@@ -98,6 +98,7 @@ pub struct Recorder {
     directory: Option<TempDir>,
     cancel: Option<watch::Receiver<bool>>,
     closed: Option<watch::Receiver<bool>>,
+    remote: Option<OwnedFd>,
 }
 impl Recorder {
     pub fn prepare(
@@ -219,7 +220,14 @@ impl Recorder {
             });
         }
         let child = command.spawn().context("Start isolated recording worker")?;
-        drop((child_socket, control_fd, portal_fd, fd));
+        drop((child_socket, control_fd, portal_fd));
+        // The parent observes disconnects even if plugin negotiation/teardown
+        // in the isolated child is stuck. It never reads this duplicate.
+        let remote = if matches!(&source, Source::Portal { .. }) {
+            fd
+        } else {
+            None
+        };
         let recorder = Self {
             worker: Mutex::new(Worker {
                 child,
@@ -230,6 +238,7 @@ impl Recorder {
             directory: Some(directory),
             cancel,
             closed,
+            remote,
         };
         let init = Init {
             directory: recorder
@@ -257,6 +266,12 @@ impl Recorder {
             !self.closed.as_ref().is_some_and(|v| *v.borrow()),
             "ScreenCast session closed while recording"
         );
+        if let Some(fd) = &self.remote {
+            ensure!(
+                pipewire_connected(fd)?,
+                "PipeWire connection closed while recording"
+            );
+        }
         Ok(())
     }
     fn exchange(&self, message: &impl Serialize, limit: Duration) -> Result<Reply> {
@@ -398,6 +413,30 @@ impl Drop for Recorder {
         }
     }
 }
+// Observe only disconnect/error flags on our retained descriptor. The plugin
+// duplicates this socket and is its sole reader; polling must not consume any
+// PipeWire protocol bytes or confuse an unchanged desktop with a dead remote.
+fn pipewire_connected(fd: &OwnedFd) -> Result<bool> {
+    let mut descriptor = libc::pollfd {
+        fd: fd.as_raw_fd(),
+        events: libc::POLLRDHUP,
+        revents: 0,
+    };
+    // SAFETY: descriptor is valid for this one-entry, nonblocking poll and fd
+    // remains owned by Recorder for the complete recording lifetime.
+    if unsafe { libc::poll(&mut descriptor, 1, 0) } < 0 {
+        let error = std::io::Error::last_os_error();
+        if error.kind() == std::io::ErrorKind::Interrupted {
+            return Ok(true); // Retry on the next bounded control tick.
+        }
+        return Err(error).context("Check PipeWire connection");
+    }
+    Ok(
+        descriptor.revents & (libc::POLLRDHUP | libc::POLLHUP | libc::POLLERR | libc::POLLNVAL)
+            == 0,
+    )
+}
+
 fn transfer(
     stream: &mut UnixStream,
     bytes: &mut [u8],
@@ -422,6 +461,21 @@ fn transfer(
                         | std::io::ErrorKind::TimedOut
                         | std::io::ErrorKind::Interrupted
                 ) => {}
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::BrokenPipe
+                        | std::io::ErrorKind::ConnectionReset
+                        | std::io::ErrorKind::ConnectionAborted
+                        | std::io::ErrorKind::NotConnected
+                        | std::io::ErrorKind::UnexpectedEof
+                ) =>
+            {
+                // A child exit may be noticed while writing the next request,
+                // rather than as a zero-byte read. Give both the same recovery
+                // class without losing the OS cause used by diagnostics.
+                return Err(error).context("Recording worker connection closed");
+            }
             Err(error) => return Err(error.into()),
         }
     }
@@ -575,3 +629,6 @@ fn worker_main() -> Result<()> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod pipewire_tests;

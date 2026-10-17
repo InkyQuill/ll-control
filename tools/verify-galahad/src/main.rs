@@ -2,7 +2,7 @@
 //!
 //! Not a product binary. This exists only to exercise commands defined
 //! in `lconnect-protocol` against a live device and print the results
-//! into `docs/protocol/galahad2-lcdv2.md`'s "Verification" sections.
+//! into `docs/development/protocol/galahad2-lcdv2.md`'s "Verification" sections.
 //!
 //! Once Phase 1 stands up the real daemon, this tool is retired.
 
@@ -70,7 +70,7 @@ enum Cmd {
     /// framing class and dump the hex response. For Phase 0e cross-device
     /// experimentation; the caller is responsible for choosing a cmd byte
     /// that has been hid-safety-reviewer-cleared as read-only. See
-    /// `docs/protocol/captures/2026-04-26-cross-device-probes.txt` for
+    /// `docs/development/protocol/captures/2026-04-26-cross-device-probes.txt` for
     /// the curated probe set.
     Probe(ProbeCliArgs),
 }

@@ -4,11 +4,12 @@ test.beforeEach(async ({page})=>{
     type Profile={slot:number;name:string;content:{kind:string;value:unknown}};
     const fixture={library:{version:1,revision:0,profiles:[] as Profile[]},writes:[] as {method:string;params:Record<string,unknown>}[]};
     Object.assign(window,{fixture,__TAURI_INTERNALS__:{invoke:async(command:string,req:{method:string;params:Record<string,unknown>})=>{
+        if (command === 'desktop_set_language') return null;
       if(command==='media_status'||command==='media_thumbnail_cancel')return null;
       if(command==='media_thumbnail')throw new Error('No decoder in fixture');
       switch(req.method){
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle'};
         case 'get_lcd_media':return null;
@@ -28,10 +29,11 @@ test.beforeEach(async ({page})=>{
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
 });
 test('save and load media slot preserve theme draft and require explicit Apply',async({page})=>{
   await page.getByLabel('Название',{exact:true}).fill('Мой черновик');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect(page.getByLabel('Сохранённый ролик')).toHaveValue('a'.repeat(32));
   await page.getByText('Сохранённые профили',{exact:true}).click();

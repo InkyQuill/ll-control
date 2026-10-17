@@ -278,7 +278,15 @@ fn snapshot_from_identities(
         if &info == target_info {
             target = Some(saved.clone());
         }
+        if let Some(editor) = &saved.screen_editor {
+            images.extend(editor.image_keys().into_iter().map(str::to_owned));
+            media.extend(editor.video_keys().into_iter().map(str::to_owned));
+            fonts.extend(editor.font_keys().into_iter().map(str::to_owned));
+        }
         if let Some(theme) = saved.theme {
+            themes.push(theme);
+        }
+        if let Some(theme) = saved.screen_editor.and_then(|editor| editor.theme) {
             themes.push(theme);
         }
         if let Some(key) = saved.media_clip {
@@ -738,6 +746,7 @@ mod tests {
             background_fill: None,
             layers: vec![],
             page_cache: vec![],
+            basic_editor: None,
         };
         theme.background_image = Some(lconnect_ipc::BackgroundImage {
             asset: key.clone(),

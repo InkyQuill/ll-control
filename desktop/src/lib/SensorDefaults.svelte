@@ -11,7 +11,7 @@
   ];
   const gpuFields: { key: GpuSourceField; label: string }[] = [...fields, { key: 'memory_used', label: 'Использование VRAM' }];
   let snapshot = $state<SensorDefaultsState | null>(null), draft = $state<SensorDefaults | null>(null);
-  let fresh = $state(false);
+  let fresh = $state(false), mustReload = $state(false);
   let busy = $state(false), error = $state(''), readError = $state(''), notice = $state('');
   let generation = 0, readRevision = 0;
   const gpuIds = $derived([...new Set(snapshot?.candidates.flatMap(c => c.gpu_id ? [c.gpu_id] : []) ?? [])]);
@@ -53,7 +53,7 @@
     return () => { alive = false; clearTimeout(first); clearInterval(timer); };
   });
   async function apply() {
-    if (!draft || busy || !connected || !fresh || conflict || readError) return;
+    if (!draft || busy || !connected || !fresh || conflict || readError || mustReload) return;
     const epoch = generation, config = copy(draft);
     readRevision++; fresh = false;
     busy = true; error = ''; notice = '';
@@ -63,15 +63,16 @@
       draft = copy(saved);
       if (snapshot) snapshot.config = copy(saved);
       notice = 'Источники сохранены. Явные привязки LCD, охлаждения и RGB не изменены.';
-    } catch (e) { if (epoch === generation) error = `${message(e)} Проверьте сохранённый выбор перед повторной попыткой.`; }
+    } catch (e) { if (epoch === generation) { error = message(e); mustReload = true; } }
     finally { busy = false; }
   }
 </script>
 <section aria-label="{t("Источники системных датчиков")}">
   <h2>{t("Источники системных датчиков")}</h2>
   <p>{t("Выберите источники CPU и видеокарту для общесистемных показателей. Неподдерживаемые показатели останутся без значения.")}</p>
-  {#if readError}<p role="alert">{t("Не удалось прочитать настройки:")} {t(readError)}</p>{/if}
-  {#if error}<p role="alert">{t(error)}</p>{/if}
+  {#if readError}<p role="alert">{t("Не удалось прочитать настройки:")} <span>{readError}</span></p>{/if}
+  {#if error}<p role="alert">{error}</p>{/if}
+  {#if mustReload}<p role="alert">{t('Проверьте сохранённый выбор перед повторной попыткой.')}</p>{/if}
   {#if notice}<p role="status">{t(notice)}</p>{/if}
   {#if conflict}<p role="alert">{t("Настройки изменились извне. Ваш черновик сохранён; загрузите актуальный выбор перед применением.")}</p>{/if}
   {#if draft}
@@ -107,8 +108,8 @@
       {/each}{/if}
     </fieldset>
     <div class="actions">
-      <button disabled={busy || !connected || !fresh || !!readError || conflict} onclick={() => void apply()}>{t("Применить источники")}</button>
-      <button disabled={busy || !snapshot || !connected || !fresh || !!readError} onclick={() => { if (snapshot) { draft = copy(snapshot.config); error = ''; notice = ''; } }}>{t("Загрузить сохранённый выбор")}</button>
+      <button disabled={busy || !connected || !fresh || !!readError || conflict || mustReload} onclick={() => void apply()}>{t("Применить источники")}</button>
+      <button disabled={busy || !snapshot || !connected || !fresh || !!readError} onclick={() => { if (snapshot) { draft = copy(snapshot.config); error = ''; notice = ''; mustReload = false; } }}>{t("Загрузить сохранённый выбор")}</button>
       <button disabled={busy || !connected || !fresh || !snapshot?.recommended} onclick={() => { if (snapshot?.recommended) { draft = copy(snapshot.recommended); error = ''; notice = 'Рекомендуемые источники загружены в черновик. Проверьте выбор и нажмите Apply для сохранения.'; } }}>{t("Восстановить рекомендуемый выбор")}</button>
       <button disabled={busy} onclick={clearDraft}>{t("Очистить выбор в черновике")}</button>
     </div>
@@ -118,5 +119,5 @@
   </dl>{/if}
 </section>
 <style>
-  section{margin-bottom:24px;border:1px solid #38485c;border-radius:12px;padding:20px}fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:14px;margin:16px 0;border:1px solid #38485c;border-radius:8px;padding:16px;min-width:0}legend{padding:0 6px}.actions{display:flex;gap:12px;flex-wrap:wrap}p{line-height:1.6;color:#bdccdf}[role=alert]{color:#ffb8c5}[role=status]{color:#8adbc0}dl{display:flex;gap:20px;flex-wrap:wrap}dt{color:#bdccdf}dd{margin:6px 0;font-size:20px}
+  section{margin-bottom:24px;border:1px solid var(--border);border-radius:12px;padding:20px}fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:14px;margin:16px 0;border:1px solid var(--border);border-radius:8px;padding:16px;min-width:0}legend{padding:0 6px}.actions{display:flex;gap:12px;flex-wrap:wrap}p{line-height:1.6;color:var(--text-muted)}[role=alert]{color:var(--danger)}[role=status]{color:var(--success)}dl{display:flex;gap:20px;flex-wrap:wrap}dt{color:var(--text-muted)}dd{margin:6px 0;font-size:20px}
 </style>

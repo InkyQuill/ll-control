@@ -3,9 +3,10 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     type Collections = {version:number;revision:number;images:string[];watermarks:string[];backgrounds:{kind:string;key:string}[]};
-    const fixture = {collections:null as Collections|null,failMembership:false,writes:0, admitted: false, finish: (_fail: boolean) => {} };
+    const fixture = {online:true,collections:null as Collections|null,failMembership:false,writes:0, admitted: false, finish: (_fail: boolean) => {} };
     Object.assign(window, { imageImport: fixture, __TAURI_INTERNALS__: {
       invoke: async (command: string, args: { method: string; params:{collections:Collections;expected_revision:number} }) => {
+        if (command === 'desktop_set_language') return null;
         if (command === 'import_image') {
           fixture.admitted = true;
           return new Promise<string>((resolve, reject) => {
@@ -18,7 +19,7 @@ test.beforeEach(async ({ page }) => {
         switch (args.method) {
           case 'get_screen_collections': return {collections:fixture.collections,persistence:{pending:false,saved:false,last_error:null}};
           case 'set_screen_collections': fixture.writes++; if(fixture.failMembership) throw new Error('Collection conflict'); fixture.collections=args.params.collections; return fixture.collections;
-          case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2' }];
+          case 'list_devices': if(!fixture.online)throw new Error('offline');return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [];
           case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };
           default: throw new Error(`Unexpected operation: ${args.method}`);
@@ -26,8 +27,22 @@ test.beforeEach(async ({ page }) => {
       }
     } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
+});
+
+test('late image import failure after reconnect cannot overwrite the new connection state',async({page})=>{
+  await page.getByLabel('Название',{exact:true}).fill('New session draft');
+  const count=await page.locator('.layer').count();
+  await page.locator('.file input[type=file]').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('fixture')});
+  await expect.poll(()=>page.evaluate(()=>(window as unknown as {imageImport:{admitted:boolean}}).imageImport.admitted)).toBe(true);
+  await page.evaluate(()=>(window as unknown as {imageImport:{online:boolean}}).imageImport.online=false);
+  await expect(page.getByText('Нет связи с daemon',{exact:true})).toBeVisible();
+  await page.evaluate(()=>(window as unknown as {imageImport:{online:boolean}}).imageImport.online=true);
+  await page.getByRole('button',{name:'Повторить подключение',exact:true}).click();await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
+  await page.evaluate(()=>(window as unknown as {imageImport:{finish(fail:boolean):void}}).imageImport.finish(true));
+  await expect(page.locator('.file input[type=file]')).toBeEnabled();await expect(page.getByRole('alert').filter({hasText:'Invalid image fixture'})).toHaveCount(0);
+  await expect(page.getByLabel('Название',{exact:true})).toHaveValue('New session draft');await expect(page.locator('.layer')).toHaveCount(count);
 });
 
 for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-page'] as const) {

@@ -12,10 +12,25 @@ use zbus::{
 
 #[derive(Clone, Default)]
 pub struct Screenshots(Arc<Mutex<State>>);
+/// Logical request termination; owner loss does not attest that an external
+/// compositor dialog disappeared.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CancelOutcome {
+    Closed,
+    OwnerGone,
+}
 #[derive(Default)]
 struct State {
     active: Option<Job>,
+    cleanup: Option<(String, PendingClose)>,
     closed: bool,
+}
+struct PendingClose {
+    connection: Connection,
+    owner: String,
+    path: String,
+    error: String,
 }
 struct Job {
     id: String,
@@ -30,6 +45,7 @@ impl Screenshots {
         let mut state = self.0.lock().await;
         ensure!(!state.closed, "Screenshot service is closing");
         ensure!(state.active.is_none(), "A screenshot is already pending");
+        ensure!(state.cleanup.is_none(), "Previous screenshot cleanup is not confirmed; cancel it before starting another capture");
         let id = uuid::Uuid::new_v4().simple().to_string();
         let (cancel, _) = watch::channel(false);
         let (completion, done) = watch::channel(false);
@@ -81,13 +97,20 @@ impl Screenshots {
         let id = id.to_owned();
         // Owned work survives a dropped invoke future; cancel/shutdown joins it.
         let task = tokio::spawn(async move {
+            let mut cleanup = None;
             let result = async {
                 let connection = tokio::select! {
                     biased;
                     _=cancel.wait_for(|v|*v)=>return Ok(Vec::new()),
                     result=tokio::time::timeout(Duration::from_secs(10),connection)=>result??,
                 };
-                let uri = request(&connection, Duration::from_secs(120), cancel.clone()).await?;
+                let uri = request(
+                    &connection,
+                    Duration::from_secs(120),
+                    cancel.clone(),
+                    &mut cleanup,
+                )
+                .await?;
                 if *cancel.borrow() {
                     return Ok(Vec::new());
                 }
@@ -106,6 +129,9 @@ impl Screenshots {
             let mut state = owner.0.lock().await;
             if state.active.as_ref().is_some_and(|j| j.id == id) {
                 state.active = None;
+                if let Some(cleanup) = cleanup {
+                    state.cleanup = Some((id, cleanup));
+                }
             }
             let _ = completion.send(true);
             result
@@ -113,39 +139,94 @@ impl Screenshots {
         drop(state);
         task.await?
     }
-    pub async fn cancel(&self, id: &str) {
+    /// Opaque recovery ID only; callers never receive a portal path or connection.
+    pub async fn pending_cleanup(&self) -> Option<String> {
+        self.0
+            .lock()
+            .await
+            .cleanup
+            .as_ref()
+            .map(|(id, _)| id.clone())
+    }
+    pub async fn cancel(&self, id: &str) -> anyhow::Result<CancelOutcome> {
         let done = {
             let mut state = self.0.lock().await;
-            let Some(job) = state.active.as_mut().filter(|j| j.id == id) else {
-                return;
-            };
-            if !job.started {
-                state.active = None;
-                return;
+            if let Some(job) = state.active.as_mut().filter(|j| j.id == id) {
+                if !job.started {
+                    state.active = None;
+                    return Ok(CancelOutcome::Closed);
+                }
+                let _ = job.cancel.send(true);
+                Some(job.done.clone())
+            } else {
+                None
             }
-            let _ = job.cancel.send(true);
-            job.done.clone()
         };
-        let mut done = done;
-        let _ = done.wait_for(|v| *v).await;
+        if let Some(mut done) = done {
+            done.wait_for(|v| *v)
+                .await
+                .context("Screenshot completion owner disappeared")?;
+            let state = self.0.lock().await;
+            if let Some((owned, pending)) = &state.cleanup {
+                if owned == id {
+                    anyhow::bail!("{}", pending.error);
+                }
+            }
+            return Ok(CancelOutcome::Closed);
+        }
+        // Serialize explicit retries with admission and shutdown. This bounded
+        // call uses the original bus connection, unique service owner and path.
+        let mut state = self.0.lock().await;
+        if let Some((owned, pending)) = &state.cleanup {
+            if owned == id {
+                let outcome = match close_request(&pending.connection, &pending.owner, &pending.path).await {
+                    Ok(()) => CancelOutcome::Closed,
+                    Err(error) => match original_owner_gone(pending).await {
+                        Ok(true) => CancelOutcome::OwnerGone,
+                        Ok(false) => return Err(error),
+                        Err(inspection) => anyhow::bail!("Screenshot cleanup unresolved: {error:#}; original owner verification failed: {inspection:#}"),
+                    },
+                };
+                state.cleanup = None;
+                return Ok(outcome);
+            }
+        }
+        Ok(CancelOutcome::Closed)
     }
     pub async fn shutdown(&self) -> anyhow::Result<()> {
         let id = {
             let mut state = self.0.lock().await;
             state.closed = true;
-            state.active.as_ref().map(|j| j.id.clone())
+            state
+                .active
+                .as_ref()
+                .map(|j| j.id.clone())
+                .or_else(|| state.cleanup.as_ref().map(|(id, _)| id.clone()))
         };
         if let Some(id) = id {
-            self.cancel(&id).await;
+            self.cancel(&id).await?;
         }
         Ok(())
     }
+}
+
+async fn original_owner_gone(pending: &PendingClose) -> anyhow::Result<bool> {
+    // Query the original bus connection and exact unique name. A failed query
+    // proves nothing; the replacement well-known owner is never contacted.
+    tokio::time::timeout(Duration::from_secs(2), async {
+        let name = zbus::names::UniqueName::try_from(pending.owner.as_str())?;
+        let bus = zbus::fdo::DBusProxy::new(&pending.connection).await?;
+        Ok::<_, anyhow::Error>(!bus.name_has_owner(name.into()).await?)
+    })
+    .await
+    .context("Screenshot original owner inspection timed out")?
 }
 
 async fn request(
     connection: &Connection,
     deadline: Duration,
     mut cancel: watch::Receiver<bool>,
+    cleanup: &mut Option<PendingClose>,
 ) -> anyhow::Result<Option<String>> {
     let token = format!("lconnect_{}", uuid::Uuid::new_v4().simple());
     let sender = connection
@@ -155,16 +236,23 @@ async fn request(
         .trim_start_matches(':')
         .replace('.', "_");
     let path = format!("/org/freedesktop/portal/desktop/request/{sender}/{token}");
+    let owner = tokio::time::timeout(Duration::from_secs(10), async {
+        let bus = zbus::fdo::DBusProxy::new(connection).await?;
+        let name = zbus::names::WellKnownName::try_from("org.freedesktop.portal.Desktop")?;
+        bus.start_service_by_name(name.clone(), 0).await?;
+        Ok::<_, anyhow::Error>(bus.get_name_owner(name.into()).await?)
+    })
+    .await??;
     let portal = Proxy::new(
         connection,
-        "org.freedesktop.portal.Desktop",
+        owner.as_str(),
         "/org/freedesktop/portal/desktop",
         "org.freedesktop.portal.Screenshot",
     )
     .await?;
     let request = Proxy::new(
         connection,
-        "org.freedesktop.portal.Desktop",
+        owner.as_str(),
         path.as_str(),
         "org.freedesktop.portal.Request",
     )
@@ -177,6 +265,7 @@ async fn request(
         ("modal", Value::from(true)),
     ]);
     let mut cancelled = false;
+    let mut submitted = false;
     let outcome = tokio::time::timeout(deadline, async {
         if *cancel.borrow() {
             cancelled = true;
@@ -184,6 +273,7 @@ async fn request(
         }
         // Obtain the handle before Close, even if cancellation arrives while the
         // method is in flight. The connection is dedicated to this operation.
+        submitted = true;
         let handle: OwnedObjectPath = tokio::time::timeout(
             Duration::from_secs(10),
             portal.call("Screenshot", &("", options)),
@@ -212,14 +302,42 @@ async fn request(
     })
     .await;
     // Close on failure/timeout as well; do not leave a consent dialog orphaned.
-    if cancelled || !matches!(&outcome, Ok(Ok(_))) {
-        let _ = tokio::time::timeout(
-            Duration::from_secs(2),
-            request.call::<_, _, ()>("Close", &()),
-        )
-        .await;
+    if submitted && (cancelled || !matches!(&outcome, Ok(Ok(_)))) {
+        if let Err(error) = close_request(connection, owner.as_str(), &path).await {
+            let stage = match &outcome {
+                Ok(Err(error)) => format!("Screenshot request failed: {error:#}"),
+                Err(error) => format!("Screenshot request timed out: {error}"),
+                _ => "Screenshot cancellation cleanup failed".into(),
+            };
+            let detail = format!("{stage}; Screenshot Request.Close not confirmed: {error:#}");
+            *cleanup = Some(PendingClose {
+                connection: connection.clone(),
+                owner: owner.to_string(),
+                path,
+                error: detail.clone(),
+            });
+            return Err(anyhow::anyhow!(detail));
+        }
     }
     outcome.context("Screenshot selection timed out")?
+}
+
+async fn close_request(connection: &Connection, owner: &str, path: &str) -> anyhow::Result<()> {
+    let result = tokio::time::timeout(Duration::from_secs(2), async {
+        let request = Proxy::new(connection, owner, path, "org.freedesktop.portal.Request").await?;
+        request.call::<_, _, ()>("Close", &()).await
+    })
+    .await
+    .context("Screenshot Request.Close timed out")?;
+    // Portals may remove a completed request before the cleanup call arrives.
+    // Only absence reported by the pinned original owner is conclusive; never
+    // treat a missing/replaced service or an unsupported method as confirmation.
+    if matches!(&result, Err(zbus::Error::MethodError(name, _, _)) if name.as_str()=="org.freedesktop.DBus.Error.UnknownObject")
+    {
+        return Ok(());
+    }
+    result?;
+    Ok(())
 }
 
 fn read_image(uri: &str) -> anyhow::Result<Vec<u8>> {

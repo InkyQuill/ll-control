@@ -13,11 +13,12 @@ async function setup(page:Page){
   localStorage.setItem('lconnect.interface-language','en-US');
   const f={language:'en-US',offline:false,devices:['A','B'],hold:false,fail:false,response:{version:'1.6',raw_token:'Настройки {1} <CPU>',build_datetime:'Apr 12 2024 14:33:21'},calls:[] as {method:string;params:Record<string,unknown>}[],pending:[] as {dev:string;resolve:(value:unknown)=>void}[]};
   Object.assign(window,{firmwareFixture:f,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
+        if (command === 'desktop_set_language') return null;
    if(command!=='daemon_call')return null;
    const method=String(args.method),params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params});
    if(f.offline)throw {message:'Fixture daemon offline'};
    switch(method){
-    case 'list_devices':return f.devices.map(id=>({id,display_name:id==='A'?'Настройки':'LCD B'}));
+    case 'list_devices':return f.devices.map(id=>({id,display_name:id==='A'?'Настройки':'LCD B',family:'galahad2-lcdv2'}));
     case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];
     case 'get_lcd_state':return {source:'Idle',requested:{mode:'LocalUI',brightness_percent:100,rotation_degrees:0},last_error:null};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
@@ -27,7 +28,7 @@ async function setup(page:Page){
    }
   }}});
  });
- await page.goto('/');await expect(page.getByText('Daemon connected',{exact:true})).toBeVisible();
+ await page.goto('/?view=display');await expect(page.getByText('Daemon connected',{exact:true})).toBeVisible();
  await page.getByLabel('Name',{exact:true}).fill('Настройки');
  await page.getByRole('button',{name:'Settings',exact:true}).click();
 }

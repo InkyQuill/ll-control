@@ -1,6 +1,7 @@
 //! Tauri desktop lifecycle around durable preferences. No device/daemon writer.
 use crate::desktop_settings::{Preferences, Readback, Store};
 use anyhow::{Context, Result};
+use lconnect_ipc::InterfaceLanguage;
 use serde::Serialize;
 use std::{
     sync::{
@@ -16,6 +17,18 @@ use tauri::{
 };
 const TRAY_ID: &str = "lconnect-main";
 const JOBS: u32 = 2;
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TrayErrorCode {
+    HostUnconfirmed,
+    Unavailable,
+}
+#[derive(Clone)]
+enum TrayIssue {
+    HostUnconfirmed,
+    Unavailable(String),
+}
+const LEGACY_HOST_ERROR: &str = "В сессии нет зарегистрированного tray host для приложения.";
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
@@ -23,16 +36,56 @@ pub struct Snapshot {
     pub settings: Readback,
     pub tray_ready: bool,
     pub tray_error: Option<String>,
+    pub tray_error_code: Option<TrayErrorCode>,
+}
+type TrayMenu = (MenuItem<tauri::Wry>, MenuItem<tauri::Wry>);
+#[derive(Default)]
+struct NativeMenu {
+    language: InterfaceLanguage,
+    items: Option<TrayMenu>,
+}
+fn menu_labels(language: InterfaceLanguage) -> (&'static str, &'static str) {
+    match language {
+        InterfaceLanguage::English => ("Show L-Connect Linux", "Exit application"),
+        InterfaceLanguage::Russian => ("Показать L-Connect Linux", "Выйти из приложения"),
+    }
+}
+fn apply_menu_language(items: &TrayMenu, language: InterfaceLanguage) -> Result<()> {
+    let (show, exit) = menu_labels(language);
+    items.0.set_text(show)?;
+    items.1.set_text(exit)?;
+    Ok(())
 }
 pub struct Desktop {
     store: Store,
+    menu: Mutex<NativeMenu>,
     preferences: Mutex<Option<Preferences>>,
     ready: AtomicBool,
-    tray_error: Mutex<Option<String>>,
+    tray_error: Mutex<Option<TrayIssue>>,
     closed: AtomicBool,
     jobs: Arc<tokio::sync::Semaphore>,
 }
 impl Desktop {
+    /// UI labels only; no settings persistence, device access or lifecycle action.
+    pub fn set_language(&self, language: InterfaceLanguage) -> Result<()> {
+        if self.closed.load(Ordering::Acquire) {
+            return Ok(());
+        }
+        let items = {
+            let mut menu = self
+                .menu
+                .lock()
+                .map_err(|_| anyhow::anyhow!("Native menu state unavailable"))?;
+            menu.language = language;
+            menu.items.clone()
+        };
+        // GTK operations may dispatch to the main thread. Never hold our lock there.
+        if let Some(items) = items {
+            apply_menu_language(&items, language)?;
+        }
+        Ok(())
+    }
+
     fn cache(&self, p: Option<Preferences>) {
         if let Ok(mut value) = self.preferences.lock() {
             *value = p;
@@ -45,10 +98,24 @@ impl Desktop {
         self.ready.load(Ordering::Acquire) && self.preferences().is_some_and(|p| p.close_to_tray)
     }
     fn snapshot(&self, settings: Readback) -> Snapshot {
+        let tray_ready = self.ready.load(Ordering::Acquire);
+        let issue = self.tray_error.lock().ok().and_then(|e| e.clone());
+        let (tray_error, tray_error_code) = match issue {
+            Some(TrayIssue::HostUnconfirmed) if tray_ready => (None, None),
+            Some(TrayIssue::HostUnconfirmed) => (
+                Some(LEGACY_HOST_ERROR.to_owned()),
+                Some(TrayErrorCode::HostUnconfirmed),
+            ),
+            Some(TrayIssue::Unavailable(diagnostic)) => {
+                (Some(diagnostic), Some(TrayErrorCode::Unavailable))
+            }
+            None => (None, None),
+        };
         Snapshot {
             settings,
-            tray_ready: self.ready.load(Ordering::Acquire),
-            tray_error: self.tray_error.lock().ok().and_then(|e| e.clone()),
+            tray_ready,
+            tray_error,
+            tray_error_code,
         }
     }
     pub async fn read(self: Arc<Self>) -> Result<Snapshot> {
@@ -87,6 +154,15 @@ impl Desktop {
     pub async fn shutdown(&self) -> Result<()> {
         self.closed.store(true, Ordering::Release);
         let _drained = self.jobs.clone().acquire_many_owned(JOBS).await?;
+        // Menu handles own an AppHandle. Release them before application teardown,
+        // outside our lock because their drop can dispatch GTK work.
+        let items = self
+            .menu
+            .lock()
+            .map_err(|_| anyhow::anyhow!("Native menu state unavailable"))?
+            .items
+            .take();
+        drop(items);
         Ok(())
     }
 }
@@ -121,6 +197,7 @@ pub fn setup(app: &mut tauri::App, on_exit: fn(&tauri::AppHandle)) -> Result<()>
     let minimize = preferences.as_ref().is_some_and(|p| p.start_minimized);
     let desktop = Arc::new(Desktop {
         store,
+        menu: Mutex::new(NativeMenu::default()),
         preferences: Mutex::new(preferences),
         ready: AtomicBool::new(false),
         tray_error: Mutex::new(None),
@@ -134,14 +211,14 @@ pub fn setup(app: &mut tauri::App, on_exit: fn(&tauri::AppHandle)) -> Result<()>
         let show_item = MenuItem::with_id(
             app,
             "desktop-show",
-            "Показать L-Connect Linux",
+            menu_labels(InterfaceLanguage::default()).0,
             true,
             None::<&str>,
         )?;
         let exit_item = MenuItem::with_id(
             app,
             "desktop-exit",
-            "Выйти из приложения",
+            menu_labels(InterfaceLanguage::default()).1,
             true,
             None::<&str>,
         )?;
@@ -157,12 +234,21 @@ pub fn setup(app: &mut tauri::App, on_exit: fn(&tauri::AppHandle)) -> Result<()>
                 _ => {}
             })
             .build(app)?;
+        let language = {
+            let mut menu = desktop
+                .menu
+                .lock()
+                .map_err(|_| anyhow::anyhow!("Native menu state unavailable"))?;
+            menu.items = Some((show_item.clone(), exit_item.clone()));
+            menu.language
+        };
+        apply_menu_language(&(show_item, exit_item), language)?;
         Ok(())
     }))
     .unwrap_or_else(|_| Err(anyhow::anyhow!("Tray indicator library unavailable")));
     if let Err(e) = tray {
         if let Ok(mut error) = desktop.tray_error.lock() {
-            *error = Some(e.to_string());
+            *error = Some(TrayIssue::Unavailable(e.to_string()));
         }
         return Ok(());
     }
@@ -191,8 +277,7 @@ pub fn setup(app: &mut tauri::App, on_exit: fn(&tauri::AppHandle)) -> Result<()>
             }
 
             if let Ok(mut error) = desktop.tray_error.lock() {
-                *error = (!ready)
-                    .then(|| "В сессии нет зарегистрированного tray host для приложения.".into());
+                *error = (!ready).then_some(TrayIssue::HostUnconfirmed);
             }
             if !ready && (first && minimize || was_ready) {
                 show(&handle);

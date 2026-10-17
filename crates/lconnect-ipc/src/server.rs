@@ -638,6 +638,50 @@ where
             let p: DeviceParams = from_value(params)?;
             to_value(&rpc.get_cooling_state(p.dev).await?)
         }
+        "get_cooling_modes" => {
+            let p: DeviceParams = from_value(params)?;
+            to_value(&rpc.get_cooling_modes(p.dev).await?)
+        }
+        "save_cooling_mode" => {
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Params {
+                dev: crate::DeviceId,
+                target: crate::CoolingTarget,
+                expected_revision: String,
+                profile: crate::CoolingModeProfile,
+            }
+            let p: Params = from_value(params)?;
+            to_value(
+                &rpc.save_cooling_mode(p.dev, p.target, p.expected_revision, p.profile)
+                    .await?,
+            )
+        }
+        "initialize_cooling_modes" => {
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Params {
+                dev: crate::DeviceId,
+                sensor: String,
+            }
+            let p: Params = from_value(params)?;
+            to_value(&rpc.initialize_cooling_modes(p.dev, p.sensor).await?)
+        }
+        "apply_cooling_mode" => {
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Params {
+                dev: crate::DeviceId,
+                target: crate::CoolingTarget,
+                expected_revision: String,
+                id: String,
+            }
+            let p: Params = from_value(params)?;
+            to_value(
+                &rpc.apply_cooling_mode(p.dev, p.target, p.expected_revision, p.id)
+                    .await?,
+            )
+        }
         "set_cooling_policy" => {
             #[derive(serde::Deserialize)]
             struct Params {
@@ -879,6 +923,34 @@ where
                     .await?,
             )
         }
+        "preview_windows_control_import" => {
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Params {
+                dev: DeviceId,
+                draft_json: String,
+            }
+            let p: Params = from_value(params)?;
+            to_value(
+                &rpc.preview_windows_control_import(p.dev, p.draft_json)
+                    .await?,
+            )
+        }
+        "import_windows_control" => {
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Params {
+                dev: DeviceId,
+                operation_id: String,
+                expected: String,
+                draft_json: String,
+            }
+            let p: Params = from_value(params)?;
+            to_value(
+                &rpc.import_windows_control(p.dev, p.operation_id, p.expected, p.draft_json)
+                    .await?,
+            )
+        }
         "preview_fan_and_lighting_reset" => {
             #[derive(serde::Deserialize)]
             #[serde(deny_unknown_fields)]
@@ -936,6 +1008,20 @@ where
                     .await?,
             )
         }
+        "preview_windows_screen_upload" => {
+            #[derive(serde::Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Params {
+                dev: crate::DeviceId,
+                id: String,
+                source: crate::WindowsScreenPreviewSource,
+            }
+            let p: Params = from_value(params)?;
+            to_value(
+                &rpc.preview_windows_screen_upload(p.dev, p.id, p.source)
+                    .await?,
+            )
+        }
         "group_upload" => {
             #[derive(serde::Deserialize)]
             #[serde(deny_unknown_fields)]
@@ -978,6 +1064,10 @@ where
             let p: Params = from_value(params)?;
             p.edit.validate()?;
             to_value(&rpc.edit_profile(p.expected_revision, p.edit).await?)
+        }
+        "get_imported_lcd_editor" => {
+            let p: DeviceParams = from_value(params)?;
+            to_value(&rpc.get_imported_lcd_editor(p.dev).await?)
         }
         "get_lcd_theme" => {
             let p: DeviceParams = from_value(params)?;

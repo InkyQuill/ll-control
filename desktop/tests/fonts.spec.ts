@@ -7,10 +7,11 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
       const calls: {method:string;params:Record<string,any>}[] = [];
       let received = 0, size = 0, asset: string|null = null, theme: unknown = null;
       Object.assign(window,{fontCalls:calls,__TAURI_INTERNALS__:{invoke: async (_:string, request:{method:string;params:Record<string,any>}) => {
+        if (_ === 'desktop_set_language') return null;
         calls.push(structuredClone(request));
         const state = () => ({id:key,size,received,asset,cancelled:false});
         switch(request.method) {
-          case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2'}];
+          case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
           case 'list_sensors':return [];
           case 'get_lcd_state':return {source:'Theme',last_error:null,requested:{mode:'Application',brightness_percent:100,rotation_degrees:0}};
           case 'set_lcd_theme': theme=structuredClone(request.params.theme);return {source:'Theme',last_error:null};
@@ -27,9 +28,10 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
         }
       }}});
     },{mode});
-    await page.goto('/');
+    await page.goto('/?view=display');
     await expect(page.getByText('Daemon подключён')).toBeVisible();
-    await page.getByText('Пользовательские шрифты',{exact:true}).click();
+    await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
+  await page.getByText('Пользовательские шрифты',{exact:true}).click();
     await page.getByLabel('Загрузить шрифт',{exact:true}).focus();
     await page.getByLabel('Загрузить шрифт',{exact:true}).setInputFiles({name:'Custom.ttf',mimeType:'font/ttf',buffer:Buffer.alloc(70000,1)});
     if(mode==='success-moved') await page.getByLabel('Название',{exact:true}).focus();
@@ -47,14 +49,15 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
       if(mode==='cancel-moved') await page.getByLabel('Название',{exact:true}).focus();
       await expect(page.getByText('Загрузка отменена. Тема не изменена.')).toBeVisible();
       await expect(page.getByLabel(mode==='cancel-moved' ? 'Название' : 'Загрузить шрифт',{exact:true})).toBeFocused();
-      await expect(page.getByRole('combobox',{name:'Шрифт',exact:true}).first()).toHaveValue('sans');
+      await expect(page.getByRole('combobox',{name:'Шрифт',exact:true,includeHidden:true}).first()).toHaveValue('sans');
       const calls = await page.evaluate(()=> (window as any).fontCalls);
       expect(calls.some((c:any)=>c.method==='font_upload'&&c.params.request.action==='finish')).toBe(false);
     } else {
       await expect(page.getByText('Шрифт загружен.',{exact:false})).toBeVisible();
       await expect(page.getByLabel(mode==='success-moved' ? 'Название' : 'Загрузить шрифт',{exact:true})).toBeFocused();
-      const select=page.getByRole('combobox',{name:'Шрифт',exact:true}).first();
+      const select=page.getByRole('combobox',{name:'Шрифт',exact:true,includeHidden:true}).first();
       await expect(select).toHaveValue('sans');
+      await page.getByRole('button',{name:'Композиция',exact:true}).click();
       await select.selectOption('asset:0123456789abcdef0123456789abcdef');
       let calls=await page.evaluate(()=> (window as any).fontCalls);
       expect(calls.filter((c:any)=>c.method==='set_lcd_theme')).toHaveLength(0);
@@ -64,6 +67,7 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
       await expect.poll(async()=>page.evaluate(()=> (window as any).fontCalls.filter((c:any)=>c.method==='set_lcd_theme').length)).toBe(1);
       calls=await page.evaluate(()=> (window as any).fontCalls);
       expect(calls.find((c:any)=>c.method==='set_lcd_theme').params.theme.layers[0].style.font_asset).toBe('0123456789abcdef0123456789abcdef');
+      await page.getByRole('button',{name:'Композиция',exact:true}).click();
       await select.selectOption('serif');
       await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
       await expect.poll(async()=>page.evaluate(()=> (window as any).fontCalls.filter((c:any)=>c.method==='set_lcd_theme').length)).toBe(2);

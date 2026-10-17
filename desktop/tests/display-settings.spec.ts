@@ -5,12 +5,13 @@ async function setup(page:Page){
   const channel={requested:{mode:'curve',sensor_id:'cpu',points:[{celsius:30,percent:40},{celsius:70,percent:100}],hysteresis_c:2,fallback_percent:100},applied_percent:60,motherboard:false,fallback_active:false,last_error:null};
   const f={state,calls:[] as {method:string;params:Record<string,unknown>}[],lost:false};
   Object.assign(window,{unitFixture:f,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
+        if (command === 'desktop_set_language') return null;
    if(command==='group_archive_status')return null;
    const method=args.method as string,params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
    switch(method){
     case 'get_display_settings':return structuredClone(state);
     case 'set_display_settings':{const next=params.settings as typeof state;if(next.revision!==state.revision)throw {message:'stale revision'};state.temperature_unit=next.temperature_unit;state.revision++;if(f.lost){f.lost=false;throw {message:'Lost unit reply'};}return structuredClone(state);}
-    case 'list_devices':return [{id:'test',display_name:'LCDV2'}];
+    case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
     case 'list_sensors':return [{id:'cpu',label:'Fixture CPU temperature',unit:'celsius',value:40,status:'valid',age_ms:0}];
     case 'get_lcd_state':return {source:'Idle',requested:{mode:'LocalUI',brightness_percent:100,rotation_degrees:0},last_error:null};
     case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];
@@ -22,7 +23,7 @@ async function setup(page:Page){
    }
   }}});
  });
- await page.goto('/');await page.getByRole('button',{name:'Настройки',exact:true}).click();await expect(page.getByRole('combobox',{name:'Единицы температуры',exact:true})).toBeVisible();
+ await page.goto('/?view=display');await page.getByRole('button',{name:'Настройки',exact:true}).click();await expect(page.getByRole('combobox',{name:'Единицы температуры',exact:true})).toBeVisible();
 }
 const section=(page:Page)=>page.getByRole('region',{name:'Единицы и язык'});
 async function fahrenheit(page:Page){await page.getByRole('combobox',{name:'Единицы температуры',exact:true}).selectOption('fahrenheit');await section(page).getByRole('button',{name:'Сохранить параметры отображения',exact:true}).click();await expect(section(page).getByRole('status')).toContainText('Параметры отображения сохранены');}

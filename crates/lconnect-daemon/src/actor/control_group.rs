@@ -303,6 +303,7 @@ impl Coordinator {
             fan: settings.fan.clone(),
             pump: settings.pump.clone(),
             cooling: settings.cooling.clone(),
+            cooling_banks: settings.cooling_banks.clone(),
             lighting: settings.lighting.clone(),
             dynamic_rgb: settings.dynamic_rgb.clone(),
             dynamic_rgb_profiles: settings.dynamic_rgb_profiles.clone(),

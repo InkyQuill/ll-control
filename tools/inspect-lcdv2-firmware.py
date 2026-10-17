@@ -26,7 +26,7 @@ class Candidate:
 
 
 # Vendor catalog fetched 2026-10-15; hashes/offset independently recorded in
-# docs/parity/evidence/2026-10-15-firmware-image-research.json. No vendor bytes
+# docs/development/parity/evidence/2026-10-15-firmware-image-research.json. No vendor bytes
 # are bundled. Filename, extension and user-supplied metadata are not trust inputs.
 LCDV2 = Candidate(
     target="0416:7395",

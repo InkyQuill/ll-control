@@ -14,8 +14,9 @@ async function setup(page: Page) {
       resetFault: (kind: string) => { if(kind==='lost')lose=true; if(kind==='reject')reject=true; if(kind==='hold')hold=true; if(kind==='late')late=true; if(kind==='lcd'){lcdError='USB failed';retry=true;} if(kind==='read')readError=true; if(kind==='recover')readError=false; },
       releaseReset: () => release?.(),
       __TAURI_INTERNALS__: {invoke: async (_:string, r:{method:string;params:Record<string,unknown>}) => {
+        if (_ === 'desktop_set_language') return null;
         switch(r.method) {
-          case 'list_devices': return [{id:'test',display_name:'LCDV2'},{id:'other',display_name:'Other LCD'}];
+          case 'list_devices': return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'},{id:'other',display_name:'Other LCD', family:'galahad2-lcdv2'}];
           case 'list_sensors': return [];
           case 'get_lcd_state': return lcd();
           case 'list_profiles': return {version:1,revision,profiles:[]};
@@ -37,7 +38,7 @@ async function setup(page: Page) {
       }}
     });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await page.getByText('Сброс экрана LCD',{exact:true}).click();
   await expect(page.getByRole('button',{name:'Сбросить экран…',exact:true})).toBeEnabled();
 }
@@ -110,6 +111,7 @@ test('late receipt confirmation invalidates a profile list reloaded before commi
   await page.evaluate(() => (window as unknown as {releaseReset:()=>void}).releaseReset());
   await page.getByRole('button',{name:'Проверить результат сброса'}).click();
   await expect(page.getByText('Сброс сохранён, базовая тема отправлена на LCD.')).toBeVisible();
+  await expect(page.getByText(/Ответ не подтверждён:/)).toHaveCount(0);
   await expect(page.getByRole('combobox',{name:'Слот профиля',exact:true})).toHaveCount(0);
   expect((await writes(page)).length).toBe(1);
 });

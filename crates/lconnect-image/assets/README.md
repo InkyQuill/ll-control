@@ -7,7 +7,7 @@ Bundled faces are available offline to the daemon renderer:
 - Noto Sans TC Regular/Bold: pinned OTF2.002 with reproducibly embedded OFL;
   [provenance](NotoSansTC-provenance.json), [preparation](NotoSansTC-README.md),
   [OFL](NotoSansTC-OFL.txt). Windows typography comparison remains documented in
-  [catalog](../../../docs/parity/font-catalog.md).
+  [catalog](../../../docs/development/parity/font-catalog.md).
 - Abril Fatface Regular, Caprasimo Regular, Cubic 11 v1.013: unmodified official
   upstream files. [Pinned URLs and SHA-256](DisplayFonts-provenance.json).
   Complete notices: [Abril](AbrilFatface-Regular.OFL.txt),

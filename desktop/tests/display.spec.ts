@@ -4,11 +4,12 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
     const calls: { method: string; params: Record<string, unknown> }[] = [];
     Object.assign(window, { bridgeCalls: calls, __TAURI_INTERNALS__: {
       invoke: async (_command: string, args: { method: string; params: Record<string, unknown> }) => {
+        if (_command === 'desktop_set_language') return null;
         if (_command === 'import_image') { calls.push({ method: 'import_image', params: {} }); return 'test-image-key'; }
         calls.push(args);
         switch (args.method) {
           case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
-          case 'list_devices': return [{ id: 'lcd:test', display_name: 'Test LCDV2' }];
+          case 'list_devices': return [{ id: 'lcd:test', display_name: 'Test LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [{ id: 'cpu:test', label: 'CPU package', unit: 'celsius', value: 42.5, status: 'valid', age_ms: 100 }];
           case 'get_lcd_state': return { source: 'Idle', last_error: null, requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 } };
           case 'set_lcd_theme': return { source: 'Theme', last_error: null, requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 } };
@@ -18,7 +19,7 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
       }
     } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByLabel('Название', { exact: true }).fill('Моя помпа');
   await page.getByRole('combobox',{name:'Шрифт',exact:true}).first().selectOption('serif');
@@ -50,7 +51,6 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
   await page.getByRole('button', { name: 'Обновить preview' }).click();
   await expect(page.getByRole('status')).toContainText('На устройство ничего не отправлено');
   expect(await writes()).toBe(0);
-  await page.screenshot({ path: '/tmp/lconnect-desktop-editor.png', fullPage: true });
   await page.getByRole('button', { name: 'Применить к LCD' }).click();
   await expect(page.getByRole('status')).toContainText('Тема отправлена');
   const applied = await page.evaluate(() => (window as unknown as { bridgeCalls: { method: string; params: { theme: { name: string; layers: { kind: string; sensor_id?: string; style?: {font:string;opacity:number;shadow:{blur:number}} }[] } } }[] }).bridgeCalls.find(c => c.method === 'set_lcd_theme')?.params.theme);
@@ -64,7 +64,7 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
 });
 test('unavailable daemon shows error and disables applying', async ({ page }) => {
   await page.addInitScript(() => Object.assign(window, { __TAURI_INTERNALS__: { invoke: async () => { throw { message: 'Daemon unavailable' }; } } }));
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByRole('alert')).toContainText('Daemon unavailable');
   await expect(page.getByRole('button', { name: 'Применить к LCD' })).toBeDisabled();
 });

@@ -91,8 +91,12 @@ impl FanPreset {
         };
         CoolingPolicy::FanCurve {
             sensor_id,
-            points: pairs
-                .into_iter()
+            // Windows RPMPhaseInfo.ToRPMConfigPhases(false) surrounds the five
+            // editable knots with 0C/MinSpeed and 100C/MaxSpeed. In particular,
+            // low CPU temperatures interpolate from 10%, even in Full mode.
+            points: std::iter::once((0, 10))
+                .chain(pairs)
+                .chain(std::iter::once((100, 100)))
                 .map(|(c, p)| CurvePoint {
                     celsius: f64::from(c),
                     percent: p,
@@ -141,9 +145,17 @@ pub enum CoolingPolicy {
 pub struct CoolingConfig {
     pub fan: Option<CoolingPolicy>,
     pub pump: Option<CoolingPolicy>,
+    /// Stored-mode identity of the requested snapshot, not measured hardware state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fan_mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pump_mode: Option<String>,
 }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CoolingChannelState {
+    /// Absent for manual PWM or a policy applied independently of a stored mode.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode_id: Option<String>,
     pub requested: Option<CoolingPolicy>,
     pub applied_percent: Option<u8>,
     pub motherboard: bool,

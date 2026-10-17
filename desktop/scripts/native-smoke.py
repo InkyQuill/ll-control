@@ -131,10 +131,14 @@ def cleanup_profile_fault(request):
 
 try:
     start()
+    # This DOM scenario uses Russian labels; seed the private fixture explicitly.
+    display = rpc('get_display_settings', {})
+    display['interface_language'] = 'ru-RU'
+    rpc('set_display_settings', {'settings': display})
     gui_runtime = root / "gui-runtime"
     gui_runtime.mkdir(mode=0o700)
     (gui_runtime / "fixture-marker").write_text("MockBackend proxy only\n")
-    proxy = proxy_module.FaultProxy(gui_runtime / "lconnectd.sock", root / "lconnectd.sock", cleanup_profile_fault=cleanup_profile_fault)
+    proxy = proxy_module.FaultProxy(gui_runtime / "lconnectd.sock", root / "lconnectd.sock", cleanup_profile_fault=cleanup_profile_fault, cooling_modes=os.environ.get("LCONNECT_NATIVE_COOLING_MODES") == "1", cooling_defaults=os.environ.get("LCONNECT_NATIVE_COOLING_DEFAULTS") == "1")
     gui_env = dict(env, XDG_RUNTIME_DIR=str(gui_runtime), LCONNECT_SMOKE_ROOT=str(gui_runtime))
     with (root / "gui.log").open("w") as log:
         proc = subprocess.Popen(["xvfb-run", "-a", "dbus-run-session", "--",
@@ -144,6 +148,7 @@ try:
         try:
             deadline = time.monotonic() + 180
             restarted_pages = set()
+            cooling_mode_restarted = False
             sensor_faults = set()
             consumer_faults = set()
             transport_observations = {}
@@ -161,6 +166,21 @@ try:
                     raise subprocess.TimeoutExpired(proc.args, 180)
                 with profile_cleanup_lock:
                     library = rpc("list_profiles", {})
+                if os.environ.get("LCONNECT_NATIVE_COOLING_MODES") == "1" and not cooling_mode_restarted and any(p['name'] == 'Cooling mode restart request' for p in library['profiles']):
+                    stop()
+                    saved_modes = [tomllib.loads(p.read_text()).get('cooling', {}) for p in (root / 'settings/devices').glob('*.toml')]
+                    assert any(c.get('pump_mode') == 'FixRPM' and c.get('pump') == {'mode':'fixed_rpm','rpm':2400} for c in saved_modes), 'mode identity/policy not durable before restart'
+                    time.sleep(4)
+                    start()
+                    for _ in range(100):
+                        if rpc('list_devices', {}):
+                            break
+                        time.sleep(.1)
+                    else:
+                        raise AssertionError('device unavailable after stored mode restart')
+                    current_library = rpc('list_profiles', {})
+                    rpc('edit_profile', {'expected_revision':current_library['revision'],'edit':{'action':'rename','group':'screen','slot':0,'name':'Cooling mode restart ready'}})
+                    cooling_mode_restarted = True
                 for profile in library['profiles']:
                     marker = profile['name']
                     if not marker.startswith('Partial cleanup request:') or marker in partial_cleanup_faults:
@@ -425,6 +445,23 @@ try:
         time.sleep(.1)
     dev = devices[0]["id"]
     assert rpc("get_lcd_state", {"dev": dev})["source"] == "Theme"
+    if env.get("LCONNECT_NATIVE_COOLING_MODES") == "1":
+        assert result["native_cooling_modes"], "native bank selection/Apply was not exercised"
+        assert cooling_mode_restarted, "stored identity restart was not exercised"
+        if env.get("LCONNECT_NATIVE_COOLING_DEFAULTS") == "1":
+            assert result["native_cooling_defaults"] and proxy.cooling_default_requests == 1 and proxy.cooling_default_dropped == 1, "initializer must recover real lost ACK without replay or fixture seeding"
+        assert proxy.cooling_mode_requests == 1 and proxy.cooling_mode_dropped == 1, "native Save must reconcile lost ACK without a second write"
+        expected_modes = {k: v for k, v in result["cooling_mode_banks"].items() if k != "persistence"}
+        for _ in range(10):
+            # Replay also queues ordinary settings updates. Reads must be farther
+            # apart than the 250ms quiet period, rather than starving its flush.
+            time.sleep(0.4)
+            reopened = rpc("get_cooling_modes", {"dev": dev})
+            assert {k: v for k, v in reopened.items() if k != "persistence"} == expected_modes, "mode banks lost after controls/GUI close/daemon restart"
+            if not reopened["persistence"]["pending"] and reopened["persistence"]["last_error"] is None:
+                break
+        else:
+            raise AssertionError("replayed settings did not become durable after restart")
     assert rpc("get_lcd_theme", {"dev": dev}) == result["theme"]
     assert rpc("get_sensor_defaults", {})["config"] == result["sensor_defaults"], "source choices changed after restart"
     assert rpc("list_profiles", {}) == result["profiles"], "profile library changed after restart"
@@ -464,7 +501,7 @@ try:
         raise AssertionError("controls did not resume applying after daemon restart")
     assert not resumed_cooling["fan"]["last_error"] and not resumed_cooling["pump"]["last_error"]
     assert not resumed_dynamic["last_error"]
-    result.update(gui_closed_jpeg_frames=second - first, restart_replay=True, controls_restart_replay=True, controls_restart_applied=True, profiles_restart_replay=True)
+    result.update(native_cooling_mode_restart=cooling_mode_restarted, gui_closed_jpeg_frames=second - first, restart_replay=True, controls_restart_replay=True, controls_restart_applied=True, profiles_restart_replay=True)
     (root / "acceptance.json").write_text(json.dumps(result, indent=2))
     print(f"PASS native WebKitGTK → Unix IPC → MockBackend; evidence: {root}")
 finally:

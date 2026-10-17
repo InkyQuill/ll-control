@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "check:contracts": "node --experimental-strip-types scripts/preset-contract.ts | cargo run --quiet --locked --manifest-path ../Cargo.toml -p lconnect-ipc --example validate-themes",
     "check:locales": "node scripts/check-locales.mjs --strict",
-    "audit:locales": "node scripts/check-locales.mjs"
+    "audit:locales": "node scripts/check-locales.mjs",
+    "test:localization": "node --experimental-strip-types --test scripts/localization.test.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

@@ -41,8 +41,8 @@
   fieldset { min-width:0; border:0; padding:0; margin:12px 0; }
   legend { font-weight:600; }
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); gap:12px; }
-  article { min-width:0; border:1px solid #64748b; border-radius:10px; padding:10px; }
-  article.selected { outline:2px solid #6ee7b7; outline-offset:1px; }
+  article { min-width:0; border:1px solid var(--border-strong); border-radius:10px; padding:10px; }
+  article.selected { outline:2px solid var(--success); outline-offset:1px; }
   label { display:flex; align-items:start; gap:8px; cursor:pointer; overflow-wrap:anywhere; }
   input { flex:none; }
   p { overflow-wrap:anywhere; }

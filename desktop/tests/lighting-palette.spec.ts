@@ -4,8 +4,9 @@ test('manual palettes use mode-specific slots and send all selected colors',asyn
   await page.addInitScript(()=>{
     const writes:unknown[]=[];
     Object.assign(window,{paletteWrites:writes,__TAURI_INTERNALS__:{invoke:async (_:string,req:{method:string;params:unknown})=>{
+        if (_ === 'desktop_set_language') return null;
       switch(req.method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lighting_info':return {modes:['static','runway','meteor','rainbow']};
         case 'get_thermal_state':return {requested:{cpu:null,gpu:null},degraded_sources:[],fan:{last_error:null},pump:{last_error:null},grace_remaining_ms:0};
@@ -14,7 +15,7 @@ test('manual palettes use mode-specific slots and send all selected colors',asyn
       }
     }}});
   });
-  await page.goto('/');await page.getByRole('button',{name:'Подсветка',exact:true}).click();
+  await page.goto('/?view=display');await page.getByRole('button',{name:'Подсветка',exact:true}).click();
   await expect(page.getByRole('combobox',{name:'Эффект',exact:true})).toHaveValue('static');
   await expect(page.getByLabel('Цвет RGB',{exact:true})).toBeVisible();
   await expect(page.getByLabel('Цвет RGB 2',{exact:true})).toHaveCount(0);
@@ -33,6 +34,12 @@ test('manual palettes use mode-specific slots and send all selected colors',asyn
   await page.getByRole('combobox',{name:'Зона',exact:true}).selectOption('fan');
   await page.getByRole('combobox',{name:'Эффект',exact:true}).selectOption('meteor');
   await expect(page.getByLabel('Цвет RGB 4',{exact:true})).toBeVisible();
+  await page.getByLabel('Цвет RGB',{exact:true}).fill('#ad85ff');
+  await page.getByRole('button',{name:'Обзор',exact:true}).click();
+  await page.locator('nav').getByRole('button',{name:'Подсветка',exact:true}).click();
+  await expect(page.getByLabel('Цвет RGB',{exact:true})).toHaveValue('#ad85ff');
+  await page.evaluate(() => { (document.activeElement as HTMLElement)?.blur(); window.scrollTo(0, 0); });
+  await page.screenshot({path:'../.impeccable/review/production-lighting.png',fullPage:true});
 });
 test('palette inventory covers the Windows 2.1.28 fan/pump modes',()=>{
   for(const mode of ['rainbow','rainbow_morph','colorful_starry_night','colors_morph'])expect(lightingColorCount('pump',mode)).toBe(0);

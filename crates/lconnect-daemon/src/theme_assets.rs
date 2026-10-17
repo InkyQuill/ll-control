@@ -413,10 +413,29 @@ impl ThemeAssetStore {
         self.load_keys(theme.image_assets())
     }
 
-    fn load_keys<'a>(
+    pub(crate) fn load_keys<'a>(
         &self,
         keys: impl IntoIterator<Item = &'a str>,
     ) -> anyhow::Result<ThemeAssets> {
+        self.load_keys_budgeted(keys, 256 * 1024 * 1024)
+    }
+
+    fn load_keys_budgeted<'a>(
+        &self,
+        keys: impl IntoIterator<Item = &'a str>,
+        decoded_budget: u64,
+    ) -> anyhow::Result<ThemeAssets> {
+        let mut decoded_bytes = 0u64;
+        let mut reserve = |width: u32, height: u32| -> anyhow::Result<()> {
+            decoded_bytes = decoded_bytes
+                .checked_add(u64::from(width) * u64::from(height) * 4)
+                .ok_or_else(|| anyhow::anyhow!("theme decoded image budget overflow"))?;
+            anyhow::ensure!(
+                decoded_bytes <= decoded_budget,
+                "theme decoded images exceed aggregate budget"
+            );
+            Ok(())
+        };
         let mut session = self
             .session
             .lock()
@@ -427,10 +446,9 @@ impl ThemeAssetStore {
                 continue;
             }
             if let Some(builtin) = defaults::image(asset) {
-                assets.insert(
-                    asset.to_owned(),
-                    std::sync::Arc::new(decode_asset(builtin.png)?),
-                );
+                let image = decode_asset(builtin.png)?;
+                reserve(image.width(), image.height())?;
+                assets.insert(asset.to_owned(), std::sync::Arc::new(image));
                 continue;
             }
             let path = self.path(asset)?;
@@ -448,12 +466,13 @@ impl ThemeAssetStore {
                 .take(MAX_ASSET_BYTES as u64 + 1)
                 .read_to_end(&mut bytes)?;
             let image = decode_asset(&bytes)?;
-            // Persisted files can have been modified outside the daemon. Enforce the
-            // normalized size again to bound a 32-layer render plus background to about 122 MiB RGBA.
+            // Recheck externally mutable files, then bound all unique active and
+            // inactive images before retaining their RGBA allocations.
             anyhow::ensure!(
                 image.width() <= 960 && image.height() <= 960,
                 "stored asset is not normalized"
             );
+            reserve(image.width(), image.height())?;
             assets.insert(
                 asset.to_owned(),
                 std::sync::Arc::new(image.into_rgba8().into()),
@@ -722,5 +741,34 @@ impl ThemeAssetStore {
             "invalid asset key"
         );
         Ok(self.root.join(format!("{key}.png")))
+    }
+}
+
+#[cfg(test)]
+mod decoded_budget_tests {
+    use super::*;
+    #[test]
+    fn aggregate_image_budget_counts_unique_assets_and_rejects_without_retaining_partial_pins() {
+        let directory = tempfile::tempdir().unwrap();
+        let store = ThemeAssetStore::new(directory.path().into());
+        let first = defaults::IMAGES[0].key;
+        let second = defaults::IMAGES[1].key;
+        let image = decode_asset(defaults::IMAGES[0].png).unwrap();
+        let budget = u64::from(image.width()) * u64::from(image.height()) * 4;
+        assert_eq!(
+            store
+                .load_keys_budgeted([first, first], budget)
+                .unwrap()
+                .len(),
+            1
+        );
+        let isolated = ThemeAssetStore::new(directory.path().join("isolated"));
+        assert!(isolated
+            .load_keys_budgeted([first, second], budget)
+            .unwrap_err()
+            .to_string()
+            .contains("aggregate budget"));
+        assert!(isolated.session.lock().unwrap().is_empty());
+        assert!(isolated.live.lock().unwrap().is_empty());
     }
 }

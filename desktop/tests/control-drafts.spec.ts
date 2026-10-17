@@ -6,10 +6,11 @@ test.beforeEach(async({page})=>{
     const channel={requested:{mode:'fixed',percent:60},applied_percent:60,motherboard:false,fallback_active:false,last_error:null};
     const thermal={requested:{cpu:null,gpu:null},active_source:null,degraded_sources:[],grace_remaining_ms:0,blocked_reason:null,fan:{last_error:null},pump:{last_error:null}};
     Object.assign(window,{controlFixture:fixture,__TAURI_INTERNALS__:{invoke:async(cmd:string,req:{method:string;params:{policy:unknown}})=>{
+        if (cmd === 'desktop_set_language') return null;
       if(!fixture.online)throw new Error('offline');
       if(cmd==='cooling_preset')return new Promise(resolve=>{fixture.finishPreset=()=>resolve({mode:'fixed',percent:45});if(!fixture.holdPreset)fixture.finishPreset();});
       switch(req.method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu',label:'CPU',unit:'celsius',value:42,status:'valid',age_ms:1}];
         case 'get_lcd_state':return {source:'Idle',requested:{}};
         case 'get_cooling_state':return {pump:channel,fan:channel};
@@ -20,7 +21,7 @@ test.beforeEach(async({page})=>{
       }
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён')).toBeVisible();
 });
 
 test('late cooling Apply response cannot appear on another device',async({page})=>{

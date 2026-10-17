@@ -9,8 +9,8 @@
 //! # See also
 //!
 //! - [`crate::backend::HidBackend`] — uses `Framing` to size buffers
-//! - `docs/protocol/cross-device-survey.md` section 6.1 — extension points
-//! - `docs/protocol/cross-device-survey.md` section 4.10 — per-family transport matrix
+//! - `docs/development/protocol/cross-device-survey.md` section 6.1 — extension points
+//! - `docs/development/protocol/cross-device-survey.md` section 4.10 — per-family transport matrix
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]

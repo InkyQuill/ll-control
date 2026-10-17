@@ -1,5 +1,5 @@
 //! Mounted filesystem capacity via isolated util-linux findmnt JSON.
-//! Source semantics and limitations: docs/parity/sensor-provider-inventory.md.
+//! Source semantics and limitations: docs/development/parity/sensor-provider-inventory.md.
 use super::reading;
 use lconnect_ipc::{SensorReading, SensorStatus, SensorUnit};
 use serde::Deserialize;

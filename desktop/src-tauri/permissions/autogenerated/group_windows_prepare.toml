@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-group-windows-prepare"
+description = "Enables the group_windows_prepare command without any pre-configured scope."
+commands.allow = ["group_windows_prepare"]
+
+[[permission]]
+identifier = "deny-group-windows-prepare"
+description = "Denies the group_windows_prepare command without any pre-configured scope."
+commands.deny = ["group_windows_prepare"]

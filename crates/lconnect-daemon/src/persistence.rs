@@ -38,6 +38,9 @@ pub struct DeviceSettings {
     /// None is the pre-collections shared catalog, not an empty collection.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub screen_collections: Option<lconnect_ipc::ScreenCollections>,
+    /// Imported editor/history stays independent of the running composition.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub screen_editor: Option<crate::screen_editor::StoredScreenEditor>,
     #[serde(default)]
     pub fan: FanSection,
     #[serde(default)]
@@ -48,6 +51,12 @@ pub struct DeviceSettings {
     pub lcd: LcdSection,
     #[serde(default)]
     pub cooling: lconnect_ipc::CoolingConfig,
+    /// Stored modes are independent of the currently running/manual policy.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cooling_banks: Option<lconnect_ipc::CoolingModeBanks>,
+    /// Target-local intent epoch, not portable profile content. Prevents ABA/no-op stale saves.
+    #[serde(default, skip_serializing_if = "is_zero_revision")]
+    pub cooling_modes_revision: u64,
     #[serde(default)]
     pub thermal: lconnect_ipc::ThermalConfig,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -73,11 +82,14 @@ impl Default for DeviceSettings {
             screen_reset_receipt: None,
             group_imports: Vec::new(),
             screen_collections: None,
+            screen_editor: None,
             fan: FanSection::default(),
             pump: PumpSection::default(),
             lighting: LightingSection::default(),
             lcd: LcdSection::default(),
             cooling: Default::default(),
+            cooling_banks: None,
+            cooling_modes_revision: 0,
             thermal: Default::default(),
             dynamic_rgb: None,
             dynamic_rgb_profiles: Default::default(),
@@ -97,6 +109,9 @@ pub struct FanSection {
 }
 fn is_false(value: &bool) -> bool {
     !*value
+}
+fn is_zero_revision(value: &u64) -> bool {
+    *value == 0
 }
 impl FanSection {
     pub fn has_manual_setting(&self) -> bool {
@@ -125,6 +140,9 @@ impl PumpSection {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct LightingSection {
+    /// Historical source values only; never replayed as runtime configuration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub windows_source: Option<String>,
     pub fan_topology: lconnect_ipc::FanLightingTopology,
     #[serde(skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub fan_modes: std::collections::BTreeMap<String, LightingState>,
@@ -339,6 +357,15 @@ impl PersistenceStore {
                 settings.schema_version == CURRENT_SCHEMA,
                 "unknown settings schema; cleanup refused"
             );
+            if let Some(editor) = &settings.screen_editor {
+                editor.validate()?;
+                let retained = match kind {
+                    ReferenceKind::Image => editor.image_keys(),
+                    ReferenceKind::Media => editor.video_keys(),
+                    ReferenceKind::Font => editor.font_keys(),
+                };
+                keys.extend(retained.into_iter().map(str::to_owned));
+            }
             if let Some(collections) = &settings.screen_collections {
                 collections.validate()?;
                 if matches!(kind, ReferenceKind::Media) {
@@ -349,13 +376,26 @@ impl PersistenceStore {
             }
             if matches!(kind, ReferenceKind::Media) {
                 validate_schema(&settings)?;
-                keys.extend(settings.media_clip);
-                if let Some(theme) = settings.theme {
+                keys.extend(settings.media_clip.iter().cloned());
+                for theme in settings.theme.iter().chain(
+                    settings
+                        .screen_editor
+                        .iter()
+                        .filter_map(|editor| editor.theme.as_ref()),
+                ) {
                     keys.extend(theme.video_assets().into_iter().map(str::to_owned));
                 }
                 continue;
             }
-            if let Some(theme) = settings.theme {
+            if let Some(editor) = &settings.screen_editor {
+                editor.validate()?;
+            }
+            for theme in settings.theme.iter().chain(
+                settings
+                    .screen_editor
+                    .iter()
+                    .filter_map(|editor| editor.theme.as_ref()),
+            ) {
                 theme.validate()?;
                 if matches!(kind, ReferenceKind::Font) {
                     keys.extend(theme.font_assets().into_iter().map(str::to_owned));
@@ -659,6 +699,7 @@ impl PersistenceStore {
             control_mode: "Application".into(),
         };
         next.theme = Some(theme.clone());
+        next.screen_editor = None;
         next.media_clip = None;
         next.screen_collections = Some(lconnect_ipc::ScreenCollections::defaults(
             next_collection_revision,
@@ -854,6 +895,14 @@ impl PersistenceStore {
 }
 
 pub(crate) fn validate_schema(settings: &DeviceSettings) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        settings.cooling_modes_revision <= i64::MAX as u64,
+        "cooling mode revision exceeds durable range"
+    );
+    lconnect_ipc::validate_cooling_selection(&settings.cooling, settings.cooling_banks.as_ref())?;
+    if let Some(banks) = &settings.cooling_banks {
+        banks.validate()?;
+    }
     if let Some(guard) = &settings.firmware_update_guard {
         guard.validate()?;
     }
@@ -871,6 +920,16 @@ pub(crate) fn validate_schema(settings: &DeviceSettings) -> anyhow::Result<()> {
         settings.theme.is_none() || settings.media_clip.is_none(),
         "theme and media selection are mutually exclusive"
     );
+    if let Some(source) = &settings.lighting.windows_source {
+        anyhow::ensure!(
+            source.len() <= 128 * 1024,
+            "historical lighting source exceeds128KiB"
+        );
+        anyhow::ensure!(
+            serde_json::from_str::<serde_json::Value>(source)?.is_object(),
+            "historical lighting source must be a JSON object"
+        );
+    }
     settings.lighting.fan_topology.validate()?;
     settings.dynamic_rgb_profiles.validate()?;
     anyhow::ensure!(
@@ -956,6 +1015,9 @@ pub(crate) fn validate_schema(settings: &DeviceSettings) -> anyhow::Result<()> {
     }
     if let Some(theme) = &settings.theme {
         theme.validate()?;
+    }
+    if let Some(editor) = &settings.screen_editor {
+        editor.validate()?;
     }
     if let Some(collections) = &settings.screen_collections {
         collections.validate()?;

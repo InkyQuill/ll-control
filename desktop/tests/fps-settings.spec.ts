@@ -6,6 +6,7 @@ async function setup(page:Page){
   localStorage.setItem('lconnect.interface-language','en-US');
   const f:Fixture={state:{version:1,revision:0,enabled:false,log_path:null},language:'en-US',offline:false,lost:false,hold:false,calls:[],pending:[]};
   Object.assign(window,{fpsFixture:f,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
+        if (command === 'desktop_set_language') return null;
    if(command!=='daemon_call')return null;
    const method=String(args.method),params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
    if(f.offline)throw {message:'Fixture offline'};
@@ -23,7 +24,7 @@ async function setup(page:Page){
    }
   }}});
  });
- await page.goto('/');await expect(page.getByText('Daemon connected',{exact:true})).toBeVisible();
+ await page.goto('/?view=display');await expect(page.getByText('Daemon connected',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Settings',exact:true}).click();
  await expect(panel(page).getByLabel('Read FPS',{exact:true})).toBeVisible();
 }

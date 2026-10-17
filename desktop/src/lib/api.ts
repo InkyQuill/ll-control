@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 export type Unit = 'celsius' | 'percent' | 'bytes' | 'rpm' | 'watts' | 'volts' | 'hertz' | 'bytes_per_second' | 'frames_per_second';
 export interface Sensor { id: string; label: string; unit: Unit; value: number | null; status: string; age_ms: number | null }
-export interface Device { id: string; display_name: string }
+export interface Device { id: string; display_name: string; family: string }
 export interface Style { font_asset?:string|null; line_box?:boolean; max_width?:number|null; line_height?:number|null; vertical_align?:'top'|'center'|'bottom'; font?: 'sans' | 'serif' | 'mono' | 'noto_sans_tc_regular' | 'noto_sans_tc_bold' | 'abril_fatface' | 'caprasimo' | 'cubic11'; opacity?:number; shadow?: {x:number;y:number;blur:number;color:number[];opacity:number}|null; x: number; y: number; size: number; color: number[]; align: 'left' | 'center' | 'right' }
 export interface ThemeSensor { sensor_id:string; label:string; unit:Unit; temperature_unit:'system' | 'celsius' | 'fahrenheit'; decimals:number }
 export interface EffectSensor {sensor_id:string;unit:Unit;low:number;high:number}
@@ -16,6 +16,7 @@ export interface FireworksSensor {binding:EffectSensor;low_colors:RgbSix;high_co
 export interface FireworksEffect {intensity:number;colors:RgbSix;dynamic:boolean;sensor:FireworksSensor|null;retained_sensors?:FireworksSensor[];seed:number}
 export function fireworksColors():RgbSix {return [[0,255,0],[0,0,255],[128,0,255],[255,0,65],[255,215,0],[130,173,237]];}
 export type Layer =
+  | {kind:'divider';axis:'horizontal'|'vertical';x:number;y:number;length:number;thickness:number;color:number[];opacity:number;shadow?:Style['shadow']}
   | {kind:'fireworks';effect:FireworksEffect}
   | {kind:"snow3d";effect:Snow3dEffect}
   | {kind:'meteor';effect:MeteorEffect}
@@ -30,7 +31,10 @@ export interface GradientColors { colors: [number[], number[]]; flip: boolean }
 export interface BackgroundFill { mode: BackgroundMode; horizontal: GradientColors; vertical: GradientColors; radial: GradientColors }
 export type LcdPageKind='basic'|'rain'|'snow'|'meteor'|'snow3d'|'fireworks';
 export interface SavedLcdPage {page:LcdPageKind;theme:Theme}
-export interface Theme { page_cache?:SavedLcdPage[]; background_image?: {asset: string; fit: 'crop' | 'contain' | 'contain_native' | 'stretch'} | null; background_video?: string | null; background_fill?: BackgroundFill | null; version: number; name: string; background: number[]; layers: Layer[] }
+export type BasicBackground = 'image_video' | 'background_color';
+export type BasicOverlay = 'none' | 'slider_sensor' | 'duo_sensor' | 'three_sensor' | 'four_sensor' | 'time' | 'custom';
+export interface BasicEditorState { selected_background:BasicBackground; banks:{background:BasicBackground; selected_overlay:BasicOverlay; overlays:{overlay:BasicOverlay; theme:Theme}[]}[] }
+export interface Theme { basic_editor?:BasicEditorState | null; page_cache?:SavedLcdPage[]; background_image?: {asset: string; fit: 'crop' | 'contain' | 'contain_native' | 'stretch'} | null; background_video?: string | null; background_fill?: BackgroundFill | null; version: number; name: string; background: number[]; layers: Layer[] }
 export interface LcdState { persistence?: {pending:boolean;saved:boolean;last_error:string|null}|null; source: string; last_error: string | null; requested: { brightness_percent: number; rotation_degrees: number; mode: string } }
 export async function rpc<T>(method: string, params: object = {}): Promise<T> {
   return invoke<T>('daemon_call', { method, params });
@@ -51,8 +55,11 @@ export type CoolingPolicy =
   | { mode: 'fixed_rpm'; rpm: number }
   | { mode: 'curve' | 'fan_curve'; sensor_id: string; points: { celsius: number; percent: number }[]; hysteresis_c: number; fallback_percent: number }
   | { mode: 'curve_rpm'; sensor_id: string; points: { celsius: number; rpm: number }[]; hysteresis_c: number; fallback_percent: number };
-export interface CoolingChannel { requested: CoolingPolicy | null; applied_percent: number | null; motherboard: boolean; fallback_active: boolean; last_error: string | null }
+export interface CoolingChannel { mode_id?: string; requested: CoolingPolicy | null; applied_percent: number | null; motherboard: boolean; fallback_active: boolean; last_error: string | null }
 export interface CoolingState { fan: CoolingChannel; pump: CoolingChannel }
+export function coolingModeDefault(target:'fan'|'pump',id:string,sensorId:string):Promise<unknown> {
+  return invoke('cooling_mode_default',{target,id,sensorId});
+}
 export function coolingPreset(target: 'fan' | 'pump', preset: string, sensorId: string): Promise<CoolingPolicy> {
   return invoke('cooling_preset', { target, preset, sensorId });
 }

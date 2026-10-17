@@ -18,6 +18,8 @@ pub mod thermal;
 pub mod theme;
 
 pub mod profiles;
+mod windows_control;
+mod windows_cooling;
 
 pub mod dynamic_rgb;
 
@@ -30,3 +32,5 @@ pub mod display_settings;
 pub mod mini;
 
 pub mod fps;
+
+pub mod windows_screen_media;

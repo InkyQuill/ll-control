@@ -7,6 +7,7 @@ async function setup(page:Page,response:unknown,language='en-US',sealed=false){
   localStorage.setItem('lconnect.interface-language',language);
   const f:Fixture={response,fail:false,hold:false,pending:[],sealed,calls:[]};
   Object.assign(window,{recoveryFixture:f,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
+        if (command === 'desktop_set_language') return null;
    if(command!=='daemon_call')return null;
    const method=String(args.method);f.calls.push({method,params:structuredClone(args.params)});
    if(method==='get_firmware_recovery'){
@@ -21,7 +22,7 @@ async function setup(page:Page,response:unknown,language='en-US',sealed=false){
    }
   }}});
  },{response,language,sealed});
- await page.goto('/');await page.getByRole('button',{name:language==='en-US'?'Settings':'Настройки',exact:true}).click();
+ await page.goto('/?view=display');await page.getByRole('button',{name:language==='en-US'?'Settings':'Настройки',exact:true}).click();
 }
 const card=(page:Page,language='en-US')=>page.getByRole('region',{name:language==='en-US'?'Saved firmware state':'Сохранённое состояние прошивки',exact:true});
 const read=(page:Page,language='en-US')=>card(page,language).getByRole('button',{name:language==='en-US'?'Read saved firmware state':'Прочитать сохранённое состояние прошивки',exact:true});

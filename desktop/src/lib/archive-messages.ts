@@ -6,6 +6,8 @@ export interface ArchiveMessage {
  message_code?:string|null;
 }
 const resources={
+ windows_preparation_failed:'Windows-архив не подготовлен. Проверьте файл, record и привязки датчиков; повторите подготовку.',
+ windows_import_unconfirmed:'Результат Windows импорта не подтверждён. Прочитайте результат по ID; новый импорт автоматически не запускался.',
  cancelled:'Операция отменена.',
  pending_profile_operation:'Сначала прочитайте результат сохранённой операции или закройте её сведения после обновления списка.',
  pending_group_operation:'Сначала прочитайте результат сохранённой операции и закройте её сведения.',

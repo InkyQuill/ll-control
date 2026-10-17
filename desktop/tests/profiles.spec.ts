@@ -6,9 +6,10 @@ test('screen profiles save and reload drafts, rename and delete without applying
     const writes: string[] = [];
     let groupResetCount = 0, loseGroupReply = false;
     Object.assign(window, { profileWrites: writes, getGroupResetCount: () => groupResetCount, loseNextGroupReply: () => { loseGroupReply = true; }, advanceProfileRevision: () => { library.revision++; }, __TAURI_INTERNALS__: { invoke: async (_: string, request: { method: string; params: { expected_revision: number; edit: { action: string; profile: Profile; slot: number; group: string; name: string } } }) => {
+        if (_ === 'desktop_set_language') return null;
       switch (request.method) {
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
-        case 'list_devices': return [{ id: 'test', display_name: 'LCDV2' }];
+        case 'list_devices': return [{ id: 'test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [];
         case 'get_lcd_state': return { source:'Idle', last_error:null, requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'} };
         case 'list_profiles': return structuredClone(library);
@@ -31,7 +32,7 @@ test('screen profiles save and reload drafts, rename and delete without applying
       }
     } } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByLabel('Название', { exact:true }).fill('Saved composition');
   await page.getByText('Сохранённые профили', { exact:true }).click();
@@ -81,10 +82,11 @@ test('pump and fan profile loads remain separate local cooling drafts', async ({
   await page.addInitScript(() => {
     const writes: string[] = [];
     Object.assign(window, { profileWrites: writes, __TAURI_INTERNALS__: { invoke: async (_: string, request: { method: string }) => {
+        if (_ === 'desktop_set_language') return null;
       const channel = { requested:null, applied_percent:80, motherboard:false, fallback_active:false, last_error:null };
       switch (request.method) {
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
-        case 'list_devices': return [{ id:'test',display_name:'LCDV2' }];
+        case 'list_devices': return [{ id:'test',display_name:'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [];
         case 'get_lcd_state': return { source:'Idle',last_error:null,requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'} };
         case 'get_cooling_state': return { fan:channel,pump:channel };
@@ -96,7 +98,7 @@ test('pump and fan profile loads remain separate local cooling drafts', async ({
       }
     } } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await page.getByRole('button', { name:'Охлаждение', exact:true }).click();
   await expect(page.getByText('Applied: 80%')).toBeVisible();
   await page.getByText('Сохранённые профили', { exact:true }).click();

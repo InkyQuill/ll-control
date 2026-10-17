@@ -4,11 +4,12 @@ test.beforeEach(async ({page}) => {
   await page.addInitScript(() => {
     const fixture={keys:['a'.repeat(32),'b'.repeat(32)],active:null as string|null,writes:[] as string[],lost:false,blocked:false,builtin:false};
     Object.assign(window,{fixture,__TAURI_INTERNALS__:{invoke:async(command:string,req:{method:string;params:{key:string}})=>{
+        if (command === 'desktop_set_language') return null;
       if(command==='media_status'||command==='media_thumbnail_cancel')return null;
       if(command==='media_thumbnail')throw new Error('No decoder in fixture');
       switch(req.method){
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle'};
         case 'get_lcd_media':return fixture.active;
@@ -23,7 +24,8 @@ test.beforeEach(async ({page}) => {
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect(page.getByLabel('Сохранённый ролик')).toHaveValue('a'.repeat(32));
 });

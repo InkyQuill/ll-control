@@ -15,6 +15,7 @@
     await wait(async()=>(await rpc('list_devices')).length>0,'mock device');
     const dev=(await rpc('list_devices'))[0].id;
     await rpc('migrate_screen_collections',{dev});
+    await click('Экран помпы');await click('Библиотека');
     const before=(await rpc('list_prepared_clips')).map(c=>c.key);
     await wait(()=>[...document.querySelectorAll('summary')].find(e=>e.textContent==='Библиотека роликов'),'library');
     [...document.querySelectorAll('summary')].find(e=>e.textContent==='Библиотека роликов').click();

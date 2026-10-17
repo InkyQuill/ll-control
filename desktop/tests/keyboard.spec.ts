@@ -3,9 +3,10 @@ test('keyboard skips navigation, identifies current page and applies separate LC
   await page.addInitScript(()=>{
     const patches:unknown[]=[];
     Object.assign(window,{keyboardPatches:patches,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params:{patch:unknown}})=>{
+        if (_ === 'desktop_set_language') return null;
       switch(req.method){
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
-        case 'list_devices':return [{id:'test',display_name:'LCDV2'}];
+        case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Theme',last_error:null,requested:{brightness_percent:65,rotation_degrees:90,mode:'Application'}};
         case 'patch_lcd_config':patches.push(req.params.patch);return {};
@@ -13,7 +14,7 @@ test('keyboard skips navigation, identifies current page and applies separate LC
       }
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён')).toBeVisible();
   await expect(page.getByRole('button',{name:'Экран помпы',exact:true})).toHaveAttribute('aria-current','page');
   await page.keyboard.press('Tab');
   const skip=page.getByRole('link',{name:'Перейти к содержимому'});

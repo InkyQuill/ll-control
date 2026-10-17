@@ -38,7 +38,9 @@ impl Portal {
             .await
             .unwrap();
         let file = self.root.join(
-            if std::env::var("LCONNECT_NATIVE_GROUP_PORTAL").as_deref() == Ok("1") {
+            if std::env::var("LCONNECT_NATIVE_WINDOWS_PORTAL").as_deref() == Ok("1") {
+                "source controls.zip"
+            } else if std::env::var("LCONNECT_NATIVE_GROUP_PORTAL").as_deref() == Ok("1") {
                 "exported group.lcg"
             } else {
                 "exported archive.lcp"

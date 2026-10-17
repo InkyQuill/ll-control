@@ -1,5 +1,7 @@
 <script lang="ts">
   import {t} from './i18n.svelte';
+  import {ValidationError} from './validation-error';
+  import LightingPreview from './LightingPreview.svelte';
   import TemperatureInput from './TemperatureInput.svelte';
   import {presentation} from './presentation.svelte';
   import {temperatureSuffix} from './temperature';
@@ -16,7 +18,7 @@
   let fanSync=$state(false),fanSize=$state<'280'|'360'>('360'),manualLedCount=$state<number|undefined>(24);
   const topologyDrafts=new Map<string,TopologyDraft>();
   const topologyValid=$derived(Number.isInteger(manualLedCount) && manualLedCount!==undefined && manualLedCount>=8 && manualLedCount<=50);
-  function currentTopology():FanTopology {if(!topologyValid)throw new Error('Число LED должно быть целым от 8 до 50');return {sync_to_pump:fanSync,size:fanSize,manual_led_count:manualLedCount!};}
+  function currentTopology():FanTopology {if(!topologyValid)throw new ValidationError('Число LED должно быть целым от 8 до 50');return {sync_to_pump:fanSync,size:fanSize,manual_led_count:manualLedCount!};}
   function setTopology(value:TopologyDraft) {fanSync=value.sync_to_pump;fanSize=value.size;manualLedCount=value.manual_led_count;}
   interface LightingConfig {
     dynamic_mode?:boolean;
@@ -41,7 +43,7 @@
   let color = $state('#7cdcca'), brightness = $state(100), speed = $state(50), direction = $state('forward'), scope = $state('outer'), disabled = $state(false);
   let additionalColors=$state(['#0000ff','#00ff00','#ffff00']);
   const colorCount=$derived(controls?.color_count ?? lightingColorCount(kind,mode));
-  let error = $state(''), notice = $state(''), busy = $state(false), thermal = $state<Thermal | null>(null), loaded = $state(false);
+  let error = $state<ValidationError|string|null>(null), thermalBaseMissing = $state(false), notice = $state(''), busy = $state(false), thermal = $state<Thermal | null>(null), loaded = $state(false);
   let rules = $state([{ source: 'cpu' as const, enabled: false, sensor: '', threshold: 85, color: '#ff4c4c' }, { source: 'gpu' as const, enabled: false, sensor: '', threshold: 85, color: '#ff9944' }]);
   let dynamicBusy = $state(false), loadingBase=$state(false);
   let draftRevision=0;
@@ -54,7 +56,7 @@
     const dev = device, online = connected, target = kind;
     untrack(cacheMode);draftOwner=null;
     const initialDraft=draftRevision;
-    generation++; revision++; modes = []; catalog=[];savedModes=[];topologySupported=false;dynamicSupported=false; thermal = null; pollError = ''; notice = ''; error = '';
+    generation++; revision++; modes = []; catalog=[];savedModes=[];topologySupported=false;dynamicSupported=false; thermal = null; pollError = ''; notice = ''; error = null; thermalBaseMissing=false;
     if (!dev || !online) {draftOwner=null;return;}
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
@@ -67,7 +69,7 @@
       if(initialDraft!==draftRevision){mode=desired;draftOwner={dev,kind:target,mode:desired};return;}
       if(target==='fan')setTopology(topologyDrafts.get(dev) ?? info.fan_topology ?? {sync_to_pump:false,size:'360',manual_led_count:24});
       restoreMode(dev,target,desired);
-    }).catch(e => { if (!cancelled) error = message(e); });
+    }).catch(e => { if (!cancelled) error = e instanceof ValidationError?e:message(e); });
     async function refresh() {
       const started = revision;
       try { if (!controlsBusy) { const result = await rpc<Thermal>('get_thermal_state', { dev }); if (!cancelled && started === revision) { thermal = result; pollError = ''; } } }
@@ -113,7 +115,7 @@
   async function loadBase() {
     if(controlsBusy || loadingBase || !device || !connected)return;
     const started=generation, draft=draftRevision, dev=device, target=kind;
-    loadingBase=true;error='';notice='';
+    loadingBase=true;error=null;thermalBaseMissing=false;notice='';
     try {
       const info=await rpc<LightingInfo>('get_lighting_info',{dev,kind:target});
       if(started!==generation)return;
@@ -121,21 +123,21 @@
       const base=info.base;
       if(!base){notice='Настройка режима для загрузки отсутствует. Черновик сохранён.';return;}
       const selected=info.modes.includes(base.mode)?base.mode:base.mode==='static_color'&&info.modes.includes('static')?'static':null;
-      if(!selected)throw new Error('Сохранённый режим не поддерживается редактором. Черновик сохранён.');
+      if(!selected)throw new ValidationError('Сохранённый режим не поддерживается редактором. Черновик сохранён.');
       cacheMode();modes=info.modes;catalog=info.catalog ?? [];savedModes=info.profiles ?? [];dynamicSupported=info.dynamic_mode_supported===true;topologySupported=target==='fan'&&!!(info.fan_topology??base.fan_topology);
       setDraft(dev,target,base,selected);
       if(target==='fan' && (info.fan_topology ?? base.fan_topology)){setTopology((info.fan_topology ?? base.fan_topology)!);cacheMode();}
       draftRevision++;
       notice='Настройки зоны загружены. Цвет могут временно менять оповещения и привязки к датчикам.';
-    }catch(e){if(started===generation)error=message(e);}
+    }catch(e){if(started===generation)error=e instanceof ValidationError?e:message(e);}
     finally{loadingBase=false;}
   }
   function toRgb(value: string) { const [r,g,b] = rgb(value); return { r,g,b }; }
-  async function action(run: () => Promise<void>) {
+  async function action(run: () => Promise<void>, thermalAction = false) {
     if (controlsBusy) return;
-    const started = generation; revision++; busy = true; error = ''; notice = '';
+    const started = generation; revision++; busy = true; error = null; thermalBaseMissing=false; notice = '';
     try { await run(); }
-    catch (e) { if (started === generation) { const detail = message(e); error = detail.includes('thermal alerts require known fan and pump lighting bases') ? 'Сначала примените обычную подсветку в обеих зонах: кольцо помпы и вентиляторы LCDV2. Эти настройки нужны для восстановления после оповещения.' : detail; } }
+    catch (e) { if (started === generation) { error = e instanceof ValidationError?e:message(e); thermalBaseMissing = thermalAction && !(e instanceof ValidationError) && message(e).includes('thermal alerts require known fan and pump lighting bases'); } }
     finally { revision++; busy = false; }
   }
   function loadRules() {
@@ -144,11 +146,11 @@
     loaded = true; rulesDevice = device;
   }
   async function applyRules() {
-    if (!rulesCurrent) throw new Error('Загрузите оповещения выбранного устройства перед применением');
+    if (!rulesCurrent) throw new ValidationError('Загрузите оповещения выбранного устройства перед применением');
     const dev = device, started = generation;
     const config: Config = { cpu: null, gpu: null };
     for (const r of rules) {
-      if (r.enabled) { if (!r.sensor) throw new Error('Для каждого включённого оповещения нужен датчик'); if (!Number.isFinite(r.threshold) || r.threshold < 0 || r.threshold > 150) throw new Error('Порог оповещения должен быть числом от 0 до 150 °C'); config[r.source] = { sensor_id: r.sensor, threshold_c: r.threshold, color: toRgb(r.color) }; }
+      if (r.enabled) { if (!r.sensor) throw new ValidationError('Для каждого включённого оповещения нужен датчик'); if (!Number.isFinite(r.threshold) || r.threshold < 0 || r.threshold > 150) throw new ValidationError('Порог оповещения должен быть числом от 0 до 150 °C'); config[r.source] = { sensor_id: r.sensor, threshold_c: r.threshold, color: toRgb(r.color) }; }
     }
     const result = await rpc<Thermal>('set_thermal_config', { dev, config });
     if (started !== generation) return;
@@ -159,6 +161,7 @@
   }
 </script>
 <section aria-label="{t("Подсветка")}">
+  <div class="lighting-workspace"><LightingPreview {kind} {color} {brightness} {disabled} {colorCount}/><div class="lighting-controls">
   <h2>{t("Черновик настройки RGB")}</h2>
   <button disabled={controlsBusy || loadingBase || !connected || !device} onclick={loadBase}>{t("Загрузить настройки подсветки")}</button>
   <fieldset class="manual" disabled={!modes.length} oninput={markDraftChange} onchange={markDraftChange}>
@@ -185,8 +188,9 @@
     </fieldset>
   {/if}
   {#if controls}<button disabled={controlsBusy || loadingBase} onclick={resetMode}>{t("Значения режима по умолчанию")}</button>{/if}
-  <button disabled={controlsBusy || loadingBase || !connected || !device || !mode || kind==='fan'&&topologySupported&&!topologyValid} onclick={() => action(async () => { const started = generation; cacheMode();await rpc('set_lighting', { dev: device, kind, cfg: { ...(kind==='pump'&&dynamicSupported?{dynamic_mode:useDynamic}:{}),fan_topology:kind==='fan'&&topologySupported?currentTopology():null, mode, color: toRgb(color), additional_colors: additionalColors.slice(0,Math.max(0,(colorCount ?? 1)-1)).map(toRgb), brightness_percent: brightness, speed_percent: controls?.speed===false?0:speed, direction:controls?.direction===false?'forward':direction, scope: kind === 'pump' ? scope : null, disabled } }); if (started !== generation) return; notice = dynamicSupported&&useDynamic&&kind==='pump'?'Режим по сохранённому датчику восстановлен. Фактическое состояние показано в разделе ниже.':'Команда подсветки выполнена. Thermal grace после ручного изменения — 10 секунд.'; })}>{t("Применить подсветку")}</button>
+  <button class="primary" disabled={controlsBusy || loadingBase || !connected || !device || !mode || kind==='fan'&&topologySupported&&!topologyValid} onclick={() => action(async () => { const started = generation; cacheMode();await rpc('set_lighting', { dev: device, kind, cfg: { ...(kind==='pump'&&dynamicSupported?{dynamic_mode:useDynamic}:{}),fan_topology:kind==='fan'&&topologySupported?currentTopology():null, mode, color: toRgb(color), additional_colors: additionalColors.slice(0,Math.max(0,(colorCount ?? 1)-1)).map(toRgb), brightness_percent: brightness, speed_percent: controls?.speed===false?0:speed, direction:controls?.direction===false?'forward':direction, scope: kind === 'pump' ? scope : null, disabled } }); if (started !== generation) return; notice = dynamicSupported&&useDynamic&&kind==='pump'?'Режим по сохранённому датчику восстановлен. Фактическое состояние показано в разделе ниже.':'Команда подсветки выполнена. Thermal grace после ручного изменения — 10 секунд.'; })}>{t("Применить подсветку")}</button>
   </fieldset>
+  </div></div>
   <h2>{t("Температурные оповещения")}</h2>
   <p>{t("Перед включением примените обычную подсветку в обеих зонах — помпы и вентиляторов LCDV2. Daemon восстановит эти настройки после оповещения.")}</p>
   <p>{t("Активный источник:")} {thermal?.active_source ?? '—'} · Grace: {thermal ? Math.ceil(thermal.grace_remaining_ms / 1000) : '—'} {t("s. Недоступные источники:")} {thermal?.degraded_sources.join(', ') || '—'}.</p>
@@ -195,9 +199,9 @@
   {#if loaded && !rulesCurrent}<p role="alert">{t("Черновик оповещений относится к другому устройству. Загрузите настройки выбранного устройства перед применением.")}</p>{/if}
   {#if loaded}{#each rules as rule}<fieldset><legend>{rule.source.toUpperCase()}</legend><label><input type="checkbox" bind:checked={rule.enabled}/>{t("Включить")} {rule.source.toUpperCase()}</label><div class="row"><label>{t("Датчик")} {rule.source.toUpperCase()}<select bind:value={rule.sensor} disabled={!rule.enabled}><option value="">{t("Выберите источник")}</option>{#each temperatures as sensor (sensor.id)}<option value={sensor.id}>{sensor.label} · {sensor.status}</option>{/each}{#if rule.sensor && !temperatures.some(s => s.id === rule.sensor)}<option value={rule.sensor}>{t("Недоступен:")} {rule.sensor}</option>{/if}</select></label><label>{t("Порог")} {rule.source.toUpperCase()}, {displaySuffix}
       <TemperatureInput bind:value={rule.threshold} min={0} max={150} disabled={!rule.enabled}/></label><label>{t("Цвет оповещения")} {rule.source.toUpperCase()}<input type="color" bind:value={rule.color} disabled={!rule.enabled}/></label></div></fieldset>{/each}{:else}<p>{t("Загрузите текущие правила перед редактированием. Оповещения временно перекрывают обе RGB-зоны и затем восстанавливают сохранённую подсветку.")}</p>{/if}
-  <button disabled={!rulesCurrent || controlsBusy || !device || !connected} onclick={() => action(applyRules)}>{t("Применить оповещения")}</button>
-  {#if pollError}<p role="alert">{t(pollError)}</p>{/if}
-  {#if error}<p class="error" role="alert">{t(error)}</p>{/if}{#if notice}<p role="status">{t(notice)}</p>{/if}
+  <button disabled={!rulesCurrent || controlsBusy || !device || !connected} onclick={() => action(applyRules, true)}>{t("Применить оповещения")}</button>
+  {#if pollError}<p role="alert">{t('Не удалось прочитать состояние оповещений:')} <span>{pollError}</span></p>{/if}
+  {#if error}<p class="error" role="alert">{#if error instanceof ValidationError}{t(error.resource,...error.values)}{:else}{t('Ошибка подсветки:')} <span>{error}</span>{#if thermalBaseMissing} {t('Сначала примените обычную подсветку в обеих зонах: кольцо помпы и вентиляторы LCDV2. Эти настройки нужны для восстановления после оповещения.')}{/if}{/if}</p>{/if}{#if notice}<p role="status">{t(notice)}</p>{/if}
   <DynamicRgb {device} {connected} {sensors} disabled={busy} bind:busy={dynamicBusy} onpolicychange={policyChanged}/>
 </section>
-<style>.manual{display:grid;gap:18px}.manual .row{flex-wrap:wrap}section{max-width:780px;display:grid;gap:18px}.row{display:flex;gap:15px;align-items:end}h2{font-size:18px;margin-top:8px}button{justify-self:start}p{color:#b6c5d8;line-height:1.6}fieldset{border:1px solid #3a4d66;border-radius:10px;padding:15px;display:grid;gap:15px}input[type=color]{max-width:120px}input[type=checkbox]{justify-self:start}.error,[role=alert]{color:#ffb7c6}[role=status]{color:#8adbc0}</style>
+<style>.lighting-workspace{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1fr);gap:32px}.lighting-controls{min-width:0}.lighting-controls>button{margin-bottom:16px}@media(max-width:1100px){.lighting-workspace{grid-template-columns:1fr}}.manual{display:grid;gap:18px}.manual .row{flex-wrap:wrap}section{max-width:none;display:grid;gap:18px}.row{display:flex;gap:15px;align-items:end}h2{font-size:18px;margin-top:8px}button{justify-self:start}p{color:var(--text-muted);line-height:1.6}fieldset{border:1px solid var(--border);border-radius:10px;padding:15px;display:grid;gap:15px}input[type=color]{max-width:120px}input[type=checkbox]{justify-self:start}.error,[role=alert]{color:var(--danger)}[role=status]{color:var(--success)}</style>

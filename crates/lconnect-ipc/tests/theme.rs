@@ -67,6 +67,7 @@ fn sensor_value_conversion_and_failure_never_show_fake_zero() {
 fn image_theme_roundtrip_rejects_traversal_and_oversized_rectangles() {
     let mut t = LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 1,
         name: "Моя тема".into(),
         background: [1, 2, 3],
@@ -106,6 +107,7 @@ fn image_theme_roundtrip_rejects_traversal_and_oversized_rectangles() {
 fn future_versions_and_unknown_fields_cannot_silently_change_saved_theme() {
     let mut t = LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 2,
         name: "Future".into(),
         background: [0; 3],
@@ -454,4 +456,38 @@ fn static_background_schema_tracks_references_and_rejects_ambiguous_or_unsafe_so
     theme.background_video = None;
     theme.background_image.as_mut().unwrap().asset = "../outside".into();
     assert!(theme.validate().is_err());
+}
+
+#[test]
+fn divider_fractional_geometry_roundtrips_and_rejects_outside_canvas_or_bad_shadow() {
+    let mut theme = serde_json::json!({"version":1,"name":"Editable divider","background":[0,0,0],"layers":[{"kind":"divider","axis":"vertical","x":240.5,"y":264.0,"length":166.0,"thickness":2.0,"color":[71,201,137],"opacity":100,"shadow":{"x":0,"y":0,"blur":5,"color":[0,0,0],"opacity":100}}]});
+    let parsed: lconnect_ipc::LcdTheme = serde_json::from_value(theme.clone()).unwrap();
+    parsed.validate().unwrap();
+    assert_eq!(
+        serde_json::to_value(&parsed).unwrap()["layers"],
+        theme["layers"]
+    );
+    assert!(parsed.font_assets().is_empty() && parsed.image_assets().is_empty());
+    for (key, value) in [
+        ("x", serde_json::json!(-0.5)),
+        ("length", serde_json::json!(0)),
+        ("thickness", serde_json::json!(17)),
+        ("opacity", serde_json::json!(101)),
+        ("y", serde_json::json!(400)),
+    ] {
+        let mut bad = theme.clone();
+        bad["layers"][0][key] = value;
+        assert!(
+            serde_json::from_value::<lconnect_ipc::LcdTheme>(bad)
+                .unwrap()
+                .validate()
+                .is_err(),
+            "{key}"
+        );
+    }
+    theme["layers"][0]["shadow"]["blur"] = 17.into();
+    assert!(serde_json::from_value::<lconnect_ipc::LcdTheme>(theme)
+        .unwrap()
+        .validate()
+        .is_err());
 }

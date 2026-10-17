@@ -14,6 +14,7 @@ use std::sync::Arc;
 fn theme(key: &str) -> LcdTheme {
     LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 1,
         name: "Stored".into(),
         background: [0; 3],

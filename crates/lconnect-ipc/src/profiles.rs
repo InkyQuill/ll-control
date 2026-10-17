@@ -112,6 +112,7 @@ impl NamedProfile {
                 };
                 ProfileContent::Screen(LcdTheme {
                     page_cache: Vec::new(),
+                    basic_editor: None,
                     version: 1,
                     name: name.clone(),
                     background: [12, 18, 30],

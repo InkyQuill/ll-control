@@ -526,82 +526,500 @@ async fn prepared_reset_close_and_stale_target_never_claim_an_unconfirmed_reset_
 }
 
 #[tokio::test]
-async fn reset_explicit_retry_after_real_unix_reply_loss_reads_receipt_without_a_second_apply() {
+async fn control_explicit_retry_after_real_unix_reply_loss_reads_receipt_without_a_second_apply() {
     use std::sync::atomic::{AtomicBool, Ordering};
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+    for mode in [Mode::Reset, Mode::Windows] {
+        let root = tempfile::tempdir().unwrap();
+        let h = Harness::start(root.path()).await;
+        let before = h.store.profiles().list().unwrap();
+        let proxy_path = root.path().join("reply-loss.sock");
+        let listener = tokio::net::UnixListener::bind(&proxy_path).unwrap();
+        let upstream = h.socket.clone();
+        let lose = Arc::new(AtomicBool::new(true));
+        let proxy = tokio::spawn(async move {
+            let mut workers = tokio::task::JoinSet::new();
+            loop {
+                tokio::select! {
+                    connection=listener.accept()=>{
+                        let (connection,_)=connection.unwrap();let socket=upstream.clone();let lose=lose.clone();
+                        workers.spawn(async move {
+                            let real=IpcClient::connect(&socket).await.unwrap();
+                            let (input,mut output)=connection.into_split();
+                            output.write_all(format!("{}\n",serde_json::to_string(&real.hello).unwrap()).as_bytes()).await.unwrap();
+                            let mut lines=BufReader::new(input).lines();
+                            while let Some(line)=lines.next_line().await.unwrap() {
+                                let request:serde_json::Value=serde_json::from_str(&line).unwrap();
+                                let method=request["method"].as_str().unwrap();
+                                let result=real.call(method,request["params"].clone()).await;
+                                // The production daemon has already completed the reset.
+                                // Drop only the downstream connection before its ACK.
+                                if matches!(method,"reset_fan_and_lighting"|"import_windows_control")&&result.is_ok()&&lose.swap(false,Ordering::SeqCst){break;}
+                                let response=match result {
+                                    Ok(value)=>json!({"jsonrpc":"2.0","id":request["id"],"result":value}),
+                                    Err(e)=>json!({"jsonrpc":"2.0","id":request["id"],"error":{"code":e.jsonrpc_code(),"message":e.to_string()}}),
+                                };
+                                if output.write_all(format!("{response}\n").as_bytes()).await.is_err(){break;}
+                            }
+                        });
+                    },
+                    _=workers.join_next(),if !workers.is_empty()=>{},
+                }
+            }
+        });
+        let jobs = Groups::default();
+        let mut request = h.request(84, mode, Group::FanAndLighting);
+        if mode == Mode::Reset {
+            request.sensor_id = Some("cpu:test".into());
+            jobs.start(
+                proxy_path.clone(),
+                request.clone(),
+                lconnect_ipc::InterfaceLanguage::English,
+            )
+            .unwrap();
+        } else {
+            let path = windows_file(root.path());
+            jobs.start_with(proxy_path.clone(), request.clone(), move |_| async move {
+                Ok(Some(path))
+            })
+            .unwrap();
+            assert_eq!(idle(&jobs).await.phase, Phase::Bindings);
+            jobs.prepare_windows(proxy_path.clone(), request.clone(), windows_options())
+                .unwrap();
+        }
+        assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
+        jobs.action(proxy_path.clone(), request.clone(), Action::Finish, None)
+            .unwrap();
+        let lost = idle(&jobs).await;
+        assert_eq!(lost.phase, Phase::Uncertain);
+        if mode == Mode::Windows {
+            assert!(jobs
+                .prepare_windows(proxy_path.clone(), request.clone(), windows_options())
+                .is_err());
+            std::fs::write(
+                root.path().join("windows.zip"),
+                b"must not be reread during retry",
+            )
+            .unwrap();
+        }
+        let committed = h.store.profiles().list().unwrap();
+        assert_eq!(committed.revision, before.revision + 1);
+        let real = IpcClient::connect(&h.socket).await.unwrap();
+        let read: FullGroupReadback = call(
+            &real,
+            "read_group_import",
+            json!({"dev":request.dev,"group":request.group,"operation_id":request.id}),
+        )
+        .await
+        .unwrap();
+        jobs.action(proxy_path.clone(), request, Action::Finish, None)
+            .unwrap();
+        let retry = idle(&jobs).await;
+        assert_eq!(retry.phase, Phase::Complete);
+        assert_eq!(
+            retry.readback.unwrap().runtime.revision,
+            read.runtime.revision
+        );
+        assert_eq!(h.store.profiles().list().unwrap(), committed);
+        jobs.shutdown().await.unwrap();
+        drop(real);
+        proxy.abort();
+        let _ = proxy.await;
+        h.stop().await;
+    }
+}
+
+fn windows_file(root: &Path) -> PathBuf {
+    let file = root.join("windows.zip");
+    std::fs::write(
+        &file,
+        include_bytes!("../../../crates/lconnect-profile/tests/fixtures/Control.zip"),
+    )
+    .unwrap();
+    file
+}
+fn windows_options() -> WindowsOptions {
+    let mut bindings = serde_json::Map::new();
+    for (role, unit) in [
+        ("CPULoad", "percent"),
+        ("CPUTemperature", "celsius"),
+        ("GPULoad", "percent"),
+        ("GPUTemperature", "celsius"),
+        ("PumpRPM", "rpm"),
+        ("CoolantTemp", "celsius"),
+    ] {
+        bindings.insert(
+            role.into(),
+            json!({"sensor_id":format!("fixture:{role}"),"unit":unit}),
+        );
+    }
+    serde_json::from_value(json!({"record":1,"bindings":bindings})).unwrap()
+}
+#[tokio::test]
+async fn windows_file_grant_selection_preparation_and_finish_use_one_native_owned_draft() {
     let root = tempfile::tempdir().unwrap();
     let h = Harness::start(root.path()).await;
-    let before = h.store.profiles().list().unwrap();
-    let proxy_path = root.path().join("reply-loss.sock");
-    let listener = tokio::net::UnixListener::bind(&proxy_path).unwrap();
-    let upstream = h.socket.clone();
-    let lose = Arc::new(AtomicBool::new(true));
-    let proxy = tokio::spawn(async move {
-        let mut workers = tokio::task::JoinSet::new();
-        loop {
-            tokio::select! {
-                connection=listener.accept()=>{
-                    let (connection,_)=connection.unwrap();let socket=upstream.clone();let lose=lose.clone();
-                    workers.spawn(async move {
-                        let real=IpcClient::connect(&socket).await.unwrap();
-                        let (input,mut output)=connection.into_split();
-                        output.write_all(format!("{}\n",serde_json::to_string(&real.hello).unwrap()).as_bytes()).await.unwrap();
-                        let mut lines=BufReader::new(input).lines();
-                        while let Some(line)=lines.next_line().await.unwrap() {
-                            let request:serde_json::Value=serde_json::from_str(&line).unwrap();
-                            let method=request["method"].as_str().unwrap();
-                            let result=real.call(method,request["params"].clone()).await;
-                            // The production daemon has already completed the reset.
-                            // Drop only the downstream connection before its ACK.
-                            if method=="reset_fan_and_lighting"&&result.is_ok()&&lose.swap(false,Ordering::SeqCst){break;}
-                            let response=match result {
-                                Ok(value)=>json!({"jsonrpc":"2.0","id":request["id"],"result":value}),
-                                Err(e)=>json!({"jsonrpc":"2.0","id":request["id"],"error":{"code":e.jsonrpc_code(),"message":e.to_string()}}),
-                            };
-                            if output.write_all(format!("{response}\n").as_bytes()).await.is_err(){break;}
-                        }
-                    });
-                },
-                _=workers.join_next(),if !workers.is_empty()=>{},
-            }
-        }
-    });
     let jobs = Groups::default();
-    let mut request = h.request(84, Mode::Reset, Group::FanAndLighting);
-    request.sensor_id = Some("cpu:test".into());
-    jobs.start(
-        proxy_path.clone(),
-        request.clone(),
-        lconnect_ipc::InterfaceLanguage::English,
-    )
+    let request = h.request(100, Mode::Windows, Group::FanAndLighting);
+    let before = h.store.profiles().list().unwrap();
+    let path = windows_file(root.path());
+    let choice = path.clone();
+    jobs.start_with(h.socket.clone(), request.clone(), move |_| async move {
+        Ok(Some(choice))
+    })
     .unwrap();
-    assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
-    jobs.action(proxy_path.clone(), request.clone(), Action::Finish, None)
-        .unwrap();
-    let lost = idle(&jobs).await;
-    assert_eq!(lost.phase, Phase::Uncertain);
-    let committed = h.store.profiles().list().unwrap();
-    assert_eq!(committed.revision, before.revision + 1);
-    let real = IpcClient::connect(&h.socket).await.unwrap();
-    let read: FullGroupReadback = call(
-        &real,
-        "read_group_import",
-        json!({"dev":request.dev,"group":request.group,"operation_id":request.id}),
-    )
-    .await
-    .unwrap();
-    jobs.action(proxy_path.clone(), request, Action::Finish, None)
-        .unwrap();
-    let retry = idle(&jobs).await;
-    assert_eq!(retry.phase, Phase::Complete);
+    let source = idle(&jobs).await;
+    assert_eq!(source.phase, Phase::Bindings);
     assert_eq!(
-        retry.readback.unwrap().runtime.revision,
-        read.runtime.revision
+        source.windows_source.unwrap().controllers[0].record_index,
+        1
     );
-    assert_eq!(h.store.profiles().list().unwrap(), committed);
+    assert!(jobs
+        .action(h.socket.clone(), request.clone(), Action::Finish, None)
+        .is_err());
+    // A pathname replacement cannot substitute a different file for the grant.
+    std::fs::rename(&path, root.path().join("original.zip")).unwrap();
+    std::fs::write(&path, b"not the chosen archive").unwrap();
+    jobs.prepare_windows(h.socket.clone(), request.clone(), windows_options())
+        .unwrap();
+    let prepared = idle(&jobs).await;
+    assert_eq!(prepared.phase, Phase::Prepared, "{prepared:?}");
+    assert_eq!(
+        prepared.windows_lighting.as_ref().unwrap().pump_modes.len(),
+        16
+    );
+    assert_eq!(prepared.summary.as_ref().unwrap().slots.len(), 0);
+    assert_eq!(h.store.profiles().list().unwrap(), before);
+    // Finish must not reread even the original descriptor after preparation.
+    std::fs::write(root.path().join("original.zip"), b"changed after preview").unwrap();
+    jobs.action(h.socket.clone(), request.clone(), Action::Finish, None)
+        .unwrap();
     jobs.shutdown().await.unwrap();
-    drop(real);
-    proxy.abort();
-    let _ = proxy.await;
+    let done = jobs.status().unwrap().unwrap();
+    assert_eq!(done.phase, Phase::Complete, "{done:?}");
+    assert!(done.readback.unwrap().selected_content_current);
+    assert!(jobs.lock().unwrap().windows.is_none());
+    let after = h.store.profiles().list().unwrap();
+    assert_eq!(
+        after.profiles, before.profiles,
+        "Linux extension slots are retained"
+    );
+    assert_eq!(after.revision, before.revision + 1);
+    let recovered = Groups::default();
+    recovered
+        .action(h.socket.clone(), request.clone(), Action::Recover, None)
+        .unwrap();
+    assert_eq!(idle(&recovered).await.phase, Phase::Complete);
+    assert!(recovered
+        .prepare_windows(h.socket.clone(), request, windows_options())
+        .is_err());
+    recovered.shutdown().await.unwrap();
+    h.stop().await;
+}
+#[tokio::test]
+async fn windows_changed_source_bad_record_and_missing_roles_fail_before_apply_and_can_be_reprepared(
+) {
+    let root = tempfile::tempdir().unwrap();
+    let h = Harness::start(root.path()).await;
+    let jobs = Groups::default();
+    let request = h.request(101, Mode::Windows, Group::FanAndLighting);
+    let path = windows_file(root.path());
+    let original = std::fs::read(&path).unwrap();
+    let choice = path.clone();
+    let before = h.store.profiles().list().unwrap();
+    jobs.start_with(h.socket.clone(), request.clone(), move |_| async move {
+        Ok(Some(choice))
+    })
+    .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Bindings);
+    let mut missing = windows_options();
+    missing.bindings.remove("CoolantTemp");
+    jobs.prepare_windows(h.socket.clone(), request.clone(), missing)
+        .unwrap();
+    let failed = idle(&jobs).await;
+    assert_eq!(failed.phase, Phase::Failed);
+    assert_eq!(
+        failed.message_code,
+        Some(ArchiveNotice::WindowsPreparationFailed)
+    );
+    assert!(jobs
+        .lock()
+        .unwrap()
+        .windows
+        .as_ref()
+        .unwrap()
+        .draft
+        .lock()
+        .unwrap()
+        .is_none());
+    let mut wrong = windows_options();
+    wrong.record = 0;
+    jobs.prepare_windows(h.socket.clone(), request.clone(), wrong)
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Failed);
+    std::fs::write(&path, b"corrupt source").unwrap();
+    jobs.prepare_windows(h.socket.clone(), request.clone(), windows_options())
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Failed);
+    assert_eq!(h.store.profiles().list().unwrap(), before);
+    std::fs::write(&path, original).unwrap();
+    jobs.prepare_windows(h.socket.clone(), request.clone(), windows_options())
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
+    let mut stale = request.clone();
+    stale.dev = DeviceId::new("other:device");
+    assert!(jobs
+        .prepare_windows(h.socket.clone(), stale, windows_options())
+        .is_err());
+    jobs.action(h.socket.clone(), request, Action::Cancel, None)
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Cancelled);
+    assert!(jobs.lock().unwrap().windows.is_none());
+    assert_eq!(h.store.profiles().list().unwrap(), before);
+    jobs.shutdown().await.unwrap();
+    h.stop().await;
+}
+#[tokio::test]
+async fn windows_prepared_close_and_offline_cancel_release_grant_without_daemon_transfer_cleanup() {
+    for cancel in [false, true] {
+        let root = tempfile::tempdir().unwrap();
+        let h = Harness::start(root.path()).await;
+        let jobs = Groups::default();
+        let request = h.request(102, Mode::Windows, Group::FanAndLighting);
+        let path = windows_file(root.path());
+        let before = h.store.profiles().list().unwrap();
+        jobs.start_with(h.socket.clone(), request.clone(), move |_| async move {
+            Ok(Some(path))
+        })
+        .unwrap();
+        assert_eq!(idle(&jobs).await.phase, Phase::Bindings);
+        jobs.prepare_windows(h.socket.clone(), request.clone(), windows_options())
+            .unwrap();
+        assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
+        let socket = h.socket.clone();
+        let store = h.store.clone();
+        h.stop().await;
+        if cancel {
+            jobs.action(socket, request, Action::Cancel, None).unwrap();
+            assert_eq!(idle(&jobs).await.phase, Phase::Cancelled);
+        }
+        jobs.shutdown().await.unwrap();
+        assert!(jobs.lock().unwrap().windows.is_none());
+        assert_eq!(store.profiles().list().unwrap(), before);
+    }
+}
+
+#[path = "../../../crates/lconnect-profile/tests/support/screen_plan.rs"]
+mod screen_fixture;
+fn screen_options() -> lconnect_ipc::WindowsScreenSource {
+    lconnect_ipc::WindowsScreenSource {
+        record: 0,
+        bindings_json: screen_fixture::bindings().to_string(),
+        resources_json: screen_fixture::mapping().to_string(),
+    }
+}
+async fn choose_screen(h: &Harness, root: &Path, jobs: &Groups, index: u8) -> Start {
+    let request = h.request(index, Mode::WindowsScreen, Group::Screen);
+    let path = root.join(format!("screen-{index}.zip"));
+    std::fs::write(&path, screen_fixture::archive(|_| {}, &[])).unwrap();
+    let choice = path.clone();
+    jobs.start_with(h.socket.clone(), request.clone(), move |_| async move {
+        Ok(Some(choice))
+    })
+    .unwrap();
+    let status = idle(jobs).await;
+    assert_eq!(status.phase, Phase::Bindings, "{status:?}");
+    // The selected Screen source is an immutable private snapshot, even if the
+    // original regular file is overwritten in place rather than renamed.
+    std::fs::write(path, b"changed original after selection").unwrap();
+    request
+}
+#[tokio::test]
+async fn windows_screen_private_selection_preview_finish_and_recovery_preserve_editor_and_library()
+{
+    let root = tempfile::tempdir().unwrap();
+    let h = Harness::start(root.path()).await;
+    let jobs = Groups::default();
+    let request = choose_screen(&h, root.path(), &jobs, 200).await;
+    let before = h.store.profiles().list().unwrap();
+    let catalog = h.store.theme_assets().list().unwrap();
+    jobs.prepare_windows_request(
+        h.socket.clone(),
+        request.clone(),
+        WindowsPreparation::Screen(screen_options()),
+    )
+    .unwrap();
+    let prepared = idle(&jobs).await;
+    assert_eq!(prepared.phase, Phase::Prepared, "{prepared:?}");
+    assert_eq!(h.store.profiles().list().unwrap(), before);
+    assert_eq!(h.store.theme_assets().list().unwrap(), catalog);
+    assert!(
+        jobs.prepare_windows_screen(h.socket.clone(), request.clone(), screen_options())
+            .is_err(),
+        "prepared options cannot change"
+    );
+    jobs.action(h.socket.clone(), request.clone(), Action::Finish, None)
+        .unwrap();
+    jobs.shutdown().await.unwrap();
+    let done = jobs.status().unwrap().unwrap();
+    assert_eq!(done.phase, Phase::Complete, "{done:?}");
+    assert!(done.readback.unwrap().selected_content_current);
+    assert_eq!(h.store.profiles().list().unwrap().profiles, before.profiles);
+    let client = IpcClient::connect(&h.socket).await.unwrap();
+    let imported = client
+        .call("get_imported_lcd_editor", json!({"dev":h.dev}))
+        .await
+        .unwrap();
+    let active = client
+        .call("get_lcd_theme", json!({"dev":h.dev}))
+        .await
+        .unwrap();
+    assert!(!imported.is_null());
+    assert_ne!(active, imported);
+    let recovered = Groups::default();
+    recovered
+        .action(h.socket.clone(), request, Action::Recover, None)
+        .unwrap();
+    assert_eq!(idle(&recovered).await.phase, Phase::Complete);
+    recovered.shutdown().await.unwrap();
+    drop(client);
+    h.stop().await;
+}
+#[tokio::test]
+async fn windows_screen_native_cancel_and_shutdown_clear_remote_private_preparation() {
+    for shutdown in [false, true] {
+        let root = tempfile::tempdir().unwrap();
+        let h = Harness::start(root.path()).await;
+        let jobs = Groups::default();
+        let request = choose_screen(&h, root.path(), &jobs, 201).await;
+        let catalog = h.store.theme_assets().list().unwrap();
+        jobs.prepare_windows_screen(h.socket.clone(), request.clone(), screen_options())
+            .unwrap();
+        assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
+        if !shutdown {
+            jobs.action(h.socket.clone(), request.clone(), Action::Cancel, None)
+                .unwrap();
+            assert_eq!(idle(&jobs).await.phase, Phase::Cancelled);
+        }
+        jobs.shutdown().await.unwrap();
+        let client = IpcClient::connect(&h.socket).await.unwrap();
+        assert!(
+            upload_rpc(
+                &client,
+                &request,
+                U::Status {
+                    id: request.id.clone()
+                }
+            )
+            .await
+            .is_err(),
+            "remote session released"
+        );
+        assert_eq!(h.store.theme_assets().list().unwrap(), catalog);
+        assert!(client
+            .call("get_imported_lcd_editor", json!({"dev":h.dev}))
+            .await
+            .unwrap()
+            .is_null());
+        drop(client);
+        h.stop().await;
+    }
+}
+#[tokio::test]
+async fn windows_screen_cancel_before_preparation_only_drops_local_grant() {
+    let root = tempfile::tempdir().unwrap();
+    let h = Harness::start(root.path()).await;
+    let jobs = Groups::default();
+    let request = choose_screen(&h, root.path(), &jobs, 202).await;
+    jobs.action(h.socket.clone(), request, Action::Cancel, None)
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Cancelled);
+    assert!(jobs.lock().unwrap().windows.is_none());
+    jobs.shutdown().await.unwrap();
+    h.stop().await;
+}
+
+#[test]
+fn windows_prepare_bridge_decodes_existing_control_and_new_screen_options_without_ambiguity() {
+    let control: WindowsPreparation =
+        serde_json::from_value(serde_json::to_value(windows_options()).unwrap()).unwrap();
+    assert!(matches!(control, WindowsPreparation::Control(_)));
+    let screen: WindowsPreparation =
+        serde_json::from_value(serde_json::to_value(screen_options()).unwrap()).unwrap();
+    assert!(matches!(screen, WindowsPreparation::Screen(_)));
+    let mut ambiguous = serde_json::to_value(screen_options()).unwrap();
+    ambiguous["bindings"] = json!({});
+    assert!(serde_json::from_value::<WindowsPreparation>(ambiguous).is_err());
+}
+#[tokio::test]
+async fn windows_screen_missing_source_record_fails_without_apply_and_requires_a_new_id() {
+    let root = tempfile::tempdir().unwrap();
+    let h = Harness::start(root.path()).await;
+    let jobs = Groups::default();
+    let request = choose_screen(&h, root.path(), &jobs, 203).await;
+    let before = h.store.profiles().list().unwrap();
+    let catalog = h.store.theme_assets().list().unwrap();
+    let mut options = screen_options();
+    options.record = 999;
+    jobs.prepare_windows_screen(h.socket.clone(), request.clone(), options)
+        .unwrap();
+    let failed = idle(&jobs).await;
+    assert_eq!(failed.phase, Phase::Failed, "{failed:?}");
+    assert_eq!(h.store.profiles().list().unwrap(), before);
+    assert_eq!(h.store.theme_assets().list().unwrap(), catalog);
+    assert!(jobs
+        .action(h.socket.clone(), request.clone(), Action::Finish, None)
+        .is_err());
+    assert!(jobs
+        .prepare_windows_screen(h.socket.clone(), request, screen_options())
+        .is_err());
+    let fresh = choose_screen(&h, root.path(), &jobs, 204).await;
+    jobs.action(h.socket.clone(), fresh, Action::Cancel, None)
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Cancelled);
+    jobs.shutdown().await.unwrap();
+    h.stop().await;
+}
+
+#[tokio::test]
+async fn windows_screen_requirements_use_the_owned_source_and_do_not_publish_or_prepare_apply() {
+    let root = tempfile::tempdir().unwrap();
+    let h = Harness::start(root.path()).await;
+    let jobs = Groups::default();
+    let request = choose_screen(&h, root.path(), &jobs, 205).await;
+    let before = h.store.profiles().list().unwrap();
+    let catalog = h.store.theme_assets().list().unwrap();
+    let options: WindowsPreparation =
+        serde_json::from_value(json!({"record":0,"inspect_only":true})).unwrap();
+    jobs.prepare_windows_request(h.socket.clone(), request.clone(), options)
+        .unwrap();
+    let status = idle(&jobs).await;
+    assert_eq!(status.phase, Phase::Bindings, "{status:?}");
+    let required = status.windows_screen_requirements.unwrap();
+    assert_eq!(required.record_index, 0);
+    assert_eq!(required.bindings.sensor_roles.len(), 6);
+    assert_eq!(required.bindings.resources.len(), 2);
+    assert!(required.deferred.is_empty());
+    assert!(!required.payloads_decoded && !required.apply_supported);
+    assert!(status.snapshot.is_none());
+    assert!(jobs
+        .action(h.socket.clone(), request.clone(), Action::Finish, None)
+        .is_err());
+    assert_eq!(h.store.profiles().list().unwrap(), before);
+    assert_eq!(h.store.theme_assets().list().unwrap(), catalog);
+    let wrong = Start {
+        dev: DeviceId::new("foreign"),
+        ..request.clone()
+    };
+    assert!(jobs
+        .inspect_windows_screen(h.socket.clone(), wrong, 0)
+        .is_err());
+    jobs.prepare_windows_screen(h.socket.clone(), request.clone(), screen_options())
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
+    jobs.action(h.socket.clone(), request, Action::Cancel, None)
+        .unwrap();
+    assert_eq!(idle(&jobs).await.phase, Phase::Cancelled);
+    jobs.shutdown().await.unwrap();
     h.stop().await;
 }

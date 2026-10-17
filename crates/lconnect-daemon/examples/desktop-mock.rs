@@ -1,8 +1,12 @@
 //! Isolated native desktop fixture. Never constructs a real HID backend.
 #[path = "desktop-mock/archive_portal.rs"]
 mod archive_portal;
+#[path = "desktop-mock/cooling_modes.rs"]
+mod cooling_modes;
 #[path = "desktop-mock/firmware_recovery.rs"]
 mod firmware_recovery;
+#[path = "desktop-mock/lcd_frames.rs"]
+mod lcd_frames;
 #[path = "desktop-mock/tray.rs"]
 mod tray;
 use lconnect_daemon::{
@@ -125,6 +129,7 @@ async fn main() -> anyhow::Result<()> {
         PathBuf::from("/mock/native-smoke"),
     );
     firmware_recovery::seed(&root, &store, &info).await?;
+    cooling_modes::seed(&root, &store, &info)?;
     if std::env::var("LCONNECT_NATIVE_SPEC").as_deref() != Ok("1") {
         mock.add_device(info.clone());
     }
@@ -156,6 +161,10 @@ async fn main() -> anyhow::Result<()> {
     let socket = root.join("lconnectd.sock");
     let server = tokio::spawn(async move { IpcServer::new(Arc::new(rpc)).serve(&socket).await });
     let mut sample = 0;
+    let export_frames = std::env::var("LCONNECT_MOCK_EXPORT_FRAMES").as_deref() == Ok("1");
+    let mut frames = lcd_frames::Frames::default();
+    let export_video = std::env::var("LCONNECT_MOCK_EXPORT_VIDEO").as_deref() == Ok("1");
+    let mut video = lcd_frames::Video::default();
     while !root.join("stop").exists() {
         let cpu_unavailable = tokio::fs::try_exists(root.join("cpu-unavailable")).await?;
         let weather_cpu_load = tokio::fs::try_exists(root.join("weather-cpu-load")).await?;
@@ -271,6 +280,12 @@ async fn main() -> anyhow::Result<()> {
         snapshot["lcd_failures"] = serde_json::json!(failures.lcd.load(Ordering::Relaxed));
         snapshot["fan_pwm_failures"] = serde_json::json!(failures.fan_pwm.load(Ordering::Relaxed));
         let rgb_history = mock.write_history(&info);
+        if export_frames {
+            frames.observe(&rgb_history, &root)?;
+        }
+        if export_video {
+            video.observe(&rgb_history, &root)?;
+        }
         snapshot["firmware_queries"] = serde_json::json!(rgb_history
             .iter()
             .filter(|packet| packet.starts_with(&[1, 134]))
@@ -291,6 +306,14 @@ async fn main() -> anyhow::Result<()> {
             .iter()
             .rev()
             .find(|p| p.len() > 1 && p[1] == 133));
+        snapshot["last_pump_pwm_packet"] = serde_json::json!(rgb_history
+            .iter()
+            .rev()
+            .find(|p| p.first() == Some(&1) && p.get(1) == Some(&138)));
+        snapshot["pump_pwm_writes"] = serde_json::json!(rgb_history
+            .iter()
+            .filter(|p| p.first() == Some(&1) && p.get(1) == Some(&138))
+            .count());
         snapshot["pump_rgb_writes"] = serde_json::json!(mock
             .write_history(&info)
             .iter()

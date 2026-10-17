@@ -5,9 +5,10 @@ test('live preview coalesces edits, discards obsolete responses and stops withou
     const requests: {method:string;params:Record<string,unknown>}[]=[];
     const pending: (()=>void)[]=[];
     Object.assign(window,{previewTest:{requests,pending,get max(){return max;}},__TAURI_INTERNALS__:{invoke:async(_cmd:string,req:{method:string;params:Record<string,unknown>})=>{
+        if (_cmd === 'desktop_set_language') return null;
       requests.push(req);
       switch(req.method){
-        case 'list_devices':return [{id:'lcd:test',display_name:'LCD'}];
+        case 'list_devices':return [{id:'lcd:test',display_name:'LCD', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{}};
         case 'preview_lcd_theme':
@@ -18,7 +19,7 @@ test('live preview coalesces edits, discards obsolete responses and stops withou
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByLabel('Непрерывный preview').check();
   const count=()=>page.evaluate(()=>(window as unknown as {previewTest:{requests:{method:string}[]}}).previewTest.requests.filter(r=>r.method==='preview_lcd_theme').length);

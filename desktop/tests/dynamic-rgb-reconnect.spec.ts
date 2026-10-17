@@ -6,9 +6,10 @@ for(const reconnect of [false,true])test(`dynamic RGB ignores pending mutation a
     const state={base_mode:'static',color_count:1,speed_supported:false,requested:config,applied:null,degraded:false,suppressed_by_thermal:false,last_error:null};
     const fixture:Fixture={online:true,finish:()=>{}};
     Object.assign(window,{dynamicFixture:fixture,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string})=>{
+        if (_ === 'desktop_set_language') return null;
       if(!fixture.online)throw new Error('offline');
       switch(req.method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu',label:'CPU',unit:'celsius',value:42,status:'valid',age_ms:1}];
         case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{}};
         case 'get_lighting_info':return {modes:['static']};
@@ -19,7 +20,7 @@ for(const reconnect of [false,true])test(`dynamic RGB ignores pending mutation a
       }
     }}});
   });
-  await page.goto('/');await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button',{name:'Подсветка',exact:true}).click();
   await page.getByText('Подсветка помпы по датчику',{exact:true}).click();
   const load=page.getByRole('button',{name:'Загрузить настройки режима по датчику'});

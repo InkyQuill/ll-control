@@ -454,3 +454,138 @@ fn indexed_video_larger_than_diagnostic_limit_uses_bounded_transfer_buffers() {
     assert_eq!(source.read_unit(599).unwrap().bytes.len(), 4096);
     assert_eq!(source.name(), "Long portable video");
 }
+
+#[test]
+fn inactive_basic_editor_dependencies_survive_archive_remap_profile_restart_and_device_toml() {
+    let source = tempfile::tempdir().unwrap();
+    let (exporter, mut original) = fixture(source.path());
+    let ProfileContent::Screen(theme) = &mut original.content else {
+        panic!()
+    };
+    let video = theme.page_cache[0].theme.background_video.clone().unwrap();
+    let mut template = theme.clone();
+    template.page_cache.clear();
+    template.background_video = Some(video);
+    template.background_image = None;
+    template.version = 2;
+    let bank = BasicEditorBank {
+        background: BasicBackground::ImageVideo,
+        selected_overlay: BasicOverlay::Custom,
+        overlays: [
+            BasicOverlay::None,
+            BasicOverlay::SliderSensor,
+            BasicOverlay::DuoSensor,
+            BasicOverlay::ThreeSensor,
+            BasicOverlay::FourSensor,
+            BasicOverlay::Time,
+            BasicOverlay::Custom,
+        ]
+        .into_iter()
+        .map(|overlay| BasicOverlayTheme {
+            overlay,
+            theme: Box::new(template.clone()),
+        })
+        .collect(),
+    };
+    theme.page_cache.clear();
+    theme.layers.clear();
+    theme.background_image = None;
+    theme.basic_editor = Some(Box::new(BasicEditorState {
+        selected_background: BasicBackground::ImageVideo,
+        banks: vec![bank],
+    }));
+    theme.validate().unwrap();
+    assert!(!theme.requires_streaming());
+    let before = theme.clone();
+    let mut bytes = Vec::new();
+    exporter.export(&original, &mut bytes).unwrap();
+    let target = tempfile::tempdir().unwrap();
+    let (importer, images, fonts, media, library) = stores(target.path());
+    let saved = importer
+        .import(&mut Cursor::new(bytes), &library, 0, 7)
+        .unwrap();
+    let ProfileContent::Screen(theme) = &saved.profiles[0].content else {
+        panic!()
+    };
+    assert!(
+        theme.layers.is_empty() && theme.background_image.is_none() && !theme.requires_streaming()
+    );
+    assert_eq!(theme.pages().count(), 8);
+    assert!(theme.image_assets().is_disjoint(&before.image_assets()));
+    assert!(theme.font_assets().is_disjoint(&before.font_assets()));
+    assert!(theme.video_assets().is_disjoint(&before.video_assets()));
+    images.load(theme).unwrap();
+    fonts.load_theme(theme).unwrap();
+    assert_eq!(theme.image_assets().len(), 1);
+    assert_eq!(theme.font_assets().len(), 1);
+    assert_eq!(theme.video_assets().len(), 1);
+    let key = *theme.video_assets().iter().next().unwrap();
+    assert_eq!(loaded_clip(&media, key), clip());
+    let template = &theme.basic_editor.as_ref().unwrap().banks[0].overlays[0].theme;
+    let ThemeLayer::Sensor { sensor_id, .. } = &template.layers[2] else {
+        panic!()
+    };
+    assert_eq!(
+        sensor_id,
+        &before.basic_editor.as_ref().unwrap().banks[0].overlays[0]
+            .theme
+            .layers
+            .iter()
+            .find_map(|layer| match layer {
+                ThemeLayer::Sensor { sensor_id, .. } => Some(sensor_id.clone()),
+                _ => None,
+            })
+            .unwrap()
+    );
+    assert_eq!(
+        ProfileStore::new(target.path().join("state"))
+            .list()
+            .unwrap(),
+        saved
+    );
+    // Device current-theme uses TOML, named slots use JSON. Both must retain caches.
+    let settings = lconnect_daemon::persistence::DeviceSettings {
+        theme: Some(theme.clone()),
+        ..Default::default()
+    };
+    let toml = toml::to_string(&settings).unwrap();
+    let reloaded: lconnect_daemon::persistence::DeviceSettings = toml::from_str(&toml).unwrap();
+    assert_eq!(reloaded.theme.as_ref(), Some(theme));
+    let selected = theme
+        .select_basic_editor(BasicBackground::ImageVideo, BasicOverlay::None)
+        .unwrap();
+    assert!(
+        !selected.requires_streaming(),
+        "text selection keeps the active shared background"
+    );
+    let mut reexported = Vec::new();
+    importer
+        .export(&saved.profiles[0], &mut reexported)
+        .unwrap();
+    assert!(reexported.len() > FONT.len());
+}
+
+#[test]
+fn editable_fractional_dividers_survive_portable_asset_remap_in_active_and_cached_pages() {
+    let source = tempfile::tempdir().unwrap();
+    let (exporter, mut original) = fixture(source.path());
+    let divider:ThemeLayer=serde_json::from_value(json!({"kind":"divider","axis":"vertical","x":240.5,"y":264,"length":166,"thickness":1.5,"color":[71,201,137],"opacity":73,"shadow":{"x":-2,"y":3,"blur":5,"color":[9,8,7],"opacity":35}})).unwrap();
+    let ProfileContent::Screen(theme) = &mut original.content else {
+        panic!()
+    };
+    theme.layers.push(divider.clone());
+    theme.page_cache[0].theme.layers.push(divider.clone());
+    let mut bytes = Vec::new();
+    exporter.export(&original, &mut bytes).unwrap();
+    let dest = tempfile::tempdir().unwrap();
+    let (importer, _, _, _, library) = stores(dest.path());
+    let saved = importer
+        .import(&mut Cursor::new(bytes), &library, 0, 6)
+        .unwrap();
+    let ProfileContent::Screen(theme) = &saved.profiles[0].content else {
+        panic!()
+    };
+    assert_eq!(theme.layers.last(), Some(&divider));
+    assert_eq!(theme.page_cache[0].theme.layers.last(), Some(&divider));
+    theme.validate().unwrap();
+}

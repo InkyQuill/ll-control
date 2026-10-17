@@ -6,16 +6,17 @@ import {join} from 'node:path';
 async function setup(page:Page,videoUrl='data:video/mp4;base64,',language='ru-RU'){
   await page.addInitScript(({videoUrl,language})=>{
     localStorage.setItem('lconnect.interface-language',language);
-    const f={snapshotUrls:[] as string[],revokedUrls:[] as string[],failSnapshot:false,holdSnapshot:false,releaseSnapshot:null as null|(()=>void),failRegion:false,lostRegion:false,regions:[] as unknown[],holdStatus:false,releaseStatus:null as null|(()=>void),failPause:false,failAdmit:false,failPrepare:false,deferFinish:false,failCancel:false,calls:[] as string[],capture:null as null|{id:string;phase:string;recordedMillis:number;frames:number;message:null;metadata:null;region:null|{x:number;y:number;width:number;height:number}},job:null as null|{id:string;phase:string;key:string|null;message:string|null},edit:null as unknown,collections:{version:1,revision:1,images:[],backgrounds:[],watermarks:[]} as unknown};
+    const f={language,failResume:false,failCaptureCancel:false,cancelMessage:'lost cancel',snapshotUrls:[] as string[],revokedUrls:[] as string[],failSnapshot:false,holdSnapshot:false,releaseSnapshot:null as null|(()=>void),failRegion:false,lostRegion:false,regions:[] as unknown[],holdStatus:false,releaseStatus:null as null|(()=>void),failPause:false,failAdmit:false,failPrepare:false,deferFinish:false,failCancel:false,calls:[] as string[],capture:null as null|{id:string;phase:string;recordedMillis:number;frames:number;message:null;metadata:null;region:null|{x:number;y:number;width:number;height:number}},job:null as null|{id:string;phase:string;key:string|null;message:string|null},edit:null as unknown,collections:{version:1,revision:1,images:[],backgrounds:[],watermarks:[]} as unknown};
     const createUrl=URL.createObjectURL.bind(URL),revokeUrl=URL.revokeObjectURL.bind(URL);
     URL.createObjectURL=(blob:Blob|MediaSource)=>{const url=createUrl(blob);if(blob instanceof Blob && blob.type==='image/jpeg')f.snapshotUrls.push(url);return url;};
     URL.revokeObjectURL=(url:string)=>{f.revokedUrls.push(url);revokeUrl(url);};
     Object.assign(window,{recordingFixture:f,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
+        if (command === 'desktop_set_language') return null;
       f.calls.push(command==='daemon_call'?String(args.method):command);
       if(command==='screen_record_begin'){f.capture={id:String(args.id),phase:'reserved',recordedMillis:0,frames:0,message:null,metadata:null,region:null};return {...f.capture};}
       if(command==='screen_record_start'){if(f.capture)f.capture.phase='setup';return;}
       if(command==='screen_record_status'){const snapshot=f.capture?{...f.capture}:null;if(f.holdStatus){f.holdStatus=false;await new Promise<void>(resolve=>{f.releaseStatus=resolve;});}return snapshot;}
-      if(command==='screen_record_control'){if(typeof args.action==='object' && args.action!==null && 'set_region' in args.action){const region=args.action.set_region as {x:number;y:number;width:number;height:number};f.regions.push(region);if(f.failRegion)throw new Error('region rejected');if(f.capture)f.capture.region=region;if(f.lostRegion)throw new Error('lost region reply');return;}if(args.action==='pause' && f.failPause)throw new Error('pause rejected');if(f.capture)f.capture.phase=args.action==='pause'?'paused':args.action==='resume'?'recording':f.deferFinish?'finalizing':'ready';return;}
+      if(command==='screen_record_control'){if(args.action==='resume' && f.failResume){f.failResume=false;throw new Error('No source frame yet');}if(typeof args.action==='object' && args.action!==null && 'set_region' in args.action){const region=args.action.set_region as {x:number;y:number;width:number;height:number};f.regions.push(region);if(f.failRegion)throw new Error('region rejected');if(f.capture)f.capture.region=region;if(f.lostRegion)throw new Error('lost region reply');return;}if(args.action==='pause' && f.failPause)throw new Error('pause rejected');if(f.capture)f.capture.phase=args.action==='pause'?'paused':args.action==='resume'?'recording':f.deferFinish?'finalizing':'ready';return;}
       if(command==='screen_record_snapshot'){
         if(f.holdSnapshot){f.holdSnapshot=false;await new Promise<void>(resolve=>{f.releaseSnapshot=resolve;});}
         if(f.failSnapshot)throw new Error('snapshot failed');
@@ -24,16 +25,16 @@ async function setup(page:Page,videoUrl='data:video/mp4;base64,',language='ru-RU
         const blob=await new Promise<Blob>(resolve=>canvas.toBlob(blob=>resolve(blob!),'image/jpeg'));
         return blob.arrayBuffer();
       }
-      if(command==='screen_record_cancel'){if(f.capture)f.capture.phase='cancelled';return;}
+      if(command==='screen_record_cancel'){if(f.failCaptureCancel){f.failCaptureCancel=false;throw new Error(f.cancelMessage);}if(f.capture)f.capture.phase='cancelled';return;}
       if(command==='screen_record_admit'){if(f.failAdmit)throw new Error('admission rejected');f.edit=args;f.job={id:String(args.id),phase:'uploading',key:null,message:null};return {...f.job};}
       if(command==='screen_record_prepare'){if(f.failPrepare){if(f.job){f.job.phase='failed';f.job.message='encoding rejected';}throw new Error('encoding rejected');}if(f.job)f.job.phase='review_ready';return;}
       if(command==='media_status')return f.job?{...f.job}:null;
       if(command==='media_confirm'){if(f.job){f.job.phase='complete';f.job.key='a'.repeat(32);}return;}
-      if(command==='media_cancel'){if(f.failCancel){f.failCancel=false;throw new Error('lost cancel');}if(f.job)f.job.phase='cancelled';return;}
+      if(command==='media_cancel'){if(f.failCancel){f.failCancel=false;throw new Error(f.cancelMessage);}if(f.job)f.job.phase='cancelled';return;}
       if(command==='media_playback_url')return videoUrl;
       if(command==='daemon_call')switch(args.method){
-        case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:language};
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle'};
         case 'get_lcd_media':return null;
@@ -45,7 +46,8 @@ async function setup(page:Page,videoUrl='data:video/mp4;base64,',language='ru-RU
       return null;
     }}});
   },{videoUrl,language});
-  await page.goto('/');await page.getByText(language==='en-US'?'Video library':'Библиотека роликов',{exact:true}).click();
+  await page.goto('/?view=display');await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
+  await page.getByText(language==='en-US'?'Video library':'Библиотека роликов',{exact:true}).click();
   await page.getByRole('button',{name:language==='en-US'?'Record screen…':'Записать экран…',exact:true}).click();
 }
 test('capture pause resume review and explicit save add gallery membership',async({page})=>{
@@ -434,17 +436,18 @@ test('English recording starts with a localized draft name and keeps the user na
 });
 
 
-for(const language of ['en-US','ru-RU'])test(`worker failure can be cleared and a new capture started (${language})`,async({page})=>{
+for(const fault of ['worker timeout','PipeWire disconnect'])for(const language of ['en-US','ru-RU'])test(`${fault} can be cleared and a new capture started (${language})`,async({page})=>{
   await setup(page,undefined,language);
   const english=language==='en-US';
   const choose=english?'Select screen or window':'Выбрать экран или окно';
   await page.getByRole('button',{name:choose,exact:true}).click();
   await expect(page.getByRole('button',{name:english?'Start screen recording':'Начать запись экрана',exact:true})).toBeVisible();
-  await page.evaluate(()=>{
+  await page.evaluate(fault=>{
     const fixture=(window as unknown as {recordingFixture:{capture:{phase:string;message:string}}}).recordingFixture;
-    fixture.capture.phase='failed';fixture.capture.message='Recording worker response timed out';
-  });
-  await expect(page.getByRole('alert')).toHaveText(english?'The recording process is not responding. Recording stopped. Select the source again.':'Процесс записи не отвечает. Запись остановлена. Выберите источник заново.');
+    fixture.capture.phase='failed';fixture.capture.message=fault==='worker timeout'?'Recording worker response timed out':'PipeWire connection closed while recording';
+  },fault);
+  const closed=english?'The screen capture session closed. Select the source again.':'Сеанс захвата экрана закрыт. Выберите источник заново.';
+  await expect(page.getByRole('alert')).toHaveText(fault==='PipeWire disconnect'?closed:english?'The recording process is not responding. Recording stopped. Select the source again.':'Процесс записи не отвечает. Запись остановлена. Выберите источник заново.');
   await page.getByRole('button',{name:english?'Clear recording…':'Очистить запись…',exact:true}).click();
   await page.getByRole('button',{name:english?'Confirm clearing the recording':'Подтвердить очистку записи',exact:true}).click();
   await page.getByRole('button',{name:choose,exact:true}).click();
@@ -453,3 +456,145 @@ for(const language of ['en-US','ru-RU'])test(`worker failure can be cleared and 
   expect(calls.filter(method=>method==='screen_record_cancel').length).toBeGreaterThan(0);
   expect(calls).not.toContain('media_confirm');
 });
+
+
+for(const state of ['paused','ready','review-capture','review-media'] as const)for(const language of ['en-US','ru-RU']) {
+  test(`failed cleanup fences ${state} until explicit retry (${language})`,async({page})=>{
+    await setup(page,undefined,language);
+    const en=language==='en-US';
+    const button=(english:string,russian:string)=>page.getByRole('button',{name:en?english:russian,exact:true});
+    await button('Select screen or window','Выбрать экран или окно').click();
+    await button('Start screen recording','Начать запись экрана').click();
+    if(state==='paused')await button('Pause recording','Приостановить запись').click();
+    else {
+      await button('Finish and review recording','Завершить и просмотреть запись').click();
+      await button('Edit recording','Редактировать запись').click();
+      await page.getByLabel(en?'Recording name':'Название записи',{exact:true}).fill('Retained capture');
+      if(state.startsWith('review'))await button('Prepare recording for LCD','Подготовить запись для LCD').click();
+    }
+    await page.evaluate(state=>{
+      const f=(window as unknown as {recordingFixture:{failCaptureCancel:boolean;failCancel:boolean}}).recordingFixture;
+      if(state==='review-media')f.failCancel=true;else f.failCaptureCancel=true;
+    },state);
+    const clear=state==='ready'||state==='review-media';
+    if(clear){await button('Clear recording…','Очистить запись…').click();await button('Confirm clearing the recording','Подтвердить очистку записи').click();}
+    else await button('Close screen recording','Закрыть запись экрана').click();
+    await expect(page.getByRole('alert')).toContainText(en?'Could not confirm cleanup:':'Не удалось подтвердить завершение:');
+    if(state==='paused')await expect(button('Resume recording','Продолжить запись')).toBeDisabled();
+    else if(state==='ready')await expect(button('Prepare recording for LCD','Подготовить запись для LCD')).toBeDisabled();
+    else {
+      await expect(button('Save recording to library','Сохранить запись в библиотеку')).toBeDisabled();
+      await expect(button('Return to recording edits','Вернуться к редактированию записи')).toBeDisabled();
+    }
+    if(clear)await expect(button('Keep current recording','Сохранить текущую запись')).toBeDisabled();
+    if(state==='ready')await expect(page.getByLabel(en?'Recording name':'Название записи',{exact:true})).toHaveValue('Retained capture');
+    const mutations=()=>page.evaluate(()=>(window as unknown as {recordingFixture:{calls:string[]}}).recordingFixture.calls.filter(c=>['screen_record_control','screen_record_prepare','screen_record_admit','media_confirm'].includes(c)));
+    const before=await mutations();
+    await page.waitForTimeout(900); // Cross two status polls after the failed cleanup.
+    expect(await mutations()).toEqual(before);
+    if(clear){
+      await button('Confirm clearing the recording','Подтвердить очистку записи').click();
+      await expect(button('Select screen or window','Выбрать экран или окно')).toBeEnabled();
+      await button('Select screen or window','Выбрать экран или окно').click();
+      await expect(button('Start screen recording','Начать запись экрана')).toBeEnabled();
+    }else {
+      await button('Close screen recording','Закрыть запись экрана').click();
+      await expect(page.getByRole('region',{name:en?'Screen recording':'Запись экрана',exact:true})).toHaveCount(0);
+    }
+    expect(await page.evaluate(()=>(window as unknown as {recordingFixture:{calls:string[]}}).recordingFixture.calls.filter(c=>c==='media_confirm'))).toEqual([]);
+  });
+}
+
+for(const context of ['return','close'] as const)for(const language of ['en-US','ru-RU']) {
+  test(`recording ${context} cleanup error follows language switches and permits retry (${language})`,async({page})=>{
+    await setup(page,undefined,language);
+    const english=language==='en-US';
+    await page.getByRole('button',{name:english?'Select screen or window':'Выбрать экран или окно',exact:true}).click();
+    if(context==='return') {
+      await page.getByRole('button',{name:english?'Start screen recording':'Начать запись экрана',exact:true}).click();
+      await page.getByRole('button',{name:english?'Finish and review recording':'Завершить и просмотреть запись',exact:true}).click();
+      await page.getByRole('button',{name:english?'Edit recording':'Редактировать запись',exact:true}).click();
+      await page.getByLabel(english?'Recording name':'Название записи',{exact:true}).fill('Настройки {0}');
+      await page.getByRole('button',{name:english?'Prepare recording for LCD':'Подготовить запись для LCD',exact:true}).click();
+    }
+    const diagnostic=context==='return'?'Настройки':'Настройки {0} <diagnostic>';
+    await page.evaluate(({context,diagnostic})=>{
+      const f=(window as unknown as {recordingFixture:{failCancel:boolean;failCaptureCancel:boolean;cancelMessage:string}}).recordingFixture;
+      f.cancelMessage=diagnostic;
+      if(context==='return')f.failCancel=true;else f.failCaptureCancel=true;
+    },{context,diagnostic});
+    const action=(en:boolean)=>context==='return'?(en?'Return to recording edits':'Вернуться к редактированию записи'):(en?'Close screen recording':'Закрыть запись экрана');
+    await page.getByRole('button',{name:action(english),exact:true}).click();
+    const expected=(en:boolean)=>context==='return'?
+      (en?`Could not discard the prepared version: ${diagnostic}. Try returning to editing again.`:`Не удалось отменить подготовленный вариант: ${diagnostic}. Повторите возврат к редактированию.`):
+      (en?`Could not confirm cleanup: ${diagnostic}. Try closing again.`:`Не удалось подтвердить завершение: ${diagnostic}. Повторите закрытие.`);
+    await expect(page.getByRole('alert')).toHaveText(expected(english));
+    if(context==='return')await expect(page.getByRole('button',{name:english?'Save recording to library':'Сохранить запись в библиотеку',exact:true})).toBeDisabled();
+    for(const nextLanguage of [english?'ru-RU':'en-US',language]) {
+      await page.evaluate(language=>{
+        (window as unknown as {recordingFixture:{language:string}}).recordingFixture.language=language;
+      },nextLanguage);
+      await expect(page.getByRole('alert')).toHaveText(expected(nextLanguage==='en-US'));
+    }
+    await page.getByRole('button',{name:action(english),exact:true}).click();
+    if(context==='return') {
+      await expect(page.getByLabel(english?'Recording name':'Название записи',{exact:true})).toHaveValue('Настройки {0}');
+      await expect(page.getByRole('button',{name:english?'Prepare recording for LCD':'Подготовить запись для LCD',exact:true})).toBeEnabled();
+    } else await expect(page.getByRole('region',{name:english?'Screen recording':'Запись экрана',exact:true})).toHaveCount(0);
+    const calls=await page.evaluate(()=>(window as unknown as {recordingFixture:{calls:string[]}}).recordingFixture.calls);
+    expect(calls).not.toContain('media_confirm');
+    expect(calls.filter(c=>c===(context==='return'?'media_cancel':'screen_record_cancel')).length).toBe(2);
+  });
+}
+
+
+for(const language of ['en-US','ru-RU'])test(`first frame failure is localized and resume retries the same capture (${language})`,async({page})=>{
+  await setup(page,undefined,language);
+  const english=language==='en-US';
+  await page.getByRole('button',{name:english?'Select screen or window':'Выбрать экран или окно',exact:true}).click();
+  const id=await page.evaluate(()=>{
+    const f=(window as unknown as {recordingFixture:{failResume:boolean;capture:{id:string}}}).recordingFixture;
+    f.failResume=true;return f.capture.id;
+  });
+  const start=page.getByRole('button',{name:english?'Start screen recording':'Начать запись экрана',exact:true});
+  await start.click();
+  await expect(page.getByRole('alert')).toHaveText(english?'The source has not supplied a frame yet. Refresh the frame and try again.':'Источник ещё не передал кадр. Обновите кадр и повторите попытку.');
+  await expect(start).toBeEnabled();
+  await start.click();
+  await expect(page.getByRole('button',{name:english?'Pause recording':'Приостановить запись',exact:true})).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const f=await page.evaluate(()=>(window as unknown as {recordingFixture:{capture:{id:string};calls:string[]}}).recordingFixture);
+  expect(f.capture.id).toBe(id);
+  expect(f.calls.filter(c=>c==='screen_record_start')).toHaveLength(1);
+  expect(f.calls).not.toContain('media_confirm');
+});
+
+for(const language of ['en-US','ru-RU'])for(const release of ['buttons','capture']) {
+  test(`capture region ends lost ${release} drag without applying it (${language})`,async({page})=>{
+    await setup(page,undefined,language);const en=language==='en-US';
+    await page.getByRole('button',{name:en?'Select screen or window':'Выбрать экран или окно',exact:true}).click();
+    await page.getByRole('button',{name:en?'Start screen recording':'Начать запись экрана',exact:true}).click();
+    await page.getByRole('button',{name:en?'Pause recording':'Приостановить запись',exact:true}).click();
+    const area=page.getByRole('button',{name:en?'Capture region selection on frame':'Выбор области захвата на кадре',exact:true});
+    await expect(area).toBeVisible();await area.scrollIntoViewIfNeeded();
+    const box=(await area.locator('canvas').boundingBox())!;
+    const names=en?['Capture X, %','Capture Y, %','Capture width, %','Capture height, %']:['Захват X, %','Захват Y, %','Ширина захвата, %','Высота захвата, %'];
+    const values=async()=>Promise.all(names.map(name=>page.getByLabel(name,{exact:true}).inputValue()));
+    await area.evaluate(element=>element.addEventListener('pointerdown',event=>element.setAttribute('data-last-pointer',String((event as PointerEvent).pointerId)),{once:true}));
+    await page.mouse.move(box.x+box.width*.1,box.y+box.height*.2);await page.mouse.down();
+    await page.mouse.move(box.x+box.width*.6,box.y+box.height*.8);
+    await expect(page.getByLabel(names[2],{exact:true})).not.toHaveValue('100');
+    const before=await values(),id=Number(await area.getAttribute('data-last-pointer'));
+    try {
+      if(release==='buttons')await area.dispatchEvent('pointermove',{pointerId:id,buttons:0,button:-1,clientX:box.x+box.width*.9,clientY:box.y+box.height*.95});
+      else {await area.evaluate((element,id)=>element.releasePointerCapture(id),id);await page.mouse.move(box.x+box.width*.9,box.y+box.height*.95);}
+      await expect.poll(values).toEqual(before);
+    } finally {await page.mouse.up();}
+    await expect.poll(values).toEqual(before);
+    await page.mouse.move(box.x+box.width*.2,box.y+box.height*.2);await page.mouse.down();
+    await page.mouse.move(box.x+box.width*.8,box.y+box.height*.7);await page.mouse.up();
+    expect(await values()).not.toEqual(before);
+    const f=await page.evaluate(()=>(window as unknown as {recordingFixture:{regions:unknown[];calls:string[]}}).recordingFixture);
+    expect(f.regions).toEqual([]);expect(f.calls).not.toContain('screen_record_admit');expect(f.calls).not.toContain('media_confirm');
+  });
+}

@@ -40,6 +40,10 @@
     // Use actual DOM controls for loading and subsequent Apply.
     await rpc('set_lcd_theme',{dev,theme});
     const button=name=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===name);
+    for(let i=0;i<100&&!button('Экран помпы');i++)await delay(100);
+    assert(document.querySelector('.devices'),'native device overview is initial surface');
+    button('Экран помпы').click();await delay(0);
+    assert(button('Композиция') && button('Библиотека'),'native studio navigation');
     for(let i=0;i<100&&!button('Загрузить активную тему');i++)await delay(100);
     button('Загрузить активную тему').click();
     for(let i=0;i<100;i++){if(Array.from(document.querySelectorAll('input')).some(el=>el.value==='Native smoke'))break;await delay(100);}
@@ -56,6 +60,7 @@
     lineBoxToggle.click();
     const tcFontSelect=Array.from(document.querySelectorAll('label')).find(e=>e.textContent.startsWith('Шрифт')).querySelector('select');
     tcFontSelect.value='noto_sans_tc_bold';tcFontSelect.dispatchEvent(new Event('change',{bubbles:true}));
+    button('Библиотека').click();await delay(0);
     // Real DOM File input -> chunked native bridge -> production daemon font store.
     const fontDetails=Array.from(document.querySelectorAll('summary')).find(e=>e.textContent==='Пользовательские шрифты');
     fontDetails.click();
@@ -134,11 +139,12 @@
     assert(stored.background_fill.mode==='radial'&&stored.background_fill.radial.flip&&!stored.background_fill.horizontal.flip,'native gradient edit and independent modes');
     assert(stored.name==='Native DOM applied'&&stored.layers[0].asset===asset,'theme persisted intent');
     const until=async(check,why,attempts=100)=>{for(let i=0;i<attempts;i++){if(await check())return;await delay(100);}throw new Error('timeout: '+why);};
-    const clickButton=async(name)=>{await until(()=>button(name)&&!button(name).disabled,name);button(name).click();await delay(0);};
+    const revealPanel=async(el)=>{const panel=el?.closest('[data-studio-panel]');if(panel?.hidden){button(panel.dataset.studioPanel==='library'?'Библиотека':'Композиция')?.click();await delay(0);}};
+    const clickButton=async(name)=>{await until(()=>button(name)&&!button(name).disabled,name);await revealPanel(button(name));button(name).click();await delay(0);};
     const field=name=>Array.from(document.querySelectorAll('label')).find(l=>l.textContent.trim().startsWith(name))?.querySelector('input,select');
     const setField=async(name,value)=>{
       await until(()=>field(name)&&!field(name).disabled,name);
-      const el=field(name);
+      const el=field(name);await revealPanel(el);
       if(el.type==='checkbox')el.checked=value;else el.value=String(value);
       el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));
       if(el.type==='checkbox')el.dispatchEvent(new Event('change',{bubbles:true}));
@@ -511,6 +517,56 @@
     assert(field('Системная видеокарта').value==='','native clear draft');
     assert(JSON.stringify((await rpc('get_sensor_defaults')).config)===JSON.stringify(sensorDefaults),'clear does not write');
     await clickButton('Охлаждение');
+    let nativeCoolingModes=await rpc('get_cooling_modes',{dev});
+    if(window.__nativeCoolingDefaults){
+      assert(nativeCoolingModes===null,'fresh fixture has no seeded mode bank');
+      const beforeInit=await rpc('get_cooling_state',{dev});
+      const summary=document.querySelector('.device-modes > summary');assert(summary,'native standard mode initializer');summary.click();
+      await clickButton('Прочитать режимы устройства');
+      await until(()=>field('Источник стандартных режимов'),'native empty bank controls');
+      await setField('Источник стандартных режимов','fixture:cpu');await clickButton('Создать стандартные режимы');
+      await until(()=>document.querySelector('.device-modes')?.textContent.includes('Найдены сохранённые режимы.'),'native initialization readback after lost reply');
+      nativeCoolingModes=await rpc('get_cooling_modes',{dev});
+      assert(nativeCoolingModes.fan.length===8&&nativeCoolingModes.pump.length===3&&nativeCoolingModes.pump.every(m=>m.use_default_name),'native production default bank and labels');
+      const afterInit=await rpc('get_cooling_state',{dev});
+      for(const channel of ['fan','pump'])assert(JSON.stringify(beforeInit[channel].requested)===JSON.stringify(afterInit[channel].requested)&&beforeInit[channel].mode_id===afterInit[channel].mode_id,'native initialization does not Apply');
+    }
+
+    if(nativeCoolingModes){
+      assert(nativeCoolingModes.fan.length===8&&nativeCoolingModes.pump.length===3&&!('source' in nativeCoolingModes),'native mode list and metadata omission');
+      const beforeModes=await rpc('get_cooling_state',{dev});
+      const summary=document.querySelector('.device-modes > summary');assert(summary,'native device mode editor');if(!summary.parentElement.open)summary.click();
+      await clickButton('Прочитать режимы устройства');
+      await until(()=>field('Сохранённый режим')?.options.length===4,'native three pump modes');
+      await setField('Сохранённый режим','FixRPM');await clickButton('Загрузить режим в черновик');
+      await until(()=>field('Режим')?.value==='fixed_rpm'&&Number(field('Целевые RPM (reference mapping)')?.value)===(window.__nativeCoolingDefaults?2200:2300),'native saved mode draft');
+      assert(JSON.stringify((await rpc('get_cooling_state',{dev})).pump.requested)===JSON.stringify(beforeModes.pump.requested),'native mode load does not apply');
+      const bankBeforeRestore=await rpc('get_cooling_modes',{dev});
+      await setField('Целевые RPM (reference mapping)',2800);
+      await clickButton('Стандартные параметры в черновик');
+      await until(()=>Number(field('Целевые RPM (reference mapping)')?.value)===2200,'native factory draft restore');
+      await setField('Имя режима','Temporary draft name');await clickButton('Вернуть стандартное имя');
+      assert(field('Имя режима').value==='Фиксированные RPM','native factory name restored locally');
+      assert(JSON.stringify(await rpc('get_cooling_modes',{dev}))===JSON.stringify(bankBeforeRestore),'native draft restore does not Save');
+      assert(JSON.stringify((await rpc('get_cooling_state',{dev})).pump.requested)===JSON.stringify(beforeModes.pump.requested),'native draft restore does not Apply');
+      await setField('Имя режима','Native saved pump');
+      await setField('Целевые RPM (reference mapping)',2400);
+      await clickButton('Сохранить снимок режима');
+      await until(()=>document.querySelector('.device-modes [role="status"]')?.textContent.includes('Native saved pump'),'native stored mode acknowledgement');
+      nativeCoolingModes=await rpc('get_cooling_modes',{dev});
+      const savedMode=nativeCoolingModes.pump.find(mode=>mode.id==='FixRPM');
+      assert(savedMode.name==='Native saved pump'&&savedMode.policy.rpm===2400&&!nativeCoolingModes.persistence.pending&&!nativeCoolingModes.persistence.last_error,'native saved snapshot durable');
+      assert(JSON.stringify((await rpc('get_cooling_state',{dev})).pump.requested)===JSON.stringify(beforeModes.pump.requested),'native Save does not apply');
+      await clickButton('Применить охлаждение');
+      await until(async()=>{const pump=(await rpc('get_cooling_state',{dev})).pump;return pump.requested?.mode==='fixed_rpm'&&pump.requested.rpm===2400&&pump.mode_id==='FixRPM'&&pump.applied_percent===60&&!pump.last_error;},'native saved RPM mode explicit Apply');
+      const modeLibrary=await rpc('list_profiles',{});
+      await rpc('edit_profile',{expected_revision:modeLibrary.revision,edit:{action:'rename',group:'screen',slot:0,name:'Cooling mode restart request'}});
+      await until(()=>document.querySelector('.connection')?.textContent.includes('Нет связи с daemon'),'stored mode restart offline');
+      await until(()=>document.querySelector('.connection')?.textContent.includes('Daemon подключён'),'stored mode restart online');
+      await until(async()=>(await screenSlot())?.name==='Cooling mode restart ready','stored mode restart acknowledgement');
+      await until(async()=>{const pump=(await rpc('get_cooling_state',{dev})).pump;return pump.mode_id==='FixRPM'&&pump.requested?.rpm===2400&&pump.applied_percent===60&&!pump.last_error;},'stored mode identity and snapshot replay');
+      await until(()=>document.body.textContent.includes('Запрошенный режим устройства: FixRPM'),'native stored identity label after restart');
+    }
     const beforeCooling=await rpc('get_cooling_state',{dev});
     await setField('Источник температуры','fixture:cpu');
     await clickButton('quiet');
@@ -764,7 +820,8 @@
     await clickButton('Загрузить текущие оповещения');
     await setField('Порог CPU,',81);await setField('Цвет RGB','#123456');
     const reopenedDynamic=Array.from(document.querySelectorAll('summary')).find(s=>s.textContent.trim()==='Подсветка помпы по датчику');
-    reopenedDynamic.click();await clickButton('Загрузить настройки режима по датчику');
+    if(!reopenedDynamic.parentElement.open)reopenedDynamic.click();
+    await clickButton('Загрузить настройки режима по датчику');
     await setField('Верхний порог',61);
     await reconnect('lighting',()=>{
       for(const name of ['Применить подсветку','Применить оповещения','Применить режим по датчику','Отключить режим по датчику'])assert(button(name).disabled,`${name} offline disabled`);
@@ -859,6 +916,6 @@
     assert(profiles.profiles.length===5&&new Set(profiles.profiles.map(p=>p.content.kind)).size===3,'three groups plus retained profile and fault slots');
     assert(profiles.profiles.some(p=>p.slot===7&&p.name==='Native fault slot'&&p.content.kind==='screen'),'pre-forward failure retained original test slot');
     const controls={pump:cooling.pump.requested,fan:cooling.fan.requested,lcd:lcd.requested,thermal:thermal.requested,dynamic:dynamic.requested,base_mode:dynamic.base_mode};
-    await invoke('native_smoke_result',{result:{ok:true,dev,asset,preview_bytes:preview.length,theme:stored,controls,profiles,sensor_defaults:sensorDefaults,native_sensor_defaults:true,native_intel_sources:true,native_recommended_defaults:true,native_cpu_fan_mapping:true,native_gradient_background:true,native_font_import:true,native_display_fonts:true,native_noto_coverage:true,native_text_fallback:true,native_font_retry:true,native_font_partial_upload:true,native_saved_dependency_recovery:true,native_restart_dependency_recovery:true,native_active_sensor_recovery:true,native_combined_consumers:true,native_aged_sensor_recovery:true,native_rgb_transport_recovery:true,native_lcd_pwm_transport_recovery:true,native_font_parts:true,native_font_cleanup:true,native_font_retention:true,native_draft_session_retention:true,native_image_cleanup:true,native_cleanup_corrupt_root:true,native_cleanup_corrupt_profiles:true,native_cleanup_partial_retry:true,native_source_lost_reply:true,native_theme_lost_reply:true,native_clear_lost_reply:true,native_profile_lost_reply:true,native_profile_extra_faults:true,profile_fault_recovery:profileFaultRecovery,profile_conflict_recovery:true,missing_asset_rejection:true,missing_sensor_profile_recovery:true,native_display_reconnect:true,native_controls_reconnect:true,native_lost_reply:true,native_write_timeout:true}});
+    await invoke('native_smoke_result',{result:{ok:true,dev,asset,preview_bytes:preview.length,theme:stored,controls,profiles,native_cooling_modes:!!nativeCoolingModes,native_cooling_defaults:!!window.__nativeCoolingDefaults,cooling_mode_banks:nativeCoolingModes,sensor_defaults:sensorDefaults,native_sensor_defaults:true,native_intel_sources:true,native_recommended_defaults:true,native_cpu_fan_mapping:true,native_gradient_background:true,native_font_import:true,native_display_fonts:true,native_noto_coverage:true,native_text_fallback:true,native_font_retry:true,native_font_partial_upload:true,native_saved_dependency_recovery:true,native_restart_dependency_recovery:true,native_active_sensor_recovery:true,native_combined_consumers:true,native_aged_sensor_recovery:true,native_rgb_transport_recovery:true,native_lcd_pwm_transport_recovery:true,native_font_parts:true,native_font_cleanup:true,native_font_retention:true,native_draft_session_retention:true,native_image_cleanup:true,native_cleanup_corrupt_root:true,native_cleanup_corrupt_profiles:true,native_cleanup_partial_retry:true,native_source_lost_reply:true,native_theme_lost_reply:true,native_clear_lost_reply:true,native_profile_lost_reply:true,native_profile_extra_faults:true,profile_fault_recovery:profileFaultRecovery,profile_conflict_recovery:true,missing_asset_rejection:true,missing_sensor_profile_recovery:true,native_display_reconnect:true,native_controls_reconnect:true,native_lost_reply:true,native_write_timeout:true}});
   }catch(e){await invoke('native_smoke_result',{result:{ok:false,error:e?.message??String(e),detail:JSON.stringify(e),body:document.body.innerText,alerts:Array.from(document.querySelectorAll('[role=alert]')).map(el=>el.textContent),stack:e?.stack}});}
 })();

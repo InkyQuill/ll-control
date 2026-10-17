@@ -18,7 +18,7 @@ use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Read, Write},
     path::Path,
 };
 
@@ -483,13 +483,21 @@ fn remap_page(
                 }
                 style
             }
-            ThemeLayer::Weather { .. }
+            ThemeLayer::Divider { .. }
+            | ThemeLayer::Weather { .. }
             | ThemeLayer::Meteor { .. }
             | ThemeLayer::Snow3d { .. }
             | ThemeLayer::Fireworks { .. } => continue,
         };
         if let Some(key) = &mut style.font_asset {
             mapped(key, Kind::Font, mapping)?;
+        }
+    }
+    if let Some(editor) = &mut theme.basic_editor {
+        for bank in &mut editor.banks {
+            for item in &mut bank.overlays {
+                remap_page(&mut item.theme, mapping)?;
+            }
         }
     }
     for cached in &mut theme.page_cache {
@@ -621,29 +629,7 @@ fn read_payloads(input: &mut impl Read, directory: &Path, entries: &[Entry]) -> 
             copy_hashed(input, &mut file, e.bytes)? == e.sha256,
             "archive asset checksum mismatch"
         );
-        file.seek(SeekFrom::Start(0))?;
-        match e.kind {
-            Kind::Image => {
-                let mut bytes = Vec::new();
-                file.read_to_end(&mut bytes)?;
-                let image = lconnect_image::assets::decode_asset(&bytes)?;
-                ensure!(
-                    image.width() <= 960 && image.height() <= 960,
-                    "archive image is not normalized"
-                );
-            }
-            Kind::Font => {
-                let mut bytes = Vec::new();
-                file.read_to_end(&mut bytes)?;
-                lconnect_image::fonts::validate_font(&bytes)?;
-            }
-            Kind::Media => {
-                let mut reader = MediaFile::open(&path)?;
-                for frame in 0..reader.frames() {
-                    reader.read_unit(frame)?;
-                }
-            }
-        }
+        validate_staged_payload(&path, e.kind)?;
     }
     let mut tail = [0];
     ensure!(
@@ -656,3 +642,31 @@ fn read_payloads(input: &mut impl Read, directory: &Path, entries: &[Entry]) -> 
 
 mod group;
 pub use group::PreparedGroup;
+pub(crate) use group::{StagedWindowsScreen, WindowsPreview};
+
+fn validate_staged_payload(path: &Path, kind: Kind) -> anyhow::Result<()> {
+    let mut file = fs::File::open(path)?;
+    match kind {
+        Kind::Image => {
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes)?;
+            let image = lconnect_image::assets::decode_asset(&bytes)?;
+            ensure!(
+                image.width() <= 960 && image.height() <= 960,
+                "archive image is not normalized"
+            );
+        }
+        Kind::Font => {
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes)?;
+            lconnect_image::fonts::validate_font(&bytes)?;
+        }
+        Kind::Media => {
+            let mut reader = MediaFile::open(path)?;
+            for frame in 0..reader.frames() {
+                reader.read_unit(frame)?;
+            }
+        }
+    }
+    Ok(())
+}

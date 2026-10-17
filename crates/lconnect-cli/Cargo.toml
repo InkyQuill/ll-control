@@ -16,6 +16,8 @@ rand = "0.8"
 tempfile = "3"
 lconnect-ipc   = { path = "../lconnect-ipc" }
 lconnect-image = { path = "../lconnect-image" }
+lconnect-media = { path = "../lconnect-media" }
+lconnect-profile = { path = "../lconnect-profile" }
 
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal", "io-std", "time"] }
 anyhow.workspace = true
@@ -27,6 +29,8 @@ clap = { version = "4", features = ["derive"] }
 xdg = "2"
 
 [dev-dependencies]
+base64 = "0.22.1"
+zip = { version = "4.6.1", default-features = false, features = ["deflate-flate2"] }
 lconnect-daemon = { path = "../lconnect-daemon" }
 lconnect-hid = { path = "../lconnect-hid" }
 lconnect-protocol = { path = "../protocol" }

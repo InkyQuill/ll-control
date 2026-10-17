@@ -5,8 +5,9 @@ test('numeric lighting validation exposes ranges and prevents invalid writes', a
     const thermal = { requested: { cpu: null, gpu: null }, active_source: null, degraded_sources: [], grace_remaining_ms: 0, blocked_reason: null, fan: { last_error: null }, pump: { last_error: null } };
     const dynamic = { base_mode: 'breathing', color_count: 1, speed_supported: true, requested: null, applied: null, degraded: false, suppressed_by_thermal: false, last_error: null };
     Object.assign(window, { numericWrites: writes, __TAURI_INTERNALS__: { invoke: async (_: string, req: { method: string }) => {
+        if (_ === 'desktop_set_language') return null;
       switch (req.method) {
-        case 'list_devices': return [{ id: 'mock', display_name: 'LCD' }];
+        case 'list_devices': return [{ id: 'mock', display_name: 'LCD', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid' }, { id: 'pump', label: 'Pump', unit: 'rpm', value: 2200, status: 'valid' }];
         case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };
         case 'get_lighting_info': return { modes: ['breathing'] };
@@ -19,7 +20,7 @@ test('numeric lighting validation exposes ranges and prevents invalid writes', a
     } } });
   });
   const writes = () => page.evaluate(() => (window as unknown as { numericWrites: string[] }).numericWrites);
-  await page.goto('/');
+  await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Подсветка', exact: true }).click();
   await page.getByRole('button', { name: 'Загрузить текущие оповещения' }).click();
   await page.getByLabel('Включить CPU', { exact: true }).check();

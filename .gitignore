@@ -26,3 +26,13 @@ desktop/playwright-report/
 # Python bytecode caches
 __pycache__/
 *.py[cod]
+
+# Local verification evidence: keep reproducible tests/fixtures, not run outputs.
+/docs/development/parity/evidence/
+/docs/development/parity/*checkpoints*.md
+/docs/development/design/*verification.json
+/docs/development/protocol/captures/
+/.impeccable/review/
+/.impeccable/questions/
+
+/docs/development/archive/legacy-scaffold/TEST_RESULTS.md

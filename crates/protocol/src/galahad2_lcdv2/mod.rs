@@ -1,7 +1,7 @@
 //! Galahad II LCDV2 (`0x0416:0x7395`) protocol.
 //!
 //! Decompiled-source references are in
-//! `docs/protocol/decompiled-source-map.md`.
+//! `docs/development/protocol/decompiled-source-map.md`.
 //!
 //! USB / HID identity:
 //! - Vendor ID:  `0x0416`  (Winbond / Lian Li)

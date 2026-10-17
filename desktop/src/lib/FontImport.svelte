@@ -1,11 +1,12 @@
 <script lang="ts">
   import {t} from './i18n.svelte';
+  import {ValidationError} from './validation-error';
   import { onDestroy, tick } from 'svelte';
   import fontLicenses from './assets/font-licenses.txt?raw';
   import { message } from './api';
   import { uploadFont, type FontChoice } from './font-upload';
   let { connected, onimport }: { connected: boolean; onimport: (font: FontChoice) => void } = $props();
-  let uploading = $state(false), received = $state(0), size = $state(0), error = $state(''), status = $state('');
+  let uploading = $state(false), received = $state(0), size = $state(0), error = $state<ValidationError|string|null>(null), status = $state<'uploaded'|'cancelled'|''>('');
   let controller: AbortController | undefined;
   let alive = true;
   let fileInput = $state<HTMLInputElement>();
@@ -18,16 +19,16 @@
     const file = input.files?.[0]; input.value = '';
     if (!file || uploading || !connected) return;
     const request = new AbortController(); controller = request;
-    uploading = true; received = 0; size = file.size; error = ''; status = '';
+    uploading = true; received = 0; size = file.size; error = null; status = '';
     try {
       const key = await uploadFont(file, request.signal, value => { if (alive) received = value; });
       if (!alive || request.signal.aborted) return;
       onimport({ key, name: file.name });
-      status = 'Шрифт загружен. Выберите его в настройках слоя, затем примените тему.';
+      status = 'uploaded';
     } catch (e) {
       if (alive) {
-        if (request.signal.aborted) status = 'Загрузка отменена. Тема не изменена.';
-        else error = message(e);
+        if (request.signal.aborted) status = 'cancelled';
+        else error = e instanceof ValidationError?e:message(e);
       }
     } finally {
       const restoreFocus = alive && document.activeElement === cancelButton;
@@ -47,7 +48,7 @@
   <details><summary>{t("Лицензии встроенных шрифтов")}</summary><pre>{fontLicenses}</pre></details>
   <label>{t("Загрузить шрифт")}<input bind:this={fileInput} type="file" accept=".ttf,.otf" disabled={!connected || uploading} onchange={choose}/></label>
   {#if uploading}<progress max={size} value={received} aria-label="{t("Загрузка шрифта")}"></progress><button bind:this={cancelButton} onclick={() => controller?.abort()}>{t("Отменить загрузку шрифта")}</button>{/if}
-  {#if status}<p role="status">{status}</p>{/if}
-  {#if error}<p role="alert">{t(error)}</p>{/if}
+  {#if status}<p role="status">{status==='uploaded'?t('Шрифт загружен. Выберите его в настройках слоя, затем примените тему.'):t('Загрузка отменена. Тема не изменена.')}</p>{/if}
+  {#if error}<p role="alert">{#if error instanceof ValidationError}{t(error.resource,...error.values)}{:else}{t('Не удалось загрузить шрифт:')} <span>{error}</span>{/if}</p>{/if}
 </details>
-<style>pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}details{border:1px solid #38485c;border-radius:10px;padding:14px;margin-bottom:16px}summary{cursor:pointer}p{color:#bdccdf;line-height:1.6}label{display:grid;gap:8px}progress{width:100%;margin:10px 0}[role=alert]{color:#ffb8c5}</style>
+<style>pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}details{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px}summary{cursor:pointer}p{color:var(--text-muted);line-height:1.6}label{display:grid;gap:8px}progress{width:100%;margin:10px 0}[role=alert]{color:var(--danger)}</style>

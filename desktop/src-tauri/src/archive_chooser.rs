@@ -14,6 +14,7 @@ use zbus::{
 struct Dialog {
     save: bool,
     group: bool,
+    windows: bool,
     language: InterfaceLanguage,
 }
 impl Dialog {
@@ -24,6 +25,12 @@ impl Dialog {
         }
     }
     fn title(self) -> &'static str {
+        if self.windows {
+            return self.text(
+                "Import Windows L-Connect3 settings",
+                "Импорт настроек Windows L-Connect3",
+            );
+        }
         match (self.language, self.group, self.save) {
             (InterfaceLanguage::English, false, true) => "Export L-Connect Linux profile",
             (InterfaceLanguage::English, false, false) => "Import L-Connect Linux profile",
@@ -36,6 +43,9 @@ impl Dialog {
         }
     }
     fn filter(self) -> &'static str {
+        if self.windows {
+            return "Windows L-Connect3 ZIP";
+        }
         match (self.language, self.group) {
             (InterfaceLanguage::English, false) => "L-Connect Linux profile",
             (InterfaceLanguage::English, true) => "L-Connect Linux settings group",
@@ -60,6 +70,7 @@ pub async fn choose(
         Dialog {
             save,
             group: false,
+            windows: false,
             language,
         },
     )
@@ -79,6 +90,26 @@ pub async fn choose_group(
         Dialog {
             save,
             group: true,
+            windows: false,
+            language,
+        },
+    )
+    .await
+}
+pub async fn choose_windows_group(
+    cancel: watch::Receiver<bool>,
+    language: InterfaceLanguage,
+) -> Result<Option<PathBuf>> {
+    let connection = Connection::session().await?;
+    choose_filtered(
+        &connection,
+        "backup.zip",
+        cancel,
+        Duration::from_secs(600),
+        Dialog {
+            save: false,
+            group: true,
+            windows: true,
             language,
         },
     )
@@ -128,7 +159,9 @@ async fn choose_filtered(
     } else {
         &name
     };
-    let filters = if group {
+    let filters = if dialog.windows {
+        vec![(dialog.filter(), vec![(0u32, "*.zip")])]
+    } else if group {
         vec![(dialog.filter(), vec![(0u32, "*.lcg")])]
     } else {
         vec![(dialog.filter(), vec![(0u32, "*.lcp")])]

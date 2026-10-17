@@ -182,6 +182,33 @@ impl Harness {
             };
             settings.theme = Some(serde_json::from_value(theme).unwrap());
         }
+        if kind == "editor" {
+            let video = source
+                .media_assets()
+                .import(
+                    "Unapplied editor clip".into(),
+                    H264Clip {
+                        fps: 24,
+                        units: vec![H264AccessUnit {
+                            bytes: vec![0, 0, 0, 1, 0x67, 1, 0, 0, 1, 0x68, 1, 0, 0, 1, 0x65, 1],
+                            keyframe: true,
+                        }],
+                    },
+                )
+                .unwrap()
+                .key;
+            let mut editor: LcdTheme = serde_json::from_str(include_str!(
+                "../../../desktop/tests/fixtures/basic-editor-theme.json"
+            ))
+            .unwrap();
+            editor.background_image = None;
+            editor.background_video = Some(video.clone());
+            editor.version = 2;
+            settings.screen_editor=Some(lconnect_daemon::screen_editor::StoredScreenEditor {
+                version:1,theme:Some(editor),resources:std::collections::BTreeMap::from([("archive:wmsq/clip.mp4".into(),ScreenBackgroundAsset::Video(video))]),
+                source_json:serde_json::json!({"version":1,"format":"windows_lconnect3_2_1_28","source":{"archive":{"backup_sha256":"a".repeat(64)},"unassigned":"private history"}}).to_string(),
+            });
+        }
         let profile =
             GroupProfile::capture(&settings, &ProfileLibrary::default(), GroupKind::Screen)
                 .unwrap()
@@ -901,5 +928,42 @@ async fn queued_checked_composition_reapply_is_joined_on_shutdown_without_output
     assert!(rx.await.unwrap().is_err());
     assert!(h.writes.lock().unwrap().is_empty());
     assert!(h.store.read("device").unwrap().group_imports.is_empty());
+    h.finish().await;
+}
+
+#[tokio::test]
+async fn imported_editor_video_is_retained_but_only_the_independent_active_jpeg_scene_runs() {
+    let h = Harness::new();
+    h.sample(42.);
+    let archive = h.archive("editor", 0).await;
+    let result = h
+        .import(&"9".repeat(32), h.expected(), archive)
+        .await
+        .unwrap();
+    assert!(
+        result.lcd.last_error.is_none(),
+        "{:?}",
+        result.lcd.last_error
+    );
+    let settings = h.store.read("device").unwrap();
+    assert_eq!(settings.theme.as_ref().unwrap().name, "Realtime");
+    let editor = settings.screen_editor.as_ref().unwrap();
+    assert!(editor.theme.as_ref().unwrap().requires_streaming());
+    assert!(!settings.theme.as_ref().unwrap().requires_streaming());
+    {
+        let frames = h.frames.lock().unwrap();
+        assert!(!frames.is_empty());
+        assert!(
+            frames[0].windows(2).any(|pair| pair == [0xff, 0xd8]),
+            "actual active frame is JPEG, not the editor H264 unit"
+        );
+    }
+    assert!(h.writes.lock().unwrap().iter().all(|committed| *committed));
+    let editor_before = editor.clone();
+    let h = h.restart().await;
+    assert_eq!(
+        h.store.read("device").unwrap().screen_editor,
+        Some(editor_before)
+    );
     h.finish().await;
 }

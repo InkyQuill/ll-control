@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 #[serde(rename_all = "snake_case")]
 pub enum ArchiveNotice {
     Cancelled,
+    WindowsPreparationFailed,
+    WindowsImportUnconfirmed,
     ProfileExportUnconfirmed,
     GroupExportUnconfirmed,
     CancelUnconfirmed,
@@ -22,6 +24,8 @@ impl ArchiveNotice {
 impl fmt::Display for ArchiveNotice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
+            Self::WindowsPreparationFailed => "Windows archive is not prepared. Check the file, controller record and sensor bindings, then prepare again.",
+            Self::WindowsImportUnconfirmed => "The Windows import result is unconfirmed. Read the operation ID; no new import was started automatically.",
             Self::Cancelled => "Operation cancelled.",
             Self::ProfileExportUnconfirmed => "The daemon prepared the archive, but the local file is unconfirmed. Cancel the transfer and export again.",
             Self::GroupExportUnconfirmed => "The local file is unconfirmed. Cancel the transfer and export again.",

@@ -1,4 +1,6 @@
 //! CPU composition renderer. No filesystem, device access or wall clock reads.
+#[path = "theme_divider.rs"]
+mod divider;
 use crate::text_layout::Shaper;
 use ab_glyph::{Font, FontArc, FontRef, ScaleFont};
 use image::{imageops::FilterType, Rgb};
@@ -348,6 +350,22 @@ fn render_layers(
         });
     for layer in background_layer.iter().chain(&theme.layers) {
         match layer {
+            ThemeLayer::Divider {
+                axis,
+                x,
+                y,
+                length,
+                thickness,
+                color,
+                opacity,
+                shadow,
+            } => {
+                let bounds = match axis {
+                    lconnect_ipc::DividerAxis::Horizontal => [*x, *y, *length, *thickness],
+                    lconnect_ipc::DividerAxis::Vertical => [*x, *y, *thickness, *length],
+                };
+                divider::draw(&mut canvas, bounds, *color, *opacity, shadow.as_ref());
+            }
             ThemeLayer::Fireworks { effect } => {
                 if let Some(scene) = time.fireworks.as_deref_mut() {
                     if scene.effect() != effect {
@@ -618,7 +636,7 @@ fn draw_sensor(
 }
 
 fn blend(canvas: &mut RgbImage, x: i32, y: i32, color: [u8; 3], alpha: f32) {
-    if !(0..480).contains(&x) || !(0..480).contains(&y) {
+    if alpha == 0.0 || !(0..480).contains(&x) || !(0..480).contains(&y) {
         return;
     }
     let pixel = canvas.get_pixel_mut(x as u32, y as u32);
@@ -642,6 +660,10 @@ fn draw_text(
             mask_style.color = [255; 3];
             mask_style.opacity = 100;
             draw_text_pass(&mut mask, font, &shaper, text, &mask_style);
+            // White glyph coverage is identical in all RGB channels. Blur one
+            // exact channel, preserving the existing raster and edge behavior.
+            let mask =
+                image::GrayImage::from_fn(480, 480, |x, y| image::Luma([mask.get_pixel(x, y)[0]]));
             let mask = if shadow.blur > 0 {
                 image::imageops::blur(&mask, f32::from(shadow.blur))
             } else {
@@ -893,6 +915,64 @@ pub fn render_background(theme: &LcdTheme) -> RgbImage {
 #[cfg(test)]
 mod wrapping_tests {
     use super::*;
+    #[test]
+    fn text_shadows_match_full_rgb_reference_on_colored_backgrounds() {
+        let font = FontRef::try_from_slice(include_bytes!("../assets/DejaVuSans.ttf")).unwrap();
+        for (blur, x, y, opacity, line_box) in [
+            (0, 0, 3, 100, false),
+            (2, -3, 4, 65, true),
+            (5, 7, -8, 100, true),
+        ] {
+            let mut style = test_style();
+            style.x = 20;
+            style.y = 10;
+            style.align = TextAlign::Center;
+            style.color = [32, 211, 141];
+            style.opacity = opacity;
+            style.line_box = line_box;
+            let shadow = lconnect_ipc::TextShadow {
+                x,
+                y,
+                blur,
+                color: [17, 40, 91],
+                opacity: 73,
+            };
+            style.shadow = Some(shadow.clone());
+            let mut actual = RgbImage::from_pixel(480, 480, Rgb([91, 127, 184]));
+            let mut expected = actual.clone();
+            let text = "42.5°C Ж ffi";
+            let mut white = style.clone();
+            white.shadow = None;
+            white.opacity = 100;
+            white.color = [255; 3];
+            let mut mask = RgbImage::new(480, 480);
+            draw_text(&mut mask, &font, text, &white).unwrap();
+            let mask = if blur > 0 {
+                image::imageops::blur(&mask, f32::from(blur))
+            } else {
+                mask
+            };
+            for (px, py, pixel) in mask.enumerate_pixels() {
+                blend(
+                    &mut expected,
+                    px as i32 + i32::from(x),
+                    py as i32 + i32::from(y),
+                    shadow.color,
+                    f32::from(pixel[0]) / 255.0 * f32::from(shadow.opacity) / 100.0
+                        * f32::from(opacity)
+                        / 100.0,
+                );
+            }
+            let mut foreground = style.clone();
+            foreground.shadow = None;
+            draw_text(&mut expected, &font, text, &foreground).unwrap();
+            draw_text(&mut actual, &font, text, &style).unwrap();
+            assert_eq!(
+                actual, expected,
+                "blur={blur}, x={x}, y={y}, opacity={opacity}"
+            );
+        }
+    }
     fn line_width(font: &impl Font, style: &TextStyle, text: &str) -> f32 {
         Shaper::new(font, style, text)
             .unwrap()

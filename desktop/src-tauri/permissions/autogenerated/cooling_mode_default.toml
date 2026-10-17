@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cooling-mode-default"
+description = "Enables the cooling_mode_default command without any pre-configured scope."
+commands.allow = ["cooling_mode_default"]
+
+[[permission]]
+identifier = "deny-cooling-mode-default"
+description = "Denies the cooling_mode_default command without any pre-configured scope."
+commands.deny = ["cooling_mode_default"]

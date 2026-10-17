@@ -7,6 +7,7 @@ test.beforeEach(async ({page})=>{
     URL.revokeObjectURL=(url:string)=>{fixture.revoked.push(url);revoke(url);};
     const png=Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
     Object.assign(window,{fixture,__TAURI_INTERNALS__:{invoke:async(command:string,args:Record<string,unknown>={})=>{
+        if (command === 'desktop_set_language') return null;
       if(command==='media_status')return null;
       if(command==='media_thumbnail_cancel'){fixture.cancelled.push(String(args.id));return null;}
       if(command==='media_thumbnail'){
@@ -20,7 +21,7 @@ test.beforeEach(async ({page})=>{
       switch(args.method){
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle'};
         case 'get_lcd_media':return null;
@@ -29,10 +30,11 @@ test.beforeEach(async ({page})=>{
       }
     }}});
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
 });
 
 test('gallery decodes one page sequentially, retains browsed page on refresh and selects without Apply',async({page})=>{
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await page.getByLabel('Показать карточки роликов').check();
   const gallery=page.getByRole('group',{name:'Карточки роликов'});
@@ -47,16 +49,19 @@ test('gallery decodes one page sequentially, retains browsed page on refresh and
   await gallery.getByRole('radio',{name:'Clip 15',exact:true}).check();
   await expect(page.getByLabel('Сохранённый ролик')).toHaveValue('f'.padStart(32,'0'));
   expect(await page.evaluate(()=>(window as unknown as {fixture:{writes:string[]}}).fixture.writes)).toEqual([]);
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>{const f=(window as unknown as {fixture:{created:string[];revoked:string[]}}).fixture;return f.created.length===f.revoked.length;})).toBe(true);
 });
 
 test('page changes and close remove queued thumbnails before native dispatch',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{hold:boolean}}).fixture.hold=true;});
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{release:unknown}}).fixture.release!==null)).toBe(true);
   await page.getByLabel('Показать карточки роликов').check();
   await page.getByRole('button',{name:'Следующие ролики',exact:true}).click();
+  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Библиотека роликов',{exact:true}).click();
   // Details becomes hidden before its asynchronous toggle unmounts children.
   await expect(page.getByRole('group',{name:'Карточки роликов',includeHidden:true})).toHaveCount(0);

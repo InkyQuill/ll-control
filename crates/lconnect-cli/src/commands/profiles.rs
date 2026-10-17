@@ -21,6 +21,55 @@ impl From<Group> for ProfileGroup {
 }
 #[derive(Subcommand)]
 pub enum Command {
+    /// Preview a complete Windows FanAndLighting group; --apply commits explicitly.
+    WindowsControl(super::windows_control::Options),
+    /// Inspect a Windows 2.1.28 ZIP locally; never imports assets or applies settings.
+    WindowsInspect {
+        file: PathBuf,
+    },
+    /// Inspect Screen banks/payloads; --bindings prepares a native runtime proposal, never Apply.
+    WindowsScreen {
+        file: PathBuf,
+        #[arg(long)]
+        record: usize,
+        /// Explicit runtime sensor/font/resource mappings; omitted means source inventory only.
+        #[arg(long)]
+        bindings: Option<PathBuf>,
+        /// Prepare all basic editor banks/overlays, including inactive settings, instead of runtime only.
+        #[arg(long, requires = "bindings")]
+        editor_banks: bool,
+        /// Verify and normalize static PNG/JPEG payloads without publishing them.
+        #[arg(long, conflicts_with_all=["bindings","editor_banks"])]
+        prepare_images: bool,
+        /// Prepare GIF/MP4 through the shared bounded media pipeline; never publishes.
+        #[arg(long, conflicts_with_all=["bindings","editor_banks","prepare_images"])]
+        prepare_media: bool,
+        /// Explicit source path/URI→archive entry or existing native resource mapping.
+        #[arg(long,requires="bindings",conflicts_with_all=["prepare_images","prepare_media","editor_banks"])]
+        resource_map: Option<PathBuf>,
+    },
+    /// Inspect all static/dynamic lighting banks locally; never imports or applies.
+    WindowsLighting {
+        file: PathBuf,
+        #[arg(long)]
+        record: usize,
+        /// JSON map of all six Windows sensor roles to explicit Linux IDs and units.
+        #[arg(long)]
+        bindings: Option<PathBuf>,
+    },
+    /// Prepare all cooling-mode policies from one Windows record locally; never applies/imports a group.
+    WindowsCooling {
+        file: PathBuf,
+        #[arg(long)]
+        record: usize,
+        /// Explicit binding for the Windows CPU source; availability is checked only on later Apply.
+        #[arg(long)]
+        cpu_sensor: String,
+        #[arg(long, default_value_t = 0.0)]
+        hysteresis_c: f64,
+        #[arg(long, default_value_t = 100)]
+        fallback_percent: u8,
+    },
     /// Full-group snapshots/backups, distinct from individual saved slots.
     Group {
         #[command(subcommand)]
@@ -89,6 +138,137 @@ pub enum Command {
 
 pub async fn run(command: Command, as_json: bool) -> anyhow::Result<()> {
     let command = match command {
+        Command::WindowsControl(options) => {
+            return super::windows_control::run(options, as_json).await
+        }
+        Command::WindowsInspect { file } => {
+            let report = lconnect_profile::inspect_windows(std::fs::File::open(file)?)?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            return Ok(());
+        }
+        Command::WindowsScreen {
+            file,
+            record,
+            bindings,
+            editor_banks,
+            prepare_images,
+            prepare_media,
+            resource_map,
+        } => {
+            if let Some(map) = resource_map {
+                return super::windows_screen_media::plan(
+                    file,
+                    record,
+                    bindings.ok_or_else(|| anyhow::anyhow!("resource map requires bindings"))?,
+                    map,
+                )
+                .await;
+            }
+            if prepare_media {
+                return super::windows_screen_media::run(file, record).await;
+            }
+            let bindings = if let Some(path) = bindings {
+                let mut bytes = Vec::new();
+                std::fs::File::open(path)?
+                    .take(64 * 1024 + 1)
+                    .read_to_end(&mut bytes)?;
+                Some(lconnect_profile::linux_screen::parse_bindings(&bytes)?)
+            } else {
+                None
+            };
+            let report = lconnect_profile::screen::inspect_windows_screen(
+                std::fs::File::open(&file)?,
+                record,
+            )?;
+            if prepare_images {
+                let images = lconnect_profile::screen_assets::prepare_images(
+                    std::fs::File::open(&file)?,
+                    &report,
+                )?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(
+                        &json!({"source":report,"prepared_images":images,"preparation_only":true,"apply_supported":false,"group_import_supported":false})
+                    )?
+                );
+                return Ok(());
+            }
+            if let Some(bindings) = bindings {
+                if editor_banks {
+                    let editors =
+                        lconnect_profile::screen_editor::prepare_basic_banks(&report, &bindings)?;
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(
+                            &json!({"source":report,"editor_banks":editors,"preparation_only":true,"group_import_supported":false,"apply_supported":false})
+                        )?
+                    );
+                    return Ok(());
+                }
+                let runtime = lconnect_profile::linux_screen::prepare_runtime(
+                    &report.runtime_config.source_json,
+                    &bindings,
+                )?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(
+                        &json!({"source":report,"runtime":runtime,"preparation_only":true,"group_import_supported":false,"apply_supported":false})
+                    )?
+                );
+            } else {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
+            return Ok(());
+        }
+        Command::WindowsLighting {
+            file,
+            record,
+            bindings,
+        } => {
+            let report = lconnect_profile::lighting::inspect_windows_lighting(
+                std::fs::File::open(file)?,
+                record,
+            )?;
+            if let Some(path) = bindings {
+                let file = std::fs::File::open(path)?;
+                anyhow::ensure!(
+                    file.metadata()?.len() <= 16 * 1024,
+                    "binding map exceeds16KiB"
+                );
+                let bytes = {
+                    let mut bytes = Vec::new();
+                    file.take(16 * 1024 + 1).read_to_end(&mut bytes)?;
+                    bytes
+                };
+                anyhow::ensure!(bytes.len() <= 16 * 1024, "binding map exceeds16KiB");
+                let bindings = lconnect_profile::linux_lighting::parse_bindings(&bytes)?;
+                let prepared = lconnect_profile::linux_lighting::prepare(&report, &bindings)?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(
+                        &json!({"source":report,"lighting":prepared,"preparation_only":true,"group_import_supported":false,"apply_supported":false,"sensor_binding_verified":false})
+                    )?
+                );
+            } else {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
+            return Ok(());
+        }
+        Command::WindowsCooling {
+            file,
+            record,
+            cpu_sensor,
+            hysteresis_c,
+            fallback_percent,
+        } => {
+            return super::windows_cooling::run(
+                file,
+                record,
+                &cpu_sensor,
+                hysteresis_c,
+                fallback_percent,
+            );
+        }
         Command::Group { command } => return super::group_archives::run(command, as_json).await,
         other => other,
     };
@@ -145,7 +325,12 @@ pub async fn run(command: Command, as_json: bool) -> anyhow::Result<()> {
         | Command::Import { .. }
         | Command::ArchiveState { .. }
         | Command::ArchiveFinish { .. }
-        | Command::ArchiveCancel { .. } => unreachable!("handled above"),
+        | Command::ArchiveCancel { .. }
+        | Command::WindowsControl(..)
+        | Command::WindowsInspect { .. }
+        | Command::WindowsScreen { .. }
+        | Command::WindowsCooling { .. }
+        | Command::WindowsLighting { .. } => unreachable!("handled above"),
     };
     if let Some(edit) = &edit {
         edit.validate()?;

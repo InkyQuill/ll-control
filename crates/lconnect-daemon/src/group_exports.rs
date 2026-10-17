@@ -518,6 +518,7 @@ pub fn summary(profile: &GroupProfile) -> Result<Summary> {
         fan_manual_percent: None,
         pump_manual: None,
         cooling: None,
+        cooling_modes: None,
         fan_led_mode: None,
         pump_led_mode: None,
         dynamic_rgb: None,
@@ -553,6 +554,14 @@ pub fn summary(profile: &GroupProfile) -> Result<Summary> {
                         },
                     });
             info.cooling = Some(group.cooling.clone());
+            info.cooling_modes =
+                group
+                    .cooling_banks
+                    .as_ref()
+                    .map(|banks| lconnect_ipc::GroupCoolingModes {
+                        fan: banks.fan.clone(),
+                        pump: banks.pump.clone(),
+                    });
             info.fan_led_mode = group.lighting.fan.as_ref().map(|s| s.mode.clone());
             info.pump_led_mode = group.lighting.pump.as_ref().map(|s| s.mode.clone());
             info.dynamic_rgb = group.dynamic_rgb.clone();
@@ -568,6 +577,38 @@ mod tests {
         persistence::{DeviceSettings, PersistenceStore},
         profile_group::{GroupKind, GroupProfile},
     };
+    #[test]
+    fn control_summary_exposes_reviewable_modes_without_private_source_metadata() {
+        let mut profile = crate::control_reset::profile("cpu:chosen").unwrap();
+        let GroupSettings::FanAndLighting(group) = &mut profile.content else {
+            panic!()
+        };
+        group.cooling_banks.as_mut().unwrap().source =
+            Some(lconnect_ipc::CoolingBankSource::Windows2128 {
+                fan_json: r#"{"private":"fan provenance"}"#.into(),
+                pump_json: r#"{"private":"pump provenance"}"#.into(),
+            });
+        let info = summary(&profile).unwrap();
+        let modes = info.cooling_modes.as_ref().unwrap();
+        assert_eq!(modes.fan.len(), 8);
+        assert_eq!(modes.pump.len(), 3);
+        assert_eq!(
+            info.cooling.as_ref().unwrap().fan_mode.as_deref(),
+            Some("StandardSpeed")
+        );
+        assert_eq!(
+            info.cooling.as_ref().unwrap().pump_mode.as_deref(),
+            Some("PWMQuiet")
+        );
+        let json = serde_json::to_value(info).unwrap();
+        assert!(json["cooling_modes"].get("source").is_none());
+        assert!(!json.to_string().contains("provenance"));
+        let (_, _, _, _, screen) = source();
+        assert!(serde_json::to_value(summary(&screen).unwrap())
+            .unwrap()
+            .get("cooling_modes")
+            .is_none());
+    }
     fn source() -> (
         tempfile::TempDir,
         PersistenceStore,

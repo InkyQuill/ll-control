@@ -330,6 +330,18 @@ pub(crate) async fn preview(
         Ok::<_, anyhow::Error>((source.read_unit(0)?, source.pin()))
     })
     .await??;
+    let rendered = preview_unit(runtime, unit, elapsed_seconds).await;
+    drop(pin);
+    rendered
+}
+
+/// Same joined/limited decoder for a privately staged source access unit.
+/// The caller retains the owning preparation and its admission through this job.
+pub(crate) async fn preview_unit(
+    runtime: Arc<ThemeRuntime>,
+    unit: H264AccessUnit,
+    elapsed_seconds: u64,
+) -> Result<Vec<u8>> {
     let frame = decode_preview_frame(unit, OsStr::new("ffmpeg"), Duration::from_secs(10)).await?;
     let rendered = tokio::task::spawn_blocking(move || {
         let frame = runtime.compose_video_frame(frame, elapsed_seconds)?;
@@ -343,7 +355,6 @@ pub(crate) async fn preview(
         )
     })
     .await?;
-    drop(pin);
     rendered
 }
 

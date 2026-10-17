@@ -1,6 +1,14 @@
 //! Full-group upload/preparation and explicit durable Finish/Apply.
 use crate::{GroupArchiveSnapshot, GroupArchiveSummary};
 use serde::{Deserialize, Serialize};
+/// Explicit Windows bindings and aliases; source paths are data, never host paths.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WindowsScreenSource {
+    pub record: usize,
+    pub bindings_json: String,
+    pub resources_json: String,
+}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
 pub enum GroupUploadRequest {
@@ -8,6 +16,12 @@ pub enum GroupUploadRequest {
         id: String,
         size: u64,
         expected: String,
+    },
+    BeginWindowsScreen {
+        id: String,
+        size: u64,
+        expected: String,
+        source: WindowsScreenSource,
     },
     Chunk {
         id: String,
@@ -56,4 +70,12 @@ pub struct GroupUploadState {
     pub last_error: Option<String>,
     #[serde(default)]
     pub committed: Option<crate::FullGroupCommit>,
+}
+
+/// Independent source scene versus the selected source editor preset.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WindowsScreenPreviewSource {
+    Scene,
+    Editor,
 }

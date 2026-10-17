@@ -12,7 +12,7 @@ use serde_json::json;
 use std::{
     fs::File,
     future::Future,
-    io::{Read, Write},
+    io::{Read, Seek, SeekFrom, Write},
     os::unix::fs::OpenOptionsExt,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
@@ -26,11 +26,14 @@ pub enum Mode {
     Import,
     Export,
     Reset,
+    Windows,
+    WindowsScreen,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Phase {
     Choosing,
+    Bindings,
     Uploading,
     Inspecting,
     Prepared,
@@ -48,7 +51,12 @@ impl Phase {
     pub fn idle(self) -> bool {
         matches!(
             self,
-            Self::Prepared | Self::Cancelled | Self::Complete | Self::Failed | Self::Uncertain
+            Self::Bindings
+                | Self::Prepared
+                | Self::Cancelled
+                | Self::Complete
+                | Self::Failed
+                | Self::Uncertain
         )
     }
 }
@@ -69,6 +77,17 @@ pub struct Status {
     pub summary: Option<GroupArchiveSummary>,
     pub readback: Option<FullGroupReadback>,
     pub sensor_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub windows_source: Option<WindowsSource>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub windows_options: Option<WindowsOptions>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub windows_lighting: Option<lconnect_ipc::WindowsControlLightingReview>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub windows_screen_options: Option<lconnect_ipc::WindowsScreenSource>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub windows_screen_requirements:
+        Option<lconnect_profile::screen_requirements::ScreenRequirements>,
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -89,6 +108,29 @@ pub enum Action {
     Reapply,
     Dismiss,
 }
+#[derive(Debug, Clone, Serialize)]
+pub struct WindowsRecord {
+    pub record_index: usize,
+    pub profile_sha256: String,
+}
+#[derive(Debug, Clone, Serialize)]
+pub struct WindowsSource {
+    pub source_version: String,
+    pub backup_sha256: String,
+    pub controllers: Vec<WindowsRecord>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WindowsOptions {
+    pub record: usize,
+    pub bindings: lconnect_profile::linux_lighting::SensorBindings,
+}
+struct WindowsInput {
+    id: String,
+    file: Mutex<File>,
+    fingerprint: String,
+    draft: Mutex<Option<String>>,
+}
 struct Job {
     status: Status,
     socket: PathBuf,
@@ -99,6 +141,7 @@ struct Job {
 struct State {
     closed: bool,
     job: Option<Job>,
+    windows: Option<Arc<WindowsInput>>,
 }
 #[derive(Clone, Default)]
 pub struct Groups(Arc<Mutex<State>>);
@@ -150,10 +193,18 @@ impl Groups {
                     );
                 } else {
                     ensure!(
+                        !matches!(status.mode, Mode::Windows | Mode::WindowsScreen)
+                            || old.status.id != status.id,
+                        "New Windows source requires a new operation ID"
+                    );
+                    ensure!(
                         !matches!(old.status.phase, Phase::Prepared | Phase::Uncertain),
                         "Resolve the previous group operation first"
                     );
                 }
+            }
+            if !replace {
+                state.windows = None;
             }
             state.job = Some(Job {
                 status: status.clone(),
@@ -172,16 +223,39 @@ impl Groups {
                 .and_then(|r| r);
             if let Err(e) = result {
                 let _ = owner.update(&id, |s| {
-                    s.message_code = ArchiveNotice::from_error(&e);
+                    s.message_code = if matches!(s.mode, Mode::Windows | Mode::WindowsScreen) {
+                        Some(if matches!(s.phase, Phase::Applying | Phase::Recovering) {
+                            ArchiveNotice::WindowsImportUnconfirmed
+                        } else {
+                            ArchiveNotice::WindowsPreparationFailed
+                        })
+                    } else {
+                        ArchiveNotice::from_error(&e)
+                    };
                     s.message = Some(e.to_string());
                     s.phase = if s.phase == Phase::Choosing
                         || (s.mode == Mode::Reset && s.phase == Phase::Inspecting)
-                    {
+                        || (s.mode == Mode::Windows
+                            && !matches!(s.phase, Phase::Applying | Phase::Recovering))
+                        || (s.mode == Mode::WindowsScreen
+                            && !matches!(
+                                s.phase,
+                                Phase::Applying | Phase::Recovering | Phase::Uncertain
+                            )) {
                         Phase::Failed
                     } else {
                         Phase::Uncertain
                     };
                 });
+            }
+            if owner.status().ok().flatten().is_some_and(|s| {
+                s.id == id
+                    && matches!(s.mode, Mode::Windows | Mode::WindowsScreen)
+                    && s.phase == Phase::Cancelled
+            }) {
+                if let Ok(mut state) = owner.lock() {
+                    state.windows = None;
+                }
             }
             // Terminal state is not a license to replace a live worker.
             let _ = done.send(true);
@@ -195,8 +269,13 @@ impl Groups {
         language: lconnect_ipc::InterfaceLanguage,
     ) -> Result<Status> {
         let choice = request.clone();
-        self.start_with(socket, request, move |cancel| {
-            crate::archive_chooser::choose_group(choice.mode == Mode::Export, cancel, language)
+        self.start_with(socket, request, move |cancel| async move {
+            if matches!(choice.mode, Mode::Windows | Mode::WindowsScreen) {
+                crate::archive_chooser::choose_windows_group(cancel, language).await
+            } else {
+                crate::archive_chooser::choose_group(choice.mode == Mode::Export, cancel, language)
+                    .await
+            }
         })
     }
     fn start_with<F, Fut>(&self, socket: PathBuf, request: Start, picker: F) -> Result<Status>
@@ -224,6 +303,14 @@ impl Groups {
             request.mode == Mode::Reset || request.sensor_id.is_none(),
             "Sensor is only valid for reset"
         );
+        ensure!(
+            request.mode != Mode::Windows || request.group == Group::FanAndLighting,
+            "Windows import requires FanAndLighting"
+        );
+        ensure!(
+            request.mode != Mode::WindowsScreen || request.group == Group::Screen,
+            "Windows Screen import requires Screen"
+        );
         let status = Status {
             id: request.id.clone(),
             dev: request.dev.clone(),
@@ -243,6 +330,11 @@ impl Groups {
             summary: None,
             readback: None,
             sensor_id: request.sensor_id.clone(),
+            windows_source: None,
+            windows_options: None,
+            windows_lighting: None,
+            windows_screen_requirements: None,
+            windows_screen_options: None,
         };
         self.launch(
             socket.clone(),
@@ -292,6 +384,89 @@ impl Groups {
                 owner.update(&request.id, |s| {
                     s.file_name = path.file_name().map(|v| v.to_string_lossy().into_owned())
                 })?;
+                if matches!(request.mode, Mode::Windows | Mode::WindowsScreen) {
+                    let read_cancel = cancel.clone();
+                    let inspected = tokio::task::spawn_blocking(move || -> Result<_> {
+                        let mut file = std::fs::OpenOptions::new()
+                            .read(true)
+                            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                            .open(path)?;
+                        ensure!(
+                            file.metadata()?.is_file(),
+                            "Windows archive must be a regular file"
+                        );
+                        if request.mode == Mode::WindowsScreen {
+                            let size = file.metadata()?.len();
+                            ensure!(
+                                (44..=MAX).contains(&size),
+                                "Windows archive size outside limit"
+                            );
+                            let mut private = tempfile::tempfile()?;
+                            let mut limited = (&mut file).take(size + 1);
+                            let mut copied = 0u64;
+                            let mut buffer = [0u8; 64 * 1024];
+                            loop {
+                                ensure!(
+                                    !*read_cancel.borrow(),
+                                    "Windows source selection cancelled"
+                                );
+                                let count = limited.read(&mut buffer)?;
+                                if count == 0 {
+                                    break;
+                                }
+                                private.write_all(&buffer[..count])?;
+                                copied += count as u64;
+                            }
+                            ensure!(copied == size, "Windows archive changed during selection");
+                            private.seek(SeekFrom::Start(0))?;
+                            file = private;
+                        }
+                        let source = lconnect_profile::inspect_windows(&mut file)?;
+                        ensure!(
+                            source.group
+                                == if request.mode == Mode::WindowsScreen {
+                                    lconnect_profile::Group::Screen
+                                } else {
+                                    lconnect_profile::Group::FanAndLighting
+                                },
+                            "Windows archive does not match selected group"
+                        );
+                        Ok((file, source))
+                    })
+                    .await?;
+                    if *cancel.borrow() {
+                        owner.update(&request.id, |s| s.phase = Phase::Cancelled)?;
+                        return Ok(());
+                    }
+                    let (file, source) = inspected?;
+                    {
+                        let mut state = owner.lock()?;
+                        state.windows = Some(Arc::new(WindowsInput {
+                            id: request.id.clone(),
+                            file: Mutex::new(file),
+                            fingerprint: source.backup_sha256.clone(),
+                            draft: Mutex::new(None),
+                        }));
+                    }
+                    owner.update(&request.id, |s| {
+                        s.windows_source = Some(WindowsSource {
+                            source_version: source.source_version,
+                            backup_sha256: source.backup_sha256,
+                            controllers: source
+                                .controllers
+                                .into_iter()
+                                .map(|c| WindowsRecord {
+                                    record_index: c.record_index,
+                                    profile_sha256: c.profile_sha256,
+                                })
+                                .collect(),
+                        });
+                        s.phase = Phase::Bindings;
+                        s.snapshot = None;
+                        s.summary = None;
+                    })?;
+                    return Ok(());
+                }
                 let result = match request.mode {
                     Mode::Export => {
                         owner
@@ -303,7 +478,7 @@ impl Groups {
                             .upload(&client, &request, &snapshot, path, &mut cancel)
                             .await
                     }
-                    Mode::Reset => unreachable!(),
+                    Mode::Reset | Mode::Windows | Mode::WindowsScreen => unreachable!(),
                 };
                 if result.is_err() {
                     // Never claim cancellation until the daemon has finished cleanup.
@@ -317,6 +492,120 @@ impl Groups {
             },
         )
     }
+    /// Bind an inspected source and prepare a native-owned immutable draft. No Apply.
+    pub fn prepare_windows(
+        &self,
+        socket: PathBuf,
+        request: Start,
+        options: WindowsOptions,
+    ) -> Result<Status> {
+        valid_id(&request.id)?;
+        ensure!(
+            request.mode == Mode::Windows
+                && request.group == Group::FanAndLighting
+                && request.sensor_id.is_none(),
+            "Invalid Windows preparation target"
+        );
+        let (mut status, input) = {
+            let state = self.lock()?;
+            let job = state.job.as_ref().context("Windows source missing")?;
+            ensure!(
+                job.status.id == request.id
+                    && job.status.dev == request.dev
+                    && job.status.group == request.group
+                    && job.status.mode == Mode::Windows,
+                "Stale Windows preparation target"
+            );
+            ensure!(
+                *job.done.borrow()
+                    && matches!(
+                        job.status.phase,
+                        Phase::Bindings | Phase::Prepared | Phase::Failed
+                    ),
+                "Read the admitted Windows operation before preparing again"
+            );
+            let input = state
+                .windows
+                .as_ref()
+                .context("Select a Windows source archive first")?;
+            ensure!(input.id == request.id, "Stale Windows source");
+            (job.status.clone(), input.clone())
+        };
+        status.phase = Phase::Inspecting;
+        status.snapshot = None;
+        status.summary = None;
+        status.windows_options = None;
+        status.windows_lighting = None;
+        status.message = None;
+        status.message_code = None;
+        self.launch(
+            socket.clone(),
+            status,
+            true,
+            move |owner, cancel| async move {
+                *input
+                    .draft
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("Windows preparation unavailable"))? = None;
+                let source = input.clone();
+                let selected = options.clone();
+                let prepared = tokio::task::spawn_blocking(move || -> Result<String> {
+                    let mut file = source
+                        .file
+                        .lock()
+                        .map_err(|_| anyhow::anyhow!("Windows file grant unavailable"))?;
+                    file.seek(SeekFrom::Start(0))?;
+                    let draft = lconnect_profile::control::prepare(
+                        &mut *file,
+                        selected.record,
+                        &selected.bindings,
+                        0.0,
+                        100,
+                    )?;
+                    ensure!(
+                        draft.source_backup_sha256 == source.fingerprint,
+                        "Windows archive changed; select it again"
+                    );
+                    let bytes = serde_json::to_vec(&draft)?;
+                    lconnect_profile::control::parse(&bytes)?;
+                    Ok(String::from_utf8(bytes)?)
+                })
+                .await?;
+                if *cancel.borrow() {
+                    owner.update(&request.id, |s| s.phase = Phase::Cancelled)?;
+                    return Ok(());
+                }
+                let draft = prepared?;
+                let client = connect(&socket).await?;
+                let preview: lconnect_ipc::WindowsControlPreview = call(
+                    &client,
+                    "preview_windows_control_import",
+                    json!({"dev":request.dev,"draft_json":draft}),
+                )
+                .await?;
+                ensure!(
+                    preview.target.dev == request.dev && preview.target.group == request.group,
+                    "Unexpected Windows target"
+                );
+                if *cancel.borrow() {
+                    owner.update(&request.id, |s| s.phase = Phase::Cancelled)?;
+                    return Ok(());
+                }
+                *input
+                    .draft
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("Windows preparation unavailable"))? = Some(draft);
+                owner.update(&request.id, |s| {
+                    s.phase = Phase::Prepared;
+                    s.snapshot = Some(preview.target);
+                    s.summary = Some(preview.proposed);
+                    s.windows_lighting = Some(preview.lighting);
+                    s.windows_options = Some(options);
+                })?;
+                Ok(())
+            },
+        )
+    }
     pub fn action(
         &self,
         socket: PathBuf,
@@ -326,7 +615,8 @@ impl Groups {
     ) -> Result<Option<Status>> {
         valid_id(&request.id)?;
         ensure!(
-            request.mode != Mode::Reset || request.group == Group::FanAndLighting,
+            !matches!(request.mode, Mode::Reset | Mode::Windows)
+                || request.group == Group::FanAndLighting,
             "Reset requires FanAndLighting"
         );
         let old = self.status()?;
@@ -355,13 +645,18 @@ impl Groups {
                 );
             }
             state.job = None;
+            state.windows = None;
             return Ok(None);
         }
-        if matches!(action, Action::Cancel) && request.mode == Mode::Reset {
+        if matches!(action, Action::Cancel) && matches!(request.mode, Mode::Reset | Mode::Windows) {
             ensure!(
                 old.as_ref().is_some_and(|s| matches!(
                     s.phase,
-                    Phase::Prepared | Phase::Inspecting | Phase::Cancelled | Phase::Failed
+                    Phase::Bindings
+                        | Phase::Prepared
+                        | Phase::Inspecting
+                        | Phase::Cancelled
+                        | Phase::Failed
                 )),
                 "Reset may already be admitted; read its result instead of cancelling"
             );
@@ -391,15 +686,30 @@ impl Groups {
                 }
             }
         }
+        if matches!(action, Action::Cancel)
+            && (request.mode == Mode::Windows
+                || request.mode == Mode::WindowsScreen
+                    && old.as_ref().is_some_and(|s| s.snapshot.is_none()))
+        {
+            let mut state = self.lock()?;
+            let job = state.job.as_mut().context("Windows source missing")?;
+            ensure!(*job.done.borrow(), "Windows worker is still finishing");
+            job.status.phase = Phase::Cancelled;
+            let status = job.status.clone();
+            state.windows = None;
+            return Ok(Some(status));
+        }
         if matches!(action, Action::Finish) {
             ensure!(
-                old.as_ref()
-                    .is_some_and(|s| (matches!(s.mode, Mode::Import | Mode::Reset)
-                        && s.phase == Phase::Prepared)
-                        || (s.mode == Mode::Reset
-                            && s.phase == Phase::Uncertain
-                            && s.snapshot.is_some()
-                            && s.sensor_id.is_some())),
+                old.as_ref().is_some_and(|s| (matches!(
+                    s.mode,
+                    Mode::Import | Mode::Reset | Mode::Windows | Mode::WindowsScreen
+                ) && s.phase == Phase::Prepared)
+                    || (matches!(s.mode, Mode::Reset | Mode::Windows)
+                        && s.phase == Phase::Uncertain
+                        && s.snapshot.is_some()
+                        && (s.mode == Mode::Windows && s.windows_options.is_some()
+                            || s.mode == Mode::Reset && s.sensor_id.is_some()))),
                 "Inspect the archive before applying it"
             );
         }
@@ -432,6 +742,11 @@ impl Groups {
             summary: None,
             readback: None,
             sensor_id: None,
+            windows_source: None,
+            windows_options: None,
+            windows_lighting: None,
+            windows_screen_requirements: None,
+            windows_screen_options: None,
         });
         let reset_parameters = if request.mode == Mode::Reset && matches!(action, Action::Finish) {
             Some((
@@ -446,6 +761,32 @@ impl Groups {
         } else {
             None
         };
+        let windows_parameters =
+            if request.mode == Mode::Windows && matches!(action, Action::Finish) {
+                let state = self.lock()?;
+                let input = state
+                    .windows
+                    .as_ref()
+                    .context("Windows source is no longer available; read the operation result")?;
+                ensure!(input.id == request.id, "Stale Windows source");
+                let draft = input
+                    .draft
+                    .lock()
+                    .map_err(|_| anyhow::anyhow!("Windows preparation unavailable"))?
+                    .clone()
+                    .context("Windows preparation missing")?;
+                Some((
+                    status
+                        .snapshot
+                        .as_ref()
+                        .context("Windows target snapshot missing")?
+                        .expected
+                        .clone(),
+                    draft,
+                ))
+            } else {
+                None
+            };
         status.phase = match action {
             Action::Finish | Action::Reapply => Phase::Applying,
             Action::Cancel => Phase::Cancelling,
@@ -456,6 +797,11 @@ impl Groups {
         let started = self.launch(socket.clone(), status, true, move |owner, _| async move {
             let client = connect(&socket).await?;
             match action {
+                Action::Finish if request.mode==Mode::Windows => {
+                    let (expected,draft_json)=windows_parameters.context("Windows preparation missing")?;
+                    let result:lconnect_ipc::FullGroupCommit=call(&client,"import_windows_control",json!({"dev":request.dev,"operation_id":request.id,"expected":expected,"draft_json":draft_json})).await?;
+                    owner.accept_readback(&request,result.readback)?;
+                }
                 Action::Finish if request.mode == Mode::Reset => {
                     let (expected, sensor) = reset_parameters.context("Reset preparation missing")?;
                     let result: lconnect_ipc::FullGroupCommit = call(&client,"reset_fan_and_lighting",json!({"dev":request.dev,"operation_id":request.id,"expected":expected,"sensor_id":sensor})).await?;
@@ -475,7 +821,7 @@ impl Groups {
                     owner.accept_upload(&request.id, state)?;
                 }
                 Action::Cancel => {
-                    if request.mode != Mode::Reset { cleanup(&client, &request).await?; }
+                    if !matches!(request.mode,Mode::Reset|Mode::Windows) { cleanup(&client, &request).await?; }
                     owner.update(&request.id, |s| s.phase = Phase::Cancelled)?;
                 }
                 Action::Recover => {
@@ -485,7 +831,7 @@ impl Groups {
                     match receipt {
                         Ok(readback) => owner.accept_readback(&request, readback)?,
                         Err(receipt_error) => {
-                            ensure!(request.mode != Mode::Reset, "Reset receipt unavailable: {receipt_error}. No reset was replayed; inspect current settings before a new reset.");
+                            ensure!(!matches!(request.mode,Mode::Reset|Mode::Windows), "Control receipt unavailable: {receipt_error}. No reset was replayed; inspect current settings before a new reset.");
                             let state = upload_rpc(&client, &request, U::Status { id: request.id.clone() }).await.with_context(|| format!("Receipt: {receipt_error}"))?;
                             owner.accept_upload(&request.id, state)?;
                         }
@@ -703,7 +1049,7 @@ impl Groups {
         cancel: &mut watch::Receiver<bool>,
     ) -> Result<()> {
         self.update(&request.id, |s| s.phase = Phase::Uploading)?;
-        let (mut input, size) = tokio::task::spawn_blocking(move || -> Result<_> {
+        let (input, size) = tokio::task::spawn_blocking(move || -> Result<_> {
             let mut file = std::fs::OpenOptions::new()
                 .read(true)
                 .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
@@ -721,20 +1067,34 @@ impl Groups {
             Ok((file, m.len()))
         })
         .await??;
-        self.update(&request.id, |s| {
-            s.total = size;
-            s.summary = None;
-        })?;
-        let begun = upload_rpc(
+        self.upload_file(
             client,
             request,
+            input,
+            size,
             U::Begin {
                 id: request.id.clone(),
                 size,
                 expected: snapshot.expected.clone(),
             },
+            cancel,
         )
-        .await?;
+        .await
+    }
+    async fn upload_file(
+        &self,
+        client: &IpcClient,
+        request: &Start,
+        mut input: File,
+        size: u64,
+        begin: U,
+        cancel: &mut watch::Receiver<bool>,
+    ) -> Result<()> {
+        self.update(&request.id, |s| {
+            s.total = size;
+            s.summary = None;
+        })?;
+        let begun = upload_rpc(client, request, begin).await?;
         ensure!(
             begun.received == 0 && begun.size == size,
             "Unexpected upload start"
@@ -820,10 +1180,9 @@ impl Groups {
                     .await
                     .context("Group worker completion unavailable")?;
             }
-            if self
-                .status()?
-                .is_some_and(|s| s.phase == Phase::Prepared && s.mode != Mode::Reset)
-            {
+            if self.status()?.is_some_and(|s| {
+                s.phase == Phase::Prepared && !matches!(s.mode, Mode::Reset | Mode::Windows)
+            }) {
                 let client = connect(&socket).await?;
                 cleanup(
                     &client,
@@ -838,6 +1197,7 @@ impl Groups {
                 .await?;
             }
         }
+        self.lock()?.windows = None;
         Ok(())
     }
 }
@@ -897,8 +1257,10 @@ async fn cleanup(client: &IpcClient, r: &Start) -> Result<()> {
 }
 async fn cleanup_inner(client: &IpcClient, r: &Start) -> Result<()> {
     match r.mode {
-        Mode::Reset => anyhow::bail!("Reset has no transfer to cancel; read its result"),
-        Mode::Import => {
+        Mode::Reset | Mode::Windows => {
+            anyhow::bail!("Control import has no transfer to cancel; read its result")
+        }
+        Mode::Import | Mode::WindowsScreen => {
             loop {
                 let state = upload_rpc(client, r, U::Cancel { id: r.id.clone() }).await?;
                 ensure!(
@@ -943,3 +1305,6 @@ async fn cleanup_inner(client: &IpcClient, r: &Start) -> Result<()> {
 #[cfg(test)]
 #[path = "group_jobs_tests.rs"]
 mod tests;
+
+mod windows_screen;
+pub use windows_screen::WindowsPreparation;

@@ -13,11 +13,14 @@ reply=connection.call_sync('org.freedesktop.DBus','/org/freedesktop/DBus','org.f
 assert reply.unpack()[0]==1
 portal=Gio.DBusNodeInfo.new_for_xml('''<node><interface name="org.freedesktop.portal.Screenshot"><method name="Screenshot"><arg name="parent" type="s" direction="in"/><arg name="options" type="a{sv}" direction="in"/><arg name="handle" type="o" direction="out"/></method></interface></node>''')
 request=Gio.DBusNodeInfo.new_for_xml('''<node><interface name="org.freedesktop.portal.Request"><method name="Close"/></interface></node>''')
-observations={'requests':[],'closed':[]}
+observations={'requests':[],'closed':[],'close_attempts':[]}
 def save():
     (root/'portal.tmp').write_text(json.dumps(observations));(root/'portal.tmp').replace(root/'portal.json')
 def close(conn,sender,path,interface,method,parameters,invocation):
-    assert method=='Close';observations['closed'].append(path);save();invocation.return_value(GLib.Variant('()',()))
+    assert method=='Close';observations['close_attempts'].append(path);save()
+    if os.environ.get('LCONNECT_SCREENSHOT_RECOVERY')=='1' and not (root/'allow-close').exists():
+        invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed','fixture Close rejected');return
+    observations['closed'].append(path);save();invocation.return_value(GLib.Variant('()',()))
 def screenshot(conn,sender,path,interface,method,parameters,invocation):
     assert method=='Screenshot'
     parent,options=parameters.unpack();assert options['interactive'] and options['modal']
@@ -25,7 +28,7 @@ def screenshot(conn,sender,path,interface,method,parameters,invocation):
     connection.register_object(handle,request.interfaces[0],close,None,None)
     observations['requests'].append({'path':handle,'parent':parent,'interactive':options['interactive']});save()
     count=len(observations['requests'])
-    if count<=2:
+    if count<=2 and os.environ.get('LCONNECT_SCREENSHOT_RECOVERY')!='1':
         result={'uri':GLib.Variant('s',(root/'capture.png').as_uri())} if count==1 else {}
         connection.emit_signal(sender,handle,'org.freedesktop.portal.Request','Response',GLib.Variant('(ua{sv})',(0 if count==1 else 1,result)))
     invocation.return_value(GLib.Variant('(o)',(handle,)))

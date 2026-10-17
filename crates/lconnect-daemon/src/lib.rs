@@ -69,3 +69,12 @@ pub mod system_spec;
 pub mod display_settings;
 
 pub mod fps_source;
+
+/// Windows control preparation into target-preserving Linux groups.
+pub mod windows_control;
+
+pub mod screen_editor;
+
+#[cfg(test)]
+#[path = "../../lconnect-profile/tests/support/screen_plan.rs"]
+pub(crate) mod windows_screen_fixture;

@@ -1,0 +1,1332 @@
+{
+  "version": 1,
+  "name": "Owned basic editors",
+  "background": [
+    12,
+    18,
+    30
+  ],
+  "layers": [
+    {
+      "kind": "text",
+      "text": "Image custom",
+      "style": {
+        "x": 240,
+        "y": 200,
+        "size": 40,
+        "color": [
+          235,
+          240,
+          255
+        ],
+        "align": "center",
+        "font": "sans"
+      }
+    }
+  ],
+  "background_image": {
+    "asset": "builtin-midnight-v1",
+    "fit": "stretch"
+  },
+  "basic_editor": {
+    "selected_background": "image_video",
+    "banks": [
+      {
+        "background": "image_video",
+        "selected_overlay": "custom",
+        "overlays": [
+          {
+            "overlay": "none",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          },
+          {
+            "overlay": "slider_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor_cycle",
+                  "interval_seconds": 10,
+                  "sensors": [
+                    {
+                      "sensor_id": "fixture:cpu",
+                      "label": "Owned CPU",
+                      "unit": "celsius",
+                      "temperature_unit": "celsius",
+                      "decimals": 1
+                    }
+                  ],
+                  "style": {
+                    "x": 240,
+                    "y": 200,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          },
+          {
+            "overlay": "duo_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 140,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 240,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          },
+          {
+            "overlay": "three_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 140,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 240,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 340,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "horizontal",
+                  "x": 34,
+                  "y": 240,
+                  "length": 412,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "vertical",
+                  "x": 241,
+                  "y": 262,
+                  "length": 166,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                }
+              ],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          },
+          {
+            "overlay": "four_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 150,
+                    "y": 150,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 330,
+                    "y": 150,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 150,
+                    "y": 300,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 330,
+                    "y": 300,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "vertical",
+                  "x": 239,
+                  "y": 53,
+                  "length": 169,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "horizontal",
+                  "x": 34,
+                  "y": 242,
+                  "length": 412,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "vertical",
+                  "x": 239,
+                  "y": 264,
+                  "length": 166,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                }
+              ],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          },
+          {
+            "overlay": "time",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "clock",
+                  "twenty_four_hour": true,
+                  "show_seconds": false,
+                  "style": {
+                    "x": 240,
+                    "y": 200,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          },
+          {
+            "overlay": "custom",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "text",
+                  "text": "Image custom",
+                  "style": {
+                    "x": 240,
+                    "y": 200,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_image": {
+                "asset": "builtin-midnight-v1",
+                "fit": "stretch"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "background": "background_color",
+        "selected_overlay": "custom",
+        "overlays": [
+          {
+            "overlay": "none",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          },
+          {
+            "overlay": "slider_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor_cycle",
+                  "interval_seconds": 10,
+                  "sensors": [
+                    {
+                      "sensor_id": "fixture:cpu",
+                      "label": "Owned CPU",
+                      "unit": "celsius",
+                      "temperature_unit": "celsius",
+                      "decimals": 1
+                    }
+                  ],
+                  "style": {
+                    "x": 240,
+                    "y": 200,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          },
+          {
+            "overlay": "duo_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 140,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 240,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          },
+          {
+            "overlay": "three_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 140,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 240,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 240,
+                    "y": 340,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "horizontal",
+                  "x": 34,
+                  "y": 240,
+                  "length": 412,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "vertical",
+                  "x": 241,
+                  "y": 262,
+                  "length": 166,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                }
+              ],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          },
+          {
+            "overlay": "four_sensor",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 150,
+                    "y": 150,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 330,
+                    "y": 150,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 150,
+                    "y": 300,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "sensor",
+                  "sensor_id": "fixture:cpu",
+                  "label": "Owned CPU",
+                  "unit": "celsius",
+                  "temperature_unit": "celsius",
+                  "decimals": 1,
+                  "style": {
+                    "x": 330,
+                    "y": 300,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "vertical",
+                  "x": 239,
+                  "y": 53,
+                  "length": 169,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "horizontal",
+                  "x": 34,
+                  "y": 242,
+                  "length": 412,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                },
+                {
+                  "kind": "divider",
+                  "axis": "vertical",
+                  "x": 239,
+                  "y": 264,
+                  "length": 166,
+                  "thickness": 2,
+                  "color": [
+                    144,
+                    177,
+                    201
+                  ],
+                  "opacity": 100,
+                  "shadow": {
+                    "x": 0,
+                    "y": 0,
+                    "blur": 5,
+                    "color": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "opacity": 100
+                  }
+                }
+              ],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          },
+          {
+            "overlay": "time",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "clock",
+                  "twenty_four_hour": true,
+                  "show_seconds": false,
+                  "style": {
+                    "x": 240,
+                    "y": 200,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          },
+          {
+            "overlay": "custom",
+            "theme": {
+              "version": 1,
+              "name": "Owned basic editors",
+              "background": [
+                12,
+                18,
+                30
+              ],
+              "layers": [
+                {
+                  "kind": "text",
+                  "text": "Color custom",
+                  "style": {
+                    "x": 240,
+                    "y": 200,
+                    "size": 40,
+                    "color": [
+                      235,
+                      240,
+                      255
+                    ],
+                    "align": "center",
+                    "font": "sans"
+                  }
+                }
+              ],
+              "background_fill": {
+                "mode": "horizontal",
+                "horizontal": {
+                  "colors": [
+                    [
+                      40,
+                      50,
+                      60
+                    ],
+                    [
+                      70,
+                      80,
+                      90
+                    ]
+                  ],
+                  "flip": false
+                },
+                "vertical": {
+                  "colors": [
+                    [
+                      10,
+                      20,
+                      30
+                    ],
+                    [
+                      40,
+                      50,
+                      60
+                    ]
+                  ],
+                  "flip": true
+                },
+                "radial": {
+                  "colors": [
+                    [
+                      90,
+                      80,
+                      70
+                    ],
+                    [
+                      60,
+                      50,
+                      40
+                    ]
+                  ],
+                  "flip": false
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

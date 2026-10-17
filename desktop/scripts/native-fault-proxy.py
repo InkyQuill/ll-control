@@ -7,7 +7,26 @@ import threading
 
 
 class FaultProxy:
-    def __init__(self, path, backend, cleanup_profile_fault=None):
+    def __init__(self, path, backend, cleanup_profile_fault=None, lcd_messages=False, image_messages=False, library_messages=False, cooling_messages=False, collection_readbacks=False, cooling_modes=False, cooling_defaults=False):
+        self.cooling_defaults = cooling_defaults
+        self.cooling_default_requests = 0
+        self.cooling_default_dropped = 0
+        self.cooling_modes = cooling_modes
+        self.cooling_mode_requests = 0
+        self.cooling_mode_dropped = 0
+        self.collection_readbacks = collection_readbacks
+        self.collection_modes = ('stale', 'missing', 'null', 'pending', 'pending-detail', 'error', 'malformed')
+        self.collection_writes = []
+        self.collection_faults = []
+        self.collection_pending = {}
+        self.cooling_messages = cooling_messages
+        self.cooling_message_requests = 0
+        self.library_messages = library_messages
+        self.library_rename_requests = 0
+        self.image_messages = image_messages
+        self.image_message_requests = 0
+        self.lcd_messages = lcd_messages
+        self.lcd_message_requests = {}
         self.cleanup_profile_fault = cleanup_profile_fault
         self.cleanup_profile_armed = False
         self.cleanup_profile_checks = []
@@ -63,6 +82,48 @@ class FaultProxy:
                                     line, _, rest = buffers[source].partition(b'\n')
                                     buffers[source] = bytearray(rest)
                                     obj = json.loads(line)
+                                    if source is self.request and owner.collection_readbacks:
+                                        # This fault matrix targets append-only image imports.
+                                        if obj.get('method') == 'set_screen_collections':
+                                            params = obj['params']
+                                            with owner.lock:
+                                                case = dict(mode=owner.collection_modes[len(owner.collection_writes) % len(owner.collection_modes)],
+                                                    dev=params['dev'], revision=params['collections']['revision'],
+                                                    previous_revision=params['expected_revision'], key=params['collections']['images'][-1])
+                                                owner.collection_writes.append(case)
+                                            target_ids[obj['id']] = ('collection-commit', case)
+                                        elif obj.get('method') == 'get_screen_collections':
+                                            with owner.lock:
+                                                case = owner.collection_pending.pop(obj['params']['dev'], None)
+                                            if case is not None:
+                                                target_ids[obj['id']] = ('collection-readback', case)
+                                    if source is self.request and owner.cooling_messages and obj.get('method') == 'set_cooling_policy':
+                                        with owner.lock:
+                                            owner.cooling_message_requests += 1
+                                            if owner.cooling_message_requests in (1, 3):
+                                                target_ids[obj['id']] = 'cooling-message'
+                                    if source is self.request and owner.library_messages and obj.get('method') == 'rename_theme_asset':
+                                        with owner.lock:
+                                            owner.library_rename_requests += 1
+                                            if owner.library_rename_requests in (1, 3):
+                                                target_ids[obj['id']] = 'library-rename'
+                                    if source is self.request and owner.image_messages and obj.get('method') == 'set_screen_collections':
+                                        with owner.lock:
+                                            owner.image_message_requests += 1
+                                        self.request.sendall(json.dumps({'jsonrpc': '2.0', 'id': obj['id'],
+                                            'error': {'code': -32000, 'message': 'Настройки'}}).encode() + b'\n')
+                                        continue
+                                    if source is self.request and owner.lcd_messages and obj.get('method') in (
+                                            'set_lcd_theme', 'get_lcd_theme', 'clear_lcd', 'preview_lcd_theme'):
+                                        method = obj['method']
+                                        with owner.lock:
+                                            count = owner.lcd_message_requests.get(method, 0) + 1
+                                            owner.lcd_message_requests[method] = count
+                                        if count in (1, 3):
+                                            response = {'jsonrpc': '2.0', 'id': obj['id'],
+                                                        'error': {'code': -32000, 'message': 'Настройки'}}
+                                            self.request.sendall(json.dumps(response).encode() + b'\n')
+                                            continue
                                     if source is self.request and obj.get('method') in ('cleanup_theme_assets', 'cleanup_theme_fonts') and owner.cleanup_profile_armed:
                                         owner.cleanup_profile_armed = False
                                         if owner.cleanup_profile_fault is None:
@@ -79,6 +140,14 @@ class FaultProxy:
                                                 owner.requests += 1
                                             else:
                                                 owner.timeout_requests += 1
+                                    if source is self.request and owner.cooling_defaults and obj.get('method') == 'initialize_cooling_modes':
+                                        target_ids[obj['id']] = 'cooling-default'
+                                        with owner.lock:
+                                            owner.cooling_default_requests += 1
+                                    if source is self.request and owner.cooling_modes and obj.get('method') == 'save_cooling_mode':
+                                        target_ids[obj['id']] = 'cooling-mode'
+                                        with owner.lock:
+                                            owner.cooling_mode_requests += 1
                                     if source is self.request and obj.get('method') == 'set_sensor_defaults':
                                         with owner.lock:
                                             owner.source_total += 1
@@ -134,6 +203,47 @@ class FaultProxy:
                                                 owner.font_status_reads += 1
                                     if source is upstream and obj.get('id') in target_ids:
                                         mode = target_ids.pop(obj['id'])
+                                        if isinstance(mode, tuple) and mode[0] == 'collection-commit':
+                                            case = mode[1]
+                                            value = obj.get('result')
+                                            if not isinstance(value, dict) or value.get('revision') != case['revision'] or case['key'] not in value.get('images', []):
+                                                raise ValueError('collection write failed before intended readback fault')
+                                            with owner.lock:
+                                                if case['dev'] in owner.collection_pending:
+                                                    raise ValueError('previous collection readback fault was not consumed')
+                                                owner.collection_pending[case['dev']] = case
+                                            peers[source].sendall(line + b'\n')
+                                            continue
+                                        if isinstance(mode, tuple) and mode[0] == 'collection-readback':
+                                            case = mode[1]
+                                            state = obj.get('result')
+                                            if not isinstance(state, dict) or state.get('persistence', {}).get('pending') or state.get('collections', {}).get('revision') != case['revision'] or case['key'] not in state['collections']['images']:
+                                                raise ValueError('real collection readback did not confirm committed write')
+                                            fault = case['mode']
+                                            if fault == 'stale':
+                                                state['collections']['revision'] = case['previous_revision']
+                                            elif fault == 'missing':
+                                                state['collections']['images'].remove(case['key'])
+                                            elif fault == 'null':
+                                                state['collections'] = None
+                                            elif fault in ('pending', 'pending-detail'):
+                                                state['persistence'].update(pending=True, last_error='Настройки {0} <disk>' if fault == 'pending-detail' else None)
+                                            elif fault == 'error':
+                                                obj = {'jsonrpc': '2.0', 'id': obj['id'], 'error': {'code': -32000, 'message': 'Настройки {0} <disk>'}}
+                                            elif fault == 'malformed':
+                                                state['collections']['images'] = 0
+                                            else:
+                                                raise ValueError('unknown collection readback fault')
+                                            with owner.lock:
+                                                owner.collection_faults.append(case)
+                                            peers[source].sendall(json.dumps(obj).encode() + b'\n')
+                                            continue
+                                        if mode in ('library-rename', 'cooling-message'):
+                                            if 'error' in obj:
+                                                raise ValueError(f'{mode} failed before intended reply fault')
+                                            self.request.sendall(json.dumps({'jsonrpc': '2.0', 'id': obj['id'],
+                                                'error': {'code': -32000, 'message': 'Настройки'}}).encode() + b'\n')
+                                            continue
                                         if isinstance(mode, tuple) and mode[0] == 'profile_extra':
                                             if 'error' in obj:
                                                 raise ValueError('profile mutation failed before intended response loss')
@@ -172,6 +282,12 @@ class FaultProxy:
                                         if 'error' in obj:
                                             raise ValueError('fault target failed before response loss')
                                         with owner.lock:
+                                            cooling_default_drop = mode == 'cooling-default' and owner.cooling_default_dropped == 0
+                                            if cooling_default_drop:
+                                                owner.cooling_default_dropped += 1
+                                            cooling_mode_drop = mode == 'cooling-mode' and owner.cooling_mode_dropped == 0
+                                            if cooling_mode_drop:
+                                                owner.cooling_mode_dropped += 1
                                             theme_drop = mode == 'theme' and owner.theme_dropped == 0
                                             clear_drop = mode == 'clear' and owner.clear_dropped == 0
                                             if theme_drop:
@@ -190,7 +306,7 @@ class FaultProxy:
                                                 owner.dropped += 1
                                             if withhold:
                                                 owner.withheld += 1
-                                        if drop or source_drop or profile_drop or theme_drop or clear_drop:
+                                        if drop or source_drop or profile_drop or theme_drop or clear_drop or cooling_mode_drop or cooling_default_drop:
                                             self.request.shutdown(socket.SHUT_RDWR)
                                             return
                                         if withhold:

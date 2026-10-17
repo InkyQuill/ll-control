@@ -2,18 +2,45 @@
 """Render the real Plasma package in a private Xvfb/session with a Unix RPC peer.
 No installation in the user's session, no daemon/hardware collector, no Tauri.
 """
-import json,os,signal,socket,subprocess,sys,tempfile,threading,time
+import argparse,json,os,signal,socket,subprocess,sys,tempfile,threading,time
 from pathlib import Path
 repo=Path(__file__).resolve().parents[3]
-build=Path(sys.argv[1]).resolve()
-if '--inside' not in sys.argv:
- env=dict(os.environ,LCONNECT_PLASMA_ISOLATED='1');env.pop('DISPLAY',None);env.pop('WAYLAND_DISPLAY',None)
- raise SystemExit(subprocess.call(['xvfb-run','-a','-s','-screen 0 1400x1000x24','dbus-run-session','--',sys.executable,__file__,str(build),'--inside']+(['--staged'] if '--staged' in sys.argv else []),env=env))
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('build',type=Path)
+parser.add_argument('--inside',action='store_true')
+parser.add_argument('--staged',action='store_true')
+parser.add_argument('--package-root',type=Path,help='Extracted production prefix containing usr/share and usr/lib')
+parser.add_argument('--cli',type=Path,help='Use this exact CLI instead of the development binary')
+args=parser.parse_args()
+build=args.build.resolve()
+cli=(args.cli or (args.package_root/'usr/bin/lconnectctl' if args.package_root else repo/'target/debug/lconnectctl')).resolve(strict=True)
+if not args.inside:
+ root=Path(tempfile.mkdtemp(prefix='lconnect-mini-plasma-native-'))
+ env=dict(os.environ,LCONNECT_PLASMA_ISOLATED='1',LCONNECT_PLASMA_ROOT=str(root),
+  XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),
+  XDG_DATA_HOME=str(root/'data'),DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
+ for name in ['DISPLAY','WAYLAND_DISPLAY','DBUS_SESSION_BUS_ADDRESS','AT_SPI_BUS_ADDRESS']:env.pop(name,None)
+ command=['xvfb-run','-a','-s','-screen 0 1400x1000x24','dbus-run-session','--',sys.executable,__file__,str(build),'--inside','--cli',str(cli)]
+ if args.staged:command.append('--staged')
+ if args.package_root:command.extend(['--package-root',str(args.package_root.resolve(strict=True))])
+ try:code=subprocess.call(command,env=env)
+ finally:
+  target=root/'doc'
+  def mounted():return any(row.split()[4]==str(target) for row in Path('/proc/self/mountinfo').read_text().splitlines())
+  if mounted():
+   cleanup=subprocess.run(['fusermount3','-uz','--',str(target)],capture_output=True)
+   if cleanup.returncode and mounted():raise RuntimeError(f'Private document mount remains: {target}')
+ raise SystemExit(code)
 assert os.environ.get('LCONNECT_PLASMA_ISOLATED')=='1'
-root=Path(tempfile.mkdtemp(prefix='lconnect-mini-plasma-native-'));(root/'bin').mkdir();(root/'bin/lconnectctl').symlink_to(repo/'target/debug/lconnectctl')
+root=Path(os.environ['LCONNECT_PLASMA_ROOT']);assert os.environ['XDG_RUNTIME_DIR']==str(root)
+(root/'bin').mkdir();(root/'bin/lconnectctl').symlink_to(cli)
 stage=build/'stage'
-package=stage/'share/plasma/plasmoids/net.inkyquill.lconnect.mini' if '--staged' in sys.argv else build/'package'
-qml_path=next(stage.glob('lib*/qt6/qml')) if '--staged' in sys.argv else build/'qml'
+if args.package_root:
+ package=args.package_root/'usr/share/plasma/plasmoids/net.inkyquill.lconnect.mini'
+ qml_path=args.package_root/'usr/lib/qt6/qml'
+else:
+ package=stage/'share/plasma/plasmoids/net.inkyquill.lconnect.mini' if args.staged else build/'package'
+ qml_path=next(stage.glob('lib*/qt6/qml')) if args.staged else build/'qml'
 assert (package/'contents/code/mini.mjs').is_file()
 env=dict(os.environ,PATH=str(root/'bin')+':'+os.environ.get('PATH',''),QML_IMPORT_PATH=str(qml_path),LCONNECTCTL_SOCKET=str(root/'peer.sock'),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),QT_QPA_PLATFORM='xcb',QT_QUICK_BACKEND='software',LC_ALL='C.UTF-8');env.pop('WAYLAND_DISPLAY',None)
 stop=threading.Event();calls=[];language='en-US';processes=[];logs=[];workers=[];errors=[]
@@ -68,6 +95,10 @@ try:
  subprocess.run(['import','-window',window,str(root/'english.png')],env=env,check=True,timeout=10)
  language='ru-RU';before=len(calls);wait(lambda:len(calls)>=before+6,'Russian refresh')
  subprocess.run(['import','-window',window,str(root/'russian.png')],env=env,check=True,timeout=10)
+ if args.package_root:
+  maps=Path(f'/proc/{gui.pid}/maps').read_text()
+  for library in ['liblconnect_mini_feed.so','liblconnect_mini_feedplugin.so']:
+   assert str(qml_path/'net/inkyquill/lconnect'/library) in maps, 'Packaged QML library not loaded: '+library
  helper_ids=subprocess.run(['pgrep','-P',str(gui.pid),'lconnectctl'],text=True,stdout=subprocess.PIPE).stdout.splitlines();assert len(helper_ids)==1,helper_ids
  subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=15);assert gui.returncode==0
  for pid in helper_ids:assert not Path('/proc/'+pid).exists(),'Helper survived widget destruction'
@@ -75,7 +106,7 @@ try:
  log=(root/'widget.log').read_text();fatal=['ReferenceError','TypeError','SyntaxError','is not installed','Error loading QML file','Script file:']
  assert not any(item in log for item in fatal),log
  assert not errors,errors
- (root/'acceptance.json').write_text(json.dumps(dict(package_loaded=True,real_cli=True,readonly_methods=sorted(set(calls)),calls=len(calls),helper_count=1,helper_reaped=True,language_cache_persisted=True,english_screenshot='english.png',russian_screenshot='russian.png',hardware_access=False,host_installation=False,staged_package='--staged' in sys.argv),indent=2)+'\n')
+ (root/'acceptance.json').write_text(json.dumps(dict(package_loaded=True,real_cli=True,readonly_methods=sorted(set(calls)),calls=len(calls),helper_count=1,helper_reaped=True,language_cache_persisted=True,english_screenshot='english.png',russian_screenshot='russian.png',hardware_access=False,host_installation=False,staged_package=args.staged,production_package=bool(args.package_root),cli=str(cli)),indent=2)+'\n')
  print('PASS private Plasma package/real CLI/read-only Unix peer/helper teardown:',root)
 finally:
  stop.set();listener.close();server.join(timeout=2)

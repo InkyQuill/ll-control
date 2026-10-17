@@ -11,10 +11,11 @@ test('accepted Apply, disk failure and retry have distinct visible status', asyn
       persistenceFixture: fixture,
       __TAURI_INTERNALS__: {
         invoke: async (_: string, req: { method: string; params: { patch: { brightness_percent?: number } } }) => {
+        if (_ === 'desktop_set_language') return null;
           const state = () => ({ source: 'Idle', last_error: null, requested: fixture.config, applied: fixture.config, persistence: fixture.save });
           switch (req.method) {
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
-            case 'list_devices': return [{ id: 'test', display_name: 'LCDV2' }];
+            case 'list_devices': return [{ id: 'test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
             case 'list_sensors': return [];
             case 'get_lcd_state': fixture.polls++; return structuredClone(state());
             case 'patch_lcd_config':
@@ -29,7 +30,7 @@ test('accepted Apply, disk failure and retry have distinct visible status', asyn
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   const live = page.locator('#persistence-status');
   await expect(live).toHaveAttribute('aria-live', 'polite');

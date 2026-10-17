@@ -1,7 +1,7 @@
 //! Source-derived FW1.6 update reply recognition, without device I/O.
 //!
 //! Exact researched image SHA-256 and function offsets are recorded in
-//! `docs/parity/firmware-lcdv2.md`: dispatcher 0x3c418, upload 0x81a94,
+//! `docs/development/parity/firmware-lcdv2.md`: dispatcher 0x3c418, upload 0x81a94,
 //! activation 0x815d8. These are not hardware-qualified ACKs. In particular:
 //! - A 512-byte upload reply echoes only the first 501 payload bytes, even
 //!   when the echoed header declares a 1013-byte chunk. Do not use the generic

@@ -5,7 +5,7 @@ description: Prepare or run scoped Galahad II LCDV2 hardware acceptance for L-Co
 
 # LCDV2 hardware verification
 
-Read `docs/parity/lcdv2-hardware-acceptance.md` from the repository root before composing commands. Inspect the current CLI and daemon behavior; the acceptance document contains known historical gaps that may since have been fixed.
+Read `docs/development/parity/lcdv2-hardware-acceptance.md` from the repository root before composing commands. Inspect the current CLI and daemon behavior; the acceptance document contains known historical gaps that may since have been fixed.
 
 ## Working prompt
 
@@ -26,6 +26,6 @@ Keep one device operator. Stop a run on unexpected device behavior or loss of co
 
 USB transport success proves transfer, not display output. Record the actual visible image or movement and the observation method; when observation needs the user, request it explicitly and leave the result pending until received. Assess concurrent telemetry and cancellation where the selected acceptance case requires them.
 
-Restore the agreed state, then record commands, timings, replies/errors, visible observations, and restoration outcome. Mask serials in public captures; use `docs/protocol/captures/private/` for sensitive local artifacts. Distinguish pass, fail, blocked, and not-run. If the device is unavailable, deliver the prepared procedure without marking hardware acceptance complete.
+Restore the agreed state, then record commands, timings, replies/errors, visible observations, and restoration outcome. Mask serials in public captures; use `docs/development/protocol/captures/private/` for sensitive local artifacts. Distinguish pass, fail, blocked, and not-run. If the device is unavailable, deliver the prepared procedure without marking hardware acceptance complete.
 
 Prompting basis: [OpenAI GPT-6 Astra recommendations](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices), reviewed 2026-09-08. Device constraints are adapted from the project's hardware acceptance document.

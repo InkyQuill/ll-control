@@ -10,6 +10,7 @@ use tokio::sync::{mpsc, oneshot, watch};
 fn theme() -> LcdTheme {
     LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 1,
         name: "Live CPU".into(),
         background: [0; 3],

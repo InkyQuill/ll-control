@@ -43,6 +43,13 @@ pub struct GroupManualPump {
     pub percent: u8,
     pub source: PwmSource,
 }
+/// Public policies/names only; historical Windows metadata stays in prepared intent.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GroupCoolingModes {
+    pub fan: Vec<crate::CoolingModeProfile>,
+    pub pump: Vec<crate::CoolingModeProfile>,
+}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GroupArchiveSummary {
@@ -54,6 +61,8 @@ pub struct GroupArchiveSummary {
     pub fan_manual_percent: Option<u8>,
     pub pump_manual: Option<GroupManualPump>,
     pub cooling: Option<CoolingConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cooling_modes: Option<GroupCoolingModes>,
     pub fan_led_mode: Option<String>,
     pub pump_led_mode: Option<String>,
     pub dynamic_rgb: Option<DynamicRgbConfig>,
@@ -97,4 +106,23 @@ pub enum GroupArchiveReply {
         bytes: Vec<u8>,
         eof: bool,
     },
+}
+
+/// Read-only target-bound Windows control import proposal.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WindowsControlPreview {
+    pub target: GroupArchiveSnapshot,
+    pub proposed: GroupArchiveSummary,
+    pub lighting: WindowsControlLightingReview,
+}
+
+/// Executable Linux values for review; never historical Windows JSON/Metadata.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WindowsControlLightingReview {
+    pub fan_topology: crate::FanLightingTopology,
+    pub fan_modes: Vec<crate::LightingConfig>,
+    pub pump_modes: Vec<crate::LightingConfig>,
+    pub dynamic_rgb_profiles: crate::DynamicRgbProfiles,
 }

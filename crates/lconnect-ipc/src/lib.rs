@@ -3,6 +3,7 @@
 pub mod client;
 pub mod clip;
 pub mod cooling;
+pub mod cooling_banks;
 pub mod effects;
 pub mod fireworks;
 pub mod meteor;
@@ -27,6 +28,7 @@ pub use thermal::*;
 
 pub use clip::*;
 pub use cooling::*;
+pub use cooling_banks::*;
 pub use error::{IpcError, Result};
 pub use sensors::*;
 pub use trait_def::DaemonRpc;

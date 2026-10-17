@@ -3,17 +3,17 @@
   import { rpc, message } from './api';
   interface Report { candidates: string[]; deleted: string[]; retained_referenced: number; retained_session: number; retained_draft: number; skipped: number; failures: { key: string; error: string }[] }
   let { connected, disabled = false, keep, kind = 'image' }: { connected: boolean; disabled?: boolean; keep: string[]; kind?: 'image' | 'font' } = $props();
-  let report = $state<Report | null>(null), error = $state(''), busy = $state(false), deleted = $state(false);
+  let report = $state<Report | null>(null), error = $state(''), busy = $state(false), deleted = $state(false), failedDelete = $state(false);
   const keepKey = $derived(JSON.stringify([...new Set(keep)].sort()));
   let generation = 0;
   $effect(() => {
     void connected; void keepKey; void kind;
-    generation++; report = null; error = ''; deleted = false;
+    generation++; report = null; error = ''; deleted = false; failedDelete = false;
     return () => { generation++; };
   });
   async function scan(remove: boolean) {
     const started = generation;
-    busy = true; error = '';
+    busy = true; error = ''; failedDelete = remove;
     try { const result = await rpc<Report>(kind === 'font' ? 'cleanup_theme_fonts' : 'cleanup_theme_assets', { delete: remove, keep: [...new Set(keep)] }); if (started !== generation) return; report = result; deleted = remove; }
     catch (e) { if (started === generation) { error = message(e); report = null; } }
     finally { busy = false; }
@@ -28,9 +28,9 @@
     {#if !deleted && report.candidates.length}<button disabled={!connected || disabled || busy} onclick={() => scan(true)}>{t("Удалить неиспользуемые")} {kind === 'font' ? "" + t("шрифты") + "" : "" + t("изображения") + ""}</button>{/if}
     {#each report.failures as failure}<p role="alert">{failure.key}: {failure.error}</p>{/each}
   {/if}
-  {#if error}<p role="alert">{t(error)}</p>{/if}
+  {#if error}<p role="alert">{failedDelete?t('Результат очистки не подтверждён:'):t('Не удалось проверить очистку:')} <span>{error}</span></p>{/if}
 </details>
 <style>
-  details { padding:14px; border:1px solid #33445b; border-radius:12px; margin:16px 0; }
+  details { padding:14px; border:1px solid var(--border); border-radius:12px; margin:16px 0; }
   summary { cursor:pointer; font-weight:600; }
 </style>

@@ -11,6 +11,7 @@ test('global source draft survives polling/navigation/reconnect and saves only o
     const writes: unknown[] = [];
     Object.assign(window, { sourceWrites: writes, sourceOffline: false, externalSourceEdit: () => { config.revision++; } });
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, request: { method: string; params: { config: typeof config } }) => {
+        if (_ === 'desktop_set_language') return null;
       if ((window as unknown as { sourceOffline: boolean }).sourceOffline) throw new Error('offline');
       switch (request.method) {
         case 'list_devices': return [];
@@ -25,7 +26,7 @@ test('global source draft survives polling/navigation/reconnect and saves only o
       }
     } } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Датчики', exact: true }).click();
   const editor = page.getByRole('region', { name: 'Источники системных датчиков' });
   const gpu = editor.getByLabel('Системная видеокарта');

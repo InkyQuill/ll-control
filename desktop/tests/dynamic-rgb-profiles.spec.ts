@@ -9,8 +9,9 @@ async function setup(page:Page){
     const f={mode:'meteor',empty:false,holdCpu:false,releaseCpu:null as null|(()=>void),writes:[] as unknown[]};let active:C|null=null;
     const state=()=>({base_mode:f.mode,color_count:f.mode==='meteor'?4:1,speed_supported:f.mode==='meteor',direction_supported:f.mode==='meteor',requested:active,applied:null,degraded:false,suppressed_by_thermal:false,last_error:null,profiles:f.empty?{modes:[]}:profiles,mode_defaults:{color:{r:255,g:0,b:0},additional_colors:f.mode==='meteor'?[{r:0,g:0,b:255},{r:0,g:255,b:0},{r:255,g:255,b:0}]:[],speed_percent:f.mode==='meteor'?75:0,brightness_percent:100,direction:'forward'}});
     Object.assign(window,{dynamicProfiles:f,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params?:{config:C|null}})=>{
+        if (_ === 'desktop_set_language') return null;
       switch(req.method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [['cpu:temp','celsius'],['gpu:load','percent'],['pump:rpm','rpm'],['cpu:load','percent']].map(([id,unit])=>({id,unit,label:id,status:'valid',value:45,age_ms:0}));
         case 'get_lighting_info':return {modes:['static','meteor']};
         case 'get_thermal_state':return {requested:{cpu:null,gpu:null},degraded_sources:[],fan:{last_error:null},pump:{last_error:null},grace_remaining_ms:0};
@@ -21,7 +22,7 @@ async function setup(page:Page){
       }
     }}});
   });
-  await page.goto('/');await page.getByRole('button',{name:'Подсветка',exact:true}).click();
+  await page.goto('/?view=display');await page.getByRole('button',{name:'Подсветка',exact:true}).click();
   await page.getByText('Подсветка помпы по датчику',{exact:true}).click();
   await expect(page.getByRole('button',{name:'Загрузить настройки режима по датчику',exact:true})).toBeEnabled();
 }

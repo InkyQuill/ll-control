@@ -13,7 +13,7 @@ fn wait_for(recorder: &Recorder, predicate: impl Fn(&Status) -> bool) {
         thread::sleep(Duration::from_millis(10));
     }
 }
-fn probe(file: &RecordingFile) -> serde_json::Value {
+pub(super) fn probe(file: &RecordingFile) -> serde_json::Value {
     let output = Process::new("ffprobe")
         .args([
             "-v",

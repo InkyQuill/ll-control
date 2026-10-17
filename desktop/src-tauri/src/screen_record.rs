@@ -65,6 +65,10 @@ impl RecordingFile {
 }
 
 enum Source {
+    #[cfg(test)]
+    Controlled(gst::Element),
+    #[cfg(test)]
+    Profile { width: i32, height: i32 },
     Portal {
         fd: OwnedFd,
         node: u32,
@@ -94,6 +98,7 @@ struct Progress {
     accepting: Mutex<bool>,
     started: AtomicBool,
     latest: Mutex<Option<gst::Sample>>,
+    canvas: Mutex<Option<(i32, i32)>>,
     region: Mutex<Option<crate::media_prepare::VideoCrop>>,
     frames: AtomicU64,
     active_millis: AtomicU64,
@@ -211,6 +216,7 @@ impl Recorder {
             accepting: Mutex::new(!setup),
             started: AtomicBool::new(!setup),
             latest: Mutex::new(None),
+            canvas: Mutex::new(None),
             region: Mutex::new(None),
             frames: AtomicU64::new(0),
             active_millis: AtomicU64::new(0),
@@ -347,7 +353,20 @@ fn build(
     max_bytes: u64,
 ) -> Result<Pipeline> {
     gst::init()?;
+    #[cfg(test)]
+    let profile_dimensions = match source {
+        Source::Profile { width, height } => Some((*width, *height)),
+        _ => None,
+    };
     let source = match source {
+        #[cfg(test)]
+        Source::Controlled(source) => source.clone(),
+        #[cfg(test)]
+        Source::Profile { .. } => {
+            let source = element("videotestsrc")?;
+            source.set_property("is-live", true);
+            source
+        }
         Source::Portal {
             fd, node, serial, ..
         } => {
@@ -411,13 +430,20 @@ fn build(
         }
     };
     let input = element("capsfilter")?;
-    input.set_property(
-        "caps",
+    let input_caps = gst::Caps::builder("video/x-raw")
+        .field("width", gst::IntRange::<i32>::new(2, 4096))
+        .field("height", gst::IntRange::<i32>::new(2, 4096))
+        .build();
+    #[cfg(test)]
+    let input_caps = if let Some((width, height)) = profile_dimensions {
         gst::Caps::builder("video/x-raw")
-            .field("width", gst::IntRange::<i32>::new(2, 4096))
-            .field("height", gst::IntRange::<i32>::new(2, 4096))
-            .build(),
-    );
+            .field("width", width)
+            .field("height", height)
+            .build()
+    } else {
+        input_caps
+    };
+    input.set_property("caps", input_caps);
     let queue = element("queue")?;
     queue.set_property("max-size-buffers", 2u32);
     queue.set_property("max-size-bytes", 0u32);
@@ -430,15 +456,73 @@ fn build(
             .field("format", "RGBA")
             .build(),
     );
+    // Normalize resized source frames into the first source canvas before
+    // applying the user's normalized region. Crop coordinates and encoder
+    // geometry then stay fixed while the source window can grow or shrink.
+    let source_scale = element("videoscale")?;
+    source_scale.set_property("add-borders", false);
+    let canvas = element("capsfilter")?;
+    let target = canvas.downgrade();
     let source_progress = progress.clone();
     rgb.static_pad("src")
         .context("Missing source events pad")?
         .add_probe(gst::PadProbeType::EVENT_DOWNSTREAM, move |_, info| {
-            if info
-                .event()
-                .is_some_and(|event| matches!(event.view(), gst::EventView::Eos(_)))
-            {
-                source_progress.source_ended.store(true, Ordering::Release);
+            if let Some(event) = info.event() {
+                match event.view() {
+                    gst::EventView::Eos(_) => {
+                        source_progress.source_ended.store(true, Ordering::Release);
+                    }
+                    gst::EventView::Caps(event) => {
+                        if let Some((width, height)) = event
+                            .caps()
+                            .structure(0)
+                            .and_then(|s| {
+                                Some((s.get::<i32>("width").ok()?, s.get::<i32>("height").ok()?))
+                            })
+                            .filter(|(w, h)| (2..=4096).contains(w) && (2..=4096).contains(h))
+                        {
+                            let first = {
+                                let mut geometry = source_progress.canvas.lock().unwrap();
+                                if geometry.is_none() {
+                                    *geometry = Some((width, height));
+                                    true
+                                } else {
+                                    false
+                                }
+                            };
+                            // Never call GStreamer with the shared geometry lock held.
+                            if first {
+                                let Some(canvas) = target.upgrade() else {
+                                    return gst::PadProbeReturn::Drop;
+                                };
+                                canvas.set_property(
+                                    "caps",
+                                    gst::Caps::builder("video/x-raw")
+                                        .field("format", "RGBA")
+                                        .field("width", width)
+                                        .field("height", height)
+                                        .field("pixel-aspect-ratio", gst::Fraction::new(1, 1))
+                                        .build(),
+                                );
+                            }
+                        }
+                    }
+                    _ => (),
+                }
+            }
+            gst::PadProbeReturn::Ok
+        });
+    let source_progress = progress.clone();
+    rgb.static_pad("src")
+        .context("Missing source snapshot pad")?
+        .add_probe(gst::PadProbeType::BUFFER, move |pad, info| {
+            if let (Some(buffer), Some(caps)) = (info.buffer(), pad.current_caps()) {
+                // Retain the full native source before canvas scaling/cropping.
+                // This is one shared buffer, not a per-frame pixel copy.
+                if buffer.size() <= 4096 * 4096 * 4 + 4096 * 64 {
+                    *source_progress.latest.lock().unwrap() =
+                        Some(gst::Sample::builder().buffer(buffer).caps(&caps).build());
+                }
             }
             gst::PadProbeReturn::Ok
         });
@@ -451,14 +535,7 @@ fn build(
     let setup = !progress.started.load(Ordering::Acquire);
     rate.static_pad("src")
         .context("Missing full-source pad")?
-        .add_probe(gst::PadProbeType::BUFFER, move |pad, info| {
-            if let (Some(buffer), Some(caps)) = (info.buffer(), pad.current_caps()) {
-                // Retain one bounded negotiated RGBA frame; never copy every frame.
-                if buffer.size() <= 4096 * 4096 * 4 + 4096 * 64 {
-                    *observed.latest.lock().unwrap() =
-                        Some(gst::Sample::builder().buffer(buffer).caps(&caps).build());
-                }
-            }
+        .add_probe(gst::PadProbeType::BUFFER, move |_, _| {
             // Snapshot is upstream of this gate. Setup buffers never reach
             // the encoder; its output probe assigns the saved CFR timeline.
             if !observed.started.load(Ordering::Acquire) {
@@ -557,6 +634,8 @@ fn build(
         &queue,
         &convert,
         &rgb,
+        &source_scale,
+        &canvas,
         &rate,
         &crop,
         &scale,
@@ -730,6 +809,8 @@ fn record(
             return Ok(None);
         }
         let source_closed = match &source {
+            #[cfg(test)]
+            Source::Profile { .. } | Source::Controlled(_) => false,
             Source::Portal { closed, .. } => *closed.borrow(),
             #[cfg(any(test, feature = "native-smoke"))]
             Source::Synthetic { closed, .. } => closed.as_ref().is_some_and(|s| *s.borrow()),
@@ -799,15 +880,15 @@ fn record(
                 } else {
                     if phase == Phase::Setup {
                         let configured = (|| -> Result<()> {
-                            let sample = progress
-                                .latest
+                            ensure!(
+                                progress.latest.lock().unwrap().is_some(),
+                                "No source frame yet"
+                            );
+                            let dimensions = progress
+                                .canvas
                                 .lock()
                                 .unwrap()
-                                .clone()
-                                .context("No source frame yet")?;
-                            let caps = sample.caps().context("Missing source caps")?;
-                            let structure =
-                                caps.structure(0).context("Missing source dimensions")?;
+                                .context("Missing source canvas dimensions")?;
                             let region = progress.region.lock().unwrap().unwrap_or(
                                 crate::media_prepare::VideoCrop {
                                     x: 0.0,
@@ -816,11 +897,7 @@ fn record(
                                     height: 1.0,
                                 },
                             );
-                            set_region(
-                                &pipeline.0,
-                                region,
-                                Some((structure.get("width")?, structure.get("height")?)),
-                            )
+                            set_region(&pipeline.0, region, Some(dimensions))
                         })();
                         if let Err(error) = configured {
                             let _ = reply.send(Err(error));
@@ -901,3 +978,9 @@ fn record(
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod resource_profile;
+
+#[cfg(test)]
+mod source_resize;

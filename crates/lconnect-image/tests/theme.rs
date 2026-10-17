@@ -14,6 +14,7 @@ fn clock() -> ClockTime {
 fn base(layers: Vec<ThemeLayer>) -> LcdTheme {
     LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 1,
         name: "Тест".into(),
         background: [0, 0, 100],
@@ -1341,4 +1342,61 @@ fn weather_renders_above_background_image_and_below_ordered_overlays() {
     .unwrap();
     assert_ne!(first, later);
     assert_eq!(later.get_pixel(240, 240).0, [255, 0, 0]);
+}
+
+#[test]
+fn dividers_preserve_fractional_coverage_opacity_layer_order_and_shadow() {
+    let vertical = ThemeLayer::Divider {
+        axis: DividerAxis::Vertical,
+        x: 1.5,
+        y: 10.0,
+        length: 8.0,
+        thickness: 2.0,
+        color: [200, 0, 0],
+        opacity: 100,
+        shadow: None,
+    };
+    let horizontal = ThemeLayer::Divider {
+        axis: DividerAxis::Horizontal,
+        x: 0.0,
+        y: 14.0,
+        length: 8.0,
+        thickness: 1.0,
+        color: [0, 0, 200],
+        opacity: 50,
+        shadow: None,
+    };
+    let mut theme = base(vec![vertical, horizontal]);
+    theme.background = [0; 3];
+    let frame = render_theme(&theme, &[], clock(), &ThemeAssets::new()).unwrap();
+    assert_eq!(frame.get_pixel(0, 11).0, [0, 0, 0]);
+    assert_eq!(frame.get_pixel(1, 11).0, [100, 0, 0]);
+    assert_eq!(frame.get_pixel(2, 11).0, [200, 0, 0]);
+    assert_eq!(frame.get_pixel(3, 11).0, [100, 0, 0]);
+    assert_eq!(frame.get_pixel(2, 14).0, [100, 0, 100]);
+    assert_eq!(frame.get_pixel(2, 18).0, [0, 0, 0]);
+    theme.background = [255; 3];
+    theme.layers = vec![ThemeLayer::Divider {
+        axis: DividerAxis::Vertical,
+        x: 10.0,
+        y: 10.0,
+        length: 8.0,
+        thickness: 2.0,
+        color: [255; 3],
+        opacity: 100,
+        shadow: Some(TextShadow {
+            x: 0,
+            y: 0,
+            blur: 1,
+            color: [0; 3],
+            opacity: 100,
+        }),
+    }];
+    let frame = render_theme(&theme, &[], clock(), &ThemeAssets::new()).unwrap();
+    assert!(
+        frame.get_pixel(9, 14)[0] < 255,
+        "shadow must be visible outside the line"
+    );
+    assert_eq!(frame.get_pixel(10, 14).0, [255; 3]);
+    assert_eq!(frame.get_pixel(0, 0).0, [255; 3]);
 }

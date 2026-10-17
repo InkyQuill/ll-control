@@ -3,6 +3,7 @@ use lconnect_ipc::{ImageFit, LcdTheme, ThemeLayer};
 fn theme(asset: &str) -> LcdTheme {
     LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 1,
         name: "Imported".into(),
         background: [0; 3],

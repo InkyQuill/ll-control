@@ -26,7 +26,7 @@
 //! method returns `IpcError::NotImplemented`. Cmd 15 (`UploadJpeg`) is
 //! deliberately not exposed via `set_lcd_image` -- only cmd 14 (`SendJpeg`)
 //! drives the lcd_keeper. See the Phase 0e finding in
-//! `docs/protocol/captures/2026-04-25-jpeg-upload-live.txt`.
+//! `docs/development/protocol/captures/2026-04-25-jpeg-upload-live.txt`.
 //!
 //! Settings mutations are independent deltas applied by command_dispatch.
 
@@ -1046,6 +1046,108 @@ impl DaemonRpc for IpcServerImpl {
         rx.await
             .map_err(|_| IpcError::DeviceBusy("cooling reply dropped".into()))
     }
+    async fn get_cooling_modes(
+        &self,
+        dev: DeviceId,
+    ) -> Result<Option<lconnect_ipc::CoolingModeLibrary>> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let handles = self.handles(&dev).await?;
+        let (reply, rx) = oneshot::channel();
+        handles
+            .settings_tx
+            .send(SettingsUpdate::ReadCoolingModes { reply })
+            .await
+            .map_err(lcd_closed)?;
+        rx.await.map_err(lcd_closed)?.map_err(IpcError::DeviceBusy)
+    }
+    async fn save_cooling_mode(
+        &self,
+        dev: DeviceId,
+        target: lconnect_ipc::CoolingTarget,
+        expected_revision: String,
+        profile: lconnect_ipc::CoolingModeProfile,
+    ) -> Result<lconnect_ipc::CoolingModeLibrary> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let handles = self.handles(&dev).await?;
+        let (reply, rx) = oneshot::channel();
+        handles
+            .settings_tx
+            .send(SettingsUpdate::SaveCoolingMode {
+                target,
+                expected_revision,
+                profile,
+                reply,
+            })
+            .await
+            .map_err(lcd_closed)?;
+        rx.await.map_err(lcd_closed)?.map_err(IpcError::DeviceBusy)
+    }
+    async fn initialize_cooling_modes(
+        &self,
+        dev: DeviceId,
+        sensor: String,
+    ) -> Result<lconnect_ipc::CoolingModeLibrary> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let (supported, handles) = self
+            .manager
+            .with_device(&dev, |device| {
+                (
+                    device.descriptor.family.as_str() == "galahad2-lcdv2",
+                    device.handles.clone(),
+                )
+            })
+            .await
+            .ok_or_else(|| IpcError::DeviceNotFound(dev.as_str().into()))?;
+        if !supported {
+            return Err(IpcError::NotImplemented(
+                "standard cooling modes are only implemented for LCDV2".into(),
+            ));
+        }
+        let mut rows = self.sensors.readings();
+        rows.extend(handles.sensor_cache.readings());
+        if !rows
+            .iter()
+            .any(|r| r.id == sensor && r.unit == lconnect_ipc::SensorUnit::Celsius)
+        {
+            return Err(IpcError::InvalidArgument(
+                "initialization requires a known host or this device temperature sensor".into(),
+            ));
+        }
+        let (reply, rx) = oneshot::channel();
+        handles
+            .settings_tx
+            .send(SettingsUpdate::InitializeCoolingModes { sensor, reply })
+            .await
+            .map_err(lcd_closed)?;
+        rx.await.map_err(lcd_closed)?.map_err(IpcError::DeviceBusy)
+    }
+    async fn apply_cooling_mode(
+        &self,
+        dev: DeviceId,
+        target: lconnect_ipc::CoolingTarget,
+        expected_revision: String,
+        id: String,
+    ) -> Result<lconnect_ipc::CoolingState> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let handles = self.handles(&dev).await?;
+        let (reply, rx) = oneshot::channel();
+        handles
+            .cooling_tx
+            .send(crate::actor::cooling::CoolingCommand::Stored {
+                target,
+                expected_revision,
+                id,
+                reply,
+            })
+            .await
+            .map_err(|_| IpcError::DeviceBusy("cooling actor closed".into()))?;
+        rx.await
+            .map_err(|_| IpcError::DeviceBusy("cooling reply dropped".into()))?
+    }
     async fn set_cooling_policy(
         &self,
         dev: DeviceId,
@@ -1281,6 +1383,82 @@ impl DaemonRpc for IpcServerImpl {
         self.group_import_reapply(dev, group, operation_id, expected)
             .await
     }
+    async fn preview_windows_control_import(
+        &self,
+        dev: DeviceId,
+        draft_json: String,
+    ) -> Result<lconnect_ipc::WindowsControlPreview> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let supported = self
+            .manager
+            .with_device(&dev, |d| d.descriptor.family.as_str() == "galahad2-lcdv2")
+            .await
+            .ok_or_else(|| IpcError::DeviceNotFound(dev.as_str().into()))?;
+        if !supported {
+            return Err(IpcError::InvalidArgument(
+                "Windows control import requires LCDV2".into(),
+            ));
+        }
+        let draft = lconnect_profile::control::parse(draft_json.as_bytes())
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        let (target, profile) = self
+            .group_snapshot(dev, lconnect_ipc::FullProfileGroup::FanAndLighting)
+            .await?;
+        let proposed = crate::windows_control::profile(&draft, &profile)
+            .and_then(|p| Ok(crate::group_exports::summary(&p)?))
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        Ok(lconnect_ipc::WindowsControlPreview {
+            target,
+            proposed,
+            lighting: lconnect_ipc::WindowsControlLightingReview {
+                fan_topology: draft.lighting.fan_topology.clone(),
+                fan_modes: draft.lighting.fan_modes.values().cloned().collect(),
+                pump_modes: draft.lighting.pump_modes.values().cloned().collect(),
+                dynamic_rgb_profiles: draft.lighting.dynamic_rgb_profiles.clone(),
+            },
+        })
+    }
+    async fn import_windows_control(
+        &self,
+        dev: DeviceId,
+        operation_id: String,
+        expected: String,
+        draft_json: String,
+    ) -> Result<lconnect_ipc::FullGroupCommit> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        crate::profile_group::validate_operation_id(&operation_id)
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        if expected.len() > 1024 {
+            return Err(IpcError::InvalidArgument(
+                "group revision token too long".into(),
+            ));
+        }
+        let expected: crate::profile_group::GroupRevision = serde_json::from_str(&expected)
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        let supported = self
+            .manager
+            .with_device(&dev, |d| d.descriptor.family.as_str() == "galahad2-lcdv2")
+            .await
+            .ok_or_else(|| IpcError::DeviceNotFound(dev.as_str().into()))?;
+        if !supported {
+            return Err(IpcError::InvalidArgument(
+                "Windows control import requires LCDV2".into(),
+            ));
+        }
+        let draft = lconnect_profile::control::parse(draft_json.as_bytes())
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        let (_, target) = self
+            .group_snapshot(dev.clone(), lconnect_ipc::FullProfileGroup::FanAndLighting)
+            .await?;
+        let prepared = Arc::new(
+            crate::profile_archive::PreparedGroup::windows_control(&draft, &target)
+                .map_err(|e| IpcError::InvalidArgument(e.to_string()))?,
+        );
+        self.commit_control_profile(dev, operation_id, expected, prepared)
+            .await
+    }
     async fn preview_fan_and_lighting_reset(
         &self,
         dev: DeviceId,
@@ -1318,6 +1496,38 @@ impl DaemonRpc for IpcServerImpl {
         self.stats.inc_ipc_request();
         self.group_import_readback(dev, group, operation_id).await
     }
+    async fn preview_windows_screen_upload(
+        &self,
+        dev: DeviceId,
+        id: String,
+        source: lconnect_ipc::WindowsScreenPreviewSource,
+    ) -> Result<Vec<u8>> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let handles = self.handles(&dev).await?;
+        let permit = self
+            .theme_jobs
+            .clone()
+            .try_acquire_owned()
+            .map_err(lcd_closed)?;
+        self.group_uploads
+            .preview_windows(
+                &dev,
+                &id,
+                source,
+                crate::group_uploads::preview::PreviewContext {
+                    archives: crate::profile_archive::ProfileArchives::new(
+                        self.persistence.theme_assets(),
+                        self.persistence.theme_fonts(),
+                        self.persistence.media_assets(),
+                    ),
+                    sensors: vec![self.sensors.clone(), handles.sensor_cache],
+                    display_unit: self.persistence.display_settings().live_unit(),
+                    permit,
+                },
+            )
+            .await
+    }
     async fn group_upload(
         &self,
         dev: DeviceId,
@@ -1353,12 +1563,71 @@ impl DaemonRpc for IpcServerImpl {
                 }
                 self.group_uploads.begin(id, snapshot, size).await
             }
+            Request::BeginWindowsScreen {
+                id,
+                size,
+                expected,
+                source,
+            } => {
+                if group != lconnect_ipc::FullProfileGroup::Screen || expected.len() > 1024 {
+                    return Err(IpcError::InvalidArgument(
+                        "Windows Screen requires a Screen target and bounded revision token".into(),
+                    ));
+                }
+                let revision: crate::profile_group::GroupRevision = serde_json::from_str(&expected)
+                    .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+                let expected = serde_json::to_string(&revision).map_err(lcd_closed)?;
+                // Bound and parse before retaining any source options in the registry.
+                lconnect_profile::linux_screen::parse_bindings(source.bindings_json.as_bytes())
+                    .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+                lconnect_profile::screen_plan::parse_resource_map(source.resources_json.as_bytes())
+                    .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+                if let Some(state) = self
+                    .group_uploads
+                    .existing_source(&dev, group, &id, size, &expected, Some(&source))
+                    .await?
+                {
+                    return Ok(state);
+                }
+                let supported = self
+                    .manager
+                    .with_device(&dev, |d| d.descriptor.family.as_str() == "galahad2-lcdv2")
+                    .await
+                    .ok_or_else(|| IpcError::DeviceNotFound(dev.as_str().into()))?;
+                if !supported {
+                    return Err(IpcError::InvalidArgument(
+                        "Windows Screen import requires LCDV2".into(),
+                    ));
+                }
+                let (snapshot, target) = self.group_snapshot(dev, group).await?;
+                if snapshot.expected != expected {
+                    return Err(IpcError::DeviceBusy(
+                        "target changed; read snapshot again".into(),
+                    ));
+                }
+                self.group_uploads
+                    .begin_source(id, snapshot, size, Some((source, target)))
+                    .await
+            }
             Request::Chunk { id, offset, bytes } => {
                 self.group_uploads
                     .chunk(&dev, group, &id, offset, bytes)
                     .await
             }
-            Request::Inspect { id } => self.group_uploads.inspect(&dev, group, &id).await,
+            Request::Inspect { id } => {
+                self.group_uploads
+                    .inspect_source(
+                        &dev,
+                        group,
+                        &id,
+                        Some(crate::profile_archive::ProfileArchives::new(
+                            self.persistence.theme_assets(),
+                            self.persistence.theme_fonts(),
+                            self.persistence.media_assets(),
+                        )),
+                    )
+                    .await
+            }
             Request::Finish { id } => self.finish_group_upload(dev, group, id).await,
             Request::Status { id } => self.group_uploads.status(&dev, group, &id).await,
             Request::Cancel { id } => self.group_uploads.cancel(&dev, group, &id).await,
@@ -1756,6 +2025,20 @@ impl DaemonRpc for IpcServerImpl {
                 join_theme_job(permit, async move { rx.await.map_err(lcd_closed)? }).await?;
             Ok(state)
         }))
+    }
+    async fn get_imported_lcd_editor(
+        &self,
+        dev: DeviceId,
+    ) -> Result<Option<lconnect_ipc::LcdTheme>> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let (_, profile) = self
+            .group_snapshot(dev, lconnect_ipc::FullProfileGroup::Screen)
+            .await?;
+        let crate::profile_group::GroupSettings::Screen(screen) = profile.content else {
+            return Err(lcd_closed("expected Screen snapshot"));
+        };
+        Ok(screen.editor.and_then(|editor| editor.theme))
     }
     async fn get_lcd_theme(&self, dev: DeviceId) -> Result<Option<lconnect_ipc::LcdTheme>> {
         let _admission = self.admit()?;

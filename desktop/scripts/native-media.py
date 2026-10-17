@@ -14,10 +14,27 @@ import time
 
 repo = Path(__file__).resolve().parents[2]
 if '--inside-xvfb' not in sys.argv:
-    env = dict(os.environ, LCONNECT_KEYBOARD_ISOLATED='1')
-    env.pop('DISPLAY', None)
-    env.pop('WAYLAND_DISPLAY', None)
-    raise SystemExit(subprocess.call(['xvfb-run', '-a', '-s', '-screen 0 1600x1200x24', 'dbus-run-session', '--', sys.executable, __file__, '--inside-xvfb', *sys.argv[1:]], env=env))
+    # Portal activation inherits the bus environment, before per-GUI overrides.
+    # Keep its runtime/config private as well as the display and IPC fixture.
+    session = Path(tempfile.mkdtemp(prefix='lconnect-media-session-'))
+    session.chmod(0o700)
+    inherited = {key:value for key,value in os.environ.items() if not key.startswith('LCONNECT_NATIVE_')}
+    env = dict(inherited, LCONNECT_KEYBOARD_ISOLATED='1', XDG_RUNTIME_DIR=str(session),
+               XDG_CONFIG_HOME=str(session/'config'), XDG_DATA_HOME=str(session/'data'),
+               XDG_CACHE_HOME=str(session/'cache'), DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={session}/no-system-bus')
+    for key in ['DISPLAY','WAYLAND_DISPLAY','AT_SPI_BUS_ADDRESS','DBUS_SESSION_BUS_ADDRESS']:
+        env.pop(key,None)
+    try:
+        result = subprocess.call(['xvfb-run','-a','-s','-screen 0 1600x1200x24','dbus-run-session','--',sys.executable,__file__,'--inside-xvfb',*sys.argv[1:]],env=env)
+    finally:
+        target=session/'doc'
+        mounted=lambda:any(row.split()[4]==str(target) for row in Path('/proc/self/mountinfo').read_text().splitlines())
+        if mounted():
+            cleanup=subprocess.run(['fusermount3','-uz','--',str(target)],capture_output=True,text=True,timeout=5)
+            # The private portal may unmount concurrently after its bus exits.
+            if cleanup.returncode and mounted():
+                raise RuntimeError(f'Private document portal cleanup failed: {cleanup.stderr}')
+    raise SystemExit(result)
 assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1'
 root = Path(tempfile.mkdtemp(prefix='lconnect-native-media-'))
 (root / 'fixture-marker').write_text('MockBackend only\n')
@@ -89,6 +106,12 @@ def start_fixture():
     fixture=launch([repo/'target/debug/examples/desktop-mock'],f'fixture-{len(processes)}')
     wait(lambda:(root/'lconnectd.sock').exists() or fixture.poll() is not None,'mock socket')
     assert fixture.poll() is None
+    # The scripted selectors below deliberately exercise Russian. Fresh stores
+    # correctly default to English; choose the test locale through normal RPC.
+    settings=rpc('get_display_settings')
+    if settings.get('interface_language')!='ru-RU':
+        settings['interface_language']='ru-RU'
+        rpc('set_display_settings',{'settings':settings})
 
 def stop_fixture():
     (root/'stop').touch();fixture.wait(timeout=10);assert fixture.returncode==0

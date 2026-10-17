@@ -36,6 +36,12 @@ pub enum CoolingCommand {
         barrier: GroupBarrier,
         reply: oneshot::Sender<Result<()>>,
     },
+    Stored {
+        target: CoolingTarget,
+        expected_revision: String,
+        id: String,
+        reply: oneshot::Sender<Result<CoolingState>>,
+    },
     Set {
         target: CoolingTarget,
         policy: CoolingPolicy,
@@ -201,7 +207,7 @@ struct Channel {
     enabled: bool,
 }
 impl Channel {
-    fn new(policy: Option<CoolingPolicy>, target: CoolingTarget) -> Self {
+    fn new(policy: Option<CoolingPolicy>, target: CoolingTarget, mode_id: Option<String>) -> Self {
         let error = policy
             .as_ref()
             .and_then(|p| p.validate(target).err())
@@ -210,6 +216,7 @@ impl Channel {
             enabled: error.is_none(),
             state: CoolingChannelState {
                 requested: policy,
+                mode_id,
                 last_error: error,
                 ..Default::default()
             },
@@ -375,10 +382,46 @@ impl Controller {
         }
         Ok(self.state())
     }
+    async fn set_policy(
+        &mut self,
+        target: CoolingTarget,
+        policy: CoolingPolicy,
+        mode_id: Option<String>,
+    ) -> Result<CoolingState> {
+        let validation = policy.validate(target).and_then(|()| {
+            if let Some(sensor_id) = policy.sensor_id() {
+                if !self
+                    .rows()
+                    .iter()
+                    .any(|r| r.id == sensor_id && r.unit == SensorUnit::Celsius)
+                {
+                    return Err(IpcError::InvalidArgument(
+                        "binding must identify a known host or this device temperature sensor"
+                            .into(),
+                    ));
+                }
+            }
+            Ok(())
+        });
+        validation?;
+        *self.channel(target) = Channel::new(Some(policy), target, mode_id);
+        self.tick(target).await;
+        let config = CoolingConfig {
+            fan: self.fan.state.requested.clone(),
+            pump: self.pump.state.requested.clone(),
+            fan_mode: self.fan.state.mode_id.clone(),
+            pump_mode: self.pump.state.mode_id.clone(),
+        };
+        self.settings
+            .send(SettingsUpdate::Cooling(config))
+            .await
+            .map_err(|_| IpcError::DeviceBusy("settings actor closed".into()))
+            .map(|()| self.state())
+    }
     async fn command(&mut self, cmd: CoolingCommand) {
         if GroupBarrier::held(&mut self.group_barrier) {
             match cmd {
-                CoolingCommand::Set { reply, .. } => {
+                CoolingCommand::Set { reply, .. } | CoolingCommand::Stored { reply, .. } => {
                     let _ = reply.send(Err(GroupBarrier::busy()));
                     return;
                 }
@@ -391,7 +434,9 @@ impl Controller {
         }
         if matches!(
             &cmd,
-            CoolingCommand::Set { .. } | CoolingCommand::Manual { .. }
+            CoolingCommand::Set { .. }
+                | CoolingCommand::Manual { .. }
+                | CoolingCommand::Stored { .. }
         ) {
             self.revision.advance();
         }
@@ -428,8 +473,16 @@ impl Controller {
                 {
                     let prepared = self.prepared_group.take().expect("checked prepared group");
                     self.revision.advance();
-                    self.fan = Channel::new(prepared.1.cooling.fan.clone(), CoolingTarget::Fan);
-                    self.pump = Channel::new(prepared.1.cooling.pump.clone(), CoolingTarget::Pump);
+                    self.fan = Channel::new(
+                        prepared.1.cooling.fan.clone(),
+                        CoolingTarget::Fan,
+                        prepared.1.cooling.fan_mode.clone(),
+                    );
+                    self.pump = Channel::new(
+                        prepared.1.cooling.pump.clone(),
+                        CoolingTarget::Pump,
+                        prepared.1.cooling.pump_mode.clone(),
+                    );
                     self.installed_group = Some(prepared);
                     Ok(())
                 } else {
@@ -452,30 +505,33 @@ impl Controller {
                 policy,
                 reply,
             } => {
-                let validation = policy.validate(target).and_then(|()| {
-                    if let Some(sensor_id) = policy.sensor_id() {
-                        if !self.rows().iter().any(|r| r.id == sensor_id && r.unit == SensorUnit::Celsius) {
-                            return Err(IpcError::InvalidArgument("binding must identify a known host or this device temperature sensor".into()));
-                        }
-                    }
-                    Ok(())
-                });
-                if let Err(error) = validation {
-                    let _ = reply.send(Err(error));
-                    return;
+                let result = self.set_policy(target, policy, None).await;
+                let _ = reply.send(result);
+            }
+            CoolingCommand::Stored {
+                target,
+                expected_revision,
+                id,
+                reply,
+            } => {
+                let (resolved, rx) = oneshot::channel();
+                let result = async {
+                    self.settings
+                        .send(SettingsUpdate::ResolveCoolingMode {
+                            target,
+                            expected_revision,
+                            id,
+                            reply: resolved,
+                        })
+                        .await
+                        .map_err(|_| IpcError::DeviceBusy("settings actor closed".into()))?;
+                    let mode = rx
+                        .await
+                        .map_err(|_| IpcError::DeviceBusy("mode resolution dropped".into()))?
+                        .map_err(IpcError::DeviceBusy)?;
+                    self.set_policy(target, mode.policy, Some(mode.id)).await
                 }
-                *self.channel(target) = Channel::new(Some(policy), target);
-                self.tick(target).await;
-                let config = CoolingConfig {
-                    fan: self.fan.state.requested.clone(),
-                    pump: self.pump.state.requested.clone(),
-                };
-                let result = self
-                    .settings
-                    .send(SettingsUpdate::Cooling(config))
-                    .await
-                    .map_err(|_| IpcError::DeviceBusy("settings actor closed".into()))
-                    .map(|()| self.state());
+                .await;
                 let _ = reply.send(result);
             }
             CoolingCommand::Manual {
@@ -490,7 +546,7 @@ impl Controller {
                     return;
                 }
                 let channel = self.channel(target);
-                *channel = Channel::new(None, target);
+                *channel = Channel::new(None, target, None);
                 channel.state.applied_percent = Some(percent);
                 channel.state.motherboard = motherboard;
                 let result = self
@@ -559,8 +615,16 @@ pub fn spawn(
             prepared_group: None,
             installed_group: None,
             shutdown: shutdown.clone(),
-            fan: Channel::new(inputs.initial.fan, CoolingTarget::Fan),
-            pump: Channel::new(inputs.initial.pump, CoolingTarget::Pump),
+            fan: Channel::new(
+                inputs.initial.fan,
+                CoolingTarget::Fan,
+                inputs.initial.fan_mode,
+            ),
+            pump: Channel::new(
+                inputs.initial.pump,
+                CoolingTarget::Pump,
+                inputs.initial.pump_mode,
+            ),
             hid: inputs.hid,
             settings: inputs.settings,
             host: inputs.host,

@@ -7,13 +7,14 @@ test.beforeEach(async ({ page }) => {
     const fixture: ExternalFixture = { changed: false, modeChanged: false, cleared: false, writes: [] };
     Object.assign(window, { externalFixture: fixture, __TAURI_INTERNALS__: {
       invoke: async (_: string, req: { method: string }) => {
+        if (_ === 'desktop_set_language') return null;
         if (req.method.startsWith('set_') || req.method === 'patch_lcd_config' || req.method === 'clear_lcd') {
           fixture.writes.push(req.method);
           throw new Error('Unexpected mutation');
         }
         const channel = { requested: { mode: 'fixed', percent: fixture.changed ? 72 : 60 }, applied_percent: fixture.changed ? 72 : 60, motherboard: false, fallback_active: false, last_error: null };
         switch (req.method) {
-          case 'list_devices': return [{ id: 'A', display_name: 'LCD A' }];
+          case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid', age_ms: 1 }];
           case 'get_lcd_state': return {
             source: fixture.cleared ? 'Idle' : 'Theme',
@@ -44,7 +45,7 @@ test.beforeEach(async ({ page }) => {
       }
     } });
   });
-  await page.goto('/');
+  await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
 });
 
@@ -125,7 +126,7 @@ for (const cleared of [false, true]) {
       fixture.changed = true; fixture.cleared = cleared;
     }, cleared);
     await expect(page.getByText('Настройки ожидают записи на диск.', { exact: true })).toBeVisible();
-    await expect(page.getByText(`Источник: ${cleared ? 'Idle' : 'Theme'}`, { exact: true })).toBeVisible();
+    await expect(page.getByText(`Источник: ${cleared ? 'Нет программного потока' : 'Тема LCD'}`, { exact: true })).toBeVisible();
     await expect(name).toHaveValue('Unsaved local design');
     await load.click();
     if (cleared) {

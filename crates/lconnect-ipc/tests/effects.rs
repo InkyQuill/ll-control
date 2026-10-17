@@ -143,6 +143,7 @@ fn invalid_weather_settings_fail_before_render_admission() {
 fn weather_theme_version_order_and_profile_roundtrip_are_explicit() {
     let mut theme = LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 3,
         name: "Rain".into(),
         background: [0; 3],
@@ -289,6 +290,7 @@ fn independent_weather_pages_survive_profiles_and_only_active_settings_drive_ren
     assert_eq!(config.parameters(&[reading(90.0)]).unwrap().amount, 6);
     let theme = LcdTheme {
         page_cache: Vec::new(),
+        basic_editor: None,
         version: 3,
         name: "Independent pages".into(),
         background: [0; 3],

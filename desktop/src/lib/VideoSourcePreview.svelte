@@ -21,7 +21,20 @@
   const canvasHeight=$derived(sourceWidth && sourceHeight ? Math.max(1,Math.round(Math.min(480/sourceWidth,360/sourceHeight)*sourceHeight)) : 480);
   let mounted=false;
   let recording=$state<{start:number;limit:number;crop:VideoCrop|null}|null>(null);
-  let recordNotice=$state('');
+  type RecordingNotice = 'playback-failed'|'limit'|'added'|'empty'|'stopped'|'source-failed'|'seeked';
+  let recordNotice=$state<RecordingNotice|null>(null);
+  function recordingNoticeText() {
+    switch(recordNotice) {
+      case 'playback-failed':return t('Не удалось начать воспроизведение. Фрагмент не добавлен.');
+      case 'limit':return t('Достигнут конец видео или лимит выбранных фрагментов.');
+      case 'added':return t('Фрагмент добавлен.');
+      case 'empty':return t('Пустой фрагмент не добавлен.');
+      case 'stopped':return t('Запись остановлена.');
+      case 'source-failed':return t('Источник недоступен; незавершённый фрагмент не добавлен.');
+      case 'seeked':return t('Позиция изменилась во время записи; незавершённый фрагмент не добавлен.');
+      default:return '';
+    }
+  }
   async function startRecord() {
     const seconds=currentPosition();
     if(!recordEnabled || !canRecord || disabled || recording || seconds===null || !player || remainingMs<=0)return;
@@ -29,13 +42,13 @@
     if(start>=limit)return;
     recording={start,limit,crop:crop ? {...crop} : null};
     const attempt=recording, video=player;
-    recordNotice='';onrecording?.(true);
+    recordNotice=null;onrecording?.(true);
     try {
       await video.play();
       if(!mounted || !recording)video.pause();
     } catch {
       if(mounted && recording===attempt) {
-        recording=null;onrecording?.(false);recordNotice='Не удалось начать воспроизведение. Фрагмент не добавлен.';
+        recording=null;onrecording?.(false);recordNotice='playback-failed';
       }
     }
   }
@@ -48,19 +61,19 @@
     onrecording?.(false);
     if(Number.isFinite(end) && end>captured.start) {
       onrecord?.({start_ms:captured.start,end_ms:end,crop:captured.crop});
-      recordNotice=end===captured.limit ? 'Достигнут конец видео или лимит выбранных фрагментов.' : 'Фрагмент добавлен.';
-    } else recordNotice='Пустой фрагмент не добавлен.';
+      recordNotice=end===captured.limit ? 'limit' : 'added';
+    } else recordNotice='empty';
   }
-  function discardRecord(reason:string) {
+  function discardRecord(reason:RecordingNotice) {
     if(!recording)return;
     recording=null;player?.pause();onrecording?.(false);recordNotice=reason;
   }
 
   const lut=$derived(adjustments ? videoChannelLut(adjustments) : null);
   let effectCanvas:HTMLCanvasElement|undefined;
-  let paintError=$state('');
+  let paintError=$state(false);
   function paint() {
-    try {paintFrame();paintError='';} catch {paintError='Цветовой preview недоступен. Проверьте готовый ролик после подготовки.';}
+    try {paintFrame();paintError=false;} catch {paintError=true;}
   }
   function paintFrame() {
     if(!mounted || !player || player.readyState<2 || (!crop && !adjustments) || !croppedCanvas || failed) return;
@@ -111,6 +124,9 @@
   function finishCrop(event:PointerEvent) {
     const start=drag;drag=null;
     if(disabled || recording || !crop || !start || start.id!==event.pointerId) return;
+    const button=event.currentTarget as HTMLButtonElement;
+    if(!button.hasPointerCapture(event.pointerId))return;
+    button.releasePointerCapture(event.pointerId);
     const end=point(event), width=Math.round(Math.abs(end.x-start.x)*10000)/10000, height=Math.round(Math.abs(end.y-start.y)*10000)/10000;
     if(width>0 && height>0) oncrop?.({x:Math.min(start.x,end.x),y:Math.min(start.y,end.y),width,height});
   }
@@ -132,7 +148,7 @@
       if(!external)URL.revokeObjectURL(source);
     };
   });
-  $effect(()=>{if(disabled || !recordEnabled)discardRecord('Запись остановлена.');if(disabled)player?.pause();});
+  $effect(()=>{if(disabled || !recordEnabled)discardRecord('stopped');if(disabled)player?.pause();});
   export function currentExactPosition():number|null {
     if(!mounted || disabled || !playable || !player || seeking || player.seeking)return null;
     return Number.isFinite(player.currentTime) ? player.currentTime : null;
@@ -157,7 +173,7 @@
     if(recording && Math.round(position*1000)>=recording.limit)finishRecord();
     onposition(seeking ? null : Math.round(position*1000)/1000);
   }
-  function fail() {if(!mounted)return;discardRecord('Источник недоступен; незавершённый фрагмент не добавлен.');failed=true;hasFrame=false;duration=0;onposition(null);onmetadata(null);}
+  function fail() {if(!mounted)return;discardRecord('source-failed');failed=true;hasFrame=false;duration=0;onposition(null);onmetadata(null);}
   function seek(event:Event) {
     if(disabled || recording || !playable || !player) return;
     const value=(event.currentTarget as HTMLInputElement).valueAsNumber;
@@ -173,7 +189,7 @@
   {#if url}
     <video crossorigin="anonymous" bind:this={player} src={url} controls={!disabled && !recording} muted playsinline preload="auto"
       aria-label="{t("Исходное видео")}" onloadedmetadata={metadata} onloadeddata={update} ontimeupdate={update}
-      onseeking={()=>{discardRecord('Позиция изменилась во время записи; незавершённый фрагмент не добавлен.');seeking=true;onposition(null);}}
+      onseeking={()=>{discardRecord('seeked');seeking=true;onposition(null);}}
       onpause={()=>{if(player?.paused)finishRecord();}} onended={finishRecord}
       onseeked={(event)=>{seeking=false;update(event);}}
       onerror={fail}></video>
@@ -187,7 +203,7 @@
   {#if recordEnabled}
     <button disabled={disabled || (!recording && (!canRecord || !playable || seeking || remainingMs<=0 || position>=duration))} onclick={()=>recording ? finishRecord() : startRecord()}>{recording ? "" + t("Пауза записи") + "" : "" + t("Записать фрагмент") + ""}</button>
     {#if recording}<p role="status">{t("Идёт запись фрагмента.")}</p><p>{t("Записано:")} {(Math.max(0,Math.min(position*1000,recording.limit)-recording.start)/1000).toFixed(3)} {t("с.")}</p>{/if}
-    {#if recordNotice}<p role="status">{recordNotice}</p>{/if}
+    {#if recordNotice}<p role="status">{recordingNoticeText()}</p>{/if}
   {/if}
   {#if crop && playable && hasFrame}
     <p>{t("Потяните от одного угла области к другому. Стрелки перемещают область; точные размеры доступны в полях фрагмента.")}</p>
@@ -199,7 +215,7 @@
     <p>{t("Кадр после цветокоррекции, обрезки и размещения. Это локальный просмотр; итоговый ролик подготавливается при импорте.")}</p>
     <canvas bind:this={croppedCanvas} width="480" height="480" aria-label="{t("Кадр после обрезки")}"></canvas>
   {/if}
-  {#if paintError}<p role="status">{paintError}</p>{/if}
+  {#if paintError}<p role="status">{t('Цветовой preview недоступен. Проверьте готовый ролик после подготовки.')}</p>{/if}
   {#if failed}
     <p role="status">{t("Просмотр этого файла недоступен. Можно указать время вручную; при импорте файл проверяется отдельно.")}</p>
   {/if}
@@ -209,6 +225,6 @@
   input {width:100%;min-width:0;}
   canvas {display:block;max-width:100%;height:auto;}
   .crop-source {display:block;padding:0;border:0;max-width:100%;touch-action:none;cursor:crosshair;}
-  .crop-source:focus-visible {outline:3px solid #7dd3fc;outline-offset:3px;}
+  .crop-source:focus-visible {outline:3px solid var(--accent);outline-offset:3px;}
   p {overflow-wrap:anywhere;}
 </style>

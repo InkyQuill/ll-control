@@ -123,6 +123,38 @@ pub trait DaemonRpc: Send + Sync + 'static {
     async fn get_cooling_state(&self, _dev: DeviceId) -> Result<CoolingState> {
         Err(IpcError::NotImplemented("get_cooling_state".into()))
     }
+    /// Stored policies only; source provenance is omitted and nothing is applied.
+    async fn get_cooling_modes(&self, _dev: DeviceId) -> Result<Option<CoolingModeLibrary>> {
+        Err(IpcError::NotImplemented("get_cooling_modes".into()))
+    }
+    /// Save an existing stored mode with CAS; never changes the running policy.
+    async fn save_cooling_mode(
+        &self,
+        _dev: DeviceId,
+        _target: CoolingTarget,
+        _expected_revision: String,
+        _profile: CoolingModeProfile,
+    ) -> Result<CoolingModeLibrary> {
+        Err(IpcError::NotImplemented("save_cooling_mode".into()))
+    }
+    /// Create the fixed LCDV2 bank only when none exists. Never applies it.
+    async fn initialize_cooling_modes(
+        &self,
+        _dev: DeviceId,
+        _sensor: String,
+    ) -> Result<CoolingModeLibrary> {
+        Err(IpcError::NotImplemented("initialize_cooling_modes".into()))
+    }
+    /// Apply a CAS-resolved stored snapshot and retain its identity with intent.
+    async fn apply_cooling_mode(
+        &self,
+        _dev: DeviceId,
+        _target: CoolingTarget,
+        _expected_revision: String,
+        _id: String,
+    ) -> Result<CoolingState> {
+        Err(IpcError::NotImplemented("apply_cooling_mode".into()))
+    }
     async fn set_cooling_policy(
         &self,
         _dev: DeviceId,
@@ -170,6 +202,25 @@ pub trait DaemonRpc: Send + Sync + 'static {
         colors: Vec<Rgb>,
     ) -> Result<()>;
 
+    async fn preview_windows_control_import(
+        &self,
+        _dev: DeviceId,
+        _draft_json: String,
+    ) -> Result<crate::WindowsControlPreview> {
+        Err(IpcError::NotImplemented(
+            "preview_windows_control_import".into(),
+        ))
+    }
+    async fn import_windows_control(
+        &self,
+        _dev: DeviceId,
+        _operation_id: String,
+        _expected: String,
+        _draft_json: String,
+    ) -> Result<crate::FullGroupCommit> {
+        Err(IpcError::NotImplemented("import_windows_control".into()))
+    }
+
     async fn preview_fan_and_lighting_reset(
         &self,
         _dev: DeviceId,
@@ -210,6 +261,16 @@ pub trait DaemonRpc: Send + Sync + 'static {
         Err(IpcError::NotImplemented("read_group_import".into()))
     }
 
+    async fn preview_windows_screen_upload(
+        &self,
+        _dev: DeviceId,
+        _id: String,
+        _source: crate::WindowsScreenPreviewSource,
+    ) -> Result<Vec<u8>> {
+        Err(IpcError::NotImplemented(
+            "preview_windows_screen_upload".into(),
+        ))
+    }
     async fn group_upload(
         &self,
         _dev: DeviceId,
@@ -337,6 +398,10 @@ pub trait DaemonRpc: Send + Sync + 'static {
     }
     async fn get_lcd_theme(&self, _dev: DeviceId) -> Result<Option<crate::LcdTheme>> {
         Err(IpcError::NotImplemented("get_lcd_theme".into()))
+    }
+    /// Stored Windows basic editor only; does not read private source history or Apply.
+    async fn get_imported_lcd_editor(&self, _dev: DeviceId) -> Result<Option<crate::LcdTheme>> {
+        Err(IpcError::NotImplemented("get_imported_lcd_editor".into()))
     }
     async fn is_lcd_available(&self, dev: DeviceId) -> Result<bool>;
     async fn set_lcd_config(&self, dev: DeviceId, cfg: LcdConfig) -> Result<()>;

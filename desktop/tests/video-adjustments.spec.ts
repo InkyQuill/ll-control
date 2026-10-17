@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {videoChannelLut} from '../src/lib/video-adjustments';
 
 test('preview channel table matches all installed SDK oracle vectors',()=>{
-  const oracle=readFileSync(new URL('../src-tauri/tests/fixtures/video-effect-channels.bin',import.meta.url));
+  const oracle=readFileSync(new URL('../../crates/lconnect-media/tests/fixtures/video-effect-channels.bin',import.meta.url));
   for(let amount=0;amount<256;amount++) {
     expect(Buffer.from(videoChannelLut({contrast:amount,brightness:0}))).toEqual(oracle.subarray(amount*256,(amount+1)*256));
     expect(Buffer.from(videoChannelLut({contrast:0,brightness:amount}))).toEqual(oracle.subarray(65536+amount*256,65536+(amount+1)*256));

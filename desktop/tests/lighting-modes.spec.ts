@@ -16,9 +16,10 @@ async function setup(page:Page) {
     const saved=JSON.parse(localStorage.getItem('mode-fixture')??'{"base":{},"profiles":{},"writes":0}') as {topologies?:Record<string,Topology>;base:Record<string,Config>;profiles:Record<string,Record<string,Config>>;writes:number};
     saved.topologies??={};
     Object.assign(window,{modeFixture:saved,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params:{dev:string;kind:string;cfg:Config}})=>{
+        if (_ === 'desktop_set_language') return null;
       const key=req.params?`${req.params.dev}:${req.params.kind}`:'';
       switch(req.method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'},{id:'B',display_name:'LCD B'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle',requested:{}};
         case 'get_lighting_info':return {fan_topology:req.params.kind==='fan'?saved.topologies![req.params.dev]??{sync_to_pump:false,size:'360',manual_led_count:24}:null,modes:catalog(req.params.kind).map(c=>c.mode),catalog:catalog(req.params.kind),base:saved.base[key]??null,profiles:Object.values(saved.profiles[key]??{})};
@@ -28,7 +29,7 @@ async function setup(page:Page) {
       }
     }}});
   },{rows});
-  await page.goto('/');await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
+  await page.goto('/?view=display');await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Подсветка',exact:true}).click();
   await expect(mode(page)).toHaveValue('rainbow');
 }

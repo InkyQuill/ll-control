@@ -8,9 +8,10 @@ async function setup(page:Page,legacy=false) {
     const defaults=(mode:string):C=>({mode,color:{r:255,g:0,b:0},additional_colors:[],brightness_percent:100,speed_percent:mode==='static'?0:75,direction:'forward',scope:'inner',disabled:false});
     const fixture=JSON.parse(localStorage.getItem('dynamic-selection')??'null')??{mode:'static',enabled:{static:true,breathing:false},writes:[],fail:false};
     Object.assign(window,{dynamicSelection:fixture,__TAURI_INTERNALS__:{invoke:async(_:string,{method,params}:{method:string;params:{dev:string;kind:string;cfg:C;config:unknown}})=>{
+        if (_ === 'desktop_set_language') return null;
       const state=()=>({base_mode:fixture.mode,color_count:1,speed_supported:fixture.mode!=='static',requested:fixture.enabled[fixture.mode]?{sensor_id:'cpu',unit:'celsius',low_value:30,high_value:60,low_colors:[{r:0,g:0,b:255}],high_colors:[{r:255,g:0,b:0}],low_speed_percent:null,high_speed_percent:null}:null,applied:null,last_error:null,degraded:false,suppressed_by_thermal:false});
       switch(method){
-        case 'list_devices':return [{id:'A',display_name:'LCD A'}];
+        case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu',unit:'celsius',label:'CPU',value:50,status:'valid',age_ms:0}];
         case 'get_lighting_info':return {dynamic_mode_supported:!legacy&&params.kind==='pump',modes:['static','breathing'],base:{...defaults(fixture.mode),...(!legacy?{dynamic_mode:fixture.enabled[fixture.mode]}:{})},profiles:['static','breathing'].map(m=>({...defaults(m),...(!legacy?{dynamic_mode:fixture.enabled[m]}:{})})),catalog:['static','breathing'].map(m=>({mode:m,color_count:1,speed:m!=='static',brightness:true,direction:false,defaults:defaults(m)}))};
         case 'get_thermal_state':return {requested:{cpu:null,gpu:null},degraded_sources:[],fan:{last_error:null},pump:{last_error:null},grace_remaining_ms:0};
@@ -21,7 +22,7 @@ async function setup(page:Page,legacy=false) {
       }
     }}});
   },{legacy});
-  await page.goto('/');await page.getByRole('button',{name:'Подсветка',exact:true}).click();await expect(mode(page)).toHaveValue('static');
+  await page.goto('/?view=display');await page.getByRole('button',{name:'Подсветка',exact:true}).click();await expect(mode(page)).toHaveValue('static');
 }
 test('per-mode Static/Dynamic choice follows drafts and reload without implicit writes',async({page})=>{
   await setup(page);await expect(selection(page)).toHaveValue('true');

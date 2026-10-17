@@ -72,6 +72,7 @@ impl PreparedScreen {
         let group = ScreenGroup {
             lcd: settings.lcd.clone(),
             theme: settings.theme.clone(),
+            editor: settings.screen_editor.clone(),
             media_clip: settings.media_clip.clone(),
             collections: settings.screen_collections.clone(),
         };
@@ -207,6 +208,7 @@ impl PreparedScreenGroup {
             theme: group.theme.clone(),
             media_clip: group.media_clip.clone(),
             screen_collections: group.collections.clone(),
+            screen_editor: group.editor.clone(),
             ..Default::default()
         };
         let screen =
@@ -265,5 +267,6 @@ pub(crate) fn media_theme(key: String) -> lconnect_ipc::LcdTheme {
         background_fill: None,
         layers: Vec::new(),
         page_cache: Vec::new(),
+        basic_editor: None,
     }
 }

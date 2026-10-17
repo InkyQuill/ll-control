@@ -126,5 +126,5 @@
 </details>
 <style>
   pre{white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
-  details{border-top:1px solid #33445b;padding-top:14px;display:grid;gap:12px}summary{cursor:pointer;font-weight:600}p{line-height:1.5}label{display:grid;gap:6px;margin:12px 0}.buttons{display:flex;flex-wrap:wrap;gap:8px}progress{width:100%}[role=alert]{color:#ffb7c6}code{user-select:all;overflow-wrap:anywhere}
+  details{border-top:1px solid var(--border);padding-top:14px;display:grid;gap:12px}summary{cursor:pointer;font-weight:600}p{line-height:1.5}label{display:grid;gap:6px;margin:12px 0}.buttons{display:flex;flex-wrap:wrap;gap:8px}progress{width:100%}[role=alert]{color:var(--danger)}code{user-select:all;overflow-wrap:anywhere}
 </style>
