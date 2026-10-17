@@ -22,6 +22,9 @@ struct Entry {
 }
 struct VideoEntry {
     key: String,
+    fps: u8,
+    frames: usize,
+    target: usize,
     decoder: crate::editor_video::EditorVideo,
     touched: Instant,
     gate: crate::admission::Admission,
@@ -42,7 +45,12 @@ impl EditorCache {
             }
         }
         let mut video = self.video.lock().await;
-        if video.as_ref().is_some_and(|entry| entry.key != key) {
+        if video.as_ref().is_some_and(|entry| {
+            entry.key != key
+                || frame_index(timeline, entry.fps, entry.frames) < entry.target
+                || frame_index(timeline, entry.fps, entry.frames).saturating_sub(entry.target)
+                    > 1024
+        }) {
             *video = None;
         }
         if video.is_none() {
@@ -51,16 +59,23 @@ impl EditorCache {
             let source_key = key.clone();
             let source =
                 tokio::task::spawn_blocking(move || store.acquire_source(&source_key)).await??;
+            let fps = source.fps();
+            let frames = source.frames();
+            let target = frame_index(timeline, fps, frames);
             *video = Some(VideoEntry {
                 key,
-                decoder: crate::editor_video::EditorVideo::spawn(source, permit),
+                fps,
+                frames,
+                target,
+                decoder: crate::editor_video::EditorVideo::spawn(source, permit, target),
                 touched: Instant::now(),
                 gate,
             });
         }
         let entry = video.as_mut().expect("video initialized");
         entry.touched = Instant::now();
-        match entry.decoder.first_frame().await {
+        entry.target = frame_index(timeline, entry.fps, entry.frames);
+        match entry.decoder.frame_at(entry.target).await {
             Ok(frame) => {
                 if let Ok(mut last) = self.last_frame.lock() {
                     *last = Some((entry.key.clone(), timeline, (*frame).clone()));
@@ -124,4 +139,8 @@ impl EditorCache {
             }
         });
     }
+}
+
+fn frame_index(timeline: u64, fps: u8, frames: usize) -> usize {
+    ((u128::from(timeline) * u128::from(fps) / 1000) % frames.max(1) as u128) as usize
 }

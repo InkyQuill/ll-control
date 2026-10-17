@@ -6,7 +6,7 @@
   const hex=(color:number[])=>'#'+color.map(value=>value.toString(16).padStart(2,'0')).join('');
   const rgb=(color:string)=>[1,3,5].map(index=>parseInt(color.slice(index,index+2),16));
 </script>
-                <div class="row"><label>X<input type="number" min="0" max="479" bind:value={style.x}/></label><label>Y<input type="number" min="0" max="479" bind:value={style.y}/></label><label>{t("Размер")}<input type="number" min="8" max="160" bind:value={style.size}/></label><label>{t("Цвет")}<input type="color" value={hex(style.color)} oninput={e => { style.color = rgb(e.currentTarget.value); }}/></label></div>
+                <div class="row placement"><label>X<input type="number" min="0" max="479" bind:value={style.x}/></label><label>Y<input type="number" min="0" max="479" bind:value={style.y}/></label><label>{t("Размер")}<input type="number" min="8" max="160" bind:value={style.size}/></label><label>{t("Цвет")}<input type="color" value={hex(style.color)} oninput={e => { style.color = rgb(e.currentTarget.value); }}/></label></div>
                 <FontSelect style={style} {fonts} onchange={(font, asset) => { style.font = font; style.font_asset = asset; }}/>
                 <label>{t("Непрозрачность текста, %")}<input type="number" min="0" max="100" value={style.opacity ?? 100} oninput={e=>style.opacity=Number(e.currentTarget.value)}/></label>
                 <label>{t("Выравнивание")}<select bind:value={style.align}><option value="left">{t("Слева")}</option><option value="center">{t("По центру")}</option><option value="right">{t("Справа")}</option></select></label>
@@ -31,5 +31,5 @@
 </details>
 
 <style>
-  .row{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:8px}
+  .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end;margin-bottom:8px}.placement{grid-template-columns:repeat(4,minmax(0,1fr))}.row>label{min-width:0}
 </style>

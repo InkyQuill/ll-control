@@ -2,8 +2,8 @@
   import {t} from './i18n.svelte';
   import type {Layer} from './api';
   import {isProcedural} from './lcd-pages';
-  let {layers,labels,selected,onselect,onmove,onduplicate,onremove,onvisibility,onlock}: {
-    layers:Layer[];labels:Record<Layer['kind'],string>;selected:number;
+  let {collapsed=false,layers,labels,selected,onselect,onmove,onduplicate,onremove,onvisibility,onlock}: {
+    collapsed?:boolean;layers:Layer[];labels:Record<Layer['kind'],string>;selected:number;
     onselect:(index:number)=>void;onmove:(index:number,target:number)=>void;
     onduplicate:(index:number)=>void;onremove:(index:number)=>void;onvisibility:(index:number)=>void;onlock:(index:number)=>void;
   }=$props();
@@ -13,8 +13,8 @@
   }
 </script>
 <section class="stack" aria-label={t('Слои')}>
-  <header><h2>{t('Слои')}</h2><span>{layers.length} / 32</span></header>
-  <div class="rows">
+  <header hidden={collapsed}><h2>{t('Слои')}</h2><span>{layers.length} / 32</span></header>
+  <div class="rows" hidden={collapsed}>
     {#each layers.map((layer,index)=>({layer,index})).reverse() as item (item.layer)}
       <div class="layer-entry"><button class="layer-row" data-layer-index={item.index} class:selected={selected===item.index}
         aria-pressed={selected===item.index} title={title(item.layer)}
@@ -46,6 +46,7 @@
 <style>
   .stack{border-block:1px solid var(--border);padding-block:12px;margin-block:16px}
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}h2{margin:0;font-size:15px}header>span{color:var(--text-muted);font-size:12px;font-variant-numeric:tabular-nums}
+  .rows[hidden],header[hidden]{display:none}
   .rows{display:grid;gap:2px;max-height:280px;overflow:auto}
   .layer-entry{display:flex;gap:2px}.layer-entry>.layer-row{flex:1;min-width:0}.toggle{padding:6px;min-height:30px;border-color:transparent;background:transparent}.toggle[aria-pressed=true]{color:var(--accent-text)}svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5}
   .layer-row{display:flex;align-items:center;gap:12px;text-align:left;padding:7px 10px;min-height:34px;border-color:transparent;border-radius:6px;background:transparent}

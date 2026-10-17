@@ -939,6 +939,66 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn editor_video_timeline_survives_short_pause_idle_expiry_and_wrap() {
+        let filter = "nullsrc=s=480x480:r=24,format=rgb24,geq=r='32+24*N':g=0:b=0";
+        let (_root, store, key, source) =
+            tokio::task::spawn_blocking(move || source_with_filter_video(filter, "4", "8"))
+                .await
+                .unwrap();
+        drop(source);
+        let gate = crate::admission::Admission::default();
+        let slots = crate::admission::WorkSlots::new(1, gate.clone());
+        let editor = Arc::new(crate::editor_cache::EditorCache::default());
+        editor.store(
+            None,
+            theme(),
+            Arc::new(ThemeRuntime::new(theme(), ThemeAssets::new(), vec![]).unwrap()),
+        );
+        let fifth = editor
+            .video_frame(key.clone(), 209, store.clone(), slots.clone())
+            .await
+            .unwrap();
+        assert!((i16::from(fifth.get_pixel(240, 240)[0]) - 152).abs() < 10);
+        tokio::time::sleep(Duration::from_millis(150)).await;
+        assert_eq!(
+            fifth,
+            editor
+                .video_frame(key.clone(), 209, store.clone(), slots.clone())
+                .await
+                .unwrap()
+        );
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while gate.active() != 0 {
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(
+            fifth,
+            editor
+                .video_frame(key.clone(), 209, store.clone(), slots.clone())
+                .await
+                .unwrap()
+        );
+        let sixth = editor
+            .video_frame(key.clone(), 250, store.clone(), slots.clone())
+            .await
+            .unwrap();
+        assert!((i16::from(sixth.get_pixel(240, 240)[0]) - 176).abs() < 10);
+        let wrapped = editor
+            .video_frame(key.clone(), 334, store.clone(), slots.clone())
+            .await
+            .unwrap();
+        assert!((i16::from(wrapped.get_pixel(240, 240)[0]) - 32).abs() < 10);
+        tokio::time::timeout(Duration::from_secs(5), gate.close().wait_checked())
+            .await
+            .unwrap()
+            .unwrap();
+        store.delete_unreferenced(&key, || Ok(false)).unwrap();
+    }
+
+    #[tokio::test]
     async fn preview_timeout_and_output_budget_reap_decoder_before_returning() {
         for oversized in [false, true] {
             let (root, _store, _key, mut source) =
@@ -1418,6 +1478,51 @@ time.sleep(60)
         malformed.push(&[1, 2, 3, 0, 0, 1, 9, 0xf0]).unwrap();
         assert!(malformed.next().is_err());
     }
+    #[test]
+    fn editor_dynamic_weather_matches_continuous_output_through_sensor_transition() {
+        let cache = SensorCache::default();
+        update(&cache, 20.0);
+        let mut config:LcdTheme=serde_json::from_value(serde_json::json!({"version":3,"name":"Snow","background":[0,0,0],"layers":[{"kind":"weather","effect":{"kind":"snow","intensity":1,"seed":42,"dynamic":true,"sensor":{"sensor_id":"cpu","unit":"celsius","low":20,"high":80}}}]})).unwrap();
+        config.background_image = Some(
+            serde_json::from_value(
+                serde_json::json!({"asset":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fit":"stretch"}),
+            )
+            .unwrap(),
+        );
+        config.layers.push(serde_json::from_value(serde_json::json!({"kind":"divider","axis":"horizontal","x":0,"y":0,"length":100,"thickness":1,"color":[255,255,255],"opacity":100,"editor":{"id":"editor-background-0","name":"Collision fixture","hidden":true,"locked":false}})).unwrap());
+        let mut assets = ThemeAssets::new();
+        assets.insert(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into(),
+            Arc::new(
+                RgbImage::from_raw(480, 480, [20, 30, 40].repeat(480 * 480))
+                    .unwrap()
+                    .into(),
+            ),
+        );
+        let editor =
+            ThemeRuntime::new(config.clone(), assets.clone(), vec![cache.clone()]).unwrap();
+        let output = ThemeRuntime::new(config, assets, vec![cache.clone()]).unwrap();
+        for elapsed in [0, 100, 500, 1000, 1100, 1500] {
+            if elapsed >= 1000 {
+                update(&cache, 90.0);
+            }
+            let preview = editor.editor_preview(None, elapsed, None).unwrap();
+            let pixels = output.compose_frame_at_millis(None, elapsed).unwrap();
+            let expected = lconnect_image::prepare_jpeg_from_image(
+                pixels.into(),
+                lconnect_image::FitMode::Stretch,
+                lconnect_image::Quality::default(),
+            )
+            .unwrap()
+            .bytes;
+            assert_eq!(preview.background, expected, "background at {elapsed}");
+            assert_eq!(
+                preview.jpeg, expected,
+                "effect must advance only once at {elapsed}"
+            );
+        }
+    }
+
     #[tokio::test]
     async fn procedural_weather_encodes_without_media_and_live_sensor_changes_reach_h264() {
         let root = tempfile::tempdir().unwrap();

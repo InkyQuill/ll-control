@@ -26,6 +26,9 @@
     await delay(10000);observer.disconnect();
     const apply=[...document.querySelectorAll('button')].find(n=>n.textContent.trim()===(en?'Apply to LCD':'Применить к LCD'));
     const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};
-    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,viewport:{width:innerWidth,height:innerHeight,scale:devicePixelRatio},frames:frames.length,fps:frames.length/((performance.now()-started)/1000),layers:document.querySelectorAll('.layer-row[data-layer-index]').length,apply:rect(apply),inspector:rect(document.querySelector('.inspector')),canvas:rect(document.querySelector('.canvas')),horizontalOverflow:document.documentElement.scrollWidth>innerWidth}});
+    const result={ok:true,viewport:{width:innerWidth,height:innerHeight,scale:devicePixelRatio},frames:frames.length,fps:frames.length/((performance.now()-started)/1000),layers:document.querySelectorAll('.layer-row[data-layer-index]').length,apply:rect(apply),inspector:rect(document.querySelector('.inspector')),canvas:rect(document.querySelector('.canvas')),horizontalOverflow:document.documentElement.scrollWidth>innerWidth};
+    await invoke('native_smoke_result',{keepOpen:true,result});
+    await delay(3000);await click('Layers','Слои');await delay(300);
+    await invoke('native_smoke_result',{keepOpen:true,result:{...result,pane:'layers'}});
   } catch(error) { await invoke('native_smoke_result',{result:{ok:false,error:String(error)}}); }
 })();

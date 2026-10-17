@@ -119,15 +119,15 @@ Success and danger colors communicate status alongside text. Errors pair the dan
 
 Exo 2 Semibold is self-hosted at `desktop/static/fonts/exo2-semibold.ttf`, with its OFL license at `desktop/static/fonts/OFL.txt`. CSS registers it as `Exo` at weight 600 with `font-display: swap`. Headings use Exo with Segoe UI and sans-serif fallbacks. Body controls use Segoe UI, system-ui and sans-serif; English and Cyrillic labels share the same hierarchy.
 
-Page headings use the headline token and become 28px below 760px. Standard section headings use the title token; inventory device names use 24px. Supporting captions use 12px with generous line height, and field labels use 13px. Sensor values use 30px tabular numerals. LCD content typography belongs to the user's composition, not the application heading scale.
+Page headings use the headline token, compact to 26px above 980px to leave room for the workbench, and become 28px below 760px. Standard section headings use the title token; inventory device names use 24px. Supporting captions use 12px with generous line height, and field labels use 13px. Sensor values use 30px tabular numerals. LCD content typography belongs to the user's composition, not the application heading scale.
 
 ## Layout
 
-The wide shell has a 230px device rail and a flexible main area capped at 1700px, padded 36px vertically and 40px horizontally. Device capability links sit directly beneath the selected device. Global settings, sensors and system information form a separate navigation group.
+The desktop shell has a 190px device rail and a flexible main area capped at 1700px with 24px padding. Device capability links sit directly beneath the selected device. Global settings, sensors and system information form a separate navigation group.
 
-Inventory cards pair a schematic column (`minmax(180px,35%)`) with device identity and capability actions; cards have a 240px minimum height and 24px gaps. The LCD workspace has preview/editor columns (`minmax(280px,.9fr)` and `minmax(360px,1.1fr)`) separated by 32px. Lighting also pairs a schematic with controls in two flexible columns. Wide previews stay sticky at 24px from the top.
+Inventory cards pair a schematic column (`minmax(180px,35%)`) with device identity and capability actions; cards have a 240px minimum height and 24px gaps. The LCD workspace pairs a flexible canvas (`minmax(280px,1fr)`) with a bounded editing pane (`minmax(300px,360px)`). Above 980px, the columns have a 12px gap and the canvas stage stays sticky at 16px from the top. Theme identity, saved profiles and peer-panel navigation share a wrapping row above both columns. Lighting keeps its own schematic-and-controls layout.
 
-At 1100px, the rail contracts to 190px, main padding becomes 24px, studios stack and previews stop sticking. The LCD stage is capped at 560px and the LCD preview at 300px. Below 760px, navigation moves above content, inventory cards stack, main padding becomes 16px, and the header and device selector wrap. Forms and action rows wrap without shrinking their body type.
+At 980px and below, the LCD workspace stacks and its stage stops sticking, with a 560px maximum width. At 760px and below, navigation moves above content, inventory cards stack, main padding becomes 16px, and the header and device selector wrap. Forms and action rows wrap without shrinking their body type. The compact layer stack and selected-layer inspector have their own scroll areas; their height must be qualified against the supported desktop windows rather than treated as a universal token.
 
 ## Elevation & Depth
 
@@ -155,9 +155,13 @@ Inventory cards show device identity, connection state, a schematic and direct c
 
 **Display geometry.** GALAHAD II LCDV2 has a square 480×480 LCD. Shape and resolution come from device capability metadata shared by the preview and device glyph. Preserve square corners; apply a circular mask only to devices explicitly described as round. Do not infer the shape from the product category or add unsupported families just to demonstrate another shape.
 
-The preview and its explicit Apply action sit alongside the editor. Theme name and saved profiles are common controls above three peer panels: Ready-made themes, Composition and Library. Ready-made themes create an editable local draft and then open Composition; choosing a layout does not send it to hardware. Composition holds layers and content editing; Library holds media, collections and fonts.
+The live canvas is the editor on entry: selection, movement and resizing do not require an editing-mode or continuous-preview checkbox. Its toolbar keeps explicit Apply to LCD and whole-screen orientation above the canvas; animation has a separate pause/resume control. Local preview changes remain distinct from confirmed physical output.
 
-Local panels remain mounted and are hidden when inactive, preserving their editing state while switching between these panels. This is local panel continuity, not a promise that every editor persists across application restarts. Preview copy explicitly distinguishes a prepared image from confirmed physical LCD output.
+Theme name and saved profiles are common controls above three peer panels: Ready-made themes, Composition and Library. Ready-made themes create an editable local draft and then open Composition; choosing a layout does not send it to hardware. Library holds media, collections and fonts.
+
+Composition uses a switchable Layers / Properties pane beside the canvas. Layers are compact rows ordered topmost first, with content names, type, visibility and lock controls; the background remains reachable below the rows. Selection on either the canvas or a row opens Properties for that same layer. One contextual inspector replaces repeated expanded forms. Reorder, duplicate and delete remain explicit controls, and layer names and advanced typography use disclosures rather than competing with common content fields.
+
+Local peer panels remain mounted and are hidden when inactive, preserving their editing state while switching between them. This is local panel continuity, not a promise that every editor persists across application restarts. Preview copy explicitly distinguishes a prepared image from confirmed physical LCD output.
 
 ### Lighting studio
 

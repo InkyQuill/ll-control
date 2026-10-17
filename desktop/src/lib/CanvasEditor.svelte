@@ -47,7 +47,7 @@
     const directions:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
     const direction=directions[event.key];if(!direction)return;
     event.preventDefault();event.stopPropagation();
-    if(event.altKey){onorder(index,direction[0]||direction[1]);return;}
+    if(event.altKey){onorder(index,direction[0]||-direction[1]);return;}
     const layer=JSON.parse(JSON.stringify(layers[index])) as Layer;
     const step=event.ctrlKey||event.metaKey?10:layer.kind==='image'&&layer.watermark_position?5:1;
     // Direction keys follow the visible, rotated canvas.

@@ -35,6 +35,7 @@ def rpc(root, method, params):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--theme', type=Path, required=True)
+    parser.add_argument('--layers', action='store_true', help='Also capture the full Layers pane')
     parser.add_argument('--video', action='store_true', help='Use a generated 480px video background and available mock temperature sensors')
     parser.add_argument('--release', action='store_true', help='Use optimized binaries for performance measurements')
     parser.add_argument('--language', choices=['en-US','ru-RU'], default='en-US')
@@ -93,6 +94,12 @@ def main():
             result=json.loads((root/'result.json').read_text())
             assert result['ok'],result
             subprocess.run(['spectacle','-b','-n','-a','-o',str(root/'editor.png')],check=True,timeout=30)
+            if args.layers:
+                deadline=time.monotonic()+10
+                while json.loads((root/'result.json').read_text()).get('pane')!='layers':
+                    assert time.monotonic()<deadline,'layer pane capture timeout'
+                    time.sleep(.1)
+                subprocess.run(['spectacle','-b','-n','-a','-o',str(root/'layers.png')],check=True,timeout=30)
             print(json.dumps(dict(root=str(root),language=args.language,size=args.size,result=result)),flush=True)
         finally:
             (root/'stop').touch()

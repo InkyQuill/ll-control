@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-16T13:43:49.764103+00:00",
+  "generatedAt": "2026-10-17T20:37:34.591539+00:00",
   "title": "Design System: L-Connect Linux Device Studio",
   "extensions": {
     "colorMeta": {
@@ -282,7 +282,7 @@
     "breakpoints": [
       {
         "name": "studio-stack",
-        "value": "1100px"
+        "value": "980px"
       },
       {
         "name": "navigation-stack",
@@ -338,6 +338,13 @@
       "description": "LCD peer panels from the production Device Studio.",
       "html": "<nav class=\"ds-panels\" aria-label=\"LCD workspace\"><button>Ready-made themes</button><button aria-pressed=\"true\">Composition</button><button>Library</button></nav>",
       "css": ".ds-panels{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid #30323e}.ds-panels button{font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:10px 14px;border:1px solid #787b8c;border-radius:8px;background:#232630;color:#eff0f6;min-height:38px}.ds-panels button[aria-pressed=true]{background:#2c263d;color:#ded3ff;border-color:#b9a7ff}.ds-panels button:hover{background:#32333f}.ds-panels button:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
+    },
+    {
+      "name": "Layers / Properties pane",
+      "kind": "nav",
+      "description": "Switch between compact layer selection and the contextual inspector; selecting a layer opens its properties.",
+      "html": "<nav class=\"ds-pane\" aria-label=\"Composition pane\"><button aria-pressed=\"false\">Layers</button><button aria-pressed=\"true\">Properties</button></nav>",
+      "css": ".ds-pane{display:flex;gap:6px;margin-bottom:8px}.ds-pane button{flex:1;font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:10px 14px;min-height:38px;border:1px solid #787b8c;border-radius:8px;background:#232630;color:#eff0f6}.ds-pane button[aria-pressed=true]{background:#2c263d;border-color:#b9a7ff;color:#ded3ff}.ds-pane button:hover{background:#32333f}.ds-pane button:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
     }
   ],
   "narrative": {

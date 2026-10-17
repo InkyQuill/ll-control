@@ -19,8 +19,12 @@ request up to24 frames/s; static clock/sensor scenes refresh once/s. Hidden wind
 stop requesting frames. Pause freezes the preview timeline; edits still rerender.
 
 The daemon keeps one matching runtime for30 seconds and one editor video decoder.
-Video uses a bounded latest-frame channel and a separate single-slot admission gate.
-Two seconds without a video request closes the decoder. Maintenance closes its
+Video decodes on demand to the requested timeline frame, with a bounded frame
+channel and a separate single-slot admission gate. Paused frames do not advance.
+Resuming after idle cleanup seeks from the preceding keyframe with an AU0 parameter
+primer; warmup is bounded to1024 frames and the whole request has a10-second deadline.
+Two seconds without a video request closes the decoder. Procedural backgrounds
+share the continuous output renderer and advance once per preview frame. Maintenance closes its
 admission gate; cancellation joins the media reader and reaps FFmpeg before
 releasing its permit and asset pin. This path never owns a HID writer.
 
@@ -35,7 +39,8 @@ releasing its permit and asset pin. This path never owns a HID writer.
   English/Russian, and captures1280×800 and1024×768 windows on isolated X11.
 - `native-editor-session.py --theme <theme-or-native-result.json>` runs the same
   frontend on the current Wayland session with private settings, bus and MockBackend.
-  Use `--size`, `--language`, and optimized binaries with `--release`.
+  Use `--size`, `--language`, `--layers` for both pane captures, and optimized
+  binaries with `--release`.
   `--video` generates a local video fixture and binds sensor layers to mock values.
   It records viewport geometry and observed canvas updates; it never tests hardware.
 

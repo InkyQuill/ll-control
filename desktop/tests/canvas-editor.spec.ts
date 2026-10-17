@@ -36,7 +36,7 @@ async function setup(page:Page,rotation=0) {
   await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await page.getByText('Загрузить или остановить',{exact:true}).click();
   await expect(page.getByLabel('Название',{exact:true}).first()).toHaveValue('Canvas test');
-  await page.locator('.layer-row[data-layer-index="0"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();
   await ready(page);
 }
 async function ready(page:Page){await expect(page.getByText('Обновление холста…',{exact:true})).toHaveCount(0);}
@@ -65,7 +65,7 @@ test('pointer transforms, cancel, history and explicit Apply',async({page})=>{
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
   await page.getByRole('button',{name:'Повторить правку',exact:true}).click();await ready(page);
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('160');
-  await page.locator('.layer-row[data-layer-index="0"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();
   await drag(page,'Изменить размер выбранного слоя',40*step,40*step);
   await expect(layer(page,0).getByLabel('width',{exact:true})).toHaveValue('120');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
@@ -81,7 +81,7 @@ test('keyboard moves, resizes and sensor replacement preserve imported styles',a
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('130');
   await page.keyboard.press('Shift+ArrowRight');await ready(page);
   await expect(layer(page,3).getByLabel('Размер',{exact:true})).toHaveValue('25');
-  await page.locator('.layer-row[data-layer-index="1"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="1"]').click();
   await layer(page,1).getByLabel('Источник датчика',{exact:true}).selectOption('GPU');await ready(page);
   await expect(layer(page,1).getByLabel('Подпись',{exact:true})).toHaveValue('My CPU');
   await expect(layer(page,1).getByRole('group',{name:'Подпись датчика',exact:true}).getByLabel('Непрозрачность текста, %',{exact:true})).toHaveValue('80');
@@ -107,12 +107,15 @@ test('layer list reaches an obscured image and keyboard ordering preserves selec
   const text=page.getByRole('button',{name:'Выбрать слой 4: Текст',exact:true});
   await text.click();
   await expect(page.locator('.layer-row[data-layer-index="3"]')).toHaveAttribute('aria-pressed','true');
-  await page.locator('.layer-row[data-layer-index="0"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();
   const handle=page.getByRole('button',{name:'Изменить размер выбранного слоя',exact:true});
-  await handle.focus();await page.keyboard.press('Alt+ArrowDown');await ready(page);
+  await handle.focus();await page.keyboard.press('Alt+ArrowUp');await ready(page);
   await expect(page.locator('.layer-row[data-layer-index="1"]')).toHaveAttribute('aria-pressed','true');
   await expect(layer(page,1).getByRole('heading',{name:'Изображение',exact:true})).toBeFocused();
   await expect(layer(page,1).getByLabel('width',{exact:true})).toHaveValue('60');
+  await page.getByRole('button',{name:'Слои',exact:true}).click();
+  await page.locator('.layer-row[data-layer-index="1"]').focus();await page.keyboard.press('Alt+ArrowUp');
+  await expect(page.locator('.layer-row[data-layer-index="2"]')).toHaveAttribute('aria-pressed','true');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
 });
 
@@ -151,7 +154,7 @@ test('canvas remains usable in a narrow desktop window',async({page})=>{
 
 test('importing an image preserves the selected existing layer',async({page})=>{
   await setup(page);
-  await page.locator('.layer-row[data-layer-index="3"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="3"]').click();
   await page.getByText('Добавить слой',{exact:true}).click();
   await page.getByLabel('+ Изображение',{exact:true}).setInputFiles({
     name:'new-image.png',mimeType:'image/png',
@@ -164,7 +167,7 @@ test('importing an image preserves the selected existing layer',async({page})=>{
   const handle=page.getByRole('button',{name:'Изменить размер выбранного слоя',exact:true});
   await handle.focus();await page.keyboard.press('Control+ArrowRight');await ready(page);
   await expect(layer(page,4).getByLabel('X',{exact:true})).toHaveValue('130');
-  await page.locator('.layer-row[data-layer-index="3"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="3"]').click();
   await expect(layer(page,3).getByLabel('X',{exact:true})).toHaveValue('120');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
 });
@@ -177,9 +180,11 @@ test('compact stack preserves layer metadata, visibility, lock and explicit disp
   await page.getByText('Добавить слой',{exact:true}).click();
   await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(7);
   await expect(page.locator('.inspector')).toHaveCount(1);
+  await page.locator('.layer-name summary').click();
   await page.getByLabel('Имя слоя',{exact:true}).fill('GPU caption');
   const row=page.locator('.layer-row[data-layer-index="6"]');
   await expect(row).toContainText('GPU caption');
+  await page.getByRole('button',{name:'Слои',exact:true}).click();
   await page.getByRole('button',{name:'Блокировка слоя 7',exact:true}).click();
   await expect(page.locator('.inspector').getByLabel('Текст',{exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Блокировка слоя 7',exact:true}).click();
@@ -221,13 +226,13 @@ test('rendered layer follows pointer before committing and Escape restores it',a
 
 test('loading a smaller document clears stale selection and remains editable',async({page})=>{
   await setup(page);
-  await page.locator('.layer-row[data-layer-index="3"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="3"]').click();
   await page.evaluate(()=>Reflect.get(window,'canvasReplaceTheme')());
   await page.getByText('Загрузить или остановить',{exact:true}).click();
   await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(1);
   await expect(page.locator('.inspector[data-layer-index="3"]')).toHaveCount(0);
-  await page.locator('.layer-row[data-layer-index="0"]').click();
+  await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();
   await expect(layer(page,0).getByLabel('width',{exact:true})).toHaveValue('80');
   await ready(page);
 });
