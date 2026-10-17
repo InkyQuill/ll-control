@@ -43,3 +43,18 @@ local and ignored. These are foundational checks, not pointer/keyboard acceptanc
 Remaining R1: canvas component and selection/property integration, history/cancel,
 sensor rebinding and property reachability, translated controls, real browser and
 native input, profile/output/restart acceptance, then the completion commit.
+
+### R1 canvas integration
+
+Canvas mode now uses renderer bounds for selection, pointer move/resize and
+rotation-aware keyboard transforms. A layer chooser reaches obscured layers;
+selection highlights the property form. Escape, pointer cancellation/loss and
+window blur discard an unfinished gesture. Draft undo/redo is bounded and never
+applies hardware changes. Source replacement preserves a sensor's label/style;
+label/unit parts now expose the same text controls as the main value.
+
+Browser verification covers drag/resize, cancellation, undo/redo, keyboard move
+and resize, rotated coordinates, obscured-layer selection, reordering and the
+explicit Apply boundary. Existing preview recovery, basic banks and font flows
+also passed in the focused regression run. Native WebKitGTK input and complete
+profile/output/restart acceptance still remain; R1 is not complete.
