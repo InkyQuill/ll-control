@@ -1,5 +1,7 @@
 # R1 — base canvas editor
 
+**Completed 2026-10-17 at `f004cf2` for software/native acceptance.**
+
 Scope: edit the existing LCDV2 composition model. New themes, Windows grid
 reconstruction and physical Plasma Wayland acceptance remain later milestones.
 
@@ -53,9 +55,11 @@ main value, including managed fonts, wrapping, anchors, opacity and shadows.
 
 - `desktop/tests/canvas-editor.spec.ts`: real browser pointer/keyboard actions,
   cancellation/capture loss, history, source replacement, overlapping layers,
+  selection retained across image insertion,
   rotated coordinates, narrow desktop layout and no implicit Apply.
 - `desktop/tests/canvas-geometry.spec.ts`: native coordinate conversion, group
-  clamping and bounded resizing with retained imported fields.
+  clamping and bounded resizing with retained imported fields, including Windows
+  watermark percentage centers.
 - `crates/lconnect-image/tests/theme.rs`: measured geometry against fitted assets
   and rendered sensor parts; the ordinary renderer retains identical pixels.
 - `crates/lconnect-daemon/tests/theme_ipc.rs`: timed editor preview through IPC,
@@ -84,3 +88,22 @@ Generated logs, screenshots, event records and output frames are local evidence,
 not repository files. The harness prints its temporary evidence directory.
 Native X11/WebKitGTK mock acceptance does not qualify real hardware or Plasma
 Wayland; those remain R3 gates.
+
+## Completion checks
+
+- Broad regression at `7a36367`: 768 browser tests; 1,375 Rust tests passed,
+  9 ignored. Strict workspace/native-feature Clippy, formatting and rustdoc passed.
+- Final source `f004cf2`: the image-insertion selection regression failed before
+  the fix and passed afterward. All 12 focused canvas checks passed; Svelte
+  reported 0 errors/0 warnings and the production frontend/native GUI builds passed.
+- Native EN/RU acceptance reran against that final rebuilt frontend: trusted
+  pointer/keyboard actions, profile Save/load, explicit Apply, decoded output
+  pixel equality, continued rendering after GUI close, and daemon/GUI restart passed.
+- Localization: 1,160 static resources, no missing entries; 39 theme contracts
+  passed. These unchanged resources were checked during R1 integration.
+
+The final production change after the broad run only retains the selected layer
+when inserting an image; it has focused regression and repeated native coverage.
+Raw reports, hashes, frames and screenshots remain in ignored local evidence.
+Reproducible tests and harnesses are committed. This is R1 completion, not R2
+fault-matrix closure or R3 hardware/Wayland/package qualification.

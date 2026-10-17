@@ -1,6 +1,6 @@
 # Реализованное и границы проверки
 
-> **Release audit 2026-10-17:** [current audit](release-audit-2026-10-17.md) distinguishes base canvas gaps from implemented form editing and retained runtime evidence. [R0–R10](release-milestones.md) now own scheduling; the old three plans remain acceptance sources. First release: direct canvas + stable core + actual Plasma Wayland/LCDV2 qualification.
+> **R1 update 2026-10-17:** [base canvas editing](r1-canvas-editor.md) is implemented and software/native acceptance passed at `f004cf2`. The [baseline audit](release-audit-2026-10-17.md) records the earlier base-canvas gaps, now closed by R1; its other gaps remain open. [R0–R10](release-milestones.md) now own scheduling; the old three plans remain acceptance sources. First release: direct canvas + stable core + actual Plasma Wayland/LCDV2 qualification.
 
 Сверено **2026-10-17**. Baseline — **Windows L-Connect3 2.1.28.0**,
 **Galahad II LCDV2 0416:7395**, квадратный LCD480×480. Другие семейства
@@ -13,7 +13,7 @@
 содержимого в [архив по2026-10-16](implementation-checkpoints-through-2026-10-16.md).
 Он сохраняет историю и ограничения каждого среза, не заменяя текущий статус.
 
-## Текущий программный кандидат
+## Сохранённый программный кандидат до R1
 
 `target/distribution-20261017-realtime` supersedes `-dividers`:845 frozen inputs,
 33 payload files, production `custom-protocol` GUI без `native-smoke`, обе Mini

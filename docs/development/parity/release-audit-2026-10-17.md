@@ -1,5 +1,9 @@
 # LCDV2 implementation and release audit — 2026-10-17
 
+> Historical R0 audit. R1 base canvas gaps described here were subsequently closed
+> at `f004cf2`; see the [canvas contract](r1-canvas-editor.md) and
+> [current milestones](release-milestones.md). Other gaps retain their stated gates.
+
 This audit separates **implemented capability**, **remaining implementation**, and
 **qualification**. It is a source/evidence audit, not a new runtime, Windows, or
 hardware test. The release plan is [release milestones](release-milestones.md);

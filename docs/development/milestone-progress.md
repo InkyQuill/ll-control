@@ -22,7 +22,9 @@ production edits in this organization step are reference-path comments only.
 The existing candidate's saved checks are historical evidence, not a new suite run.
 R1 implementation and interaction acceptance are next and receive their own commit.
 
-## R1 — in progress: shared renderer geometry
+## R1 implementation history
+
+### Shared renderer geometry (intermediate state)
 
 The renderer now returns layer foreground bounds alongside the same rendered
 frame. The read-only `preview_lcd_editor` request exposes that frame and geometry
@@ -73,3 +75,28 @@ option releasing the held button; the corrected driver records the input order.
 The [canvas contract](parity/r1-canvas-editor.md) documents implementation semantics
 and runnable verification. Broad regression suites are still running, so the
 milestone completion audit and final R1 status update remain open.
+
+## R1 complete
+
+Completed at `f004cf2` on 2026-10-17. The intermediate pending statements above
+record the implementation sequence; this completion entry supersedes them.
+All eight R1 work items are closed for their software/native scope.
+
+Direct canvas editing, selection/property synchronization, rotation-aware
+pointer/keyboard transforms, ordering, sensor rebinding and bounded draft history
+are implemented. Existing forms, Ready-made themes, Composition, Library and
+Save/preview/Apply boundaries are preserved. Review found and a failing browser
+regression confirmed selection drifting after image insertion; the final fix
+keeps the same layer selected and verifies subsequent edits affect that layer.
+
+Validation: 768 broad browser checks and 1,375 Rust passes/9 ignored; strict
+Clippy/fmt/rustdoc; localization and theme contracts. After the final selection
+fix, 12 focused canvas checks, Svelte0/0 and production frontend/native builds
+passed. EN/RU native input/profile/output/close/restart acceptance passed again
+on the final source. Exact scope and reproducible commands are in the
+[canvas contract](parity/r1-canvas-editor.md#completion-checks).
+
+Implementation commits: `b8d3183`, `c3c36bc`, `7a36367`, `f004cf2`.
+R0 organization/audit commit: `840a9a8`; immutable baseline: `299fe6c3`.
+All raw evidence stays outside tracked files. Next is R2 integrated core
+stabilization; R3 real Plasma Wayland/LCDV2/package gates remain open.

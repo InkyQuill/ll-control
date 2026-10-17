@@ -59,30 +59,31 @@ no contradictory release labels. The baseline audit is already recorded in
 
 ## R1 — Finish the base LCD visual editor
 
-**Important; first-release blocker. Type:** implementation + qualification.
+**Important; first-release blocker. Status:** complete for the R1 software/native scope at `f004cf2`; physical Plasma Wayland acceptance remains R3.
+**Type:** implementation + qualification.
 **Depends on:** R0 contracts. **Owner areas:** `desktop/src/routes/+page.svelte`,
 `desktop/src/lib/LcdPreview.svelte`, editor state/presets, theme geometry and tests.
 
-- [ ] Introduce selectable canvas layers and selection-to-properties synchronization.
+- [x] Introduce selectable canvas layers and selection-to-properties synchronization.
   Use the existing theme as the source of truth; do not build a second renderer
   with subtly different layout/fit/rotation semantics.
-- [ ] Add pointer move/resize for basic image/watermark, text, clock, sensor/cycle
+- [x] Add pointer move/resize for basic image/watermark, text, clock, sensor/cycle
   and divider geometry. Define text resize as font-size/box editing explicitly;
   preserve sensor label/value/unit relationships. Backgrounds/effects need explicit
   fixed/full-canvas behavior rather than misleading drag handles.
-- [ ] Convert preview coordinates to native 480×480 consistently at varying
+- [x] Convert preview coordinates to native 480×480 consistently at varying
   window size, display scale and rotation. Handle overlap/selection order,
   clipped layers, pointer capture/loss and Escape cancellation.
-- [ ] Keep layer ordering via accessible list/buttons and expose selection on
+- [x] Keep layer ordering via accessible list/buttons and expose selection on
   canvas; dragging must not accidentally apply or reorder a procedural background.
-- [ ] Add single-sensor source replacement retaining style/position, with units,
+- [x] Add single-sensor source replacement retaining style/position, with units,
   unavailable sources and device changes handled explicitly.
-- [ ] Audit base-layer property reachability, including separate sensor parts;
+- [x] Audit base-layer property reachability, including separate sensor parts;
   preserve non-edited imported values. Do not silently reset hidden style fields.
-- [ ] Retain numeric input and keyboard move/resize/order equivalents, visible
+- [x] Retain numeric input and keyboard move/resize/order equivalents, visible
   focus and accessible labels. Add bounded local undo/redo for gestures/property
   changes if used to provide predictable recovery; no history action writes HID.
-- [ ] Keep Ready-made themes, Composition and Library equally reachable. Selecting
+- [x] Keep Ready-made themes, Composition and Library equally reachable. Selecting
   a preset replaces a draft explicitly; Save, preview and Apply remain distinct.
 
 **Exit scenarios:** create an image + sensor + clock + text composition; select
@@ -91,6 +92,10 @@ interrupt a gesture, undo/cancel, Save/reopen, Apply, close GUI and restart daem
 Preview must match decoded output geometry; draft actions emit no device writes.
 Run focused browser behavior tests and native WebKitGTK input; Plasma Wayland
 physical/scaling acceptance closes in R3. Existing crop tests are not substitutes.
+
+**Completion:** [implementation and verification](r1-canvas-editor.md); the final
+selection regression preserves the selected object when an image is inserted.
+[Milestone record](../milestone-progress.md#r1-complete). No hardware gate is closed.
 
 **Excluded:** new effects, multi-select/grouping, snapping/distribution, exact
 Windows intrinsic grid reconstruction, new hardware and a timeline editor.
