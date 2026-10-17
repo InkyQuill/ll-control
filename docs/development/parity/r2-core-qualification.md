@@ -71,3 +71,34 @@ cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked
 R2 remains in progress. Video/replacement/reconnect interruption coverage, storage
 I/O boundaries, declared resource budgets, integrated cooling/RGB/optional isolation
 and final-source qualification still require completion.
+
+
+## Storage syscall qualification
+
+`storage-fault-smoke.py` compiles a fixture-only preload library and launches the
+owned MockBackend with a private root. A marker scopes injected failures to that
+root's settings/media paths; no production daemon or host device is used.
+
+Six scenarios passed through real Unix IPC and failed syscalls:
+
+- Settings write ENOSPC, file-sync EIO and rename ENOSPC preserve the previous
+  durable file, expose pending/error status, then recover and survive restart.
+- Settings directory-sync EIO occurs after rename: new bytes exist but persistence
+  remains pending. Removing the fault completes sync; restart restores the value.
+- Media file-sync EIO publishes nothing; status reports failure and cancellation
+  remains available.
+- Media directory-sync EIO leaves an uncertain published file. Finish does not
+  claim durable success; subsequent Status after recovery confirms publication,
+  restart retains the receipt, and the catalog contains exactly one asset.
+
+`SettingsSaveState.saved` means **any** successful sync in the current session;
+`pending` and `last_error` describe the current unfinished write. The harness
+checks that documented distinction rather than treating `saved` as a revision ACK.
+
+```sh
+/usr/bin/python3 desktop/scripts/storage-fault-smoke.py
+```
+
+The C fixture compiles with warnings treated as errors. This closes these six
+boundaries only; multi-file group journal/import ownership and remaining precise
+crash/link/partial-cleanup boundaries are still open in R2.

@@ -117,3 +117,10 @@ focused Rust storage/media tests passed. The media harness now retains an
 accessibility listener and awaits device discovery after restart. Raw passing and
 failed-run evidence is ignored. Remaining R2 gates are listed in the ledger;
 none are waived by these passes.
+
+
+R2 storage batch: added fixture-scoped real write/rename/fsync error injection.
+Six settings/media publication scenarios passed, including pending-write recovery,
+restart and uncertain post-publication readback without duplicate assets. No
+production defect was found in these scenarios. Group journal/import ownership
+I/O boundaries remain open; see the R2 ledger for the exact scope.
