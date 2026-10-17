@@ -43,6 +43,8 @@ jobs:
           persist-credentials: false
       - name: Frozen frontend dependencies
         run: pnpm --dir desktop install --frozen-lockfile
+      - name: Build embedded frontend before all-feature Rust checks
+        run: pnpm --dir desktop build
       - name: Rust and frontend checks
         run: |
           cargo fmt --all -- --check
