@@ -343,7 +343,11 @@
     const sources = container.querySelectorAll<HTMLSelectElement>('[data-cycle-source]');
     sources[Math.min(index, sources.length - 1)]?.focus();
   }
-  function prependLayer(layer:Layer) { theme.layers.splice(isProcedural(theme.layers[0])?1:0,0,layer); }
+  function prependLayer(layer:Layer) {
+    const selected=theme.layers[selectedLayer];
+    theme.layers.splice(isProcedural(theme.layers[0])?1:0,0,layer);
+    if(selected)selectedLayer=theme.layers.indexOf(selected);
+  }
   function removeLayer(index: number) {
     if(isProcedural(theme.layers[index])) {
       try {theme=switchLcdPage($state.snapshot(theme),'basic');error='';}
