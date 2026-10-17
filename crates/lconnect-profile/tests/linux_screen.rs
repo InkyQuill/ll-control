@@ -19,7 +19,12 @@ fn custom_text_uses_explicit_fonts_colors_wrapping_alignment_and_windows_blank_l
         fixture::source(json!({"Type":"Custom","Text":"first\n\nsecond","Layout":[layout]}));
     let result = prepare(&source).unwrap();
     result.theme.validate().unwrap();
-    let ThemeLayer::Text { text, style } = &result.theme.layers[0] else {
+    let ThemeLayer::Text {
+        editor: _,
+        text,
+        style,
+    } = &result.theme.layers[0]
+    else {
         panic!("text")
     };
     assert_eq!(text, "first\nsecond");

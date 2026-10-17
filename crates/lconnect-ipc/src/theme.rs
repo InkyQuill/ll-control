@@ -333,11 +333,25 @@ pub struct WatermarkPosition {
     pub vertical: u8,
 }
 
+/// Persistent editor identity and affordances; missing metadata preserves legacy themes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LayerEditor {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub hidden: bool,
+    #[serde(default)]
+    pub locked: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ThemeLayer {
     /// Editable axis-aligned decoration. Fractional coordinates retain half-pixel source bounds.
     Divider {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         axis: DividerAxis,
         x: f32,
         y: f32,
@@ -349,18 +363,28 @@ pub enum ThemeLayer {
         shadow: Option<TextShadow>,
     },
     Fireworks {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         effect: crate::FireworksEffect,
     },
     Snow3d {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         effect: crate::Snow3dEffect,
     },
     Meteor {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         effect: crate::MeteorEffect,
     },
     Weather {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         effect: crate::WeatherEffect,
     },
     SensorCycle {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         parts: Option<SensorParts>,
         sensors: Vec<ThemeSensor>,
@@ -368,10 +392,14 @@ pub enum ThemeLayer {
         style: TextStyle,
     },
     Text {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         text: String,
         style: TextStyle,
     },
     Sensor {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         parts: Option<SensorParts>,
         sensor_id: String,
@@ -383,6 +411,8 @@ pub enum ThemeLayer {
         style: TextStyle,
     },
     Clock {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         #[serde(default, skip_serializing_if = "default_clock_format")]
         format: ClockFormat,
         twenty_four_hour: bool,
@@ -391,6 +421,8 @@ pub enum ThemeLayer {
     },
     /// Daemon-managed asset key, not an arbitrary filesystem path or URL.
     Image {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        editor: Option<LayerEditor>,
         asset: String,
         x: u16,
         y: u16,
@@ -403,6 +435,26 @@ pub enum ThemeLayer {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         watermark_position: Option<WatermarkPosition>,
     },
+}
+
+impl ThemeLayer {
+    pub fn editor(&self) -> Option<&LayerEditor> {
+        match self {
+            Self::Divider { editor, .. }
+            | Self::Fireworks { editor, .. }
+            | Self::Snow3d { editor, .. }
+            | Self::Meteor { editor, .. }
+            | Self::Weather { editor, .. }
+            | Self::SensorCycle { editor, .. }
+            | Self::Text { editor, .. }
+            | Self::Sensor { editor, .. }
+            | Self::Clock { editor, .. }
+            | Self::Image { editor, .. } => editor.as_ref(),
+        }
+    }
+    pub fn hidden(&self) -> bool {
+        self.editor().is_some_and(|editor| editor.hidden)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -536,25 +588,25 @@ impl LcdTheme {
     }
     pub fn weather_effect(&self) -> Option<&crate::WeatherEffect> {
         self.layers.iter().find_map(|layer| match layer {
-            ThemeLayer::Weather { effect } => Some(effect),
+            ThemeLayer::Weather { editor: _, effect } => Some(effect),
             _ => None,
         })
     }
     pub fn fireworks_effect(&self) -> Option<&crate::FireworksEffect> {
         self.layers.iter().find_map(|layer| match layer {
-            ThemeLayer::Fireworks { effect } => Some(effect),
+            ThemeLayer::Fireworks { editor: _, effect } => Some(effect),
             _ => None,
         })
     }
     pub fn snow3d_effect(&self) -> Option<&crate::Snow3dEffect> {
         self.layers.iter().find_map(|layer| match layer {
-            ThemeLayer::Snow3d { effect } => Some(effect),
+            ThemeLayer::Snow3d { editor: _, effect } => Some(effect),
             _ => None,
         })
     }
     pub fn meteor_effect(&self) -> Option<&crate::MeteorEffect> {
         self.layers.iter().find_map(|layer| match layer {
-            ThemeLayer::Meteor { effect } => Some(effect),
+            ThemeLayer::Meteor { editor: _, effect } => Some(effect),
             _ => None,
         })
     }
@@ -702,7 +754,17 @@ impl LcdTheme {
                 "theme needs a name up to 128 bytes and at most 32 layers",
             ));
         }
+        let mut editor_ids = std::collections::HashSet::new();
         for layer in &self.layers {
+            if let Some(editor) = layer.editor() {
+                if editor.id.is_empty()
+                    || editor.id.len() > 128
+                    || editor.name.len() > 256
+                    || !editor_ids.insert(&editor.id)
+                {
+                    return Err(invalid("invalid or duplicate layer editor identity"));
+                }
+            }
             if let ThemeLayer::Sensor {
                 parts: Some(parts), ..
             }
@@ -744,19 +806,19 @@ impl LcdTheme {
                     }
                     continue;
                 }
-                ThemeLayer::Fireworks { effect } => {
+                ThemeLayer::Fireworks { editor: _, effect } => {
                     effect.validate()?;
                     continue;
                 }
-                ThemeLayer::Snow3d { effect } => {
+                ThemeLayer::Snow3d { editor: _, effect } => {
                     effect.validate()?;
                     continue;
                 }
-                ThemeLayer::Meteor { effect } => {
+                ThemeLayer::Meteor { editor: _, effect } => {
                     effect.validate()?;
                     continue;
                 }
-                ThemeLayer::Weather { effect } => {
+                ThemeLayer::Weather { editor: _, effect } => {
                     effect.validate()?;
                     continue;
                 }
@@ -789,7 +851,11 @@ impl LcdTheme {
                     }
                     style
                 }
-                ThemeLayer::Text { text, style } => {
+                ThemeLayer::Text {
+                    editor: _,
+                    text,
+                    style,
+                } => {
                     if text.len() > 2048 || text.contains('\0') {
                         return Err(invalid("text exceeds 2048 bytes or contains NUL"));
                     }

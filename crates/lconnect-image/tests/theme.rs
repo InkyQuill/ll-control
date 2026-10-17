@@ -48,6 +48,7 @@ fn image_alpha_and_contain_preserve_underlying_background() {
         DynamicImage::ImageRgba8(RgbaImage::from_pixel(2, 1, Rgba([200, 0, 0, 128]))).into(),
     )]);
     let theme = base(vec![ThemeLayer::Image {
+        editor: None,
         watermark_position: None,
         shadow: None,
         asset: "logo".into(),
@@ -74,6 +75,7 @@ fn image_alpha_and_contain_preserve_underlying_background() {
 #[test]
 fn sensor_refresh_and_unavailability_change_rendered_frame() {
     let theme = base(vec![ThemeLayer::Sensor {
+        editor: None,
         parts: None,
         sensor_id: "cpu".into(),
         label: "ЦП".into(),
@@ -100,6 +102,7 @@ fn sensor_refresh_and_unavailability_change_rendered_frame() {
     let c = render_theme(&theme, &[sensor], clock(), &assets).unwrap();
     assert_ne!(b, c);
     let placeholder = base(vec![ThemeLayer::Text {
+        editor: None,
         text: "ЦП —".into(),
         style: style(),
     }]);
@@ -112,12 +115,14 @@ fn sensor_refresh_and_unavailability_change_rendered_frame() {
 #[test]
 fn clock_format_and_unicode_multiline_are_deterministic() {
     let theme = base(vec![ThemeLayer::Clock {
+        editor: None,
         format: Default::default(),
         twenty_four_hour: false,
         show_seconds: true,
         style: style(),
     }]);
     let expected = base(vec![ThemeLayer::Text {
+        editor: None,
         text: "01:02:03 PM".into(),
         style: style(),
     }]);
@@ -127,6 +132,7 @@ fn clock_format_and_unicode_multiline_are_deterministic() {
         render_theme(&expected, &[], clock(), &assets).unwrap()
     );
     let text = base(vec![ThemeLayer::Text {
+        editor: None,
         text: "Помпа\nТемпература".into(),
         style: style(),
     }]);
@@ -154,6 +160,7 @@ fn extreme_aspect_crop_is_centered_and_empty_assets_fail() {
     pixels.put_pixel(4999, 0, Rgba([0, 255, 0, 255]));
     let mut assets = ThemeAssets::from([("wide".into(), DynamicImage::ImageRgba8(pixels).into())]);
     let theme = base(vec![ThemeLayer::Image {
+        editor: None,
         watermark_position: None,
         shadow: None,
         asset: "wide".into(),
@@ -192,6 +199,7 @@ fn sensor_cycle_switches_on_boundaries_keeps_missing_slot_and_wraps() {
         },
     ];
     let theme = base(vec![ThemeLayer::SensorCycle {
+        editor: None,
         parts: None,
         sensors: bindings.clone(),
         interval_seconds: 10,
@@ -210,6 +218,7 @@ fn sensor_cycle_switches_on_boundaries_keeps_missing_slot_and_wraps() {
     for (elapsed, index) in [(0, 0), (9, 0), (10, 1), (19, 1), (20, 0), (86400, 0)] {
         let s = &bindings[index];
         let single = base(vec![ThemeLayer::Sensor {
+            editor: None,
             parts: None,
             sensor_id: s.sensor_id.clone(),
             label: s.label.clone(),
@@ -243,6 +252,7 @@ fn invalid_cycle_is_rejected_before_division_or_indexing() {
             count
         ];
         let theme = base(vec![ThemeLayer::SensorCycle {
+            editor: None,
             parts: None,
             sensors,
             interval_seconds: interval,
@@ -258,6 +268,7 @@ fn fonts_shadows_and_opacity_render_without_changing_legacy_defaults() {
     let render = |style: TextStyle| {
         render_theme(
             &base(vec![ThemeLayer::Text {
+                editor: None,
                 text: "Помпа LCD".into(),
                 style,
             }]),
@@ -308,6 +319,7 @@ fn text_style_rejects_unbounded_shadow_and_opacity() {
             opacity,
         });
         assert!(base(vec![ThemeLayer::Text {
+            editor: None,
             text: "test".into(),
             style: bad
         }])
@@ -317,6 +329,7 @@ fn text_style_rejects_unbounded_shadow_and_opacity() {
     let mut bad = style();
     bad.opacity = 101;
     assert!(base(vec![ThemeLayer::Text {
+        editor: None,
         text: "test".into(),
         style: bad
     }])
@@ -330,6 +343,7 @@ fn watermark_shadow_follows_alpha_and_layer_opacity() {
     logo.put_pixel(0, 0, Rgba([255, 0, 0, 255]));
     let assets = ThemeAssets::from([("logo".into(), DynamicImage::ImageRgba8(logo).into())]);
     let mut theme = base(vec![ThemeLayer::Image {
+        editor: None,
         watermark_position: None,
         asset: "logo".into(),
         x: 100,
@@ -430,12 +444,14 @@ fn clock_parts_render_date_midnight_noon_and_independent_styles() {
         ),
     ] {
         let theme = base(vec![ThemeLayer::Clock {
+            editor: None,
             format,
             twenty_four_hour: false,
             show_seconds: false,
             style: style(),
         }]);
         let text = base(vec![ThemeLayer::Text {
+            editor: None,
             text: expected.into(),
             style: style(),
         }]);
@@ -446,6 +462,7 @@ fn clock_parts_render_date_midnight_noon_and_independent_styles() {
         );
     }
     let date = base(vec![ThemeLayer::Clock {
+        editor: None,
         format: ClockFormat::Date,
         twenty_four_hour: false,
         show_seconds: false,
@@ -478,6 +495,7 @@ fn watermark_center_uses_fitted_size_and_clips_at_canvas_edges() {
         DynamicImage::ImageRgba8(RgbaImage::from_pixel(40, 20, Rgba([255, 0, 0, 255]))).into(),
     )]);
     let mut theme = base(vec![ThemeLayer::Image {
+        editor: None,
         asset: "logo".into(),
         x: 0,
         y: 0,
@@ -518,6 +536,7 @@ fn off_canvas_watermark_alpha_can_cast_a_visible_shadow() {
     source.put_pixel(0, 0, Rgba([0, 255, 0, 255]));
     let assets = ThemeAssets::from([("logo".into(), DynamicImage::ImageRgba8(source).into())]);
     let theme = base(vec![ThemeLayer::Image {
+        editor: None,
         asset: "logo".into(),
         x: 0,
         y: 0,
@@ -556,6 +575,7 @@ fn native_contain_does_not_enlarge_small_assets_but_downscales_large_ones() {
             .into(),
         )]);
         let theme = base(vec![ThemeLayer::Image {
+            editor: None,
             asset: "logo".into(),
             x: 0,
             y: 0,
@@ -602,6 +622,7 @@ fn sensor_parts_render_independent_colors_and_preserve_missing_value() {
         unit: unit_style.clone(),
     };
     let theme = base(vec![ThemeLayer::Sensor {
+        editor: None,
         parts: Some(parts.clone()),
         sensor_id: "cpu".into(),
         label: "CPU".into(),
@@ -622,14 +643,17 @@ fn sensor_parts_render_independent_colors_and_preserve_missing_value() {
     for (rows, value) in [(vec![reading], "50.0"), (vec![], "—")] {
         let expected = base(vec![
             ThemeLayer::Text {
+                editor: None,
                 text: value.into(),
                 style: style(),
             },
             ThemeLayer::Text {
+                editor: None,
                 text: "CPU".into(),
                 style: label_style.clone(),
             },
             ThemeLayer::Text {
+                editor: None,
                 text: "°F".into(),
                 style: unit_style.clone(),
             },
@@ -640,6 +664,7 @@ fn sensor_parts_render_independent_colors_and_preserve_missing_value() {
         );
     }
     let cycle = base(vec![ThemeLayer::SensorCycle {
+        editor: None,
         parts: Some(parts),
         sensors: vec![
             ThemeSensor {
@@ -663,14 +688,17 @@ fn sensor_parts_render_independent_colors_and_preserve_missing_value() {
     for (elapsed, label, unit) in [(0, "Pump", "RPM"), (10, "Power", "W")] {
         let expected = base(vec![
             ThemeLayer::Text {
+                editor: None,
                 text: "—".into(),
                 style: style(),
             },
             ThemeLayer::Text {
+                editor: None,
                 text: label.into(),
                 style: label_style.clone(),
             },
             ThemeLayer::Text {
+                editor: None,
                 text: unit.into(),
                 style: unit_style.clone(),
             },
@@ -693,11 +721,13 @@ fn wrapped_text_and_vertical_anchors_match_explicit_lines() {
         ..style()
     };
     let theme = base(vec![ThemeLayer::Text {
+        editor: None,
         text: "AA BB".into(),
         style: wrapped.clone(),
     }]);
     // Mono 40px: AA+space fits 70px, AA+space+B does not. Two lines are 90px high.
     let expected = base(vec![ThemeLayer::Text {
+        editor: None,
         text: "AA \nBB".into(),
         style: TextStyle {
             font_asset: None,
@@ -713,6 +743,7 @@ fn wrapped_text_and_vertical_anchors_match_explicit_lines() {
         render_theme(&expected, &[], clock(), &ThemeAssets::new()).unwrap()
     );
     let bottom = base(vec![ThemeLayer::Text {
+        editor: None,
         text: "AA BB".into(),
         style: TextStyle {
             vertical_align: VerticalAlign::Bottom,
@@ -770,6 +801,7 @@ fn gradient_backgrounds_preserve_solid_and_compose_below_layers() {
         .pixels()
         .all(|p| p.0 == [7, 8, 9]));
     theme.layers.push(ThemeLayer::Text {
+        editor: None,
         text: "Overlay".into(),
         style: style(),
     });
@@ -789,6 +821,7 @@ fn css_line_boxes_keep_top_center_bottom_anchors_and_allow_negative_leading() {
         text_style.y = y;
         render_theme(
             &base(vec![ThemeLayer::Text {
+                editor: None,
                 text: "One\n\nThree".into(),
                 style: text_style,
             }]),
@@ -841,6 +874,7 @@ fn bundled_tc_fonts_have_real_glyphs_and_distinct_regular_bold_rendering() {
         s.max_width = Some(358);
         render_theme(
             &base(vec![ThemeLayer::Text {
+                editor: None,
                 text: text.into(),
                 style: s,
             }]),
@@ -862,6 +896,7 @@ fn managed_fonts_match_bundled_render_for_every_text_role_and_never_fallback() {
     let mut s = style();
     s.font = ThemeFont::Serif;
     let sensor = ThemeLayer::Sensor {
+        editor: None,
         sensor_id: "missing".into(),
         label: "Sensor".into(),
         unit: SensorUnit::Celsius,
@@ -874,6 +909,7 @@ fn managed_fonts_match_bundled_render_for_every_text_role_and_never_fallback() {
         style: s.clone(),
     };
     let cycle = ThemeLayer::SensorCycle {
+        editor: None,
         sensors: vec![ThemeSensor {
             sensor_id: "missing".into(),
             label: "Cycle".into(),
@@ -890,10 +926,12 @@ fn managed_fonts_match_bundled_render_for_every_text_role_and_never_fallback() {
     };
     let layers = [
         ThemeLayer::Text {
+            editor: None,
             text: "Width Wi 123".into(),
             style: s.clone(),
         },
         ThemeLayer::Clock {
+            editor: None,
             format: ClockFormat::Time,
             twenty_four_hour: true,
             show_seconds: true,
@@ -971,6 +1009,7 @@ fn bundled_display_fonts_have_outlines_and_select_distinct_rendering() {
         let mut text_style = style();
         text_style.font = choice;
         let theme = base(vec![ThemeLayer::Text {
+            editor: None,
             text: text.into(),
             style: text_style,
         }]);
@@ -1029,6 +1068,7 @@ fn image_fit_modes_keep_expected_portrait_and_landscape_bounds() {
             ),
         ] {
             let theme = base(vec![ThemeLayer::Image {
+                editor: None,
                 asset: "asset".into(),
                 x: 100,
                 y: 100,
@@ -1069,6 +1109,7 @@ fn overlapping_image_order_and_zero_opacity_survive_right_bottom_clipping() {
         ),
     ]);
     let layer = |asset: &str, horizontal, vertical| ThemeLayer::Image {
+        editor: None,
         asset: asset.into(),
         x: 0,
         y: 0,
@@ -1110,6 +1151,7 @@ fn video_frame_preserves_pixels_and_uses_the_same_layer_semantics() {
     clock_style.y = 320;
     let theme = base(vec![
         ThemeLayer::Image {
+            editor: None,
             watermark_position: None,
             shadow: None,
             asset: "logo".into(),
@@ -1121,10 +1163,12 @@ fn video_frame_preserves_pixels_and_uses_the_same_layer_semantics() {
             opacity: 255,
         },
         ThemeLayer::Text {
+            editor: None,
             text: "LCD · Видео".into(),
             style: style(),
         },
         ThemeLayer::Sensor {
+            editor: None,
             parts: None,
             sensor_id: "cpu".into(),
             label: "CPU".into(),
@@ -1134,6 +1178,7 @@ fn video_frame_preserves_pixels_and_uses_the_same_layer_semantics() {
             style: sensor_style,
         },
         ThemeLayer::Clock {
+            editor: None,
             format: Default::default(),
             twenty_four_hour: true,
             show_seconds: true,
@@ -1216,6 +1261,7 @@ fn video_theme_requires_explicit_decoded_frame_without_solid_fallback() {
 #[test]
 fn image_background_sits_under_overlays_and_missing_background_fails() {
     let mut theme = base(vec![ThemeLayer::Image {
+        editor: None,
         asset: "overlay".into(),
         x: 0,
         y: 0,
@@ -1276,9 +1322,11 @@ fn weather_renders_above_background_image_and_below_ordered_overlays() {
     };
     let mut theme = base(vec![
         ThemeLayer::Weather {
+            editor: None,
             effect: weather.clone(),
         },
         ThemeLayer::Image {
+            editor: None,
             asset: "overlay".into(),
             x: 200,
             y: 200,
@@ -1347,6 +1395,7 @@ fn weather_renders_above_background_image_and_below_ordered_overlays() {
 #[test]
 fn dividers_preserve_fractional_coverage_opacity_layer_order_and_shadow() {
     let vertical = ThemeLayer::Divider {
+        editor: None,
         axis: DividerAxis::Vertical,
         x: 1.5,
         y: 10.0,
@@ -1357,6 +1406,7 @@ fn dividers_preserve_fractional_coverage_opacity_layer_order_and_shadow() {
         shadow: None,
     };
     let horizontal = ThemeLayer::Divider {
+        editor: None,
         axis: DividerAxis::Horizontal,
         x: 0.0,
         y: 14.0,
@@ -1377,6 +1427,7 @@ fn dividers_preserve_fractional_coverage_opacity_layer_order_and_shadow() {
     assert_eq!(frame.get_pixel(2, 18).0, [0, 0, 0]);
     theme.background = [255; 3];
     theme.layers = vec![ThemeLayer::Divider {
+        editor: None,
         axis: DividerAxis::Vertical,
         x: 10.0,
         y: 10.0,
@@ -1408,6 +1459,7 @@ fn measured_image_bounds_follow_fit_watermark_and_background_layer_index() {
         DynamicImage::ImageRgba8(RgbaImage::from_pixel(100, 50, Rgba([255; 4]))).into(),
     )]);
     let mut theme = base(vec![ThemeLayer::Image {
+        editor: None,
         watermark_position: Some(WatermarkPosition {
             horizontal: 0,
             vertical: 50,
@@ -1465,6 +1517,7 @@ fn measured_text_and_sensor_parts_enclose_the_actual_foreground() {
     let mut unit_style = style();
     unit_style.y = 400;
     let theme = base(vec![ThemeLayer::Sensor {
+        editor: None,
         parts: Some(SensorParts {
             label: label_style,
             unit: unit_style,
@@ -1499,4 +1552,57 @@ fn measured_text_and_sensor_parts_enclose_the_actual_foreground() {
         frame.image,
         render_theme(&theme, &[], clock(), &ThemeAssets::new()).unwrap()
     );
+}
+
+#[test]
+fn hidden_layer_retains_identity_and_bounds_slot_without_changing_pixels() {
+    let layer = ThemeLayer::Text {
+        editor: Some(LayerEditor {
+            id: "caption-1".into(),
+            name: "GPU caption".into(),
+            hidden: true,
+            locked: true,
+        }),
+        text: "Hidden caption".into(),
+        style: style(),
+    };
+    let theme = base(vec![layer]);
+    let serialized = serde_json::to_string(&theme).unwrap();
+    let restored: LcdTheme = serde_json::from_str(&serialized).unwrap();
+    assert_eq!(restored, theme);
+    let frame = render_theme_measured(
+        &restored,
+        &[],
+        clock(),
+        &ThemeAssets::new(),
+        &ThemeFonts::new(),
+        0,
+        render_background(&restored),
+    )
+    .unwrap();
+    assert_eq!(frame.layers, vec![None]);
+    assert_eq!(frame.image, render_background(&restored));
+    let mut visible = restored.clone();
+    if let ThemeLayer::Text {
+        editor: Some(editor),
+        ..
+    } = &mut visible.layers[0]
+    {
+        editor.hidden = false;
+    }
+    assert_ne!(
+        render_theme(&visible, &[], clock(), &ThemeAssets::new()).unwrap(),
+        frame.image
+    );
+    let mut duplicate = restored;
+    duplicate.layers.push(duplicate.layers[0].clone());
+    assert!(duplicate.validate().is_err());
+    let legacy: ThemeLayer =
+        serde_json::from_value(serde_json::json!({"kind":"text","text":"Legacy","style":style()}))
+            .unwrap();
+    assert!(legacy.editor().is_none());
+    assert!(serde_json::to_value(legacy)
+        .unwrap()
+        .get("editor")
+        .is_none());
 }

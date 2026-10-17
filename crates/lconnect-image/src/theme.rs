@@ -386,6 +386,7 @@ fn render_layers_measured(
         .background_image
         .as_ref()
         .map(|image| ThemeLayer::Image {
+            editor: None,
             asset: image.asset.clone(),
             x: 0,
             y: 0,
@@ -399,8 +400,15 @@ fn render_layers_measured(
     let mut layers = Vec::with_capacity(theme.layers.len());
     for (index, layer) in background_layer.iter().chain(&theme.layers).enumerate() {
         let mut foreground = None;
+        if layer.hidden() {
+            if background_layer.is_none() || index > 0 {
+                layers.push(None);
+            }
+            continue;
+        }
         match layer {
             ThemeLayer::Divider {
+                editor: _,
                 axis,
                 x,
                 y,
@@ -422,7 +430,7 @@ fn render_layers_measured(
                 });
                 divider::draw(&mut canvas, bounds, *color, *opacity, shadow.as_ref());
             }
-            ThemeLayer::Fireworks { effect } => {
+            ThemeLayer::Fireworks { editor: _, effect } => {
                 if let Some(scene) = time.fireworks.as_deref_mut() {
                     if scene.effect() != effect {
                         return Err(RenderError::FireworksSettings);
@@ -432,10 +440,10 @@ fn render_layers_measured(
                     crate::fireworks::draw_fireworks(&mut canvas, effect, readings, time.millis)?;
                 }
             }
-            ThemeLayer::Snow3d { effect } => {
+            ThemeLayer::Snow3d { editor: _, effect } => {
                 crate::snow3d::draw_snow3d(&mut canvas, effect, time.millis)?;
             }
-            ThemeLayer::Meteor { effect } => {
+            ThemeLayer::Meteor { editor: _, effect } => {
                 if let Some(scene) = time.meteor.as_deref_mut() {
                     if scene.effect() != effect {
                         return Err(RenderError::MeteorSettings);
@@ -445,7 +453,7 @@ fn render_layers_measured(
                     crate::meteor::draw_meteor(&mut canvas, effect, readings, time.millis)?;
                 }
             }
-            ThemeLayer::Weather { effect } => {
+            ThemeLayer::Weather { editor: _, effect } => {
                 if let Some(scene) = time.weather.as_deref_mut() {
                     if scene.effect() != effect {
                         return Err(RenderError::WeatherSettings);
@@ -456,6 +464,7 @@ fn render_layers_measured(
                 }
             }
             ThemeLayer::SensorCycle {
+                editor: _,
                 parts,
                 sensors,
                 interval_seconds,
@@ -480,10 +489,15 @@ fn render_layers_measured(
                     style,
                 )?;
             }
-            ThemeLayer::Text { text, style } => {
+            ThemeLayer::Text {
+                editor: _,
+                text,
+                style,
+            } => {
                 foreground = draw_text(&mut canvas, fonts.get(style)?, text, style)?;
             }
             ThemeLayer::Sensor {
+                editor: _,
                 parts,
                 sensor_id,
                 label,
@@ -505,6 +519,7 @@ fn render_layers_measured(
                 )?;
             }
             ThemeLayer::Clock {
+                editor: _,
                 format,
                 twenty_four_hour,
                 show_seconds,
@@ -551,6 +566,7 @@ fn render_layers_measured(
                 foreground = draw_text(&mut canvas, fonts.get(style)?, &text, style)?;
             }
             ThemeLayer::Image {
+                editor: _,
                 asset,
                 x,
                 y,

@@ -151,6 +151,7 @@ fn weather_theme_version_order_and_profile_roundtrip_are_explicit() {
         background_image: None,
         background_video: None,
         layers: vec![ThemeLayer::Weather {
+            editor: None,
             effect: effect(WeatherKind::Rain),
         }],
     };
@@ -298,6 +299,7 @@ fn independent_weather_pages_survive_profiles_and_only_active_settings_drive_ren
         background_image: None,
         background_video: None,
         layers: vec![ThemeLayer::Weather {
+            editor: None,
             effect: config.clone(),
         }],
     };

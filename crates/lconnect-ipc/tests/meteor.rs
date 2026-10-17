@@ -161,6 +161,7 @@ fn meteor_theme_uses_single_first_scene_version_three_and_bounded_independent_pa
     assert!(theme.validate().is_err());
     theme = saved.clone();
     theme.layers.push(ThemeLayer::Meteor {
+        editor: None,
         effect: MeteorEffect::default(),
     });
     assert!(theme.validate().is_err());
@@ -185,6 +186,7 @@ fn meteor_theme_uses_single_first_scene_version_three_and_bounded_independent_pa
     theme.layers.insert(
         0,
         ThemeLayer::Meteor {
+            editor: None,
             effect: MeteorEffect::default(),
         },
     );

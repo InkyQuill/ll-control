@@ -75,6 +75,7 @@ fn image_theme_roundtrip_rejects_traversal_and_oversized_rectangles() {
         background_video: None,
         background_fill: None,
         layers: vec![ThemeLayer::Image {
+            editor: None,
             watermark_position: None,
             shadow: None,
             asset: "image-1".into(),

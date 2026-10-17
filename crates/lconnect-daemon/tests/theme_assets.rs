@@ -11,6 +11,7 @@ fn theme(asset: &str) -> LcdTheme {
         background_video: None,
         background_fill: None,
         layers: vec![ThemeLayer::Image {
+            editor: None,
             watermark_position: None,
             shadow: None,
             asset: asset.into(),

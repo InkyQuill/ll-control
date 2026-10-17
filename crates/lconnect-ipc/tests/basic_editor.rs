@@ -107,6 +107,7 @@ fn incomplete_duplicate_nested_and_nonbasic_templates_never_enter_storage() {
         .theme
         .layers
         .push(ThemeLayer::Snow3d {
+            editor: None,
             effect: Snow3dEffect {
                 intensity: 1,
                 seed: 42,
