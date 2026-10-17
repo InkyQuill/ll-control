@@ -252,3 +252,18 @@ The helper checks the frozen bundle/stylesheet hashes and mounts the original
 grid components in their actual Image/Color modes. It records loaded fonts,
 computed line bounds and screenshots; it does not establish Windows/WPF or
 hardware equivalence.
+
+### Native canvas editing
+
+Build the frontend, `lconnect-gui` with `native-smoke,custom-protocol`, and the
+`lconnect-daemon` `desktop-mock` example. Then run:
+
+```sh
+/usr/bin/python3 desktop/scripts/native-canvas.py
+```
+
+This uses private Xvfb/D-Bus/MockBackend instances for EN/RU pointer and keyboard
+editing, profile Save/load, explicit Apply, decoded output comparison, normal
+GUI close and daemon/GUI restart. It does not access physical HID. See the
+[R1 contract](../docs/development/parity/r1-canvas-editor.md) for controls and
+acceptance boundaries; generated evidence stays in the printed temporary path.

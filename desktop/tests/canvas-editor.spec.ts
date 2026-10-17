@@ -108,3 +108,35 @@ test('layer list reaches an obscured image and keyboard ordering preserves selec
   await expect(layer(page,1).getByLabel('width',{exact:true})).toHaveValue('60');
   expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
 });
+
+test('sensor parts move together and losing pointer capture cancels the draft gesture',async({page})=>{
+  await setup(page);
+  const canvas=page.getByRole('group',{name:'Холст LCD',exact:true});
+  const side=(await canvas.boundingBox())!.width;
+  await drag(page,'Выбрать слой 2: Датчик',20*side/480,10*side/480);
+  const label=layer(page,1).getByRole('group',{name:'Подпись датчика',exact:true});
+  const unit=layer(page,1).getByRole('group',{name:'Единица датчика',exact:true});
+  await expect(label.getByLabel('X',{exact:true})).toHaveValue('30');
+  await expect(label.getByLabel('Y',{exact:true})).toHaveValue('150');
+  await expect(unit.getByLabel('X',{exact:true})).toHaveValue('270');
+  const target=page.getByRole('button',{name:'Выбрать слой 2: Датчик',exact:true});
+  await target.scrollIntoViewIfNeeded();const box=(await target.boundingBox())!;
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+  await page.mouse.move(box.x+box.width/2+30,box.y+box.height/2+20,{steps:4});
+  await canvas.evaluate(node=>{for(let id=0;id<10;id++)if(node.hasPointerCapture(id))node.releasePointerCapture(id);});
+  await page.mouse.up();await ready(page);
+  await expect(label.getByLabel('X',{exact:true})).toHaveValue('30');
+  await expect(unit.getByLabel('X',{exact:true})).toHaveValue('270');
+  expect(await page.evaluate(()=>Reflect.get(window,'canvasWrites'))).toEqual([]);
+});
+
+test('canvas remains usable in a narrow desktop window',async({page})=>{
+  await page.setViewportSize({width:1024,height:768});
+  await setup(page);
+  const side=(await page.getByRole('group',{name:'Холст LCD',exact:true}).boundingBox())!.width;
+  await drag(page,'Выбрать слой 3: Часы',10*side/480,20*side/480);
+  await expect(layer(page,2).getByLabel('X',{exact:true})).toHaveValue('130');
+  await expect(layer(page,2).getByLabel('Y',{exact:true})).toHaveValue('340');
+  await page.getByRole('button',{name:'Отменить правку',exact:true}).click();await ready(page);
+  await expect(layer(page,2).getByLabel('X',{exact:true})).toHaveValue('120');
+});
