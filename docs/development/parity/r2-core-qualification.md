@@ -135,3 +135,25 @@ readback/restart keeps one library revision increment, not a second commit.
 All eight syscall scenarios passed together. The existing publication journal
 suite passed 18 tests (one subprocess entry point ignored by the ordinary runner)
 and the shared state transaction suite passed four tests.
+
+
+## Transport recovery qualification
+
+All five media flows (edited/plain image import, image/video replacement and GIF
+import) passed disconnect and response-timeout injection in EN/RU: 20 cases.
+The proxy confirms the collection write actually committed before dropping the
+connection or withholding its reply. Subsequent reads reconnect and confirm one
+publication, preserved adjacent membership and no implicit LCD Apply. Native
+close joins workers. The production bridge does not automatically replay writes.
+
+Run the corresponding collection flag above together with
+`--collection-transport-errors`. The video replacement test now waits for the
+application's recovery diagnostic before making verification reads; a test read
+issued during the intentional socket drop was itself rejected in the first run.
+The corrected run passed without retrying mutations. RPC test errors now retain
+the method and structured diagnostic. This is a harness sequencing change, not
+a claimed production fix. Failed and passing run evidence remains ignored.
+
+This qualifies bridge socket loss and its next-read reconnection only. Daemon
+death/restart during an operation, other operation families, resource budgets
+and the remaining ledger requirements stay open. R2 is not complete.

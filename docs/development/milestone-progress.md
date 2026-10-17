@@ -133,3 +133,10 @@ SIGKILL transaction cases passed with the earlier six syscall scenarios; startup
 preserved uncommitted state or completed committed intent exactly once. Existing
 journal/transaction suites passed 22 tests, with one subprocess fixture excluded
 from direct execution. Transport loss/reconnect and remaining R2 gates stay open.
+
+
+R2 transport batch: 20 native EN/RU disconnect/timeout cases passed across five
+media import/replacement flows. Actual committed-state checks confirm one
+publication, preserved adjacent state, read reconnection and no implicit Apply.
+The video test waits for the application's recovery diagnostic before verification
+reads. Daemon-crash recovery and remaining R2 ledger gates are still open.

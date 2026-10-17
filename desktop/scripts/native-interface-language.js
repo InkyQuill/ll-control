@@ -1,7 +1,10 @@
 // Real language resources and saved daemon preferences; all roots are private.
 (async()=>{
+ const collectionTransport=window.__nativeDesktopPhase?.endsWith('-transport');
+ const desktopPhase=window.__nativeDesktopPhase?.replace(/-transport$/,'');
+ const collectionModes=collectionTransport?['disconnect','timeout']:['stale','missing','null','pending','pending-detail','error','malformed'];
  const invoke=(command,args={})=>window.__TAURI_INTERNALS__.invoke(command,args);
- const rpc=(method,params={})=>invoke('daemon_call',{method,params});
+ const rpc=async(method,params={})=>{try{return await invoke('daemon_call',{method,params});}catch(error){throw new Error(`${method}: ${typeof error==='object'?JSON.stringify(error):String(error)}`);}};
  const wait=async(test,label)=>{for(let i=0;i<400;i++){if(await test())return;await new Promise(r=>setTimeout(r,50));}throw new Error(label);};
  const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===name);
  const control=name=>button(name)??[...document.querySelectorAll('summary')].find(node=>node.getClientRects().length&&node.textContent.trim()===name);
@@ -10,7 +13,7 @@
  const canonical=value=>JSON.stringify(value&&typeof value==='object'?(Array.isArray(value)?value.map(item=>JSON.parse(canonical(item))):Object.fromEntries(Object.keys(value).sort().map(key=>[key,JSON.parse(canonical(value[key]))]))):value);
  const set=(input,value)=>{if(!input)throw new Error('Missing language fixture field');input.value=value;input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));};
  try{
-  if(window.__nativeDesktopPhase==='cooling-errors'){
+  if(desktopPhase==='cooling-errors'){
    await click('Cooling');
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'cooling language');};
    const panel=()=>document.querySelector('section[aria-label="Cooling"],section[aria-label="Охлаждение"]');
@@ -37,7 +40,7 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,noDevices:false,coolingErrors:true,cases,actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='library-errors'){
+  if(desktopPhase==='library-errors'){
    await click('Pump screen');
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'library language');};
    const alerts=()=>[...document.querySelectorAll('[role="alert"]')].filter(node=>node.getClientRects().length).map(node=>node.textContent).join('\n');
@@ -63,7 +66,7 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,libraryErrors:true,cases,actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='collection-video-import-errors'){
+  if(desktopPhase==='collection-video-import-errors'){
    await click('Pump screen');await click('Library');await click('Video library');
    const dev=(await rpc('list_devices'))[0].id,cases=[];
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'video import language');};
@@ -71,13 +74,13 @@
    const initialLayers=document.querySelectorAll('article.layer').length;
    // Minimal owned one-pixel GIF. Exercise the real native decoder and publication.
    const bytes=Uint8Array.from(atob('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'),c=>c.charCodeAt(0));
-   for(const lang of ['en','ru'])for(const mode of ['stale','missing','null','pending','pending-detail','error','malformed']){
+   for(const lang of ['en','ru'])for(const mode of collectionModes){
     await language(lang);const english=lang==='en',other=english?'ru':'en';
     const before=await rpc('list_prepared_clips'),collections=(await rpc('get_screen_collections',{dev})).collections,name=`R2 ${lang} ${mode}.gif`;
     await wait(()=>field(english?'Import GIF/MP4':'Импортировать GIF/MP4')&&!field(english?'Import GIF/MP4':'Импортировать GIF/MP4').disabled,'native video input ready');
     const input=field(english?'Import GIF/MP4':'Импортировать GIF/MP4'),files=new DataTransfer();files.items.add(new File([bytes],name,{type:'image/gif'}));input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));
     await wait(async()=>{const job=await invoke('media_status');return job?.phase==='complete'&&job.name===name;},'native GIF publication');
-    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
+    const detail=en=>mode==='disconnect'?'response dropped':mode==='timeout'?'Request timed out; applied state must be checked':mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
     await wait(()=>alerts().includes(english?'The video was saved to the catalog':'Ролик сохранён в каталоге')&&alerts().includes(detail(english)),'video import recovery '+mode);
     await language(other);await wait(()=>alerts().includes(english?'Ролик сохранён в каталоге':'The video was saved to the catalog')&&alerts().includes(detail(!english)),'video import retained translation');
     const after=await rpc('list_prepared_clips'),added=after.filter(clip=>!before.some(old=>old.key===clip.key));
@@ -89,14 +92,14 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,videoImportErrors:true,cases,actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='collection-video-errors'){
+  if(desktopPhase==='collection-video-errors'){
    await click('Pump screen');await click('Library');await click('Video library');
    const dev=(await rpc('list_devices'))[0].id,cases=[];
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'video replacement language');};
    const alerts=()=>[...document.querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
    const panel=()=>document.querySelector('section[aria-label="Saved video editor"],section[aria-label="Редактор сохранённого ролика"]');
    const initialActive=JSON.stringify(await rpc('get_lcd_theme',{dev}));
-   for(const lang of ['en','ru'])for(const mode of ['stale','missing','null','pending','pending-detail','error','malformed']){
+   for(const lang of ['en','ru'])for(const mode of collectionModes){
     await language(lang);const english=lang==='en',other=english?'ru':'en';
     await click(english?'Refresh videos':'Обновить ролики');
     const before=await rpc('list_prepared_clips'),collections=(await rpc('get_screen_collections',{dev})).collections;
@@ -113,8 +116,9 @@
     const review=panel().querySelector('video[aria-label="Prepared video"],video[aria-label="Готовый ролик"]');
     review.scrollIntoView({block:'center'});await review.play();await wait(()=>review.readyState>=2&&review.videoWidth===480,'native review decode');review.pause();
     await click(english?'Save prepared video':'Сохранить готовый ролик');
-    await wait(async()=>(await rpc('list_prepared_clips')).length===before.length+1,'one new video publication');
-    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Replacement requires checking collection membership.':'Замена требует проверки состава коллекций.');
+    // Wait for the application's recovery diagnostic before issuing test reads:
+    // socket loss also rejects unrelated requests already in flight.
+    const detail=en=>mode==='disconnect'?'response dropped':mode==='timeout'?'Request timed out; applied state must be checked':mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Replacement requires checking collection membership.':'Замена требует проверки состава коллекций.');
     await wait(()=>alerts().includes(english?'The new video was saved to the catalog':'Новый ролик сохранён в каталоге')&&alerts().includes(detail(english)),'video replacement diagnostic '+mode);
     await language(other);await wait(()=>alerts().includes(english?'Новый ролик сохранён в каталоге':'The new video was saved to the catalog')&&alerts().includes(detail(!english)),'video replacement retained translation');
     const after=await rpc('list_prepared_clips'),added=after.filter(clip=>!before.some(old=>old.key===clip.key));
@@ -127,7 +131,7 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,videoReplacementErrors:true,cases,actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='collection-replacement-errors'){
+  if(desktopPhase==='collection-replacement-errors'){
    await click('Pump screen');await click('Library');await click('Image library');
    const dev=(await rpc('list_devices'))[0].id,cases=[];
    const name='R2 original {0} <CPU>.png';
@@ -136,7 +140,7 @@
    const panel=()=>document.querySelector('section[aria-label="Image editor"],section[aria-label="Редактор изображения"]');
    const draft=()=>JSON.stringify([...document.querySelectorAll('article.layer')].map(node=>[node.textContent,[...node.querySelectorAll('input,select,textarea')].map(input=>[input.value,input.checked])]));
    const initialDraft=draft(),initialActive=JSON.stringify(await rpc('get_lcd_theme',{dev}));
-   for(const lang of ['en','ru'])for(const mode of ['stale','missing','null','pending','pending-detail','error','malformed']){
+   for(const lang of ['en','ru'])for(const mode of collectionModes){
     await language(lang);const english=lang==='en',other=english?'ru':'en';
     // Localized headings change with language; retain the inputs separately.
     const beforeDraft=draft(),before=await rpc('list_named_theme_assets'),collections=(await rpc('get_screen_collections',{dev})).collections;
@@ -149,7 +153,7 @@
     await wait(()=>panel()?.querySelector('img.preview')?.naturalWidth===480,'replacement preview');
     await click(english?'Save image to gallery':'Сохранить изображение в галерею');
     await wait(async()=> (await rpc('list_named_theme_assets')).length===before.length+1,'one replacement asset published');
-    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Replacement requires checking collection membership.':'Замена требует проверки состава коллекций.');
+    const detail=en=>mode==='disconnect'?'response dropped':mode==='timeout'?'Request timed out; applied state must be checked':mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Replacement requires checking collection membership.':'Замена требует проверки состава коллекций.');
     await wait(()=>alerts().includes(english?'Replacement was not confirmed':'Замена не подтверждена')&&alerts().includes(detail(english)),'replacement recovery diagnostic '+mode);
     if(draft()!==beforeDraft)throw new Error('Unconfirmed replacement changed draft');
     await language(other);await wait(()=>alerts().includes(english?'Замена не подтверждена':'Replacement was not confirmed')&&alerts().includes(detail(!english)),'replacement translated retained error');
@@ -166,8 +170,8 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,collectionReplacementErrors:true,cases,initialDraft,actual_hardware_access:false}});return;
   }
-  if(['collection-readback-errors','collection-plain-errors'].includes(window.__nativeDesktopPhase)){
-   const plain=window.__nativeDesktopPhase==='collection-plain-errors';
+  if(['collection-readback-errors','collection-plain-errors'].includes(desktopPhase)){
+   const plain=desktopPhase==='collection-plain-errors';
    await click('Pump screen');
    const dev=(await rpc('list_devices'))[0].id;
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'collection readback language');};
@@ -175,7 +179,7 @@
    const alert=()=>[...(plain?document:panel()).querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
    const assets=async()=>(await rpc('list_named_theme_assets')).filter(asset=>!asset.is_default);
    const initialLayers=document.querySelectorAll('.layer').length,cases=[];
-   const modes=['stale','missing','null','pending','pending-detail','error','malformed'];
+   const modes=collectionModes;
    for(const lang of ['en','ru'])for(const mode of modes){
     const english=lang==='en',other=english?'ru':'en',index=cases.length;await language(lang);
     const before=await assets(),collections=(await rpc('get_screen_collections',{dev})).collections;
@@ -190,7 +194,7 @@
     await wait(()=>panel()?.querySelector('img[alt="Edited result, 480 by 480"],img[alt="Результат редактирования 480 на 480"]')?.naturalWidth===480,'readback preview decoded');
     await click(english?'Save image to gallery':'Сохранить изображение в галерею');
     }
-    const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
+    const detail=en=>mode==='disconnect'?'response dropped':mode==='timeout'?'Request timed out; applied state must be checked':mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
     await wait(()=>(plain||panel())&&alert().includes(english?'The file was saved to the catalog':'Файл сохранён в каталоге')&&alert().includes(detail(english)),`readback ${lang}/${mode} owned/raw error`);
     await language(other);await wait(()=>alert().includes(english?'Файл сохранён в каталоге':'The file was saved to the catalog')&&alert().includes(detail(!english)),`readback ${lang}/${mode} retained error after language`);
     if(!plain&&!button(english?'Сохранить изображение в галерею':'Save image to gallery')?.disabled)throw new Error(`Readback ${mode} offered duplicate Save`);
@@ -205,7 +209,7 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,collectionReadbackErrors:true,cases,initialLayers,actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='image-errors'){
+  if(desktopPhase==='image-errors'){
    await click('Pump screen');
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'image error language');};
    const alerts=(scope=document)=>[...scope.querySelectorAll('[role="alert"]')].filter(node=>node.getClientRects().length).map(node=>node.textContent).join('\n');
@@ -249,7 +253,7 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,imageErrors:true,cases,initialLayers,finalAssets:await assets(),actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='lcd-errors'){
+  if(desktopPhase==='lcd-errors'){
    const dev=(await rpc('list_devices'))[0]?.id;if(!dev)throw new Error('Missing mock LCDV2');
    await click('Pump screen');
    const names={en:{apply:'Apply to LCD',load:'Load active theme',localui:'Restore LocalUI',preview:'Refresh preview'},ru:{apply:'Применить к LCD',load:'Загрузить активную тему',localui:'Вернуть LocalUI',preview:'Обновить preview'}};
@@ -278,9 +282,9 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,lcdErrors:true,cases,userName,actual_hardware_access:false}});return;
   }
-  const imageDevice=window.__nativeDesktopPhase==='image';
+  const imageDevice=desktopPhase==='image';
   if((await rpc('list_devices')).length!==(imageDevice?1:0))throw new Error('Unexpected fixture device count');
-  const recovery=window.__nativeDesktopPhase==='2';
+  const recovery=desktopPhase==='2';
   const initialEnglish=!recovery,targetEnglish=imageDevice||recovery;
   const initial=await rpc('get_display_settings');if(initial.interface_language!==(initialEnglish?'en-US':'ru-RU'))throw new Error('Fresh English or restored Russian language mismatch');
   await click(initialEnglish?'Pump screen':'Экран помпы');
