@@ -393,6 +393,15 @@ pub trait DaemonRpc: Send + Sync + 'static {
         let result = self.preview_lcd_theme_at(dev, theme, elapsed_seconds).await;
         Ok(Box::pin(async move { result }))
     }
+    /// Read-only editor preview, admitted with the same bounds as ordinary preview.
+    async fn begin_lcd_editor_preview(
+        &self,
+        _dev: Option<DeviceId>,
+        _theme: crate::LcdTheme,
+        _elapsed_seconds: u64,
+    ) -> Result<futures::future::BoxFuture<'static, Result<crate::LcdEditorPreview>>> {
+        Err(IpcError::NotImplemented("preview_lcd_editor".into()))
+    }
     async fn set_lcd_theme(&self, _dev: DeviceId, _theme: crate::LcdTheme) -> Result<LcdState> {
         Err(IpcError::NotImplemented("set_lcd_theme".into()))
     }

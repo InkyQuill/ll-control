@@ -169,6 +169,53 @@ impl ThemeRuntime {
         .map_err(|e| IpcError::DeviceBusy(format!("theme renderer: {e}")))?
     }
 
+    /// Unrotated canvas preview; a single render supplies both pixels and selection bounds.
+    /// The caller owns a blocking preparation worker and any decoded-video source pin.
+    pub(crate) fn editor_preview(
+        &self,
+        frame: Option<RgbImage>,
+        elapsed_seconds: u64,
+    ) -> Result<lconnect_ipc::LcdEditorPreview> {
+        let theme =
+            &self.temperature_variants[usize::from(self.display_unit.load(Ordering::Acquire))];
+        let now = chrono::Local::now();
+        let readings = self
+            .sensors
+            .iter()
+            .flat_map(SensorCache::readings)
+            .collect::<Vec<_>>();
+        let clock = ClockTime {
+            year: now.year(),
+            month: now.month() as u8,
+            day: now.day() as u8,
+            hour: now.hour() as u8,
+            minute: now.minute() as u8,
+            second: now.second() as u8,
+        };
+        if frame.is_none() && theme.background_video.is_some() {
+            return Err(IpcError::InvalidArgument(
+                "video theme requires decoded frame".into(),
+            ));
+        }
+        let rendered = lconnect_image::theme::render_theme_measured(
+            theme,
+            &readings,
+            clock,
+            &self.assets,
+            &self.fonts,
+            elapsed_seconds,
+            frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
+        )
+        .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        let jpeg =
+            prepare_jpeg_from_image(rendered.image.into(), FitMode::Stretch, Quality::default())
+                .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        Ok(lconnect_ipc::LcdEditorPreview {
+            jpeg: jpeg.bytes,
+            layers: rendered.layers,
+        })
+    }
+
     /// Compose live layers over one decoded frame on the caller's blocking worker.
     /// Sensor snapshots are cache-only; no hardware/provider work runs per frame.
     /// Elapsed time belongs to the composition session and need not reset on video loop.

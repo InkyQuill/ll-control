@@ -6,8 +6,8 @@ use ab_glyph::{Font, FontArc, FontRef, ScaleFont};
 use image::{imageops::FilterType, Rgb};
 pub use image::{DynamicImage, RgbImage};
 use lconnect_ipc::{
-    theme_sensor_text, theme_sensor_unit, ClockFormat, ImageFit, LcdTheme, SensorParts,
-    SensorReading, TextAlign, TextStyle, ThemeLayer,
+    theme_sensor_text, theme_sensor_unit, ClockFormat, ImageFit, LayerBounds, LcdTheme,
+    SensorParts, SensorReading, TextAlign, TextStyle, ThemeLayer,
 };
 use std::collections::BTreeMap;
 use unicode_segmentation::UnicodeSegmentation;
@@ -294,7 +294,55 @@ pub fn render_theme_weather_frame(
         canvas,
     )
 }
+/// A frame and its selectable foreground geometry, produced by the same layout pass.
+pub struct ThemeFrame {
+    pub image: RgbImage,
+    /// One entry per theme layer. Backgrounds and procedural effects are fixed.
+    pub layers: Vec<Option<LayerBounds>>,
+}
+
+/// Measure and render overlays on a supplied frame (including a decoded video frame).
+/// Geometry uses the exact font shaping, sensor text and fitted assets in the image.
+pub fn render_theme_measured(
+    theme: &LcdTheme,
+    readings: &[SensorReading],
+    clock: ClockTime,
+    assets: &ThemeAssets,
+    managed: &ThemeFonts,
+    elapsed_seconds: u64,
+    canvas: RgbImage,
+) -> Result<ThemeFrame, RenderError> {
+    render_layers_measured(
+        theme,
+        readings,
+        clock,
+        assets,
+        managed,
+        RenderTime {
+            seconds: elapsed_seconds,
+            millis: elapsed_seconds.saturating_mul(1000),
+            weather: None,
+            meteor: None,
+            fireworks: None,
+        },
+        canvas,
+    )
+}
+
 fn render_layers(
+    theme: &LcdTheme,
+    readings: &[SensorReading],
+    clock: ClockTime,
+    assets: &ThemeAssets,
+    managed: &ThemeFonts,
+    time: RenderTime<'_>,
+    canvas: RgbImage,
+) -> Result<RgbImage, RenderError> {
+    render_layers_measured(theme, readings, clock, assets, managed, time, canvas)
+        .map(|frame| frame.image)
+}
+
+fn render_layers_measured(
     theme: &LcdTheme,
     readings: &[SensorReading],
     clock: ClockTime,
@@ -302,7 +350,7 @@ fn render_layers(
     managed: &ThemeFonts,
     mut time: RenderTime<'_>,
     mut canvas: RgbImage,
-) -> Result<RgbImage, RenderError> {
+) -> Result<ThemeFrame, RenderError> {
     let elapsed_seconds = time.seconds;
     if canvas.dimensions() != (480, 480) {
         return Err(RenderError::FrameSize);
@@ -348,7 +396,9 @@ fn render_layers(
             shadow: None,
             watermark_position: None,
         });
-    for layer in background_layer.iter().chain(&theme.layers) {
+    let mut layers = Vec::with_capacity(theme.layers.len());
+    for (index, layer) in background_layer.iter().chain(&theme.layers).enumerate() {
+        let mut foreground = None;
         match layer {
             ThemeLayer::Divider {
                 axis,
@@ -364,6 +414,12 @@ fn render_layers(
                     lconnect_ipc::DividerAxis::Horizontal => [*x, *y, *length, *thickness],
                     lconnect_ipc::DividerAxis::Vertical => [*x, *y, *thickness, *length],
                 };
+                foreground = Some(LayerBounds {
+                    x: bounds[0],
+                    y: bounds[1],
+                    width: bounds[2],
+                    height: bounds[3],
+                });
                 divider::draw(&mut canvas, bounds, *color, *opacity, shadow.as_ref());
             }
             ThemeLayer::Fireworks { effect } => {
@@ -414,7 +470,7 @@ fn render_layers(
                     sensor.temperature_unit,
                     sensor.decimals,
                 );
-                draw_sensor(
+                foreground = draw_sensor(
                     &mut canvas,
                     &fonts,
                     &value,
@@ -425,7 +481,7 @@ fn render_layers(
                 )?;
             }
             ThemeLayer::Text { text, style } => {
-                draw_text(&mut canvas, fonts.get(style)?, text, style)?
+                foreground = draw_text(&mut canvas, fonts.get(style)?, text, style)?;
             }
             ThemeLayer::Sensor {
                 parts,
@@ -438,7 +494,7 @@ fn render_layers(
             } => {
                 let value =
                     theme_sensor_text(readings, sensor_id, *unit, *temperature_unit, *decimals);
-                draw_sensor(
+                foreground = draw_sensor(
                     &mut canvas,
                     &fonts,
                     &value,
@@ -492,7 +548,7 @@ fn render_layers(
                     }
                     ClockFormat::Time | ClockFormat::TimeWithoutPeriod => {}
                 }
-                draw_text(&mut canvas, fonts.get(style)?, &text, style)?;
+                foreground = draw_text(&mut canvas, fonts.get(style)?, &text, style)?;
             }
             ThemeLayer::Image {
                 asset,
@@ -565,6 +621,12 @@ fn render_layers(
                         i32::from(*y) + (h - fitted.height()) as i32 / 2,
                     )
                 };
+                foreground = Some(LayerBounds {
+                    x: left as f32,
+                    y: top as f32,
+                    width: fitted.width() as f32,
+                    height: fitted.height() as f32,
+                });
                 if let Some(shadow) = shadow {
                     if shadow.opacity > 0 && *opacity > 0 {
                         // Keep off-canvas source alpha until final blend: it can cast a visible shadow.
@@ -606,8 +668,14 @@ fn render_layers(
                 }
             }
         }
+        if background_layer.is_none() || index > 0 {
+            layers.push(foreground);
+        }
     }
-    Ok(canvas)
+    Ok(ThemeFrame {
+        image: canvas,
+        layers,
+    })
 }
 
 fn draw_sensor(
@@ -618,21 +686,23 @@ fn draw_sensor(
     suffix: &str,
     parts: Option<&SensorParts>,
     style: &TextStyle,
-) -> Result<(), RenderError> {
+) -> Result<Option<LayerBounds>, RenderError> {
     if let Some(parts) = parts {
         let numeric = value.strip_suffix(suffix).unwrap_or(value);
-        draw_text(canvas, fonts.get(style)?, numeric, style)?;
-        draw_text(canvas, fonts.get(&parts.label)?, label, &parts.label)?;
-        draw_text(canvas, fonts.get(&parts.unit)?, suffix.trim(), &parts.unit)?;
+        let regions = [
+            draw_text(canvas, fonts.get(style)?, numeric, style)?,
+            draw_text(canvas, fonts.get(&parts.label)?, label, &parts.label)?,
+            draw_text(canvas, fonts.get(&parts.unit)?, suffix.trim(), &parts.unit)?,
+        ];
+        Ok(regions.into_iter().flatten().reduce(LayerBounds::union))
     } else {
         let text = if label.is_empty() {
             value.to_owned()
         } else {
             format!("{label} {value}")
         };
-        draw_text(canvas, fonts.get(style)?, &text, style)?;
+        draw_text(canvas, fonts.get(style)?, &text, style)
     }
-    Ok(())
 }
 
 fn blend(canvas: &mut RgbImage, x: i32, y: i32, color: [u8; 3], alpha: f32) {
@@ -651,7 +721,7 @@ fn draw_text(
     font: &impl Font,
     text: &str,
     style: &TextStyle,
-) -> Result<(), RenderError> {
+) -> Result<Option<LayerBounds>, RenderError> {
     let shaper = Shaper::new(font, style, text).ok_or(RenderError::Font)?;
     if let Some(shadow) = &style.shadow {
         if shadow.opacity > 0 && style.opacity > 0 {
@@ -682,8 +752,7 @@ fn draw_text(
             }
         }
     }
-    draw_text_pass(canvas, font, &shaper, text, style);
-    Ok(())
+    Ok(draw_text_pass(canvas, font, &shaper, text, style))
 }
 
 // Keep source newlines and spaces; prefer word boundaries, then whole graphemes.
@@ -826,7 +895,8 @@ fn draw_text_pass<F: Font>(
     shaper: &Shaper<'_, F>,
     text: &str,
     style: &TextStyle,
-) {
+) -> Option<LayerBounds> {
+    let mut foreground: Option<LayerBounds> = None;
     let scale = shaper.scale();
     let scaled = font.as_scaled(scale);
     let lines = text_lines(shaper, text, style);
@@ -865,6 +935,13 @@ fn draw_text_pass<F: Font>(
         for placed in layout.glyphs {
             if let Some(glyph) = shaper.outline(&placed, x, y) {
                 let bounds = glyph.px_bounds();
+                let region = LayerBounds {
+                    x: bounds.min.x,
+                    y: bounds.min.y,
+                    width: bounds.width(),
+                    height: bounds.height(),
+                };
+                foreground = Some(foreground.map_or(region, |previous| previous.union(region)));
                 glyph.draw(|gx, gy, coverage| {
                     blend(
                         canvas,
@@ -877,6 +954,7 @@ fn draw_text_pass<F: Font>(
             }
         }
     }
+    foreground
 }
 
 /// Paint the background before any overlays. Coordinates use the Windows canvas

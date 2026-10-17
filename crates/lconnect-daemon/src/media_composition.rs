@@ -335,6 +335,32 @@ pub(crate) async fn preview(
     rendered
 }
 
+/// Canvas geometry and pixels share the decoded background and live snapshot.
+/// The owned theme job retains admission until decoder and renderer both finish.
+pub(crate) async fn editor_preview(
+    store: crate::media_assets::MediaAssetStore,
+    runtime: Arc<ThemeRuntime>,
+    elapsed_seconds: u64,
+) -> Result<lconnect_ipc::LcdEditorPreview> {
+    let key = runtime
+        .theme()
+        .background_video
+        .clone()
+        .context("preview requires video theme")?;
+    let (unit, pin) = tokio::task::spawn_blocking(move || {
+        let mut source = store.acquire_source(&key)?;
+        Ok::<_, anyhow::Error>((source.read_unit(0)?, source.pin()))
+    })
+    .await??;
+    let frame = decode_preview_frame(unit, OsStr::new("ffmpeg"), Duration::from_secs(10)).await?;
+    let rendered = tokio::task::spawn_blocking(move || {
+        let _pin = pin;
+        runtime.editor_preview(Some(frame), elapsed_seconds)
+    })
+    .await??;
+    Ok(rendered)
+}
+
 /// Same joined/limited decoder for a privately staged source access unit.
 /// The caller retains the owning preparation and its admission through this job.
 pub(crate) async fn preview_unit(
@@ -860,6 +886,12 @@ mod tests {
         );
         let first = preview(store.clone(), runtime.clone(), 0).await.unwrap();
         let second = preview(store.clone(), runtime.clone(), 2).await.unwrap();
+        let editor = editor_preview(store.clone(), runtime.clone(), 2)
+            .await
+            .unwrap();
+        assert_eq!(editor.jpeg, second);
+        assert_eq!(editor.layers.len(), 1);
+        assert!(editor.layers[0].is_some());
         assert!(first != second, "preview ignored cycle position");
         update(&cache, 80.0);
         let changed = preview(store.clone(), runtime, 0).await.unwrap();

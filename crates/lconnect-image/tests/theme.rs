@@ -1400,3 +1400,103 @@ fn dividers_preserve_fractional_coverage_opacity_layer_order_and_shadow() {
     assert_eq!(frame.get_pixel(10, 14).0, [255; 3]);
     assert_eq!(frame.get_pixel(0, 0).0, [255; 3]);
 }
+
+#[test]
+fn measured_image_bounds_follow_fit_watermark_and_background_layer_index() {
+    let assets = ThemeAssets::from([(
+        "logo".into(),
+        DynamicImage::ImageRgba8(RgbaImage::from_pixel(100, 50, Rgba([255; 4]))).into(),
+    )]);
+    let mut theme = base(vec![ThemeLayer::Image {
+        watermark_position: Some(WatermarkPosition {
+            horizontal: 0,
+            vertical: 50,
+        }),
+        shadow: None,
+        asset: "logo".into(),
+        x: 300,
+        y: 300,
+        width: 80,
+        height: 80,
+        fit: ImageFit::Contain,
+        opacity: 255,
+    }]);
+    theme.background_image = Some(BackgroundImage {
+        asset: "logo".into(),
+        fit: ImageFit::Stretch,
+    });
+    let frame = render_theme_measured(
+        &theme,
+        &[],
+        clock(),
+        &assets,
+        &ThemeFonts::new(),
+        0,
+        render_background(&theme),
+    )
+    .unwrap();
+    // The background has no selection entry. A zero watermark coordinate is the
+    // Windows 22px center, while 50 percent is 240px. Contain fits 80x40.
+    assert_eq!(
+        frame.layers,
+        vec![Some(LayerBounds {
+            x: -18.0,
+            y: 220.0,
+            width: 80.0,
+            height: 40.0
+        })]
+    );
+    assert_eq!(
+        frame.image,
+        render_theme(&theme, &[], clock(), &assets).unwrap()
+    );
+}
+
+#[test]
+fn measured_text_and_sensor_parts_enclose_the_actual_foreground() {
+    let mut value_style = style();
+    value_style.x = 470;
+    value_style.align = TextAlign::Right;
+    value_style.max_width = Some(130);
+    let mut label_style = style();
+    label_style.x = 10;
+    label_style.y = 20;
+    label_style.align = TextAlign::Left;
+    let mut unit_style = style();
+    unit_style.y = 400;
+    let theme = base(vec![ThemeLayer::Sensor {
+        parts: Some(SensorParts {
+            label: label_style,
+            unit: unit_style,
+        }),
+        sensor_id: "missing".into(),
+        label: "CPU".into(),
+        unit: SensorUnit::Celsius,
+        temperature_unit: TemperatureUnit::Celsius,
+        decimals: 1,
+        style: value_style,
+    }]);
+    let frame = render_theme_measured(
+        &theme,
+        &[],
+        clock(),
+        &ThemeAssets::new(),
+        &ThemeFonts::new(),
+        0,
+        render_background(&theme),
+    )
+    .unwrap();
+    let bounds = frame.layers[0].unwrap();
+    assert!(bounds.x < 20.0 && bounds.y < 60.0);
+    assert!(bounds.x + bounds.width > 430.0 && bounds.y + bounds.height > 400.0);
+    for (x, y, pixel) in frame.image.enumerate_pixels() {
+        if pixel.0 != theme.background {
+            assert!((x as f32) >= bounds.x && (x as f32) < bounds.x + bounds.width);
+            assert!((y as f32) >= bounds.y && (y as f32) < bounds.y + bounds.height);
+        }
+    }
+    assert_eq!(
+        frame.image,
+        render_theme(&theme, &[], clock(), &ThemeAssets::new()).unwrap()
+    );
+}

@@ -1915,6 +1915,48 @@ impl DaemonRpc for IpcServerImpl {
             Ok(bytes)
         }))
     }
+    async fn begin_lcd_editor_preview(
+        &self,
+        dev: Option<DeviceId>,
+        theme: lconnect_ipc::LcdTheme,
+        elapsed_seconds: u64,
+    ) -> Result<futures::future::BoxFuture<'static, Result<lconnect_ipc::LcdEditorPreview>>> {
+        let _admission = self.admit()?;
+        self.stats.inc_ipc_request();
+        let permit = self
+            .theme_jobs
+            .clone()
+            .try_acquire_owned()
+            .map_err(lcd_closed)?;
+        let mut caches = vec![self.sensors.clone()];
+        if let Some(dev) = dev {
+            caches.push(self.handles(&dev).await?.sensor_cache);
+        }
+        let store = self.theme_assets.clone();
+        let fonts = self.persistence.theme_fonts();
+        let media = self.persistence.media_assets();
+        let display_unit = self.persistence.display_settings().live_unit();
+        Ok(Box::pin(async move {
+            let (preview, _permit) = join_theme_job(permit, async move {
+                let runtime =
+                    Self::prepare_theme(store, fonts, caches, media.clone(), theme, display_unit)
+                        .await?;
+                if runtime.theme().background_video.is_some() {
+                    crate::media_composition::editor_preview(media, runtime, elapsed_seconds)
+                        .await
+                        .map_err(lcd_closed)
+                } else {
+                    tokio::task::spawn_blocking(move || {
+                        runtime.editor_preview(None, elapsed_seconds)
+                    })
+                    .await
+                    .map_err(lcd_closed)?
+                }
+            })
+            .await?;
+            Ok(preview)
+        }))
+    }
     async fn set_lcd_theme(
         &self,
         dev: DeviceId,

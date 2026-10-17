@@ -198,6 +198,28 @@ async fn preview_does_not_apply_and_failed_theme_preserves_active_composition() 
         .await
         .unwrap();
     assert_ne!(preview, later, "timed preview must advance the cycle");
+    let editor: lconnect_ipc::LcdEditorPreview = serde_json::from_value(
+        client
+            .call(
+                "preview_lcd_editor",
+                json!({"theme":theme,"elapsed_seconds":10}),
+            )
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    let later_bytes: Vec<u8> = serde_json::from_value(later).unwrap();
+    assert_eq!(
+        editor.jpeg, later_bytes,
+        "editor uses the same cycle and renderer"
+    );
+    assert_eq!(editor.layers.len(), 1);
+    let bounds = editor.layers[0].expect("sensor cycle has selectable text");
+    assert!(bounds.width > 0.0 && bounds.height > 0.0);
+    assert!(client
+        .call("preview_lcd_editor", json!({"theme":theme,"apply":true}))
+        .await
+        .is_err());
     let bytes: Vec<u8> = serde_json::from_value(preview).unwrap();
     assert_eq!(&bytes[..2], &[255, 216]);
     let state: LcdState = serde_json::from_value(

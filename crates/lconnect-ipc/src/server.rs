@@ -424,7 +424,10 @@ where
         });
         return None;
     }
-    if matches!(method, "set_lcd_theme" | "preview_lcd_theme") {
+    if matches!(
+        method,
+        "set_lcd_theme" | "preview_lcd_theme" | "preview_lcd_editor"
+    ) {
         let admitted = match slots.clone().try_acquire_owned() {
             Ok(permit) => admit_theme(rpc, method, req.params)
                 .await
@@ -498,6 +501,12 @@ async fn admit_theme<R: DaemonRpc>(
         }
         let p: Params = from_value(params)?;
         p.theme.validate()?;
+        if method == "preview_lcd_editor" {
+            let work = rpc
+                .begin_lcd_editor_preview(p.dev, p.theme, p.elapsed_seconds)
+                .await?;
+            return Ok(Box::pin(async move { to_value(&work.await?) }));
+        }
         let work = rpc
             .begin_lcd_theme_preview(p.dev, p.theme, p.elapsed_seconds)
             .await?;
