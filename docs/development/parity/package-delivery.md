@@ -2,7 +2,10 @@
 
 Target: Linux x86_64 / Arch-family build host. Baseline application version0.1.0;
 LCDV2 parity remains incomplete. GitHub is the selected CI platform; there is
-currently no configured remote, published release, or observed GitHub run.
+a private GitHub repository at `InkyQuill/lconnect-linux` and an observed CI run.
+There is no published release. Run39063333105 failed because the browser runner
+lacked FFmpeg; the workflow now installs that test dependency. A successful run
+on the new source is still required before release qualification.
 
 ## Build and contents
 
