@@ -7,8 +7,8 @@ installed-session or physical observations.
 
 | Gate | Current state | Required completion |
 |---|---|---|
-| Exact production package | Production payload built successfully from committed R2 source; four package unit tests passed | Verify manifest/source/payload hashes, production features/notices; build package and run transaction and packaged-GUI checks |
-| Remote CI | User authorized creating a GitHub repository with gh; preparing private InkyQuill/lconnect-linux | Publish authorized source to the selected repository and inspect actual CI result |
+| Exact production package | Production payload and Arch package built; four package unit tests, private install/upgrade/remove and packaged sensor/cooling GUI passed | Verify manifest/source/payload hashes, production features/notices; build package and run transaction and packaged-GUI checks |
+| Remote CI | Private InkyQuill/lconnect-linux created; first CI run 39060891301 is active | Publish authorized source to the selected repository and inspect actual CI result |
 | Clean-host comparison | Local Docker endpoint unavailable | Provision an isolated build environment, record toolchain/dependencies and compare outputs; explain binary differences separately from deterministic repacking |
 | Installed Plasma Wayland lifecycle | Current session is KDE Wayland; no installed daemon unit or running L-Connect process found | Install/upgrade/remove with retained data, udev access, tray/single instance/hide/show/exit and actual login autostart |
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
@@ -35,3 +35,56 @@ Raw build/run outputs remain in ignored `evidence/r3/` and private temporary
 folders. Reproducible tools, fixes, plans and qualification summaries are tracked.
 User-facing installation/use/help remains under `docs/user`; this technical
 qualification ledger belongs to development documentation.
+
+
+## GitHub publication
+
+[Repository](https://github.com/InkyQuill/lconnect-linux) is private. At Pavel's
+request, publication used a separate filtered copy: 421 historical evidence paths
+were removed, while all 195 master commits and the current source tree were
+preserved. Local history was not rewritten. Legacy implementation sources were
+retained. The private commit map is retained with ignored evidence; historical
+short hashes in documentation identify the original local lineage.
+
+The published R3-ledger commit is `b701acc` (local `302ebe4`). Future commits must
+be transferred to that cleaned lineage before pushing; do not merge unfiltered
+local history into it. CI run39060891301 is the first actual remote execution,
+not yet a passing result.
+
+## Live preflight
+
+One isolated daemon was started with an empty configuration after backing up the
+existing configuration and confirming no HID owner. Firmware RPC returned1.6;
+initial telemetry was pump2400RPM, coolant36.1°C and fan0RPM. No saved firmware
+operation/guard was present. Cooling requested/applied state is unset in this
+session. Old host configuration contains pump80% MCU and fan60%, but is historical
+intent, not proof of the present device setting; it was not replayed.
+
+The radial-gradient and strawberry replacement passed Pavel's physical
+observation. A71.15-second sample series kept pump2400–2430RPM and maximum
+telemetry age0.76s. Brightness/rotation FAILED physical acceptance: commands
+reported success, but the image switched to the Lian Li logo and returned without
+visible dimming/rotation. Source inspection shows JPEG configuration patches send
+the requested LocalUI mode while the JPEG keeper remains active. Resolution and
+physical retest are required; machine success does not close this gate.
+
+Pavel authorized pump80% MCU and static-blue pump LEDs as restore settings.
+The80→90→80 pump sequence completed with continuous telemetry and restored80;
+fan controls were not changed. LCD was cleared to LocalUI after the failed test.
+RGB restoration/qualification has not yet run.
+
+The candidate was installed on the host through pacman. Its service remains
+disabled/inactive; the isolated daemon is the sole device owner. The native
+Wayland GUI initially failed with compositor error: explicit synchronization
+without an acquire point. `WEBKIT_DISABLE_DMABUF_RENDERER=1` keeps it running;
+Pavel confirms the window is visible/responsive. Default-launch resolution is
+still required. This is a real target-session defect, not covered by Xvfb passes.
+
+Packaged Mini checks passed using the retained private GJS runtime, including
+Qt/model/GJS/preferences/read-only CLI and private Plasma host. `/usr/bin/gjs`
+was absent, so the initial invocation did not run tests; that failure is retained.
+
+First remote Arch CI failed before tests: all-feature Rust checking enables
+embedded frontend loading, but a fresh checkout has no desktop/build directory.
+The workflow now builds the frontend before Rust checks. Local actionlint passed;
+a remote rerun is required. Browser CI is still running.
