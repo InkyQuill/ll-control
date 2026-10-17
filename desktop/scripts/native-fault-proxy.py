@@ -8,7 +8,7 @@ import threading
 
 
 class FaultProxy:
-    def __init__(self, path, backend, cleanup_profile_fault=None, lcd_messages=False, image_messages=False, library_messages=False, cooling_messages=False, collection_readbacks=False, cooling_modes=False, cooling_defaults=False):
+    def __init__(self, path, backend, cleanup_profile_fault=None, lcd_messages=False, image_messages=False, library_messages=False, cooling_messages=False, collection_readbacks=False, cooling_modes=False, cooling_defaults=False, collection_transport=False):
         self.cooling_defaults = cooling_defaults
         self.cooling_default_requests = 0
         self.cooling_default_dropped = 0
@@ -16,7 +16,7 @@ class FaultProxy:
         self.cooling_mode_requests = 0
         self.cooling_mode_dropped = 0
         self.collection_readbacks = collection_readbacks
-        self.collection_modes = ('stale', 'missing', 'null', 'pending', 'pending-detail', 'error', 'malformed')
+        self.collection_modes = ('disconnect', 'timeout') if collection_transport else ('stale', 'missing', 'null', 'pending', 'pending-detail', 'error', 'malformed')
         self.collection_writes = []
         self.collection_faults = []
         self.collection_pending = {}
@@ -241,6 +241,14 @@ class FaultProxy:
                                             with owner.lock:
                                                 owner.collection_seen[case['dev']] = copy.deepcopy(state['collections'])
                                             fault = case['mode']
+                                            if fault in ('disconnect', 'timeout'):
+                                                with owner.lock:
+                                                    owner.collection_faults.append(case)
+                                                if fault == 'disconnect':
+                                                    self.request.shutdown(socket.SHUT_RDWR)
+                                                    return
+                                                # Withhold only this reply; independent reads still flow.
+                                                continue
                                             if fault == 'stale':
                                                 state['collections']['revision'] = case['previous_revision']
                                             elif fault == 'missing':
