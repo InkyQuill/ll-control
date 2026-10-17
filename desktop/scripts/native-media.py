@@ -106,6 +106,7 @@ def start_fixture():
     fixture=launch([repo/'target/debug/examples/desktop-mock'],f'fixture-{len(processes)}')
     wait(lambda:(root/'lconnectd.sock').exists() or fixture.poll() is not None,'mock socket')
     assert fixture.poll() is None
+    wait(lambda:len(rpc('list_devices'))==1,'mock attachment')
     # The scripted selectors below deliberately exercise Russian. Fresh stores
     # correctly default to English; choose the test locale through normal RPC.
     settings=rpc('get_display_settings')
@@ -135,6 +136,12 @@ def assert_clean(record):
 try:
     launch(['dbus-daemon','--config-file=/usr/share/defaults/at-spi2/accessibility.conf',f'--address={env["AT_SPI_BUS_ADDRESS"]}','--nofork'],'accessibility-bus')
     wait(lambda:(root/'a11y.sock').exists(),'private accessibility bus')
+    # Keep an accessibility client registered across repeated chooser probes,
+    # as in native-keyboard; short-lived clients alone can observe an empty registry.
+    listener=launch([sys.executable,repo/'desktop/scripts/native-atspi-events.py'],'accessibility-events')
+    wait(lambda:(root/'accessibility-events-ready').exists() or listener.poll() is not None,
+         'persistent accessibility listener')
+    assert listener.poll() is None
     launch(['openbox'],'wm')
     start_fixture()
     gui=launch([repo/'target/debug/lconnect-gui'],'gui',gui_env)
@@ -258,6 +265,20 @@ try:
     assert_clean(closing)
     clips=[c for c in rpc('list_prepared_clips') if not c.get('is_default')];assert len(clips)==2
     assert sorted(c['key'] for c in clips)==sorted(result['keys'])
+    # Managed imports must no longer depend on their original user files.
+    for name in ['fixture.mp4', 'fixture.gif', 'editor.mp4']:
+        (root/name).unlink()
+    stop_fixture();start_fixture()
+    assert [c for c in rpc('list_prepared_clips') if not c.get('is_default')]==clips
+    dev=rpc('list_devices')[0]['id']
+    for clip in clips:
+        rpc('set_lcd_media',{'dev':dev,'key':clip['key']})
+        wait(lambda:rpc('get_lcd_playback_stats',{'dev':dev})['sent_frames']>=2,
+             'managed playback after original deletion')
+        assert rpc('get_lcd_media',{'dev':dev})==clip['key']
+        rpc('clear_lcd',{'dev':dev})
+        assert rpc('get_lcd_media',{'dev':dev}) is None
+    result['original_sources_removed_and_replayed']=True
     # Decode the persisted bytes themselves after the daemon restart.
     decoded=[]
     for clip in clips:

@@ -108,3 +108,12 @@ Started from `245d5eb`. The [R2 acceptance ledger](parity/r2-core-qualification.
 maps all eight milestone requirements to current checks and remaining qualification.
 Native image/video runs use isolated MockBackend instances; no physical hardware
 or real desktop acceptance is implied. R2 remains open until the full ledger closes.
+
+
+R2 first batch: native transparent-image/gallery and GIF/MP4 workflows passed;
+managed video survived original-source deletion and daemon restart. Both edited
+and plain image import passed seven readback faults in EN/RU (28 cases). Twenty
+focused Rust storage/media tests passed. The media harness now retains an
+accessibility listener and awaits device discovery after restart. Raw passing and
+failed-run evidence is ignored. Remaining R2 gates are listed in the ledger;
+none are waived by these passes.

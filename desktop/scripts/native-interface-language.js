@@ -62,12 +62,13 @@
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,libraryErrors:true,cases,actual_hardware_access:false}});return;
   }
-  if(window.__nativeDesktopPhase==='collection-readback-errors'){
+  if(['collection-readback-errors','collection-plain-errors'].includes(window.__nativeDesktopPhase)){
+   const plain=window.__nativeDesktopPhase==='collection-plain-errors';
    await click('Pump screen');
    const dev=(await rpc('list_devices'))[0].id;
    const language=async lang=>{const settings=await rpc('get_display_settings');settings.interface_language=lang==='en'?'en-US':'ru-RU';await rpc('set_display_settings',{settings});await wait(()=>document.documentElement.lang===lang,'collection readback language');};
    const panel=()=>document.querySelector('section[aria-label="Image editor"],section[aria-label="Редактор изображения"]');
-   const alert=()=>[...panel().querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
+   const alert=()=>[...(plain?document:panel()).querySelectorAll('[role="alert"]')].map(node=>node.textContent).join('\n');
    const assets=async()=>(await rpc('list_named_theme_assets')).filter(asset=>!asset.is_default);
    const initialLayers=document.querySelectorAll('.layer').length,cases=[];
    const modes=['stale','missing','null','pending','pending-detail','error','malformed'];
@@ -75,26 +76,28 @@
     const english=lang==='en',other=english?'ru':'en',index=cases.length;await language(lang);
     const before=await assets(),collections=(await rpc('get_screen_collections',{dev})).collections;
     const name=`Настройки {1} <CPU> ${lang} ${mode}.png`;
-    await click(english?'Import and edit…':'Импорт с редактированием…');await wait(()=>!!field(english?'File to edit':'Файл для редактирования'),'readback source picker');
+    if(!plain){await click(english?'Import and edit…':'Импорт с редактированием…');await wait(()=>!!field(english?'File to edit':'Файл для редактирования'),'readback source picker');}
     const canvas=document.createElement('canvas');canvas.width=96;canvas.height=64;const context=canvas.getContext('2d');context.fillStyle=`rgb(${17+index*7},${41+index*13},${67+index*5})`;context.fillRect(0,0,96,64);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw new Error('Readback source encoding failed');
-    const files=new DataTransfer();files.items.add(new File([blob],name,{type:'image/png'}));const input=field(english?'File to edit':'Файл для редактирования');input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+    const files=new DataTransfer();files.items.add(new File([blob],name,{type:'image/png'}));const input=field(plain?(english?'+ Image':'+ Изображение'):(english?'File to edit':'Файл для редактирования'));input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+    if(!plain){
     await wait(()=>panel()?.textContent.includes(name+' · 96 × 64 px'),'readback source decoded');
     await click(english?'Prepare image preview':'Подготовить preview изображения');
     await wait(()=>panel()?.querySelector('img[alt="Edited result, 480 by 480"],img[alt="Результат редактирования 480 на 480"]')?.naturalWidth===480,'readback preview decoded');
     await click(english?'Save image to gallery':'Сохранить изображение в галерею');
+    }
     const detail=en=>mode==='error'?'Настройки {0} <disk>':mode==='pending-detail'?(en?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>'):mode==='pending'?(en?'Collections are awaiting persistence. Read them again.':'Коллекции ожидают сохранения. Повторите чтение.'):mode==='malformed'?(en?'Could not read collection membership':'Не удалось прочитать состав коллекций'):(en?'Adding the asset requires checking collection membership.':'Добавление требует проверки состава коллекций.');
-    await wait(()=>panel()&&alert().includes(english?'The file was saved to the catalog':'Файл сохранён в каталоге')&&alert().includes(detail(english)),`readback ${lang}/${mode} owned/raw error`);
+    await wait(()=>(plain||panel())&&alert().includes(english?'The file was saved to the catalog':'Файл сохранён в каталоге')&&alert().includes(detail(english)),`readback ${lang}/${mode} owned/raw error`);
     await language(other);await wait(()=>alert().includes(english?'Файл сохранён в каталоге':'The file was saved to the catalog')&&alert().includes(detail(!english)),`readback ${lang}/${mode} retained error after language`);
-    if(!button(english?'Сохранить изображение в галерею':'Save image to gallery')?.disabled)throw new Error(`Readback ${mode} offered duplicate Save`);
-    if(!panel().textContent.includes(name+' · 96 × 64 px'))throw new Error('Readback error changed original filename');
+    if(!plain&&!button(english?'Сохранить изображение в галерею':'Save image to gallery')?.disabled)throw new Error(`Readback ${mode} offered duplicate Save`);
+    if(!plain&&!panel().textContent.includes(name+' · 96 × 64 px'))throw new Error('Readback error changed original filename');
     if(document.querySelectorAll('.layer').length!==initialLayers)throw new Error('Readback failure modified LCD draft');
     const after=await assets(),added=after.filter(asset=>!before.some(old=>old.key===asset.key));
     if(after.length!==before.length+1||added.length!==1||added[0].name!==name)throw new Error('Readback failure did not preserve one named catalog asset');
     const state=await rpc('get_screen_collections',{dev}),expected={...collections,revision:collections.revision+1,images:[...collections.images,added[0].key]};
     if(state.persistence.pending||JSON.stringify(state.collections)!==JSON.stringify(expected))throw new Error('Fault fixture did not preserve real committed membership: '+JSON.stringify({state,expected}));
-    cases.push({language:lang,mode,key:added[0].key,name,revision:state.collections.revision});
-    await click(english?'Закрыть редактор изображения':'Close image editor');await wait(()=>!panel(),'readback editor joined close');
+    cases.push({language:lang,mode,operation:plain?'plain':'edited',key:added[0].key,name,revision:state.collections.revision});
+    if(!plain){await click(english?'Закрыть редактор изображения':'Close image editor');await wait(()=>!panel(),'readback editor joined close');}
    }
    await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,collectionReadbackErrors:true,cases,initialLayers,actual_hardware_access:false}});return;
   }

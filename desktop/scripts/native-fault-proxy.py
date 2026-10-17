@@ -1,4 +1,5 @@
 """Fixture bridge: lose LCD/source/font/profile replies and withhold an LCD reply."""
+import copy
 import json
 import select
 import socket
@@ -19,6 +20,7 @@ class FaultProxy:
         self.collection_writes = []
         self.collection_faults = []
         self.collection_pending = {}
+        self.collection_seen = {}
         self.cooling_messages = cooling_messages
         self.cooling_message_requests = 0
         self.library_messages = library_messages
@@ -83,20 +85,31 @@ class FaultProxy:
                                     buffers[source] = bytearray(rest)
                                     obj = json.loads(line)
                                     if source is self.request and owner.collection_readbacks:
-                                        # This fault matrix targets append-only image imports.
                                         if obj.get('method') == 'set_screen_collections':
                                             params = obj['params']
                                             with owner.lock:
+                                                previous = owner.collection_seen[params['dev']]
+                                                proposed = params['collections']
+                                                changes = []
+                                                for field in ('images', 'watermarks', 'backgrounds'):
+                                                    for item in proposed[field]:
+                                                        if item not in previous[field]:
+                                                            changes.append((field, item))
+                                                if len(changes) != 1:
+                                                    raise ValueError('readback fixture requires one added/replacement member')
+                                                field, item = changes[0]
                                                 case = dict(mode=owner.collection_modes[len(owner.collection_writes) % len(owner.collection_modes)],
-                                                    dev=params['dev'], revision=params['collections']['revision'],
-                                                    previous_revision=params['expected_revision'], key=params['collections']['images'][-1])
+                                                    dev=params['dev'], revision=proposed['revision'],
+                                                    previous_revision=params['expected_revision'],
+                                                    field=field, item=copy.deepcopy(item),
+                                                    key=item['key'] if isinstance(item, dict) else item,
+                                                    expected=copy.deepcopy(proposed))
                                                 owner.collection_writes.append(case)
                                             target_ids[obj['id']] = ('collection-commit', case)
                                         elif obj.get('method') == 'get_screen_collections':
                                             with owner.lock:
                                                 case = owner.collection_pending.pop(obj['params']['dev'], None)
-                                            if case is not None:
-                                                target_ids[obj['id']] = ('collection-readback', case)
+                                            target_ids[obj['id']] = ('collection-readback', case) if case is not None else ('collection-snapshot', obj['params']['dev'])
                                     if source is self.request and owner.cooling_messages and obj.get('method') == 'set_cooling_policy':
                                         with owner.lock:
                                             owner.cooling_message_requests += 1
@@ -203,10 +216,16 @@ class FaultProxy:
                                                 owner.font_status_reads += 1
                                     if source is upstream and obj.get('id') in target_ids:
                                         mode = target_ids.pop(obj['id'])
+                                        if isinstance(mode, tuple) and mode[0] == 'collection-snapshot':
+                                            state = obj.get('result', {})
+                                            with owner.lock:
+                                                owner.collection_seen[mode[1]] = copy.deepcopy(state.get('collections'))
+                                            peers[source].sendall(line + b'\n')
+                                            continue
                                         if isinstance(mode, tuple) and mode[0] == 'collection-commit':
                                             case = mode[1]
                                             value = obj.get('result')
-                                            if not isinstance(value, dict) or value.get('revision') != case['revision'] or case['key'] not in value.get('images', []):
+                                            if value != case['expected']:
                                                 raise ValueError('collection write failed before intended readback fault')
                                             with owner.lock:
                                                 if case['dev'] in owner.collection_pending:
@@ -217,13 +236,15 @@ class FaultProxy:
                                         if isinstance(mode, tuple) and mode[0] == 'collection-readback':
                                             case = mode[1]
                                             state = obj.get('result')
-                                            if not isinstance(state, dict) or state.get('persistence', {}).get('pending') or state.get('collections', {}).get('revision') != case['revision'] or case['key'] not in state['collections']['images']:
+                                            if not isinstance(state, dict) or state.get('persistence', {}).get('pending') or state.get('collections') != case['expected']:
                                                 raise ValueError('real collection readback did not confirm committed write')
+                                            with owner.lock:
+                                                owner.collection_seen[case['dev']] = copy.deepcopy(state['collections'])
                                             fault = case['mode']
                                             if fault == 'stale':
                                                 state['collections']['revision'] = case['previous_revision']
                                             elif fault == 'missing':
-                                                state['collections']['images'].remove(case['key'])
+                                                state['collections'][case['field']].remove(case['item'])
                                             elif fault == 'null':
                                                 state['collections'] = None
                                             elif fault in ('pending', 'pending-detail'):
@@ -231,7 +252,7 @@ class FaultProxy:
                                             elif fault == 'error':
                                                 obj = {'jsonrpc': '2.0', 'id': obj['id'], 'error': {'code': -32000, 'message': 'Настройки {0} <disk>'}}
                                             elif fault == 'malformed':
-                                                state['collections']['images'] = 0
+                                                state['collections'][case['field']] = 0
                                             else:
                                                 raise ValueError('unknown collection readback fault')
                                             with owner.lock:
