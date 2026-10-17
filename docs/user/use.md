@@ -7,8 +7,13 @@ Unavailable sensor values appear as a dash; they are not zero.
 
 1. Choose a ready-made layout, or add an image/video from **Library**.
 2. Edit text, clocks, sensor bindings and appearance in **Composition**.
-3. Refresh the preview. Preview changes do not change the device.
+3. Enable **Edit on canvas** to select, drag and resize layers, or use the numeric
+   controls. The layer list reaches overlapping items. **Undo edit** restores a draft.
+   Preview changes do not change the device.
 4. Choose **Apply to LCD** when the composition is ready.
+
+Canvas arrows move a layer; Shift + arrows resize it. Escape cancels a drag.
+Open **Canvas controls** for the remaining shortcuts.
 
 **Save** stores a profile. **Load** puts a profile into the editor.
 **Apply** changes the device. These are separate actions.

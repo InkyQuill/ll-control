@@ -1355,5 +1355,21 @@
   "Длина, px": "Length, px",
   "Толщина, px": "Thickness, px",
   "Тень разделителя": "Divider shadow",
-  "Непрозрачность разделителя, %": "Divider opacity, %"
+  "Непрозрачность разделителя, %": "Divider opacity, %",
+  "Холст LCD": "LCD canvas",
+  "Черновик LCD": "LCD draft",
+  "Выбрать слой {0}: {1}": "Select layer {0}: {1}",
+  "Изменить размер выбранного слоя": "Resize selected layer",
+  "Обновление холста…": "Updating canvas…",
+  "Редактировать на холсте": "Edit on canvas",
+  "Стрелки — перемещение; Shift + стрелки — размер; Ctrl + стрелки — шаг 10; Alt + стрелки — порядок. Escape — отмена жеста.": "Arrows move; Shift + arrows resize; Ctrl + arrows use a 10px step; Alt + arrows reorder. Escape cancels a gesture.",
+  "Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.": "Text resize scales the font and text box. Images scale proportionally. Backgrounds and effects stay fixed.",
+  "Выбранный слой": "Selected layer",
+  "Выберите слой": "Choose a layer",
+  "Неподвижный фон": "Fixed background",
+  "Свойства выбранного слоя": "Selected layer properties",
+  "Отменить правку": "Undo edit",
+  "Повторить правку": "Redo edit",
+  "Источник датчика": "Sensor source",
+  "Управление холстом": "Canvas controls"
 }

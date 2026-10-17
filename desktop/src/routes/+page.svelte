@@ -7,6 +7,9 @@
   import DeviceOverview from '$lib/DeviceOverview.svelte';
   import { deviceCapabilities } from '$lib/device-capabilities';
   import LcdPreview from '$lib/LcdPreview.svelte';
+  import TextStyleControls from '$lib/TextStyleControls.svelte';
+  import CanvasEditor from '$lib/CanvasEditor.svelte';
+  import { editableLayer, type EditorPreview, type LayerBounds, type QuarterTurn } from '$lib/canvas-geometry';
   let collectionEpoch = $state(0), resetEpoch = $state(0);
   import { addImportedToCollection, imageReplacementSnapshot, replaceCollectionImage, ImportedImageMembershipError } from '$lib/collection-membership';
   import FullGroupArchive from '$lib/FullGroupArchive.svelte';
@@ -18,7 +21,6 @@
   import MediaLibrary from '$lib/MediaLibrary.svelte';
   import MediaThumbnail from '$lib/MediaThumbnail.svelte';
   import FontImport from '$lib/FontImport.svelte';
-  import FontSelect from '$lib/FontSelect.svelte';
   import type { FontChoice } from '$lib/font-upload';
   let importedFonts = $state<FontChoice[]>([]);
   import {themePages, switchLcdPage, isProcedural} from '$lib/lcd-pages';
@@ -187,32 +189,67 @@
     try { await run(); } catch (e) { if (current()) error = { context: e instanceof ImportedImageMembershipError ? 'image-membership' : context, detail: e instanceof ImportedImageMembershipError ? e.detail : e instanceof ValidationError ? e : message(e) }; } finally { actionBusy = false; }
   }
   let livePreview=$state(false), previewRequest=$state(0), previewBusy=$state(false), previewError=$state('');
+  let canvasEditing=$state(false), canvasBounds=$state<(LayerBounds|null)[]>([]), canvasDraft=$state(''), selectedLayer=$state(-1);
+  const layerIdentities=new WeakMap<Layer,number>();
+  let nextLayerIdentity=0;
+  function layerIdentity(layer:Layer):number {
+    let id=layerIdentities.get(layer);
+    if(id===undefined){id=nextLayerIdentity++;layerIdentities.set(layer,id);}
+    return id;
+  }
+  const canvasLayerKeys=$derived(theme.layers.map(layerIdentity));
+  const canvasRotation=$derived((lcd?.requested.rotation_degrees ?? 0) as QuarterTurn);
+  let undoDrafts=$state<string[]>([]), redoDrafts=$state<string[]>([]);
+  let historyDraft=untrack(()=>JSON.stringify(theme));
+  function rememberDraft(next:string) {
+    if(next===historyDraft)return;
+    undoDrafts=[...undoDrafts,historyDraft].slice(-50);
+    while(undoDrafts.length>1 && undoDrafts.reduce((size,draft)=>size+draft.length,0)>8_000_000)undoDrafts.shift();
+    redoDrafts=[];historyDraft=next;
+  }
+  $effect(()=>{const next=JSON.stringify(theme);untrack(()=>rememberDraft(next));});
+  function restoreDraft(redo=false) {
+    rememberDraft(JSON.stringify(theme));
+    const source=redo?redoDrafts:undoDrafts, next=source.at(-1);if(!next)return;
+    if(redo){redoDrafts=source.slice(0,-1);undoDrafts=[...undoDrafts,historyDraft];}
+    else{undoDrafts=source.slice(0,-1);redoDrafts=[...redoDrafts,historyDraft];}
+    historyDraft=next;theme=JSON.parse(next);selectedLayer=-1;
+  }
+  function selectCanvasLayer(index:number) {selectedLayer=index;lcdPanel='composition';}
+  function changeCanvasLayer(index:number,layer:Layer) {
+    if(index<0||index>=theme.layers.length)return;
+    const identity=layerIdentity(theme.layers[index]);
+    theme.layers[index]=layer;layerIdentities.set(theme.layers[index],identity);selectedLayer=index;
+  }
   const previewDraft=$derived(JSON.stringify(theme));
   let previewGeneration=0, lastPreviewRequest=0;
-  let previewJob: {generation:number;dev:string;theme:Theme;live:boolean;started:number}|null=null;
+  let previewJob: {generation:number;dev:string;theme:Theme;live:boolean;started:number;editor:boolean}|null=null;
   let previewTimer:ReturnType<typeof setTimeout>|undefined;
   let previewFlight=false;
   $effect(()=>{
-    const draft=previewDraft, dev=device, online=connected, visible=tab==='display', live=livePreview, request=previewRequest;
+    const draft=previewDraft, dev=device, online=connected, visible=tab==='display', live=livePreview, request=previewRequest, editor=canvasEditing;
     const manual=request!==lastPreviewRequest;lastPreviewRequest=request;
     const generation=++previewGeneration;
     clearTimeout(previewTimer);
-    untrack(()=>{if(preview) URL.revokeObjectURL(preview);});
-    preview='';previewError='';
-    previewJob=online && visible && (live||manual) ? {generation,dev,theme:JSON.parse(draft),live,started:performance.now()} : null;
-    if(previewJob && (live||manual)) previewTimer=setTimeout(runPreview,250);
+    if(!editor || !online || !visible) {untrack(()=>{if(preview) URL.revokeObjectURL(preview);});preview='';}
+    previewError='';canvasDraft='';
+    previewJob=online && visible && (live||manual||editor) ? {generation,dev,theme:JSON.parse(draft),live,editor,started:performance.now()} : null;
+    if(previewJob && (live||manual||editor)) previewTimer=setTimeout(runPreview,250);
     return()=>{previewJob=null;clearTimeout(previewTimer);};
   });
   async function runPreview() {
     if(previewFlight || !previewJob)return;
     const job=previewJob;previewFlight=true;previewBusy=true;
     try {
-      const bytes=await rpc<number[]>('preview_lcd_theme',{dev:job.dev||null,theme:job.theme,elapsed_seconds:Math.floor((performance.now()-job.started)/1000)});
+      const params={dev:job.dev||null,theme:job.theme,elapsed_seconds:Math.floor((performance.now()-job.started)/1000)};
+      const result=job.editor?await rpc<EditorPreview>('preview_lcd_editor',params):await rpc<number[]>('preview_lcd_theme',params);
+      const bytes=Array.isArray(result)?result:result.jpeg;
       if(previewJob?.generation!==job.generation)return;
       const url=URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:'image/jpeg'}));
       if(preview)URL.revokeObjectURL(preview);
       preview=url;previewError='';
-      if(!job.live)notice='Preview обновлён. На устройство ничего не отправлено.';
+      canvasBounds=Array.isArray(result)?[]:result.layers;canvasDraft=job.editor?JSON.stringify(job.theme):'';
+      if(!job.live&&!job.editor)notice='Preview обновлён. На устройство ничего не отправлено.';
     } catch(e) {
       if(previewJob?.generation===job.generation){previewError=message(e);if(preview)URL.revokeObjectURL(preview);preview='';}
     } finally {
@@ -312,6 +349,7 @@
       try {theme=switchLcdPage($state.snapshot(theme),'basic');error='';}
       catch(e) {error=message(e);return;}
     } else theme.layers.splice(index, 1);
+    selectedLayer=Math.min(index,theme.layers.length-1);
     void focusLayer(index);
   }
   function move(index: number, step: number) {
@@ -319,6 +357,7 @@
     const first=isProcedural(theme.layers[0])?1:0;
     if (target < first || index < first || target >= theme.layers.length) return;
     [theme.layers[index], theme.layers[target]] = [theme.layers[target], theme.layers[index]];
+    selectedLayer=target;
     void focusLayer(target);
   }
   const labels: Record<Layer['kind'], string> = $derived({ divider:t('Разделитель'),fireworks:t('Фейерверк'), snow3d:t('Объёмный снег'), meteor:t('Метеоры'), weather:t('Эффект погоды'), sensor_cycle:t('Смена датчиков'), text:t('Текст'), clock:t('Часы'), sensor:t('Датчик'), image:t('Изображение') });
@@ -395,9 +434,21 @@
       {#if !sensors.length}<p>{t("Показания появятся после подключения daemon.")}</p>{/if}
     {:else}
       <div class="workspace">
-        <section class="visual" aria-label="{t("Предпросмотр LCD")}">
-          <LcdPreview geometry={capabilities.display}>{#if preview}<img src={preview} alt="{t("Подготовленная композиция LCD — preview, не подтверждение вывода на устройство")}"/>{:else}<div class="empty"><span>{capabilities.display?.width ?? 480} × {capabilities.display?.height ?? 480}</span><p>{t("Создайте тему")}<br/>{t("и обновите preview")}</p></div>{/if}</LcdPreview>
+        <section class="visual" class:canvas-mode={canvasEditing} aria-label="{t("Предпросмотр LCD")}">
+          <LcdPreview geometry={capabilities.display}>{#if canvasEditing}<CanvasEditor image={preview} keys={canvasLayerKeys} layers={theme.layers} bounds={canvasBounds} selected={selectedLayer} rotation={canvasRotation} ready={canvasDraft===previewDraft && connected} {labels} onselect={selectCanvasLayer} onchange={changeCanvasLayer} onorder={move}/>{:else if preview}<img src={preview} alt="{t("Подготовленная композиция LCD — preview, не подтверждение вывода на устройство")}"/>{:else}<div class="empty"><span>{capabilities.display?.width ?? 480} × {capabilities.display?.height ?? 480}</span><p>{t("Создайте тему")}<br/>{t("и обновите preview")}</p></div>{/if}</LcdPreview>
           <div class="status"><span>{t("Источник:")} {lcdSourceLabel(lcd?.source)}</span><span>{lcd?.last_error ?? t('Preview не подтверждает физический вывод')}</span></div>
+          <label><input type="checkbox" bind:checked={canvasEditing}/>{t('Редактировать на холсте')}</label>
+          {#if canvasEditing}
+            <details><summary>{t('Управление холстом')}</summary>
+            <p>{t('Стрелки — перемещение; Shift + стрелки — размер; Ctrl + стрелки — шаг 10; Alt + стрелки — порядок. Escape — отмена жеста.')}</p>
+            <p>{t('Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.')}</p></details>
+            <label>{t('Выбранный слой')}<select aria-label={t('Выбранный слой')} value={selectedLayer} onchange={event=>selectCanvasLayer(Number(event.currentTarget.value))}>
+              <option value={-1}>{t('Выберите слой')}</option>
+              {#each theme.layers as layer,index}<option value={index}>{index+1}. {labels[layer.kind]}{editableLayer(layer)?'':` (${t('Неподвижный фон')})`}</option>{/each}
+            </select></label>
+            <button disabled={selectedLayer<0} onclick={()=>void focusLayer(selectedLayer)}>{t('Свойства выбранного слоя')}</button>
+          {/if}
+          <div class="actions"><button disabled={!undoDrafts.length} onclick={()=>restoreDraft()}>{t('Отменить правку')}</button><button disabled={!redoDrafts.length} onclick={()=>restoreDraft(true)}>{t('Повторить правку')}</button></div>
           <label><input type="checkbox" bind:checked={livePreview}/>{t("Непрерывный preview")}</label>
           {#if previewError}<p role="alert">{t('Не удалось создать preview: {0}', previewError)}</p>{/if}
           <div class="actions"><button disabled={previewBusy || !connected} onclick={() => {notice='';previewRequest++;}}>{t("Обновить preview")}</button><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button></div>
@@ -451,12 +502,15 @@
           <div class="toolbar"><button disabled={busy || theme.layers.length >= 32} onclick={() => theme.layers.push({kind:'divider',axis:'horizontal',x:34,y:240,length:412,thickness:2,color:[144,177,201],opacity:100,shadow:{x:0,y:0,blur:5,color:[0,0,0],opacity:100}})}>{t('+ Разделитель')}</button><button data-add-text disabled={theme.layers.length >= 32} onclick={() => theme.layers.push({ kind: 'text', text: t('Новый текст'), style: style(180) })}>{t("+ Текст")}</button><button disabled={theme.layers.length >= 32} onclick={() => theme.layers.push({ kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) })}>{t("+ Часы")}</button><label class="file">{t("+ Изображение")}<input type="file" accept="image/png,image/jpeg,image/webp,image/bmp" onchange={importImage} disabled={busy || theme.layers.length >= 32}/></label></div>
           <div class="row"><label>{t("Привязать датчик")}<select bind:value={selectedSensor}><option value="">{t("Выберите источник")}</option>{#each sensors as s}<option value={s.id}>{s.label} · {s.unit}</option>{/each}</select></label><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}>{t("Добавить")}</button></div>
           {#each theme.layers as layer, i (layer)}
-            <article class="layer" aria-labelledby={`layer-heading-${i}`}><div class="layer-head"><h2 id={`layer-heading-${i}`} tabindex="-1">{i + 1}. {labels[layer.kind]}</h2><div><button aria-label="{t("Слой ниже")}" disabled={i === 0 || (i === 1 && isProcedural(theme.layers[0]))} onclick={() => move(i, -1)}>↑</button><button aria-label="{t("Слой выше")}" disabled={isProcedural(layer) || i === theme.layers.length - 1} onclick={() => move(i, 1)}>↓</button><button aria-label="{t("Удалить слой")}" onclick={() => removeLayer(i)}>×</button></div></div>
+            <article class="layer" class:canvas-selected={canvasEditing && selectedLayer===i} onfocusin={()=>selectedLayer=i} aria-labelledby={`layer-heading-${i}`}><div class="layer-head"><h2 id={`layer-heading-${i}`} tabindex="-1">{i + 1}. {labels[layer.kind]}</h2><div><button aria-label="{t("Слой ниже")}" disabled={i === 0 || (i === 1 && isProcedural(theme.layers[0]))} onclick={() => move(i, -1)}>↑</button><button aria-label="{t("Слой выше")}" disabled={isProcedural(layer) || i === theme.layers.length - 1} onclick={() => move(i, 1)}>↓</button><button aria-label="{t("Удалить слой")}" onclick={() => removeLayer(i)}>×</button></div></div>
               {#if layer.kind==='divider'}<DividerEditor bind:layer={()=>layer,value=>theme.layers[i]=value}/>{/if}
               {#if layer.kind==='meteor'}<p>{t("Настройки MeteorShower находятся в блоке «Метеоры».")}</p>{/if}
               {#if layer.kind==='weather'}<p>{t("Настройки Rain/Snow находятся в блоке «Анимация LCD».")}</p>{/if}
               {#if layer.kind === 'text'}<label>{t("Текст")}<textarea bind:value={layer.text} maxlength="2048"></textarea></label>{/if}
-              {#if layer.kind === 'sensor'}<label>{t("Подпись")}<input bind:value={layer.label}/></label><code>{layer.sensor_id}</code><div class="row"><label>{t("Точность")}<input type="number" bind:value={layer.decimals} min="0" max="2"/></label>{#if layer.unit === 'celsius'}<label>{t("Единица")}<select bind:value={layer.temperature_unit}><option value="system">{t("Общие настройки")}</option><option value="celsius">°C</option><option value="fahrenheit">°F</option></select></label>{/if}</div>{/if}
+              {#if layer.kind === 'sensor'}<label>{t('Источник датчика')}<select aria-label={t('Источник датчика')} value={layer.sensor_id} onchange={event=>{const source=sensors.find(s=>s.id===event.currentTarget.value);if(source){layer.sensor_id=source.id;layer.unit=source.unit;}}}>
+                {#each sensors as source}<option value={source.id}>{source.label} · {source.unit}</option>{/each}
+                {#if !sensors.some(source=>source.id===layer.sensor_id)}<option value={layer.sensor_id}>{t('Недоступен:')} {layer.sensor_id}</option>{/if}
+              </select></label><label>{t("Подпись")}<input bind:value={layer.label}/></label><code>{layer.sensor_id}</code><div class="row"><label>{t("Точность")}<input type="number" bind:value={layer.decimals} min="0" max="2"/></label>{#if layer.unit === 'celsius'}<label>{t("Единица")}<select bind:value={layer.temperature_unit}><option value="system">{t("Общие настройки")}</option><option value="celsius">°C</option><option value="fahrenheit">°F</option></select></label>{/if}</div>{/if}
               {#if layer.kind === 'sensor_cycle'}
                 <label>{t("Интервал переключения, с")}<input type="number" min="1" max="3600" bind:value={layer.interval_seconds}/></label>
                 <button disabled={layer.sensors.length>=16} onclick={()=>layer.sensors.push({...layer.sensors[layer.sensors.length-1]})}>{t("Добавить показатель в цикл")}</button>
@@ -475,14 +529,8 @@
                 <label><input type="checkbox" checked={!!layer.parts} onchange={e => {layer.parts=e.currentTarget.checked?{label:{...$state.snapshot(layer.style),y:Math.max(0,layer.style.y-45),size:22},unit:{...$state.snapshot(layer.style),y:Math.min(479,layer.style.y+65),size:22}}:null;}}/>{t("Раздельные стили подписи и единицы")}</label>
                 {#if layer.parts}
                   {#each ['label','unit'] as part (part)}
-                    {@const partStyle = layer.parts[part as 'label'|'unit']}
                     <fieldset><legend>{part === 'label' ? "" + t("Подпись датчика") + "" : "" + t("Единица датчика") + ""}</legend>
-                      <label>{t("Цвет")}<input type="color" value={hex(partStyle.color)} oninput={e=>partStyle.color=rgb(e.currentTarget.value)}/></label>
-                      <label>X<input type="number" min="0" max="479" bind:value={partStyle.x}/></label>
-                      <label>Y<input type="number" min="0" max="479" bind:value={partStyle.y}/></label>
-                      <label>{t("Размер")}<input type="number" min="8" max="160" bind:value={partStyle.size}/></label>
-                      <FontSelect style={partStyle} fonts={fontChoices} onchange={(font, asset) => { partStyle.font = font; partStyle.font_asset = asset; }}/> 
-                      <label>{t("Выравнивание")}<select bind:value={partStyle.align}><option value="left">{t("Слева")}</option><option value="center">{t("По центру")}</option><option value="right">{t("Справа")}</option></select></label>
+                      <TextStyleControls bind:style={layer.parts[part as 'label'|'unit']} fonts={fontChoices}/>
                     </fieldset>
                   {/each}
                 {/if}
@@ -509,26 +557,7 @@
                 <label>{t("Непрозрачность")}<input type="range" min="0" max="255" bind:value={layer.opacity}/></label>
                 <div class="row">{#each ['x', 'y', 'width', 'height'] as key}<label>{key}<input type="number" disabled={!!layer.watermark_position && (key === 'x' || key === 'y')} min="0" max="480" value={layer[key as 'x' | 'y' | 'width' | 'height']} oninput={e => { if (layer.kind === 'image') layer[key as 'x' | 'y' | 'width' | 'height'] = Number(e.currentTarget.value); }}/></label>{/each}</div>
               {:else if layer.kind !== 'divider' && layer.kind !== 'weather' && layer.kind !== 'meteor' && layer.kind !== 'snow3d' && layer.kind !== 'fireworks'}
-                <label>{t("Вертикальный якорь")}<select aria-label="{t("Вертикальный якорь")}" value={layer.style.vertical_align??'top'} onchange={e=>layer.style.vertical_align=e.currentTarget.value as typeof layer.style.vertical_align}><option value="top">{t("Верх")}</option><option value="center">{t("Центр")}</option><option value="bottom">{t("Низ")}</option></select></label>
-                <label><input type="checkbox" checked={layer.style.max_width != null} onchange={e=>layer.style.max_width=e.currentTarget.checked?358:null}/>{t("Переносить текст по ширине")}</label>
-                {#if layer.style.max_width != null}<label>{t("Ширина текста, px")}<input type="number" min="1" max="480" bind:value={layer.style.max_width}/></label>{/if}
-                <label><input type="checkbox" checked={layer.style.line_box??false} onchange={e=>layer.style.line_box=e.currentTarget.checked}/>{t("Высота блока по строкам (CSS)")}</label>
-                <label><input type="checkbox" checked={layer.style.line_height != null} onchange={e=>layer.style.line_height=e.currentTarget.checked?58:null}/>{t("Задать межстрочный интервал")}</label>
-                {#if layer.style.line_height != null}<label>{t("Межстрочный интервал, px")}<input type="number" min="8" max="320" bind:value={layer.style.line_height}/></label>{/if}
-                <div class="row"><label>X<input type="number" min="0" max="479" bind:value={layer.style.x}/></label><label>Y<input type="number" min="0" max="479" bind:value={layer.style.y}/></label><label>{t("Размер")}<input type="number" min="8" max="160" bind:value={layer.style.size}/></label><label>{t("Цвет")}<input type="color" value={hex(layer.style.color)} oninput={e => { layer.style.color = rgb(e.currentTarget.value); }}/></label></div>
-                <FontSelect style={layer.style} fonts={fontChoices} onchange={(font, asset) => { layer.style.font = font; layer.style.font_asset = asset; }}/> 
-                <label>{t("Непрозрачность текста, %")}<input type="number" min="0" max="100" value={layer.style.opacity ?? 100} oninput={e=>layer.style.opacity=Number(e.currentTarget.value)}/></label>
-                <label><input type="checkbox" checked={!!layer.style.shadow} onchange={e=>layer.style.shadow=e.currentTarget.checked?{x:2,y:2,blur:2,color:[0,0,0],opacity:60}:null}/>{t("Тень текста")}</label>
-                {#if layer.style.shadow}
-                  <div class="row">
-                    <label>{t("Смещение тени X")}<input type="number" min="-32" max="32" bind:value={layer.style.shadow.x}/></label>
-                    <label>{t("Смещение тени Y")}<input type="number" min="-32" max="32" bind:value={layer.style.shadow.y}/></label>
-                    <label>{t("Размытие тени")}<input type="number" min="0" max="16" bind:value={layer.style.shadow.blur}/></label>
-                    <label>{t("Непрозрачность тени, %")}<input type="number" min="0" max="100" bind:value={layer.style.shadow.opacity}/></label>
-                    <label>{t("Цвет тени")}<input type="color" value={hex(layer.style.shadow.color)} oninput={e=>{if(layer.style.shadow)layer.style.shadow.color=rgb(e.currentTarget.value);}}/></label>
-                  </div>
-                {/if}
-                <label>{t("Выравнивание")}<select bind:value={layer.style.align}><option value="left">{t("Слева")}</option><option value="center">{t("По центру")}</option><option value="right">{t("Справа")}</option></select></label>
+                <TextStyleControls bind:style={layer.style} fonts={fontChoices}/>
               {/if}
             </article>
           {/each}
@@ -540,6 +569,9 @@
   </main>
 </div>
 <style>
+  .visual.canvas-mode{max-height:calc(100vh - 48px);overflow:auto;grid-auto-rows:max-content;align-content:start;}
+  @media(max-width:760px){.visual.canvas-mode{max-height:none;overflow:visible;}}
+  .canvas-selected{outline:2px solid #7ce9ff;outline-offset:3px;}
 .shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.aside-note,.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}.aside-note{margin-top:14px}main{padding:36px 40px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(360px,1.1fr);gap:32px}.visual{position:sticky;top:24px;align-self:start;display:grid;gap:16px;padding:24px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.actions,.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{border-top:1px solid var(--border);padding:24px 0;margin-top:24px;display:grid;gap:14px}.layer-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.layer-head button{padding:5px 9px;margin-left:4px}.layer-head h2{margin:0}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
 @media(max-width:1100px){.shell{grid-template-columns:190px minmax(0,1fr)}main{padding:24px}.workspace{grid-template-columns:minmax(0,1fr)}.visual{position:static;max-width:560px;width:100%;justify-self:center}}
 @media(max-width:760px){.shell{grid-template-columns:minmax(0,1fr)}aside{padding:16px;border-right:0;border-bottom:1px solid var(--border)}.brand{margin-bottom:16px}nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-label,.global-nav{grid-column:1/-1}.global-nav{display:flex;flex-wrap:wrap;margin-top:10px;padding-top:10px}.connection{margin-top:16px}.aside-note{margin-bottom:0}main{padding:16px}header{flex-wrap:wrap;gap:16px}.device-picker{flex-basis:100%;max-width:none}h1{font-size:28px}.layer-head{flex-wrap:wrap}.visual{padding:18px}}
