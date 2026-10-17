@@ -100,3 +100,11 @@ Implementation commits: `b8d3183`, `c3c36bc`, `7a36367`, `f004cf2`.
 R0 organization/audit commit: `840a9a8`; immutable baseline: `299fe6c3`.
 All raw evidence stays outside tracked files. Next is R2 integrated core
 stabilization; R3 real Plasma Wayland/LCDV2/package gates remain open.
+
+
+## R2 in progress
+
+Started from `245d5eb`. The [R2 acceptance ledger](parity/r2-core-qualification.md)
+maps all eight milestone requirements to current checks and remaining qualification.
+Native image/video runs use isolated MockBackend instances; no physical hardware
+or real desktop acceptance is implied. R2 remains open until the full ledger closes.
