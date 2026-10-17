@@ -1,7 +1,7 @@
 // Private Xvfb/D-Bus/MockBackend workflow. File chooser is a private portal fixture.
 (async()=>{
  const english=window.__nativeDesktopPhase==='en';
- const expectedEnglish={"Название":"Name","Обновить список профилей":"Refresh profile list","Экспортировать слот в архив…":"Export slot to archive…","Слот профиля":"Profile slot","Импортировать архив в слот…":"Import archive into slot…","Прочитать результат архива":"Read archive result","Сохранённые профили":"Saved profiles","Импорт и экспорт профиля":"Profile import and export","Архив сохранён в файл.":"Archive saved to file."};
+ const expectedEnglish={"Экран помпы":"Pump screen","Название":"Name","Обновить список профилей":"Refresh profile list","Экспортировать слот в архив…":"Export slot to archive…","Слот профиля":"Profile slot","Импортировать архив в слот…":"Import archive into slot…","Прочитать результат архива":"Read archive result","Сохранённые профили":"Saved profiles","Импорт и экспорт профиля":"Profile import and export","Архив сохранён в файл.":"Archive saved to file."};
  const ui=source=>english?(expectedEnglish[source]??source):source;
  const invoke=(command,args={})=>window.__TAURI_INTERNALS__.invoke(command,args);
  const rpc=(method,params={})=>invoke('daemon_call',{method,params});
@@ -12,6 +12,7 @@
  const select=async(label,value)=>{await wait(()=>field(label)&&!field(label).matches(':disabled'),label);field(label).value=value;field(label).dispatchEvent(new Event('change',{bubbles:true}));};
  try {
   await wait(async()=>(await rpc('list_devices')).length===1,'mock device');const dev=(await rpc('list_devices'))[0].id;
+  await click('Экран помпы');
   const before=await rpc('get_lcd_state',{dev});
   const bytes=window.__nativeFontBytes;const upload=await rpc('font_upload',{request:{action:'begin',size:bytes.length}});
   for(let offset=0;offset<bytes.length;offset+=65536)await rpc('font_upload',{request:{action:'chunk',id:upload.id,offset,bytes:bytes.slice(offset,offset+65536)}});

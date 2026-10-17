@@ -186,8 +186,44 @@
     await click(text('Вернуть LocalUI', 'Restore LocalUI'));
     await wait(async () => (await rpc('get_lcd_state', {dev})).source === 'Idle', 'final LocalUI');
     await wait(() => sourceStatus() === idleLabel, 'localized idle source after explicit LocalUI');
+    phase = 'exif-normalization';
+    const decodePixels = async bytes => {
+      const image = new Image(), url = URL.createObjectURL(new Blob([new Uint8Array(bytes)]));
+      try {
+        image.src = url; await image.decode();
+        const canvas = document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+        const context=canvas.getContext('2d');context.drawImage(image,0,0);
+        return {width:canvas.width,height:canvas.height,data:context.getImageData(0,0,canvas.width,canvas.height).data};
+      } finally {URL.revokeObjectURL(url);}
+    };
+    const exifCanvas=document.createElement('canvas');exifCanvas.width=32;exifCanvas.height=16;
+    const exifContext=exifCanvas.getContext('2d');
+    for(let y=0;y<16;y++)for(let x=0;x<32;x++){exifContext.fillStyle=`rgb(${x*7},${y*13},${(x+y)*3})`;exifContext.fillRect(x,y,1,1);}
+    const jpeg=Array.from(new Uint8Array(await (await new Promise(resolve=>exifCanvas.toBlob(resolve,'image/jpeg',.95))).arrayBuffer()));
+    const baseline=await invoke('image_editor',{bytes:jpeg,edit:null});
+    const raw=await decodePixels(baseline.png),exifCases=[];
+    for(let orientation=1;orientation<=8;orientation++){
+      const exif=[69,120,105,102,0,0,73,73,42,0,8,0,0,0,1,0,18,1,3,0,1,0,0,0,orientation,0,0,0,0,0,0,0];
+      const length=exif.length+2,bytes=[...jpeg.slice(0,2),255,225,length>>8,length&255,...exif,...jpeg.slice(2)];
+      const prepared=await invoke('image_editor',{bytes,edit:null});
+      const key=await invoke('import_image',{bytes,name:`EXIF ${orientation}.jpg`});
+      const normalized=await rpc('read_theme_asset_for_edit',{key});
+      const actual=await decodePixels(normalized);
+      assert(actual.width===(orientation>=5?16:32)&&actual.height===(orientation>=5?32:16),'oriented native dimensions '+orientation);
+      for(let y=0;y<actual.height;y++)for(let x=0;x<actual.width;x++){
+        const [sx,sy]=[[x,y],[31-x,y],[31-x,15-y],[x,15-y],[y,x],[y,15-x],[31-y,15-x],[31-y,x]][orientation-1];
+        const a=(y*actual.width+x)*4,b=(sy*raw.width+sx)*4;
+        assert(equal(actual.data.slice(a,a+4),raw.data.slice(b,b+4)),'EXIF native pixel mapping '+orientation);
+      }
+      const preview=await decodePixels(prepared.png);
+      assert(preview.width===actual.width&&preview.height===actual.height&&equal(preview.data,actual.data),'editor/import orientation agreement');
+      const reread=await invoke('image_editor',{bytes:normalized,edit:null});
+      const again=await decodePixels(reread.png);
+      assert(again.width===actual.width&&again.height===actual.height&&equal(again.data,actual.data),'normalized source must not rotate twice');
+      exifCases.push({orientation,key,width:actual.width,height:actual.height});
+    }
     await invoke('native_smoke_result', {keepOpen: true, result: {ok: true, language: settings.interface_language,
-      source_labels: {idle: idleLabel, theme: themeLabel}, trusted_key_steps: keySequence, trusted_inputs: trustedInputs,
+      exif_cases: exifCases, source_labels: {idle: idleLabel, theme: themeLabel}, trusted_key_steps: keySequence, trusted_inputs: trustedInputs,
       trusted_pointer_events: pointerEvents, release_events: releaseEvents, keyboard_save: true, typed_crop_and_pointer_clamp: true, original, replacement, crop_and_63_actions: true, all_filters: true, native_preview_decode: true,
       exact_engine_request_mapping: true, source_unchanged: true, save_requires_apply: true,
       old_active_reference_preserved: true, checked_membership: true, thumbnail_decode: true,

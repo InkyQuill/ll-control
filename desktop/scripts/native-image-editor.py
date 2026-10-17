@@ -182,6 +182,7 @@ print(json.dumps(result))
         assert gui.returncode == 0, (root / 'gui.log').read_text()
         outcome = json.loads((root / 'result.json').read_text())
         assert outcome['ok'] and closed and acknowledged, outcome
+        assert [item['orientation'] for item in outcome['exif_cases']] == list(range(1, 9)), outcome
         assert outcome['trusted_key_steps'] == key_sequence == 9, outcome
         assert len(pointer_moves) == 1 and outcome['trusted_inputs'] >= 7, outcome
         assert 'native close: all workers joined' in (root / 'gui.log').read_text()
