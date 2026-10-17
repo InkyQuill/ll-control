@@ -79,6 +79,10 @@ historical hardware observations do not close them.
 
 ## Scope discipline
 
+The installed-app review identified a required [LCD editor UX addendum](docs/development/parity/lcd-editor-ux.md):
+compact layers/inspector, responsive live canvas, and exposed display orientation.
+UX1–UX3 are proposed R3 delivery slices; live editing retains explicit hardware Apply.
+
 LCD work has three tracks: **base editor usability (R1/R2)**, **theme transfer and
 authoring (R4/R8)**, **polish (R9)**. Reset reliability, ordinary RGB, cooling and
 safe persistence stay core even when additional effects are deferred.

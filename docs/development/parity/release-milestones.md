@@ -147,6 +147,11 @@ Detailed matrices: [checklist](basic-parity-checklist.md),
 
 ## R3 — Qualify and cut the first usable LCDV2 release
 
+**Editor UX addendum:** [live-editor brief and UX1–UX3](lcd-editor-ux.md) address
+observed installed-app friction. The interaction design is proposed; live canvas
+with explicit Apply is confirmed. Track these core usability gaps here, separately
+from optional R9 conveniences and additional R8 themes.
+
 **Critical. Type:** real-platform/hardware/package qualification.
 **Depends on:** R0–R2. **Owner areas:** package/CI, desktop lifecycle, hardware acceptance.
 
