@@ -140,3 +140,10 @@ media import/replacement flows. Actual committed-state checks confirm one
 publication, preserved adjacent state, read reconnection and no implicit Apply.
 The video test waits for the application's recovery diagnostic before verification
 reads. Daemon-crash recovery and remaining R2 ledger gates are still open.
+
+
+R2 cooling/lighting batch: 57 focused backend tests passed with no ignores.
+Native catalog/palette/source-unit/topology checks passed, including disabled
+dynamic mode across navigation and daemon restart while inactive profiles remain
+intact. Private-session isolation and obsolete driver locale/label assumptions
+were corrected. Native cooling/reset/accessibility and other R2 gates remain open.

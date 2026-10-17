@@ -12,13 +12,28 @@ import time
 
 repo = Path(__file__).resolve().parents[2]
 if '--inside-xvfb' not in sys.argv:
-    env = dict(os.environ, LCONNECT_PALETTE_ISOLATED='1')
-    env.pop('DISPLAY', None)
-    env.pop('WAYLAND_DISPLAY', None)
-    raise SystemExit(subprocess.call(['xvfb-run', '-a', '-s', '-screen 0 1600x1200x24',
-        'dbus-run-session', '--', sys.executable, __file__, '--inside-xvfb'], env=env))
+    root = Path(tempfile.mkdtemp(prefix='lconnect-native-lighting-palette-'))
+    env = dict(os.environ, LCONNECT_PALETTE_ISOLATED='1', LCONNECT_PALETTE_ROOT=str(root),
+        XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root/'config'),
+        XDG_CACHE_HOME=str(root/'cache'), XDG_DATA_HOME=str(root/'data'),
+        DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
+    for key in list(env):
+        if key in ['DISPLAY','WAYLAND_DISPLAY','DBUS_SESSION_BUS_ADDRESS','AT_SPI_BUS_ADDRESS'] or key.startswith('LCONNECT_NATIVE_'):
+            env.pop(key, None)
+    try:
+        code = subprocess.call(['xvfb-run', '-a', '-s', '-screen 0 1600x1200x24',
+            'dbus-run-session', '--', sys.executable, __file__, '--inside-xvfb'], env=env)
+    finally:
+        target = root/'doc'
+        def mounted():
+            return any(row.split()[4] == str(target) for row in Path('/proc/self/mountinfo').read_text().splitlines())
+        if mounted():
+            subprocess.run(['fusermount3','-uz','--',str(target)],check=True)
+            assert not mounted(), f'Private document mount remains: {target}'
+    raise SystemExit(code)
 assert os.environ.get('LCONNECT_PALETTE_ISOLATED') == '1'
-root = Path(tempfile.mkdtemp(prefix='lconnect-native-lighting-palette-'))
+root = Path(os.environ['LCONNECT_PALETTE_ROOT'])
+assert os.environ['XDG_RUNTIME_DIR'] == str(root)
 (root/'fixture-marker').write_text('MockBackend only\n')
 env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
     XDG_CONFIG_HOME=str(root/'config'), XDG_CACHE_HOME=str(root/'cache'),
@@ -64,6 +79,9 @@ def stop_fixture():
 
 try:
     launch(['openbox'],'wm'); start_fixture()
+    display = rpc('get_display_settings')
+    display['interface_language'] = 'ru-RU'
+    rpc('set_display_settings', {'settings': display})
     gui = launch([repo/'target/debug/lconnect-gui'],'gui',dict(env,LCONNECT_NATIVE_LIGHTING_PALETTE='1'))
     wait(lambda:(root/'result.json').exists() or gui.poll() is not None,'native lighting workflow',seconds=120)
     assert (root/'result.json').exists(), f'GUI exited {gui.returncode}'

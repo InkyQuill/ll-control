@@ -157,3 +157,33 @@ a claimed production fix. Failed and passing run evidence remains ignored.
 This qualifies bridge socket loss and its next-read reconnection only. Daemon
 death/restart during an operation, other operation families, resource budgets
 and the remaining ledger requirements stay open. R2 is not complete.
+
+
+## Cooling and lighting qualification batch
+
+The native lighting palette workflow passed on the current source, exercising
+all 16 pump and six fan catalog entries and their control/default shapes,
+per-mode palettes, readback, global fan topology, and CPU Celsius/GPU percent/RPM
+dynamic bindings. It verifies source-specific thresholds/colors/brightness/direction,
+mode switching, explicit Disable, navigation away/back, and daemon restart.
+Disabled Meteor stays disabled; the inactive Static/RPM profile remains enabled.
+Persisted settings and emitted mock packets agree after restart.
+
+The driver now creates the private XDG root before launching D-Bus/portals,
+cleans its document mount, explicitly selects Russian, and uses the current °C
+label. The first two runs exposed obsolete driver language/label assumptions;
+no production defect is claimed. Passing and failed logs remain ignored.
+
+57 targeted backend tests passed across `cooling`, `cooling_ipc`,
+`cooling_mode_save`, `dynamic_rgb`, `dynamic_rgb_ipc`, `lighting_owner`,
+`lighting_palette`, and `thermal`, with no ignored tests. Inspected assertions
+cover stale-source fallback, manual cancellation, mode revision/default storage,
+restart, invalid source units, thermal precedence over dynamic RGB, renewed
+manual grace, latest-base restoration and sync topology restoration. These
+backend assertions supplement the native workflow; they do not substitute for
+the remaining current native cooling/default/reset and accessibility acceptance.
+
+Reproduce with `native-lighting-palette.py` after building the native-smoke GUI,
+and `cargo test -p lconnect-daemon --locked --test cooling --test cooling_ipc
+--test cooling_mode_save --test dynamic_rgb --test dynamic_rgb_ipc
+--test lighting_owner --test lighting_palette --test thermal`.
