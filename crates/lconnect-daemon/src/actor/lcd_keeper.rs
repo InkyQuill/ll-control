@@ -27,6 +27,12 @@ use tokio::{
     time::Instant,
 };
 
+enum ConfigTarget {
+    Requested,
+    Jpeg,
+    HostRotated,
+}
+
 enum Source {
     Idle,
     Media(MediaReader),
@@ -866,7 +872,9 @@ impl Display {
         self.state.requested = LcdConfig::new("Application", 50, 0);
         let apply = async {
             self.replace().await?;
-            let applied = self.config(&self.state.requested, false).await?;
+            let applied = self
+                .config(&self.state.requested, ConfigTarget::Requested)
+                .await?;
             self.state.applied = Some(applied);
             self.source = Source::Jpeg(prepared.jpeg);
             self.frame().await?;
@@ -936,10 +944,13 @@ impl Display {
         let result = self
             .config(
                 &next,
-                matches!(
-                    self.source,
-                    Source::Clip { .. } | Source::Media(_) | Source::Composition { .. }
-                ),
+                match self.source {
+                    Source::Clip { .. } | Source::Media(_) | Source::Composition { .. } => {
+                        ConfigTarget::HostRotated
+                    }
+                    Source::Jpeg(_) | Source::Theme(_) => ConfigTarget::Jpeg,
+                    Source::Idle => ConfigTarget::Requested,
+                },
             )
             .await;
         let applied = match result {
@@ -1012,7 +1023,7 @@ impl Display {
         let applied = if next.brightness_percent == self.state.requested.brightness_percent {
             self.state.applied.clone()
         } else {
-            match self.config(&next, true).await {
+            match self.config(&next, ConfigTarget::HostRotated).await {
                 Ok(applied) => Some(applied),
                 Err(error) => {
                     worker.stop().await.map_err(busy)?;
@@ -1060,7 +1071,7 @@ impl Display {
                 .as_ref()
                 .is_some_and(|config| config.mode == "LCDSetting")
         {
-            match self.config(&self.state.requested, false).await {
+            match self.config(&self.state.requested, ConfigTarget::Jpeg).await {
                 Ok(config) => self.state.applied = Some(config),
                 Err(error) => {
                     self.fail(&error).await;
@@ -1070,15 +1081,20 @@ impl Display {
         }
         Ok(())
     }
-    async fn config(&self, config: &LcdConfig, diagnostic: bool) -> Result<LcdConfig> {
+    async fn config(&self, config: &LcdConfig, target: ConfigTarget) -> Result<LcdConfig> {
+        let settings_only = !matches!(target, ConfigTarget::Requested);
         let mut setting = LCDControlSetting::default();
-        setting.mode = if diagnostic {
+        setting.mode = if settings_only {
             LCDControlMode::LCDSetting
         } else {
             parse_lcd_mode(&config.mode)
         };
         setting.brightness = Brightness::new(config.brightness_percent).map_err(invalid)?;
-        setting.rotation = rotation_from_degrees(if diagnostic {
+        // H264 frames are rotated by the host. JPEG sources retain the
+        // firmware rotation field, but still need LCDSetting: replaying the
+        // requested LocalUI here interrupts the active image with the logo.
+        let host_rotated = matches!(target, ConfigTarget::HostRotated);
+        setting.rotation = rotation_from_degrees(if host_rotated {
             0
         } else {
             config.rotation_degrees
@@ -1096,7 +1112,7 @@ impl Display {
             .map_err(|_| busy("HID reply dropped"))?
             .map_err(busy)?;
         Ok(LcdConfig::new(
-            if diagnostic {
+            if settings_only {
                 "LCDSetting"
             } else {
                 &config.mode
@@ -1228,7 +1244,10 @@ impl Display {
             ..LcdPlaybackStats::default()
         };
         self.started = Some(Instant::now());
-        match self.config(&self.state.requested, true).await {
+        match self
+            .config(&self.state.requested, ConfigTarget::HostRotated)
+            .await
+        {
             Ok(applied) => self.state.applied = Some(applied),
             Err(error) => {
                 self.fail(&error).await;

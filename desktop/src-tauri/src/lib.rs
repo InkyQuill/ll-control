@@ -39,4 +39,6 @@ pub mod desktop_settings;
 
 pub mod desktop_runtime;
 
+pub mod desktop_startup;
+
 pub mod archive_messages;

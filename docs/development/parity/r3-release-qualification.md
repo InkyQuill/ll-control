@@ -88,3 +88,22 @@ First remote Arch CI failed before tests: all-feature Rust checking enables
 embedded frontend loading, but a fresh checkout has no desktop/build directory.
 The workflow now builds the frontend before Rust checks. Local actionlint passed;
 a remote rerun is required. Browser CI is still running.
+
+
+## First target-session fixes — pending physical retest
+
+JPEG/Theme settings now use the LCDSetting transaction instead of replaying
+LocalUI. Configuration targets are explicit so replacement through Idle cannot
+select the wrong mode; H264 retains host rotation and zero hardware rotation.
+The regression first failed on actual mode bytes, then passed brightness/rotation,
+continued image refresh and replacement at90°. All20 LCD-owner tests,42 actor
+unit tests (one unrelated vendor-firmware case ignored),16 Screen-group and9
+Screen-reset tests passed. Strict GUI/daemon all-target Clippy and fmt passed.
+Visible rotation/brightness is still pending a rebuilt-daemon retest.
+
+Production GUI startup now re-executes with the confirmed WebKit compatibility
+setting on NVIDIA Wayland unless the user explicitly sets the renderer variable.
+It preserves arguments and leaves recording-worker dispatch first. The manual
+workaround is visually accepted; automatic startup needs a production build test
+with the variable unset. Rust review found a replacement transition risk, now
+covered by an explicit configuration target and regression. R3 is not complete.

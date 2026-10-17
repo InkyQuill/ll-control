@@ -948,6 +948,10 @@ fn main() {
     if lconnect_gui::screen_record_process::dispatch_worker() {
         return;
     }
+    if let Err(error) = lconnect_gui::desktop_startup::configure_graphics() {
+        eprintln!("Cannot initialize graphics compatibility: {error}");
+        std::process::exit(1);
+    }
     with_media_preview(desktop_builder())
         .manage(lconnect_gui::group_jobs::Groups::default())
         .manage(lconnect_gui::archive_jobs::Archives::default())
