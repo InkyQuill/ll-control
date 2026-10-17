@@ -11,6 +11,7 @@ async function setup(page:Page,language:string){
    if(command!=='daemon_call')return null;
    const method=String(args.method),params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
     case 'list_devices':return [{id:'lcd',display_name:'Fixture LCDV2',family:'galahad2-lcdv2'}];
     case 'list_sensors':case 'list_named_theme_assets':case 'list_theme_assets':case 'list_theme_fonts':return [];

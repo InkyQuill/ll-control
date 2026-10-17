@@ -7,6 +7,7 @@ test('voltage, clocks, network and storage stay typed from Sensors to LCD Apply'
         if (_ === 'desktop_set_language') return null;
         calls.push(request);
         switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [
             { id: 'gpu:voltage', label: 'GPU voltage', unit: 'volts', value: 0.975, status: 'valid', age_ms: 10 },

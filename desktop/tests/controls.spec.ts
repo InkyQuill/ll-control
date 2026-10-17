@@ -7,6 +7,7 @@ test.beforeEach(async ({ page }) => {
         if (_command === 'desktop_set_language') return null;
       calls.push(request);
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [{ id: 'cpu:test', label: 'CPU package', unit: 'celsius', value: 42, status: 'valid', age_ms: 10 }, { id: 'gpu:test', label: 'GPU edge', unit: 'celsius', value: 45, status: 'valid', age_ms: 10 }];
         case 'get_lcd_state': case 'patch_lcd_config': return { source: 'Theme', last_error: null, requested: { mode: 'Application', brightness_percent: 65, rotation_degrees: 90 } };

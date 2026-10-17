@@ -1,3 +1,4 @@
+import {loadControls,openEditorSection,selectLayer} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 import { inspect } from './accessibility-helpers';
@@ -16,6 +17,7 @@ test.beforeEach(async ({ page }) => {
     Object.assign(window, { __TAURI_INTERNALS__: { invoke: async (_: string, req: { method: string; params?: { delete?: boolean } }) => {
         if (_ === 'desktop_set_language') return null;
       switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [{ id: 'A', display_name: 'LCD', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid', age_ms: 0 }];
         case 'get_lcd_state': return { source: 'Theme', requested: {}, last_error: null };
@@ -33,12 +35,13 @@ test.beforeEach(async ({ page }) => {
     } } });
   });
   await page.goto('/?view=display'); await expect(page.getByText('Daemon подключён')).toBeVisible();
-  await page.getByRole('button', { name: 'Загрузить активную тему' }).click();
+  await loadControls(page);await page.getByRole('button', { name: 'Загрузить активную тему' }).click();
   await expect(page.getByLabel('Название', { exact: true })).toHaveValue('Expanded controls');
 });
 
 test('expanded layer, profile, font and cleanup controls have names and readable text', async ({ page }) => {
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
+
   for (const text of ['Пользовательские шрифты', 'Лицензии встроенных шрифтов', 'Сохранённые профили', 'Очистка неиспользуемых шрифтов', 'Очистка неиспользуемых изображений']) {
     await page.getByText(text, { exact: true }).click();
   }
@@ -52,7 +55,7 @@ test('expanded layer, profile, font and cleanup controls have names and readable
 test('expanded editor reflows at 320 pixels with all five layer types', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  await inspect(page);
+  for(let index=0;index<5;index++){await selectLayer(page,index);await inspect(page);}
 });
 
 test('curve point deletion keeps keyboard focus on an editable remaining point', async ({ page }) => {

@@ -82,6 +82,7 @@ test.beforeEach(async ({ page }) => {
       if(command==='media_cancel') {fixture.calls.push({command});if(fixture.delayCancel)await new Promise<void>(resolve=>fixture.cancelRelease=resolve);if(fixture.cancelFailure){fixture.cancelFailure=false;throw new Error(fixture.diagnostic);}if(fixture.job)fixture.job.phase='cancelled';return fixture.job?{...fixture.job}:null;}
       if(command==='daemon_call') {
         switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:fixture.language};
           case 'get_screen_collections': return {collections:fixture.collections,persistence:{pending:false,saved:false,last_error:null}};
         case 'set_screen_collections': {const params=args.params as {dev:string;expected_revision:number;collections:Collections};if(fixture.collections && params.expected_revision!==fixture.collections.revision)throw new Error('Collection revision conflict');fixture.membershipDevices.push(params.dev);fixture.collections=params.collections;return fixture.collections;}

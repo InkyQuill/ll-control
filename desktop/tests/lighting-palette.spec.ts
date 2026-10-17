@@ -6,6 +6,7 @@ test('manual palettes use mode-specific slots and send all selected colors',asyn
     Object.assign(window,{paletteWrites:writes,__TAURI_INTERNALS__:{invoke:async (_:string,req:{method:string;params:unknown})=>{
         if (_ === 'desktop_set_language') return null;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lighting_info':return {modes:['static','runway','meteor','rainbow']};

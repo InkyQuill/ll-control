@@ -1,10 +1,10 @@
 <script lang="ts">
   import { t } from './i18n.svelte';
   import type { Layer } from './api';
-  import { editableLayer, nativePoint, resizeLayer, translateLayer, type LayerBounds, type QuarterTurn } from './canvas-geometry';
+  import { editableLayer, layerTransform, nativePoint, resizeLayer, translateLayer, type LayerBounds, type QuarterTurn } from './canvas-geometry';
 
-  let { image, keys, layers, bounds, selected, rotation = 0, ready, labels, onselect, onchange, onorder }:
-    { image:string; keys:number[]; layers:Layer[]; bounds:(LayerBounds|null)[]; selected:number; rotation:QuarterTurn; ready:boolean;
+  let { image, images=[], background='', keys, layers, bounds, selected, rotation = 0, ready, labels, onselect, onchange, onorder }:
+    { image:string; images?:string[];background?:string; keys:number[]; layers:Layer[]; bounds:(LayerBounds|null)[]; selected:number; rotation:QuarterTurn; ready:boolean;
       labels:Record<Layer['kind'],string>; onselect:(index:number)=>void; onchange:(index:number,layer:Layer)=>void; onorder:(index:number,step:number)=>void } = $props();
   let surface: HTMLDivElement;
   type Gesture = { id:number; index:number; layer:Layer; bounds:LayerBounds; start:[number,number]; mode:'move'|'resize'; dx:number;dy:number };
@@ -57,19 +57,34 @@
     if(event.shiftKey)resizeLayer(layer,bounds[index]!,dx,dy);else translateLayer(layer,dx,dy);
     onchange(index,layer);
   }
-  function rectangle(index:number,b:LayerBounds):string {
+  function transform(index:number) {
     const g=gesture?.index===index?gesture:null;
-    const x=b.x+(g?.mode==='move'?g.dx:0), y=b.y+(g?.mode==='move'?g.dy:0);
-    const width=Math.max(4,b.width+(g?.mode==='resize'?g.dx:0)),height=Math.max(4,b.height+(g?.mode==='resize'?g.dy:0));
-    return `left:${x/4.8}%;top:${y/4.8}%;width:${width/4.8}%;height:${height/4.8}%`;
+    return g?layerTransform(JSON.parse(JSON.stringify(g.layer)),g.bounds,g.mode,g.dx,g.dy):{dx:0,dy:0,sx:1,sy:1,ox:0,oy:0};
   }
+  function rectangle(index:number,b:LayerBounds):string {
+    const t=transform(index);
+    const x=t.ox+(b.x-t.ox)*t.sx+t.dx,y=t.oy+(b.y-t.oy)*t.sy+t.dy;
+    return `left:${x/4.8}%;top:${y/4.8}%;width:${Math.max(4,b.width*t.sx)/4.8}%;height:${Math.max(4,b.height*t.sy)/4.8}%`;
+  }
+  function pixelTransform(index:number):string {
+    const t=transform(index);
+    return `translate(${t.dx/4.8}%,${t.dy/4.8}%) scale(${t.sx},${t.sy})`;
+  }
+
 </script>
 
 <svelte:window onkeydown={event=>{if(event.key==='Escape')cancel();}} onblur={cancel}/>
 <div class="canvas" bind:this={surface} role="group" aria-label={t('Холст LCD')}
   onpointermove={motion} onpointerup={finish} onpointercancel={cancel} onlostpointercapture={cancel}>
   <div class="rotated" style:transform={`rotate(${rotation}deg)`}>
-    {#if image}<img src={image} alt={t('Черновик LCD')} draggable="false"/>{/if}
+    {#if gesture && background && images.length===layers.length}
+      <img src={background} alt={t('Черновик LCD')} draggable="false"/>
+      {#each layers as layer,index (keys[index])}
+        {#if images[index] && !layer.editor?.hidden}
+          <img class="layer-pixels" src={images[index]} alt="" draggable="false" style:transform={pixelTransform(index)} style:transform-origin={`${transform(index).ox/4.8}% ${transform(index).oy/4.8}%`}/>
+        {/if}
+      {/each}
+    {:else if image}<img src={image} alt={t('Черновик LCD')} draggable="false"/>{/if}
     {#each layers as layer,index (keys[index])}
       {@const box=bounds[index]}
       {#if box && !layer.editor?.hidden && editableLayer(layer)}

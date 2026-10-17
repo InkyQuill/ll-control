@@ -5,6 +5,7 @@ test('settings write failure is distinct from LCD error and recovers on status p
     Object.assign(window,{saveFixture:save,__TAURI_INTERNALS__:{invoke:async(_cmd:string,req:{method:string})=>{
         if (_cmd === 'desktop_set_language') return null;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'lcd:test',display_name:'LCD', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Theme',last_error:null,requested:{},persistence:{...save}};

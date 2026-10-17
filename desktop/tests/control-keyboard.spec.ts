@@ -1,3 +1,4 @@
+import {addControls} from './editor-controls';
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { inspect } from './accessibility-helpers';
 
@@ -31,6 +32,7 @@ test.beforeEach(async ({ page }) => {
         if (_ === 'desktop_set_language') return null;
       if (request.method.startsWith('set_')) writes.push(structuredClone(request));
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
         case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
         case 'list_sensors': return [reading];
@@ -135,7 +137,7 @@ for (const width of [320, 640]) {
     await page.setViewportSize({ width, height: 800 });
     for (const name of ['Экран помпы', 'Датчики', 'Охлаждение', 'Подсветка', 'Настройки']) {
       await page.getByRole('button', { name, exact: true }).click();
-      if (name === 'Экран помпы') await page.getByRole('button', { name: '+ Текст', exact: true }).click();
+      if (name === 'Экран помпы') {await addControls(page);await page.getByRole('button', { name: '+ Текст', exact: true }).click();}
       if (name === 'Охлаждение') await page.getByRole('combobox', { name: 'Режим', exact: true }).selectOption('curve');
       if (name === 'Подсветка') await page.getByRole('button', { name: 'Загрузить текущие оповещения', exact: true }).click();
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${name}: no horizontal page scrolling` }).toBeLessThanOrEqual(width);

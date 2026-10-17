@@ -11,6 +11,7 @@ test('collections migrate, remove and restore membership without deleting assets
       __TAURI_INTERNALS__: { invoke: async (_: string, request: {method:string;params:{collections:Collection;expected_revision:number}}) => {
         if (_ === 'desktop_set_language') return null;
         switch(request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices': return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
           case 'list_sensors': return [];
           case 'get_lcd_state': return {source:'Idle',last_error:null,requested:{brightness_percent:50,rotation_degrees:0,mode:'LocalUI'}};

@@ -78,3 +78,7 @@ pub mod screen_editor;
 #[cfg(test)]
 #[path = "../../lconnect-profile/tests/support/screen_plan.rs"]
 pub(crate) mod windows_screen_fixture;
+
+mod editor_cache;
+
+mod editor_video;

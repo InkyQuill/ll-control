@@ -7,6 +7,7 @@ async function setup(page:Page) {
     Object.assign(window,{lightingLoad:f,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string;params:{kind:string}})=>{
         if (_ === 'desktop_set_language') return null;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'},{id:'B',display_name:'LCD B', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
         case 'get_lcd_state':return {source:'Idle',requested:{}};

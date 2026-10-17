@@ -1,3 +1,4 @@
+import {addControls,openEditorSection,selectLayer} from './editor-controls';
 import { test, expect } from '@playwright/test';
 test('edits stay local until Apply; preview and sensor selection use daemon bridge', async ({ page }) => {
   await page.addInitScript(() => {
@@ -13,6 +14,7 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
           case 'list_sensors': return [{ id: 'cpu:test', label: 'CPU package', unit: 'celsius', value: 42.5, status: 'valid', age_ms: 100 }];
           case 'get_lcd_state': return { source: 'Idle', last_error: null, requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 } };
           case 'set_lcd_theme': return { source: 'Theme', last_error: null, requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 } };
+          case 'preview_lcd_editor':
           case 'preview_lcd_theme': return Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII='), c => c.charCodeAt(0));
           default: throw { message: 'Mock has no handler for ' + args.method };
         }
@@ -22,7 +24,9 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
   await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByLabel('Название', { exact: true }).fill('Моя помпа');
+  await selectLayer(page,0);
   await page.getByRole('combobox',{name:'Шрифт',exact:true}).first().selectOption('serif');
+  await openEditorSection(page,'Дополнительные настройки текста');
   await page.getByLabel('Переносить текст по ширине').first().check();
   await page.getByLabel('Ширина текста, px').fill('300');
   await page.getByLabel('Задать межстрочный интервал').first().check();
@@ -31,8 +35,10 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
   await page.getByLabel('Тень текста',{exact:true}).first().check();
   await page.getByLabel('Непрозрачность текста, %',{exact:true}).first().fill('75');
   await page.getByLabel('Размытие тени',{exact:true}).fill('4');
+  await addControls(page);
   await page.locator('input[type=file][accept^="image/"]').setInputFiles({ name: 'image.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=', 'base64') });
   await expect(page.getByRole('status')).toContainText('Изображение добавлено');
+  await selectLayer(page,0);
   await page.getByLabel('Положение watermark как в L-Connect', {exact:true}).check();
   await page.getByLabel('Масштаб').selectOption('contain_native');
   await page.getByLabel('Watermark по горизонтали', {exact:true}).fill('100');
@@ -40,7 +46,7 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
   await page.getByLabel('Тень изображения', {exact:true}).check();
   await page.getByLabel('Смещение тени изображения X', {exact:true}).fill('-4');
   await page.getByLabel('Размытие тени изображения', {exact:true}).fill('6');
-  await page.getByLabel('Привязать датчик').selectOption('cpu:test');
+  await addControls(page);await page.getByLabel('Привязать датчик').selectOption('cpu:test');
   await page.getByRole('button', { name: 'Добавить', exact: true }).click();
   await expect(page.getByLabel('Подпись')).toHaveValue('CPU package');
   await page.getByLabel('Раздельные стили подписи и единицы').check();
@@ -48,8 +54,7 @@ test('edits stay local until Apply; preview and sensor selection use daemon brid
   await page.getByRole('group', {name:'Единица датчика', exact:true}).getByLabel('Цвет',{exact:true}).fill('#00ff00');
   const writes = () => page.evaluate(() => (window as unknown as { bridgeCalls: { method: string }[] }).bridgeCalls.filter(c => c.method === 'set_lcd_theme').length);
   expect(await writes()).toBe(0);
-  await page.getByRole('button', { name: 'Обновить preview' }).click();
-  await expect(page.getByRole('status')).toContainText('На устройство ничего не отправлено');
+  await expect(page.locator('.canvas img')).toBeVisible();
   expect(await writes()).toBe(0);
   await page.getByRole('button', { name: 'Применить к LCD' }).click();
   await expect(page.getByRole('status')).toContainText('Тема отправлена');

@@ -1,3 +1,4 @@
+import {loadControls} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 interface ExternalFixture { changed: boolean; modeChanged: boolean; cleared: boolean; writes: string[] }
@@ -14,6 +15,7 @@ test.beforeEach(async ({ page }) => {
         }
         const channel = { requested: { mode: 'fixed', percent: fixture.changed ? 72 : 60 }, applied_percent: fixture.changed ? 72 : 60, motherboard: false, fallback_active: false, last_error: null };
         switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices': return [{ id: 'A', display_name: 'LCD A', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid', age_ms: 1 }];
           case 'get_lcd_state': return {
@@ -117,7 +119,7 @@ test('external LCD settings update requested state while both edited fields surv
 
 for (const cleared of [false, true]) {
   test(`external display ${cleared ? 'clear' : 'replacement'} preserves theme edits until explicit load`, async ({ page }) => {
-    const load = page.getByRole('button', { name: 'Загрузить активную тему' });
+    await loadControls(page);const load = page.getByRole('button', { name: 'Загрузить активную тему' });
     const name = page.getByLabel('Название', { exact: true });
     await load.click(); await expect(name).toHaveValue('Original theme');
     await name.fill('Unsaved local design');

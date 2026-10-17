@@ -14,6 +14,7 @@ test('global source draft survives polling/navigation/reconnect and saves only o
         if (_ === 'desktop_set_language') return null;
       if ((window as unknown as { sourceOffline: boolean }).sourceOffline) throw new Error('offline');
       switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices': return [];
         case 'list_sensors': return candidates.map(c => c.reading);
         case 'get_sensor_defaults': return { config: structuredClone(config), recommended: { version: 1, revision: config.revision, cpu: empty(), gpu: { ...empty(), memory_used: null, device_id: 'gpu:A', load: 'A:load' } }, candidates, values: [{ role: 'gpu_load', sensor_id: config.gpu?.load ?? null, reading: candidates.find(c => c.reading.id === config.gpu?.load)?.reading ?? null }] };

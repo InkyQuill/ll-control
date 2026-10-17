@@ -15,9 +15,12 @@
   const click=async name=>{await wait(()=>button(name)&&!button(name).disabled,name);button(name).click();await delay(30);};
   const control=(name,root=document)=>[...root.querySelectorAll('label')].find(node=>[...node.childNodes].filter(child=>child.nodeType===Node.TEXT_NODE).map(child=>child.textContent).join('').trim()===name)?.querySelector('input,select,textarea');
   const set=(name,value,root=document)=>{const node=control(name,root);assert(node,'control '+name);node.value=String(value);node.dispatchEvent(new Event(node.tagName==='SELECT'?'change':'input',{bubbles:true}));};
-  const layers=()=>[...document.querySelectorAll('.editor article.layer')];
+  const layers=()=>[...document.querySelectorAll('.layer-row[data-layer-index]')];
+  const inspector=()=>document.querySelector('.inspector');
+  const select=async index=>{document.querySelector(`.layer-row[data-layer-index="${index}"]`).click();await delay(30);};
+  const open=async(en,ru)=>{const summary=[...document.querySelectorAll('summary')].find(node=>node.textContent.trim()===text(en,ru));if(summary&&!summary.parentElement.open){summary.click();await delay(30);}};
   const ready=async()=>{await wait(()=>document.querySelector('.canvas img')&&!document.querySelector('.canvas .pending'),'measured preview ready');await delay(60);};
-  const field=(index,name)=>control(name,layers()[index]);
+  const field=(index,name)=>control(name,inspector());
   const region=index=>button(text(`Select layer ${index+1}: ${['Image','Text','Clock','Sensor'][index]}`,`Выбрать слой ${index+1}: ${['Изображение','Текст','Часы','Датчик'][index]}`));
   document.addEventListener('keydown',event=>{if(event.isTrusted)trustedKeys++;},true);
   document.addEventListener('pointerdown',event=>{if(event.isTrusted&&event.target.closest('.canvas'))trustedPointers++;},true);
@@ -36,36 +39,39 @@
     await click(text('Composition','Композиция'));
     const restored=await rpc('get_lcd_theme',{dev});
     if(restored?.name==='Native canvas acceptance'){
-      await click(text('Load active theme','Загрузить активную тему'));
-      await wait(()=>layers().length===4,'reopened composition');
+      await open('Load or stop','Загрузить или остановить');await click(text('Load active theme','Загрузить активную тему'));
+      await wait(()=>layers().length===7,'reopened composition');await select(1);
       assert(field(1,text('Text','Текст')).value==='Native canvas text','reopened saved text');
       assert(Number(field(1,'X').value)===restored.layers[1].style.x,'reopened saved position');
-      control(text('Edit on canvas','Редактировать на холсте')).click();await ready();
+      await ready();
       await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,recovery:true,theme:restored}});return;
     }
     phase='create';
     set(text('Name','Название'),'Native canvas acceptance');
+    await open('Add layer','Добавить слой');
     await wait(()=>control(text('Bind sensor','Привязать датчик'))?.querySelector('option[value="amdgpu:2f61:utilization"]'),'GPU sensor');
     set(text('Bind sensor','Привязать датчик'),'amdgpu:2f61:utilization');
     await click(text('Add','Добавить'));
+    for(let index=0;index<3;index++)await click(text('+ Text','+ Текст'));
     await click(text('Library','Библиотека'));
     const gallery=[...document.querySelectorAll('summary')].find(node=>node.textContent.trim()===text('Image library','Библиотека изображений'));
     assert(gallery,'image library');gallery.click();
     const addImage=node=>visible(node)&&!node.disabled&&(window.__nativeDesktopLanguage==='en-US'?/^Add .+ to theme$/.test(node.textContent.trim()):node.textContent.trim().startsWith('Добавить в тему '));
     await wait(()=>[...document.querySelectorAll('button')].some(addImage),'builtin image');
     [...document.querySelectorAll('button')].find(addImage).click();
-    await click(text('Composition','Композиция'));await wait(()=>layers().length===4,'four layers');
-    for(const [name,value] of [['x',20],['y',20],['width',100],['height',80]])set(name,value,layers()[0]);
-    set(text('Scale','Масштаб'),'stretch',layers()[0]);
-    set(text('Text','Текст'),'Native canvas text',layers()[1]);
+    await click(text('Composition','Композиция'));await wait(()=>layers().length===7,'seven layers');await select(0);
+    for(const [name,value] of [['x',20],['y',20],['width',100],['height',80]])set(name,value,inspector());
+    set(text('Scale','Масштаб'),'stretch',inspector());
+    await select(1);set(text('Text','Текст'),'Native canvas text',inspector());
     for(const [index,x,y,size] of [[1,150,80,28],[2,80,320,22],[3,180,220,26]]){
-      for(const [name,value] of [['X',x],['Y',y],[text('Size','Размер'),size]])set(name,value,layers()[index]);
-      set(text('Alignment','Выравнивание'),'left',layers()[index]);
+      await select(index);for(const [name,value] of [['X',x],['Y',y],[text('Size','Размер'),size]])set(name,value,inspector());
+      set(text('Alignment','Выравнивание'),'left',inspector());
     }
-    set(text('Clock content','Содержимое часов'),'date',layers()[2]);
-    set(text('Label','Подпись'),'Sensor',layers()[3]);
-    control(text('Edit on canvas','Редактировать на холсте')).click();await ready();
-    phase='pointer-move';
+    await select(2);set(text('Clock content','Содержимое часов'),'date',inspector());
+    await select(3);set(text('Label','Подпись'),'Sensor',inspector());
+    await ready();
+    for(const [index,label,y] of [[4,'CPU',360],[5,'GPU',390],[6,'WATER',420]]){await select(index);set(text('Text','Текст'),label,inspector());set('X',24,inspector());set('Y',y,inspector());set(text('Size','Размер'),16,inspector());}
+    phase='pointer-move';await select(1);await ready();
     const beforeX=Number(field(1,'X').value),beforeY=Number(field(1,'Y').value);
     region(1).scrollIntoView({block:'center'});region(1).focus();
     const scale=480/document.querySelector('.canvas').getBoundingClientRect().width;
@@ -81,20 +87,20 @@
     assert(Number(field(1,'X').value)===movedX+10,'trusted keyboard movement');
     const size=Number(field(1,text('Size','Размер')).value);await key('shift+Right');await ready();
     assert(Number(field(1,text('Size','Размер')).value)===size+1,'trusted keyboard resize retains focus');
-    phase='image-resize';set(text('Selected layer','Выбранный слой'),0);await delay(50);
+    phase='image-resize';await select(0);
     const handle=button(text('Resize selected layer','Изменить размер выбранного слоя'));handle.scrollIntoView({block:'center'});handle.focus();
     await key('Home','canvas_resize');await ready();assert(Number(field(0,'width').value)>100,'trusted image resize');
-    phase='rebind';const x=field(3,'X').value,y=field(3,'Y').value,label=field(3,text('Label','Подпись')).value;
-    set(text('Sensor source','Источник датчика'),'fixture:cpu',layers()[3]);await ready();
+    phase='rebind';await select(3);const x=field(3,'X').value,y=field(3,'Y').value,label=field(3,text('Label','Подпись')).value;
+    set(text('Sensor source','Источник датчика'),'fixture:cpu',inspector());await ready();
     assert(field(3,'X').value===x&&field(3,'Y').value===y&&field(3,text('Label','Подпись')).value===label,'source replacement preserves authored properties');
     phase='save';
-    [...document.querySelectorAll('summary')].find(node=>node.textContent.trim()===text('Saved profiles','Сохранённые профили')).click();
+    await open('Saved themes','Сохранённые темы');await open('Saved profiles','Сохранённые профили');
     await click(text('Refresh profile list','Обновить список профилей'));set(text('Profile name','Имя профиля'),'Native canvas profile');
     await click(text('Save draft to slot','Сохранить черновик в слот'));await wait(async()=>(await rpc('list_profiles')).profiles.length===1,'saved profile');
     const saved=(await rpc('list_profiles')).profiles[0].content.value;
     assert(await rpc('get_lcd_theme',{dev})===null,'Save and edits never Apply');
-    set(text('Text','Текст'),'Discard this change',layers()[1]);
-    await click(text('Load profile into editor','Загрузить профиль в редактор'));await ready();
+    await select(1);set(text('Text','Текст'),'Discard this change',inspector());
+    await click(text('Load profile into editor','Загрузить профиль в редактор'));await select(1);await ready();
     assert(field(1,text('Text','Текст')).value==='Native canvas text','profile restores text');
     assert(Number(field(1,'X').value)===movedX+10,'profile restores transforms');
     await key('Home','canvas_no_writes');
@@ -102,6 +108,8 @@
     await wait(async()=>(await rpc('get_lcd_theme',{dev}))?.name==='Native canvas acceptance','explicit Apply');
     const applied=await rpc('get_lcd_theme',{dev});assert(JSON.stringify(applied)===JSON.stringify(saved),'applied scene equals saved profile');
     assert(trustedPointers===3&&trustedKeys>=6,'trusted input evidence');
+    for(const detail of document.querySelectorAll('.profiles-disclosure details,.visual details,.add-layer'))detail.open=false;
+    await select(1);document.activeElement?.blur();window.scrollTo(0,0);await delay(200);
     await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,phase,dev,theme:applied,trustedPointers,trustedKeys,steps:sequence,events}});
   }catch(error){await invoke('native_smoke_result',{keepOpen:true,result:{ok:false,phase,events,error:String(error),stack:error?.stack,body:document.body.innerText}});}
 })();

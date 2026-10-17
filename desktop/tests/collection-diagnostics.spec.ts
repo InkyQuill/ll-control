@@ -8,6 +8,7 @@ async function setup(page:Page,language:string,mode:string){
    if(command!=='daemon_call')return null;
    const method=String(args.method);f.calls.push(method);
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};
     case 'list_devices':return [{id:'lcd',display_name:'LCDV2',family:'galahad2-lcdv2'}];
     case 'get_lcd_state':return {source:'Idle',requested:{},last_error:null};

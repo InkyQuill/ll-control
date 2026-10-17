@@ -18,6 +18,7 @@ async function setup(page:Page){
    const method=String(args.method),params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params});
    if(f.offline)throw {message:'Fixture daemon offline'};
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'list_devices':return f.devices.map(id=>({id,display_name:id==='A'?'Настройки':'LCD B',family:'galahad2-lcdv2'}));
     case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];
     case 'get_lcd_state':return {source:'Idle',requested:{mode:'LocalUI',brightness_percent:100,rotation_degrees:0},last_error:null};

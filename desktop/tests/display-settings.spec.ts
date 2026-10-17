@@ -9,6 +9,7 @@ async function setup(page:Page){
    if(command==='group_archive_status')return null;
    const method=args.method as string,params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return structuredClone(state);
     case 'set_display_settings':{const next=params.settings as typeof state;if(next.revision!==state.revision)throw {message:'stale revision'};state.temperature_unit=next.temperature_unit;state.revision++;if(f.lost){f.lost=false;throw {message:'Lost unit reply'};}return structuredClone(state);}
     case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];

@@ -11,6 +11,7 @@ async function setup(page:Page,legacy=false) {
         if (_ === 'desktop_set_language') return null;
       const state=()=>({base_mode:fixture.mode,color_count:1,speed_supported:fixture.mode!=='static',requested:fixture.enabled[fixture.mode]?{sensor_id:'cpu',unit:'celsius',low_value:30,high_value:60,low_colors:[{r:0,g:0,b:255}],high_colors:[{r:255,g:0,b:0}],low_speed_percent:null,high_speed_percent:null}:null,applied:null,last_error:null,degraded:false,suppressed_by_thermal:false});
       switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu',unit:'celsius',label:'CPU',value:50,status:'valid',age_ms:0}];
         case 'get_lighting_info':return {dynamic_mode_supported:!legacy&&params.kind==='pump',modes:['static','breathing'],base:{...defaults(fixture.mode),...(!legacy?{dynamic_mode:fixture.enabled[fixture.mode]}:{})},profiles:['static','breathing'].map(m=>({...defaults(m),...(!legacy?{dynamic_mode:fixture.enabled[m]}:{})})),catalog:['static','breathing'].map(m=>({mode:m,color_count:1,speed:m!=='static',brightness:true,direction:false,defaults:defaults(m)}))};

@@ -174,7 +174,8 @@ impl ThemeRuntime {
     pub(crate) fn editor_preview(
         &self,
         frame: Option<RgbImage>,
-        elapsed_seconds: u64,
+        elapsed_millis: u64,
+        layer_index: Option<u16>,
     ) -> Result<lconnect_ipc::LcdEditorPreview> {
         let theme =
             &self.temperature_variants[usize::from(self.display_unit.load(Ordering::Acquire))];
@@ -197,13 +198,79 @@ impl ThemeRuntime {
                 "video theme requires decoded frame".into(),
             ));
         }
-        let rendered = lconnect_image::theme::render_theme_measured(
+        let mut layer_images = Vec::with_capacity(theme.layers.len());
+        for (index, layer) in theme.layers.iter().enumerate() {
+            if layer_index.map(usize::from) != Some(index)
+                || layer.hidden()
+                || matches!(
+                    layer,
+                    lconnect_ipc::ThemeLayer::Weather { .. }
+                        | lconnect_ipc::ThemeLayer::Meteor { .. }
+                        | lconnect_ipc::ThemeLayer::Snow3d { .. }
+                        | lconnect_ipc::ThemeLayer::Fireworks { .. }
+                )
+            {
+                layer_images.push(Vec::new());
+                continue;
+            }
+            let pixels = lconnect_image::editor_surfaces::layer_surface(
+                theme,
+                layer,
+                &readings,
+                clock,
+                &self.assets,
+                &self.fonts,
+                elapsed_millis / 1000,
+            )
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+            layer_images.push(
+                lconnect_image::editor_surfaces::encode_png(pixels)
+                    .map_err(|e| IpcError::InvalidArgument(e.to_string()))?,
+            );
+        }
+        if layer_index.is_some() {
+            return Ok(lconnect_ipc::LcdEditorPreview {
+                jpeg: Vec::new(),
+                background: Vec::new(),
+                layer_images,
+                layers: Vec::new(),
+            });
+        }
+        let base_frame = frame
+            .clone()
+            .unwrap_or_else(|| lconnect_image::theme::render_background(theme));
+        let mut background_theme = theme.clone();
+        background_theme.layers.retain(|layer| {
+            matches!(
+                layer,
+                lconnect_ipc::ThemeLayer::Weather { .. }
+                    | lconnect_ipc::ThemeLayer::Meteor { .. }
+                    | lconnect_ipc::ThemeLayer::Snow3d { .. }
+                    | lconnect_ipc::ThemeLayer::Fireworks { .. }
+            )
+        });
+        let background = lconnect_image::theme::render_theme_measured_millis(
+            &background_theme,
+            &readings,
+            clock,
+            &self.assets,
+            &self.fonts,
+            elapsed_millis,
+            base_frame,
+        )
+        .map_err(|e| IpcError::InvalidArgument(e.to_string()))?
+        .image;
+        let background =
+            prepare_jpeg_from_image(background.into(), FitMode::Stretch, Quality::default())
+                .map_err(|e| IpcError::InvalidArgument(e.to_string()))?
+                .bytes;
+        let rendered = lconnect_image::theme::render_theme_measured_millis(
             theme,
             &readings,
             clock,
             &self.assets,
             &self.fonts,
-            elapsed_seconds,
+            elapsed_millis,
             frame.unwrap_or_else(|| lconnect_image::theme::render_background(theme)),
         )
         .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
@@ -212,6 +279,8 @@ impl ThemeRuntime {
                 .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
         Ok(lconnect_ipc::LcdEditorPreview {
             jpeg: jpeg.bytes,
+            background,
+            layer_images,
             layers: rendered.layers,
         })
     }

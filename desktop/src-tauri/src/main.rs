@@ -1317,6 +1317,14 @@ fn main() {
         })
         .on_page_load(|webview,payload| {
             if matches!(payload.event(),tauri::webview::PageLoadEvent::Finished) {
+                if let Ok(size) = std::env::var("LCONNECT_NATIVE_EDITOR_SIZE") {
+                    let (width, height) = match size.as_str() {
+                        "1280x800" => (1280.0, 800.0),
+                        "1024x768" => (1024.0, 768.0),
+                        _ => panic!("unsupported editor fixture size"),
+                    };
+                    webview.window().set_size(tauri::LogicalSize::new(width, height)).expect("editor fixture size");
+                }
                 let dialogs = std::env::var("LCONNECT_NATIVE_DIALOGS").as_deref() == Ok("1");
                 webview.eval(format!("window.__nativeDialogs={dialogs};"))
                     .expect("expose fixture dialog mode");
@@ -1346,7 +1354,9 @@ fn main() {
                 webview.eval(format!("window.__nativeDesktopLanguage={desktop_language:?};")).expect("desktop fixture language");
                 let fps_log=std::env::var("LCONNECT_NATIVE_FPS_LOG").unwrap_or_default();
                 webview.eval(format!("window.__nativeFpsLog={};",serde_json::to_string(&fps_log).expect("encode private FPS log"))).expect("expose private FPS log");
-                let script = if std::env::var("LCONNECT_NATIVE_RECOVERY").as_deref()==Ok("1") {
+                let script = if std::env::var("LCONNECT_NATIVE_EDITOR_VIEW").as_deref()==Ok("1") {
+                    include_str!("../../scripts/native-editor-view.js")
+                } else if std::env::var("LCONNECT_NATIVE_RECOVERY").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-firmware-recovery.js")
                 } else if std::env::var("LCONNECT_NATIVE_FPS").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-fps-settings.js")

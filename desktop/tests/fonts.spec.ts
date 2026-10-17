@@ -1,3 +1,4 @@
+import {selectLayer} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 for (const mode of ['success','success-moved','lost-finish','cancel','cancel-moved','unmount'] as const) {
@@ -11,6 +12,7 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
         calls.push(structuredClone(request));
         const state = () => ({id:key,size,received,asset,cancelled:false});
         switch(request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
           case 'list_sensors':return [];
           case 'get_lcd_state':return {source:'Theme',last_error:null,requested:{mode:'Application',brightness_percent:100,rotation_degrees:0}};
@@ -29,7 +31,7 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
       }}});
     },{mode});
     await page.goto('/?view=display');
-    await expect(page.getByText('Daemon подключён')).toBeVisible();
+    await expect(page.getByText('Daemon подключён')).toBeVisible();await selectLayer(page,0);
     await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Пользовательские шрифты',{exact:true}).click();
     await page.getByLabel('Загрузить шрифт',{exact:true}).focus();

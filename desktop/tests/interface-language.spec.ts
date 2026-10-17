@@ -1,3 +1,4 @@
+import {addControls} from './editor-controls';
 import {test,expect,type Page} from '@playwright/test';
 async function setup(page:Page,language:'en-US'|'ru-RU'='ru-RU',offline=false){
  await page.addInitScript(({language,offline})=>{
@@ -11,6 +12,7 @@ async function setup(page:Page,language:'en-US'|'ru-RU'='ru-RU',offline=false){
    const method=args.method as string,params=(args.params??{}) as Record<string,unknown>;f.calls.push({method,params:structuredClone(params)});
    if(f.offline)throw new Error('offline');
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return structuredClone(state);
     case 'set_display_settings':{const next=params.settings as typeof state;if(next.revision!==state.revision)throw {message:'stale revision'};state.temperature_unit=next.temperature_unit;state.interface_language=next.interface_language??'ru-RU';state.revision++;return structuredClone(state);}
     case 'list_devices':return [{id:'test',display_name:'Моя помпа', family:'galahad2-lcdv2'}];
@@ -77,7 +79,7 @@ for(const language of ['en-US','ru-RU'] as const){
   await expect(layout.locator('option[value="focus"]')).toHaveText(english?'Focus · One large reading and a clock':'Focus · Один крупный показатель и часы');
   await expect(layout.locator('option[value="clock"]')).toHaveText(english?'Clock · Date, time and AM/PM with separate colors':'Clock · Дата, время и AM/PM с отдельными цветами');
   await page.getByRole('button',{name:english?'Composition':'Композиция',exact:true}).click();
-  await page.getByRole('button',{name:english?'+ Text':'+ Текст',exact:true}).click();
+  await addControls(page);await page.getByRole('button',{name:english?'+ Text':'+ Текст',exact:true}).click();
   const existing=page.getByLabel(english?'Text':'Текст',{exact:true});
   await expect(existing.last()).toHaveValue(english?'New text':'Новый текст');
   await existing.last().fill('Новый текст');
@@ -89,7 +91,7 @@ for(const language of ['en-US','ru-RU'] as const){
   await page.getByRole('button',{name:english?'Экран помпы':'Pump screen',exact:true}).click();
   await expect(page.getByLabel(english?'Название':'Name',{exact:true})).toHaveValue('Мой экран');
   await expect(page.getByLabel(english?'Текст':'Text',{exact:true}).last()).toHaveValue('Новый текст');
-  await page.getByRole('button',{name:english?'+ Текст':'+ Text',exact:true}).click();
+  await addControls(page);await page.getByRole('button',{name:english?'+ Текст':'+ Text',exact:true}).click();
   await expect(page.getByLabel(english?'Текст':'Text',{exact:true}).last()).toHaveValue(english?'Новый текст':'New text');
   const calls=await page.evaluate(()=>(window as unknown as {languageFixture:{calls:{method:string}[]}}).languageFixture.calls);
   expect(calls.filter(call=>call.method?.startsWith('set_')&&call.method!=='set_display_settings')).toEqual([]);

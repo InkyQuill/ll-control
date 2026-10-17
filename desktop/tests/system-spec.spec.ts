@@ -17,7 +17,8 @@ async function setup(page:Page,language:'en-US'|'ru-RU'='ru-RU'){
    if(command==='group_archive_status')return null;
    if(args.method==='get_system_spec'){f.calls.push(structuredClone(args.params as Record<string,unknown>));if(f.fail)throw {message:f.diagnostic};return f.invalid?{...structuredClone(f.spec),groups:[]}:structuredClone(f.spec);}
    if(f.offline)throw {message:'Disconnected fixture'};
-   switch(args.method){case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];default:return null;}
+   switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];default:return null;}
   }}});
  },language);
  await page.goto('/?view=display');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible({timeout:15000});

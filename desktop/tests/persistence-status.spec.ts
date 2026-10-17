@@ -14,6 +14,7 @@ test('accepted Apply, disk failure and retry have distinct visible status', asyn
         if (_ === 'desktop_set_language') return null;
           const state = () => ({ source: 'Idle', last_error: null, requested: fixture.config, applied: fixture.config, persistence: fixture.save });
           switch (req.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius'};
             case 'list_devices': return [{ id: 'test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
             case 'list_sensors': return [];

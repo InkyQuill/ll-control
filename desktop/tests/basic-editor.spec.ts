@@ -1,3 +1,4 @@
+import {selectLayer,openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 import raw from './fixtures/basic-editor-theme.json' with {type:'json'};
 import type { Theme, ProfileLibrary, ProfileEdit } from '../src/lib/api';
@@ -11,6 +12,7 @@ for(const language of ['en-US','ru-RU'] as const)for(const width of [1280,1024])
   Object.assign(window,{basicUi:state,__TAURI_INTERNALS__:{invoke:async(command:string,request:{method:string;params:Record<string,unknown>}={method:'',params:{}})=>{
    if(command!=='daemon_call')return null;
    switch(request.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:language};
     case 'list_devices':return [{id:'lcd:fixture',display_name:'Owned LCDV2',family:'galahad2-lcdv2'}];
     case 'list_sensors':return [{id:'fixture:cpu',label:'Owned CPU',unit:'celsius',status:'valid',value:42,age_ms:0}];
@@ -29,33 +31,34 @@ for(const language of ['en-US','ru-RU'] as const)for(const width of [1280,1024])
  await page.goto('/?view=display');
  const background=page.getByRole('combobox',{name:label('Background preset','Вариант фона'),exact:true}),text=page.getByRole('combobox',{name:label('Text preset','Вариант текста'),exact:true});
  await expect(background).toHaveCount(0);
- await page.getByText(label('Saved profiles','Сохранённые профили'),{exact:true}).click();
+ const backgroundRow=()=>page.getByRole('button',{name:label('Background and composition','Фон и композиция'),exact:true}).click();
+ const editText=async(value?:string)=>{await selectLayer(page,0);const field=page.locator('.inspector textarea');if(value!==undefined)await field.fill(value);return field;};
+ await openEditorSection(page,'Saved profiles|Сохранённые профили');
  await page.getByRole('button',{name:label('Refresh profile list','Обновить список профилей'),exact:true}).click();
  await page.getByRole('button',{name:label('Load profile into editor','Загрузить профиль в редактор'),exact:true}).click();
- await expect(background).toHaveValue('image_video');await expect(text).toHaveValue('custom');await expect(page.locator('.layer h2')).toContainText(label('Text','Текст'));await expect(page.getByRole('status').filter({hasText:label('Profile loaded into the editor. Applying is a separate action.','Профиль загружен в редактор. Применение — отдельное действие.')})).toBeVisible();
- await page.getByLabel(label('Name','Название'),{exact:true}).fill('Authored title');await page.locator('.layer textarea').fill('Image authored');
- await text.selectOption('time');await expect(page.locator('.layer textarea')).toHaveCount(0);await text.selectOption('custom');await expect(page.locator('.layer textarea')).toHaveValue('Image authored');
- await background.selectOption('background_color');await expect(page.locator('.layer textarea')).toHaveValue('Color custom');await page.locator('.layer textarea').fill('Color authored');
+ await expect(background).toHaveValue('image_video');await expect(text).toHaveValue('custom');
+ await page.getByLabel(label('Name','Название'),{exact:true}).fill('Authored title');await editText('Image authored');await backgroundRow();
+ await text.selectOption('time');await text.selectOption('custom');await expect(await editText()).toHaveValue('Image authored');await backgroundRow();
+ await background.selectOption('background_color');await expect(await editText()).toHaveValue('Color custom');await editText('Color authored');await backgroundRow();
  await page.getByLabel(label('First background color','Первый цвет фона'),{exact:true}).fill('#a1b2c3');
  for(const [kind,count] of [['none',0],['slider_sensor',1],['duo_sensor',2],['three_sensor',5],['four_sensor',7],['time',1],['custom',1]] as const){
-  await text.focus();await text.selectOption(kind);await expect(text).toBeFocused();await expect(page.locator('[data-studio-panel="composition"] .layer')).toHaveCount(count);await expect(page.getByLabel(label('First background color','Первый цвет фона'),{exact:true})).toHaveValue('#a1b2c3');
+  await text.focus();await text.selectOption(kind);await expect(text).toBeFocused();await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(count);await expect(page.getByLabel(label('First background color','Первый цвет фона'),{exact:true})).toHaveValue('#a1b2c3');
  }
- await expect(page.locator('.layer textarea')).toHaveValue('Color authored');await background.selectOption('image_video');
+ await expect(await editText()).toHaveValue('Color authored');await backgroundRow();await background.selectOption('image_video');
  for(const kind of ['none','slider_sensor','duo_sensor','three_sensor','four_sensor','time','custom'])await text.selectOption(kind);
- await expect(page.locator('.layer textarea')).toHaveValue('Image authored');await expect(page.getByLabel(label('Name','Название'),{exact:true})).toHaveValue('Authored title');expect(await page.evaluate(()=>window.basicUi.writes)).toEqual([]);
- await text.selectOption('four_sensor');
- const dividers=page.locator('.divider-controls');await expect(dividers).toHaveCount(3);
- await dividers.first().getByLabel('X',{exact:true}).fill('239.5');
- await dividers.first().getByLabel(label('Thickness, px','Толщина, px'),{exact:true}).fill('1.5');
- await text.selectOption('custom');await expect(dividers).toHaveCount(0);
- await text.selectOption('four_sensor');await expect(dividers.first().getByLabel('X',{exact:true})).toHaveValue('239.5');
- await background.selectOption('background_color');await text.selectOption('four_sensor');await expect(dividers.first().getByLabel('X',{exact:true})).toHaveValue('239');await text.selectOption('custom');
- await background.selectOption('image_video');await text.selectOption('four_sensor');await expect(dividers.first().getByLabel('X',{exact:true})).toHaveValue('239.5');await text.selectOption('custom');
- await page.locator('.basic-presets').scrollIntoViewIfNeeded();if(process.env.LCONNECT_BASIC_VISUAL==='1')await page.screenshot({path:`../.impeccable/review/basic-editors-${language}-${width}.png`,fullPage:true});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await expect(await editText()).toHaveValue('Image authored');await backgroundRow();
+ expect(await page.evaluate(()=>window.basicUi.writes)).toEqual([]);
+ await text.selectOption('four_sensor');await selectLayer(page,4);
+ const divider=page.locator('.divider-controls');await divider.getByLabel('X',{exact:true}).fill('239.5');await divider.getByLabel(label('Thickness, px','Толщина, px'),{exact:true}).fill('1.5');
+ await backgroundRow();await text.selectOption('custom');await text.selectOption('four_sensor');await selectLayer(page,4);await expect(divider.getByLabel('X',{exact:true})).toHaveValue('239.5');await backgroundRow();
+ await background.selectOption('background_color');await text.selectOption('four_sensor');await selectLayer(page,4);await expect(divider.getByLabel('X',{exact:true})).toHaveValue('239');await backgroundRow();await text.selectOption('custom');
+ await background.selectOption('image_video');await text.selectOption('four_sensor');await selectLayer(page,4);await expect(divider.getByLabel('X',{exact:true})).toHaveValue('239.5');await backgroundRow();await text.selectOption('custom');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('button',{name:label('Replace profile with draft','Заменить профиль черновиком'),exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.basicUi.library.revision)).toBe(2);expect(await page.evaluate(()=>window.basicUi.active)).toBeNull();
  await page.evaluate(()=>window.basicUi.pending=true);await page.getByRole('button',{name:label('Apply to LCD','Применить к LCD'),exact:true}).click();await expect(background).toBeDisabled();await expect(text).toBeDisabled();await expect.poll(()=>page.evaluate(()=>typeof window.basicUi.release)).toBe('function');await page.evaluate(()=>window.basicUi.release?.());await expect(background).toBeEnabled();
  const applied=await page.evaluate(()=>window.basicUi.active);expect(applied?.basic_editor?.banks.find(bank=>bank.background==='image_video')?.overlays.find(item=>item.overlay==='four_sensor')?.theme.layers.filter(layer=>layer.kind==='divider')[0]).toMatchObject({x:239.5,thickness:1.5});expect(applied?.name).toBe('Authored title');expect(applied?.basic_editor?.banks.find(bank=>bank.background==='background_color')?.overlays.every(item=>JSON.stringify(item.theme.background_fill?.horizontal.colors[0])==='[161,178,195]')).toBe(true);
- await page.locator('.layer textarea').fill('Unsaved extra');await page.getByRole('button',{name:label('Load profile into editor','Загрузить профиль в редактор'),exact:true}).click();await expect(page.locator('.layer textarea')).toHaveValue('Image authored');await background.selectOption('background_color');await expect(page.locator('.layer textarea')).toHaveValue('Color authored');expect(await page.evaluate(()=>window.basicUi.writes)).toEqual(['edit_profile','set_lcd_theme']);
+ await editText('Unsaved extra');await page.getByRole('button',{name:label('Load profile into editor','Загрузить профиль в редактор'),exact:true}).click();await expect(await editText()).toHaveValue('Image authored');await backgroundRow();await background.selectOption('background_color');await expect(await editText()).toHaveValue('Color authored');expect(await page.evaluate(()=>window.basicUi.writes)).toEqual(['edit_profile','set_lcd_theme']);
+
 });
 test('missing targets and malformed banks do not mutate caller data',async({page})=>{
  await page.goto('/');const result=await page.evaluate(async({modulePath,theme})=>{

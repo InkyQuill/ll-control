@@ -11,6 +11,7 @@ async function setup(page:Page,language:string,temperatureUnit='celsius'){
    if(command!=='daemon_call')return null;
    const method=String(args.method);f.calls.push(method);f.requests.push({method,params:structuredClone((args.params??{}) as Record<string,unknown>)});if(f.fail===method)throw {message:f.diagnostic};
    switch(method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
     case 'get_display_settings':return {version:1,revision:0,temperature_unit:f.temperatureUnit,interface_language:f.language};
     case 'list_devices':return [{id:'lcd',display_name:'Fixture LCDV2',family:'galahad2-lcdv2'}];
     case 'list_sensors':return [{id:'rpm',label:'Pump RPM',unit:'rpm',value:1000,status:'valid',age_ms:0},{id:'cpu',label:'Настройки',unit:'celsius',value:45,status:'valid',age_ms:0}];

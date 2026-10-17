@@ -9,6 +9,7 @@ for(const fail of [false,true])test(`lighting serializes manual and dynamic writ
     Object.assign(window,{lightingFixture:fixture,__TAURI_INTERNALS__:{invoke:async(_:string,req:{method:string})=>{
         if (_ === 'desktop_set_language') return null;
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [{id:'cpu',label:'CPU',unit:'celsius',value:42,status:'valid',age_ms:1}];
         case 'get_lcd_state':return {source:'Idle',last_error:null,requested:{}};

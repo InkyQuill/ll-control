@@ -228,3 +228,5 @@ fn encode_jpeg(img: &DynamicImage, quality: Quality) -> Result<Vec<u8>> {
     enc.encode_image(&rgb)?;
     Ok(buf)
 }
+
+pub mod editor_surfaces;

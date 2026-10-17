@@ -34,12 +34,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d={item.layer.editor?.locked?'M8 10V6a4 4 0 0 1 8 0v4':'M8 10V6a4 4 0 0 1 8 0'}/></svg>
       </button></div>
     {/each}
-    <button class="layer-row" class:selected={selected===-1} aria-pressed={selected===-1} onclick={()=>onselect(-1)}>{t('Фон и композиция')}</button>
   </div>
+  <button class="layer-row background-row" class:selected={selected===-1} aria-pressed={selected===-1} onclick={()=>onselect(-1)}>{t('Фон и композиция')}</button>
   <footer>
     <button disabled={selected<0||selected>=layers.length-1||isProcedural(layers[selected])} onclick={()=>onmove(selected,selected+1)}>{t('На передний план')}</button>
     <button disabled={selected<0||selected<=(isProcedural(layers[0])?1:0)} onclick={()=>onmove(selected,selected-1)}>{t('На задний план')}</button>
-    <button disabled={selected<0||layers.length>=32||isProcedural(layers[selected])} onclick={()=>onduplicate(selected)}>{t('Дублировать')}</button>
+    <button disabled={selected<0||selected>=layers.length||layers.length>=32||isProcedural(layers[selected])} onclick={()=>onduplicate(selected)}>{t('Дублировать')}</button>
     <button disabled={selected<0} onclick={()=>onremove(selected)}>{t('Удалить слой')}</button>
   </footer>
 </section>
@@ -49,6 +49,7 @@
   .rows{display:grid;gap:2px;max-height:280px;overflow:auto}
   .layer-entry{display:flex;gap:2px}.layer-entry>.layer-row{flex:1;min-width:0}.toggle{padding:6px;min-height:30px;border-color:transparent;background:transparent}.toggle[aria-pressed=true]{color:var(--accent-text)}svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5}
   .layer-row{display:flex;align-items:center;gap:12px;text-align:left;padding:7px 10px;min-height:34px;border-color:transparent;border-radius:6px;background:transparent}
+  .background-row{width:100%;margin-top:4px}
   .layer-row.selected{background:var(--accent-surface);border-color:var(--accent);color:var(--accent-text)}
   .layer-kind{font-size:11px;color:var(--text-muted);min-width:68px}.name{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
   footer{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px}footer button{padding:5px 8px;font-size:12px;min-height:32px}

@@ -35,6 +35,7 @@ async function setup(page: Page, language: Language, operation: Operation) {
         const request = args as { method: string; params: { policy: unknown } };
         f.calls.push(request.method);
         switch (request.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'get_display_settings': return { version: 1, revision: f.revision, interface_language: f.language, temperature_unit: 'celsius' };
           case 'list_devices': return [{ id: 'lcd', display_name: 'My pump', family: 'galahad2-lcdv2' }];
           case 'list_sensors': return [{ id: 'cpu', label: 'Настройки', unit: 'celsius', value: 45, status: 'valid', age_ms: 0 }];

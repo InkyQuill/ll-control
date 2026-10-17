@@ -1,3 +1,4 @@
+import {selectLayer} from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 type FontRequest = { action: string; id?: string; size?: number; offset?: number; bytes?: number[] };
@@ -15,6 +16,7 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
         fixture.calls.push(structuredClone(call));
         if (fixture.offline && call.method !== 'font_upload') throw new Error('Disconnected');
         switch (call.method) {
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
           case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
           case 'list_sensors': return [];
           case 'get_lcd_state': return { source: 'Theme', last_error: null, requested: { mode: 'Application', brightness_percent: 100, rotation_degrees: 0 } };
@@ -37,7 +39,7 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
       } } });
     }, { mode });
     await page.goto('/?view=display');
-    await expect(page.getByText('Daemon подключён')).toBeVisible();
+    await expect(page.getByText('Daemon подключён')).toBeVisible();await selectLayer(page,0);
     await page.getByLabel('Название', { exact: true }).fill('Keep my draft');
     await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByText('Пользовательские шрифты', { exact: true }).click();

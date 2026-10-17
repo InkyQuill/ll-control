@@ -1,3 +1,4 @@
+import {loadControls} from './editor-controls';
 import { test, expect, type Page } from '@playwright/test';
 import type { Theme } from '../src/lib/api';
 
@@ -9,7 +10,7 @@ interface Fixture {
   calls: string[]; active: Theme | null; failed: boolean; offline: boolean; persistenceError: string | null;
 }
 declare global { interface Window { lcdMessages: Fixture } }
-const methods = { apply: 'set_lcd_theme', load: 'get_lcd_theme', localui: 'clear_lcd', preview: 'preview_lcd_theme' };
+const methods = { apply: 'set_lcd_theme', load: 'get_lcd_theme', localui: 'clear_lcd', preview: 'preview_lcd_editor' };
 const buttons = {
   'en-US': { apply: 'Apply to LCD', load: 'Load active theme', localui: 'Restore LocalUI', preview: 'Refresh preview' },
   'ru-RU': { apply: 'Применить к LCD', load: 'Загрузить активную тему', localui: 'Вернуть LocalUI', preview: 'Обновить preview' },
@@ -38,13 +39,13 @@ async function setup(page: Page, language: Language, operation: Operation = 'app
         case 'list_sensors': return [{ id: 'cpu', label: 'Настройки', unit: 'celsius', value: 45, status: 'valid', age_ms: 0 }];
         case 'get_lcd_state': return { source: f.sourceOverride !== undefined ? f.sourceOverride : f.active ? 'Theme' : 'Idle', last_error: f.sourceError ?? null,
           requested: {}, persistence: { pending: !!f.persistenceError, saved: !f.persistenceError, last_error: f.persistenceError } };
-        case 'set_lcd_theme': case 'get_lcd_theme': case 'clear_lcd': case 'preview_lcd_theme':
+        case 'set_lcd_theme': case 'get_lcd_theme': case 'clear_lcd': case 'preview_lcd_editor':
           // A lost reply can follow a successful daemon mutation.
           if (method === 'set_lcd_theme') f.active = structuredClone(req.params!.theme);
-          if (method === methods[operation] && !f.failed) { f.failed = true; throw new Error('Настройки'); }
+          if (method === methods[operation] && !f.failed) { if(operation!=='preview')f.failed = true; throw new Error('Настройки'); }
           if (method === 'get_lcd_theme') return structuredClone(f.active);
           if (method === 'clear_lcd') f.active = null;
-          if (method === 'preview_lcd_theme') return Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII='), c => c.charCodeAt(0));
+          if (method === 'preview_lcd_editor') return Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII='), c => c.charCodeAt(0));
           return { source: f.active ? 'Theme' : 'Idle', last_error: null };
         case 'list_prepared_clips': case 'list_theme_assets': case 'list_named_theme_assets': return [];
         case 'list_profiles': return { version: 1, revision: 0, profiles: [] };
@@ -57,9 +58,10 @@ async function setup(page: Page, language: Language, operation: Operation = 'app
   await expect(page.getByText(language === 'en-US' ? 'Daemon connected' : 'Daemon подключён', { exact: true })).toBeVisible();
 }
 for (const language of ['en-US', 'ru-RU'] as const) {
-  for (const operation of ['apply', 'load', 'localui', 'preview'] as const) {
+  for (const operation of ['apply', 'load', 'localui'] as const) {
     test(`${operation} error keeps raw diagnostic, follows language and retries explicitly (${language})`, async ({ page }) => {
       await setup(page, language, operation);
+      if(operation!=='apply')await loadControls(page);
       const name = 'Русское имя {1} <CPU>';
       await page.getByLabel(language === 'en-US' ? 'Name' : 'Название', { exact: true }).fill(name);
       await page.getByRole('button', { name: buttons[language][operation], exact: true }).click();
@@ -75,7 +77,6 @@ for (const language of ['en-US', 'ru-RU'] as const) {
       await page.getByRole('button', { name: buttons[other][operation], exact: true }).click();
       await expect(alert).toHaveCount(0);
       await expect(page.getByLabel(other === 'en-US' ? 'Name' : 'Название', { exact: true })).toHaveValue(operation === 'load' ? 'Active theme' : name);
-      if (operation === 'preview') await expect(page.getByRole('img')).toBeVisible();
       expect(await page.evaluate(method => window.lcdMessages.calls.filter(call => call === method).length, methods[operation])).toBe(2);
       const writes = await page.evaluate(() => window.lcdMessages.calls.filter(call => ['set_lcd_theme', 'clear_lcd', 'set_lcd_media'].includes(call)));
       expect(writes).toEqual(operation === 'apply' ? ['set_lcd_theme', 'set_lcd_theme'] : operation === 'localui' ? ['clear_lcd', 'clear_lcd'] : []);
@@ -86,7 +87,7 @@ for (const language of ['en-US', 'ru-RU'] as const) {
     await page.evaluate(() => { window.lcdMessages.active = null; });
     const title = page.getByLabel(language === 'en-US' ? 'Name' : 'Название', { exact: true });
     await title.fill('My unsent draft');
-    await page.getByRole('button', { name: buttons[language].load, exact: true }).click();
+    await loadControls(page);await page.getByRole('button', { name: buttons[language].load, exact: true }).click();
     await expect(page.getByRole('alert')).toHaveText(language === 'en-US' ? 'There is no active theme on the device' : 'На устройстве нет активной темы');
     await expect(title).toHaveValue('My unsent draft');
     expect(await page.evaluate(() => window.lcdMessages.calls.filter(call => ['set_lcd_theme', 'clear_lcd', 'get_lcd_theme'].includes(call)))).toEqual(['get_lcd_theme']);
@@ -126,3 +127,15 @@ for (const language of ['en-US', 'ru-RU'] as const) {
     });
   }
 }
+
+for(const language of ['en-US','ru-RU'] as const)test(`live canvas errors retain raw diagnostics across language changes and recover (${language})`,async({page})=>{
+  await setup(page,language,'preview');
+  const alert=page.getByRole('alert').filter({hasText:'Настройки'});
+  await expect(alert).toContainText(instructions[language].preview);
+  const other=language==='en-US'?'ru-RU':'en-US';
+  await page.evaluate<void,Language>((other)=>{window.lcdMessages.settings.interface_language=other;window.lcdMessages.settings.revision++;},other);
+  await expect(alert).toContainText(instructions[other].preview);
+  await page.evaluate(()=>window.lcdMessages.failed=true);
+  await expect(alert).toHaveCount(0);await expect(page.locator('.canvas img')).toBeVisible();
+  expect(await page.evaluate(()=>window.lcdMessages.calls.filter(method=>['set_lcd_theme','clear_lcd'].includes(method)))).toEqual([]);
+});

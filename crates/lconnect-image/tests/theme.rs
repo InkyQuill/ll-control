@@ -1606,3 +1606,50 @@ fn hidden_layer_retains_identity_and_bounds_slot_without_changing_pixels() {
         .get("editor")
         .is_none());
 }
+
+#[test]
+fn editor_alpha_surface_preserves_transparent_image_pixels() {
+    let assets = ThemeAssets::from([(
+        "alpha".into(),
+        DynamicImage::ImageRgba8(RgbaImage::from_pixel(20, 20, Rgba([180, 60, 20, 128]))).into(),
+    )]);
+    let layer = ThemeLayer::Image {
+        editor: None,
+        asset: "alpha".into(),
+        x: 20,
+        y: 30,
+        width: 20,
+        height: 20,
+        fit: ImageFit::Stretch,
+        opacity: 200,
+        shadow: None,
+        watermark_position: None,
+    };
+    let theme = base(vec![layer.clone()]);
+    let surface = lconnect_image::editor_surfaces::layer_surface(
+        &theme,
+        &layer,
+        &[],
+        clock(),
+        &assets,
+        &ThemeFonts::new(),
+        0,
+    )
+    .unwrap();
+    let expected = render_theme(&theme, &[], clock(), &assets).unwrap();
+    let mut composed = DynamicImage::ImageRgb8(render_background(&theme)).into_rgba8();
+    image::imageops::overlay(&mut composed, &surface, 0, 0);
+    for (actual, expected) in composed.pixels().zip(expected.pixels()) {
+        for channel in 0..3 {
+            assert!(actual[channel].abs_diff(expected[channel]) <= 2);
+        }
+    }
+    assert_eq!(surface.get_pixel(0, 0)[3], 0);
+    assert!(surface.get_pixel(25, 35)[3] > 0);
+    assert!(
+        lconnect_image::editor_surfaces::encode_png(surface)
+            .unwrap()
+            .len()
+            < 1024 * 1024
+    );
+}

@@ -19,7 +19,8 @@ async function setup(page:Page,language:'en-US'|'ru-RU'='ru-RU'){
    }
    if(command==='desktop_exit'){f.exits++;return;}
    if(command==='group_archive_status')return null;
-   switch(args.method){case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];case 'get_lcd_state':return {source:'Idle',requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'},last_error:null};case 'list_profiles':return {version:1,revision:0,profiles:[]};default:return null;}
+   switch(args.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};case 'get_display_settings':return {version:1,revision:0,temperature_unit:'celsius',interface_language:f.language};case 'list_devices':return [{id:'test',display_name:'LCDV2', family:'galahad2-lcdv2'}];case 'list_sensors':case 'list_prepared_clips':case 'list_theme_assets':case 'list_named_theme_assets':return [];case 'get_lcd_state':return {source:'Idle',requested:{brightness_percent:100,rotation_degrees:0,mode:'LocalUI'},last_error:null};case 'list_profiles':return {version:1,revision:0,profiles:[]};default:return null;}
   }}});
  },language);
  await page.goto('/?view=display');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible({timeout:15000});await page.getByRole('button',{name:language==='en-US'?'Settings':'Настройки',exact:true}).click();await page.getByText(language==='en-US'?'Application and autostart':'Приложение и автозапуск',{exact:true}).click();

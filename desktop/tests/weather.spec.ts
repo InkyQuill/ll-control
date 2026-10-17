@@ -1,3 +1,4 @@
+import {addControls,loadControls,openEditorSection} from './editor-controls';
 import {test,expect,type Page} from '@playwright/test';
 import type {Theme} from '../src/lib/api';
 declare global {interface Window {weatherFixture:{calls:{method:string;params:Record<string,unknown>}[];fail:boolean;missing:boolean;unitChanged:boolean;preferred:string|null;defaultMode:'one'|'none'|'ambiguous';delayDefaults:boolean;failDefaults:boolean;resolveDefaults?:()=>void;active:Theme|null}}}
@@ -13,6 +14,7 @@ test.beforeEach(async({page})=>{
       if(command!=='daemon_call')return null;
       f.calls.push(structuredClone(request));
       switch(request.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'list_devices':return [{id:'lcd:test',display_name:'LCDV2', family:'galahad2-lcdv2'}];
         case 'list_sensors':return f.missing?[]:[{id:'cpu/temp',label:'CPU temperature',unit:f.unitChanged?'rpm':'celsius',status:'valid',value:40,age_ms:0},{id:'cpu/load',label:'CPU load',unit:'percent',status:'valid',value:45,age_ms:0},{id:'pump/rpm',label:'Pump RPM',unit:'rpm',status:'valid',value:1000,age_ms:0}];
         case 'get_sensor_defaults':{
@@ -48,13 +50,13 @@ test('weather source and thresholds survive mode switches Apply and active-theme
   await page.getByLabel('Верхний порог эффекта',{exact:true}).fill('75');
   await page.getByLabel('Управлять эффектом от датчика',{exact:true}).uncheck();
   await page.getByRole('combobox',{name:'Тип фона',exact:true}).selectOption('horizontal');
-  await page.getByRole('button',{name:'+ Текст',exact:true}).click();
+  await addControls(page);await page.getByRole('button',{name:'+ Текст',exact:true}).click();await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.version)).toBe(3);
   const saved=await page.evaluate(()=>window.weatherFixture.active);
   expect(saved?.layers[0]).toMatchObject({kind:'weather',effect:{kind:'rain',intensity:3,dynamic:false,sensor:{sensor_id:'cpu/temp',unit:'celsius',low:30,high:75}}});
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('snow');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await expect(page.getByRole('combobox',{name:'Эффект LCD',exact:true})).toHaveValue('rain');
   await enableTemperature(page);
   await expect(page.getByLabel('Нижний порог эффекта',{exact:true})).toHaveValue('30');
@@ -88,7 +90,7 @@ test('missing weather source retains identity and thresholds until recovery',asy
 });
 test('weather upgrades video theme to version three and removal restores version two',async({page})=>{
   await page.evaluate(()=>window.weatherFixture.active={version:2,background_video:'a'.repeat(32),name:'Video weather',background:[0,0,0],layers:[]});
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('snow');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.version)).toBe(3);
@@ -120,7 +122,7 @@ test('each source retains its own ranges across switching Apply and readback',as
   const ranges=await page.evaluate(()=>window.weatherFixture.active?.layers[0]);
   expect(ranges).toMatchObject({kind:'weather',effect:{sensor:{sensor_id:'cpu/temp',low:32,high:71},retained_sensors:[{sensor_id:'cpu/load',low:15,high:90},{sensor_id:'pump/rpm',low:950,high:2200}]}});
   await low.fill('40');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await expect(low).toHaveValue('32');
   await source.selectOption(JSON.stringify(['pump/rpm','rpm']));
   await expect(low).toHaveValue('950');await expect(high).toHaveValue('2200');
@@ -181,7 +183,7 @@ test('Rain and Snow keep independent intensity mode and source ranges in saved t
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.version)).toBe(3);
   expect(await page.evaluate(()=>window.weatherFixture.active?.page_cache?.find(page=>page.page==='snow')?.theme.layers[0])).toMatchObject({kind:'weather',effect:{kind:'snow',intensity:2,dynamic:true,sensor:{sensor_id:'pump/rpm',low:950}}});
   await intensity.selectOption('1');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(intensity).toHaveValue('3');
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(intensity).toHaveValue('3');
   await effect.selectOption('snow');await expect(intensity).toHaveValue('2');await expect(low).toHaveValue('950');
   await dynamic.uncheck();await effect.selectOption('rain');await expect(dynamic).toBeChecked();
   await effect.selectOption('snow');await expect(dynamic).not.toBeChecked();
@@ -269,7 +271,7 @@ test('late CPU Load reply cannot overwrite manual selection or a newly loaded th
   await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();
   await expect(page.getByText('Чтение источника CPU Load…',{exact:true})).toBeVisible();
   await page.evaluate(()=>window.weatherFixture.active={version:1,name:'Loaded',background:[0,0,0],layers:[]});
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());
   await expect(page.getByRole('combobox',{name:'Эффект LCD',exact:true})).toHaveValue('none');
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Loaded');
@@ -310,30 +312,31 @@ for(const kind of ['rain','snow'] as const)test(`${kind} equal thresholds surviv
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.version)).toBe(3);
   expect(await page.evaluate(()=>window.weatherFixture.active?.layers[0])).toMatchObject({kind:'weather',effect:{kind,sensor:{low:40,high:40}}});
-  await low.fill('35');await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(low).toHaveValue('40');
+  await low.fill('35');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(low).toHaveValue('40');
   await effect.selectOption(kind==='rain'?'snow':'rain');await effect.selectOption(kind);await expect(low).toHaveValue('40');await expect(high).toHaveValue('40');
 });
 test('Basic Rain and Snow retain independent names backgrounds and overlays through none Apply and reload',async({page})=>{
   const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});const name=page.getByLabel('Название',{exact:true});
   const background=page.getByLabel('Фон',{exact:true});const text=page.getByLabel('Текст',{exact:true}).first();
-  await name.fill('Basic page');await background.fill('#123456');await text.fill('Basic overlay');
-  await effect.selectOption('rain');await name.fill('Rain page');await background.fill('#ff0000');await text.fill('Rain overlay');
+  const overlay=async(value:string,check=false)=>{const index=await effect.inputValue()==='none'?0:1;await page.locator(`.layer-row[data-layer-index="${index}"]`).click();if(check)await expect(text).toHaveValue(value);else await text.fill(value);await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();};
+  await name.fill('Basic page');await background.fill('#123456');await overlay('Basic overlay');
+  await effect.selectOption('rain');await name.fill('Rain page');await background.fill('#ff0000');await overlay('Rain overlay');
   await enableTemperature(page);await page.getByLabel('Нижний порог эффекта',{exact:true}).fill('35');
-  await effect.selectOption('snow');await name.fill('Snow page');await background.fill('#0000ff');await text.fill('Snow overlay');
-  await effect.selectOption('rain');await expect(name).toHaveValue('Rain page');await expect(background).toHaveValue('#ff0000');await expect(text).toHaveValue('Rain overlay');
+  await effect.selectOption('snow');await name.fill('Snow page');await background.fill('#0000ff');await overlay('Snow overlay');
+  await effect.selectOption('rain');await expect(name).toHaveValue('Rain page');await expect(background).toHaveValue('#ff0000');await overlay('Rain overlay',true);
   await expect(page.getByLabel('Нижний порог эффекта',{exact:true})).toHaveValue('35');
-  await effect.selectOption('none');await expect(name).toHaveValue('Basic page');await expect(background).toHaveValue('#123456');await expect(text).toHaveValue('Basic overlay');
+  await effect.selectOption('none');await expect(name).toHaveValue('Basic page');await expect(background).toHaveValue('#123456');await overlay('Basic overlay',true);
   await effect.selectOption('rain');await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Rain page');
   expect(await page.evaluate(()=>window.weatherFixture.active?.page_cache?.find(page=>page.page==='snow')?.theme)).toMatchObject({name:'Snow page',background:[0,0,255]});
-  await effect.selectOption('none');await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
-  await expect(effect).toHaveValue('rain');await effect.selectOption('snow');await expect(name).toHaveValue('Snow page');await expect(text).toHaveValue('Snow overlay');
+  await effect.selectOption('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await expect(effect).toHaveValue('rain');await effect.selectOption('snow');await expect(name).toHaveValue('Snow page');await overlay('Snow overlay',true);
 });
 
 test('deleting the weather row restores Basic and preserves Rain for later Apply',async({page})=>{
   const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});const name=page.getByLabel('Название',{exact:true});
   await name.fill('Original Basic');await effect.selectOption('rain');await name.fill('Retained Rain');
-  await page.getByRole('button',{name:'Удалить слой',exact:true}).first().click();
+  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
   await expect(effect).toHaveValue('none');await expect(name).toHaveValue('Original Basic');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Original Basic');
@@ -345,7 +348,7 @@ test('deleting the weather row restores Basic and preserves Rain for later Apply
 
 test('inactive Basic video cannot be deleted until its draft reference is removed',async({page})=>{
   await page.evaluate(()=>window.weatherFixture.active={version:2,name:'Video Basic',background_video:'a'.repeat(32),background:[0,0,0],layers:[]});
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('rain');
   await page.getByRole('combobox',{name:'Тип фона',exact:true}).selectOption('solid');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
@@ -373,8 +376,8 @@ test('Meteor static palettes speed and full page survive other pages None Apply 
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Meteor page');
   const theme=await page.evaluate(()=>window.weatherFixture.active);expect(theme?.version).toBe(3);expect(theme?.layers[0]).toMatchObject({kind:'meteor',effect:{speed:3,colors:[[255,17,34],[0,0,255]]}});expect(theme?.page_cache?.length).toBe(3);
-  await page.getByRole('button',{name:'Удалить слой',exact:true}).first().click();await expect(effect).toHaveValue('none');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('meteor');await expect(page.getByLabel('Цвет метеоров 1',{exact:true})).toHaveValue('#ff1122');
+  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('meteor');await expect(page.getByLabel('Цвет метеоров 1',{exact:true})).toHaveValue('#ff1122');
 });
 test('Meteor uses CPU Load and independently retains palettes ranges and unit identities for each source',async({page})=>{
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('meteor');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();
@@ -404,9 +407,9 @@ test('late Meteor CPU Load defaults cannot overwrite manual palettes or a replac
   const source=page.getByRole('combobox',{name:'Источник эффекта',exact:true});await source.selectOption(JSON.stringify(['cpu/temp','celsius']));await page.getByLabel('Нижний цвет метеоров 1',{exact:true}).fill('#ffffff');
   await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());await expect(source).toHaveValue(JSON.stringify(['cpu/temp','celsius']));await expect(page.getByLabel('Нижний цвет метеоров 1',{exact:true})).toHaveValue('#ffffff');
   await page.evaluate(()=>{window.weatherFixture.active={version:1,name:'Replacement',background:[0,0,0],layers:[]};window.weatherFixture.resolveDefaults=undefined;});
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('meteor');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('meteor');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();
   await expect.poll(()=>page.evaluate(()=>typeof window.weatherFixture.resolveDefaults)).toBe('function');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());
   await expect(effect).toHaveValue('none');await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Replacement');
 });
 
@@ -416,7 +419,7 @@ test('Snow3D has independent intensity full page and no dynamic sensor controls'
   await effect.selectOption('rain');await effect.selectOption('snow');await effect.selectOption('meteor');await effect.selectOption('none');await effect.selectOption('snow3d');await expect(intensity).toHaveValue('3');await expect(page.getByLabel('Фон',{exact:true})).toHaveValue('#112233');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Snow3D page');
   const theme=await page.evaluate(()=>window.weatherFixture.active);expect(theme?.page_cache?.length).toBe(4);expect(theme?.layers[0]).toEqual({kind:'snow3d',effect:{intensity:3,seed:42}});expect(theme?.version).toBe(3);
-  await page.getByRole('button',{name:'Удалить слой',exact:true}).first().click();await expect(effect).toHaveValue('none');await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('snow3d');await expect(intensity).toHaveValue('3');
+  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('snow3d');await expect(intensity).toHaveValue('3');
   expect(await page.evaluate(()=>window.weatherFixture.calls.filter(call=>call.method==='get_sensor_defaults').length)).toBe(0);
 });
 
@@ -426,7 +429,7 @@ test('Fireworks six static colors and intensity survive all pages Apply and relo
   for(const target of ['rain','snow','meteor','snow3d','none','fireworks'])await effect.selectOption(target);
   await expect(intensity).toHaveValue('3');await expect(page.getByLabel('Цвет фейерверка 6',{exact:true})).toHaveValue('#112233');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.name)).toBe('Fireworks page');const saved=await page.evaluate(()=>window.weatherFixture.active);expect(saved?.page_cache?.length).toBe(5);expect(saved?.layers[0]).toMatchObject({kind:'fireworks',effect:{intensity:3,colors:[[0,255,0],[0,0,255],[128,0,255],[255,0,65],[255,215,0],[17,34,51]]}});
-  await page.getByRole('button',{name:'Удалить слой',exact:true}).first().click();await expect(effect).toHaveValue('none');await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('fireworks');await expect(intensity).toHaveValue('3');
+  await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();await expect(effect).toHaveValue('none');await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await expect(effect).toHaveValue('fireworks');await expect(intensity).toHaveValue('3');
 });
 test('Fireworks per-source six palettes and equal ranges remain independent of Meteor',async({page})=>{
   const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});await effect.selectOption('fireworks');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();const source=page.getByRole('combobox',{name:'Источник эффекта',exact:true});await expect(source).toHaveValue(JSON.stringify(['cpu/load','percent']));
@@ -440,6 +443,6 @@ test('Fireworks per-source six palettes and equal ranges remain independent of M
 test('late Fireworks default reply cannot overwrite manual palettes or a replacement Meteor page',async({page})=>{
   await page.evaluate(()=>window.weatherFixture.delayDefaults=true);const effect=page.getByRole('combobox',{name:'Эффект LCD',exact:true});await effect.selectOption('fireworks');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();await expect.poll(()=>page.evaluate(()=>typeof window.weatherFixture.resolveDefaults)).toBe('function');
   const source=page.getByRole('combobox',{name:'Источник эффекта',exact:true});await source.selectOption(JSON.stringify(['cpu/temp','celsius']));await page.getByLabel('Нижний цвет фейерверка 6',{exact:true}).fill('#ffffff');await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());await expect(source).toHaveValue(JSON.stringify(['cpu/temp','celsius']));await expect(page.getByLabel('Нижний цвет фейерверка 6',{exact:true})).toHaveValue('#ffffff');
-  await page.evaluate(()=>{window.weatherFixture.active={version:1,name:'Replacement',background:[0,0,0],layers:[]};window.weatherFixture.resolveDefaults=undefined;});await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('fireworks');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();await expect.poll(()=>page.evaluate(()=>typeof window.weatherFixture.resolveDefaults)).toBe('function');
-  await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('meteor');await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());await expect(effect).toHaveValue('meteor');await expect(page.getByLabel('Цвет метеоров 2',{exact:true})).toHaveValue('#0000ff');await expect(page.getByLabel('Цвет метеоров 3',{exact:true})).toHaveCount(0);
+  await page.evaluate(()=>{window.weatherFixture.active={version:1,name:'Replacement',background:[0,0,0],layers:[]};window.weatherFixture.resolveDefaults=undefined;});await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('fireworks');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();await expect.poll(()=>page.evaluate(()=>typeof window.weatherFixture.resolveDefaults)).toBe('function');
+  await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('meteor');await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());await expect(effect).toHaveValue('meteor');await expect(page.getByLabel('Цвет метеоров 2',{exact:true})).toHaveValue('#0000ff');await expect(page.getByLabel('Цвет метеоров 3',{exact:true})).toHaveCount(0);
 });

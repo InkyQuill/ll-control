@@ -1,3 +1,4 @@
+import {openEditorSection} from './editor-controls';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({page})=>{
   await page.addInitScript(()=>{
@@ -8,6 +9,7 @@ test.beforeEach(async ({page})=>{
       if(command==='media_status'||command==='media_thumbnail_cancel')return null;
       if(command==='media_thumbnail')throw new Error('No decoder in fixture');
       switch(req.method){
+        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
         case 'get_screen_collections': return {collections:null,persistence:{pending:false,saved:false,last_error:null}};
         case 'list_devices':return [{id:'A',display_name:'LCD A', family:'galahad2-lcdv2'}];
         case 'list_sensors':return [];
