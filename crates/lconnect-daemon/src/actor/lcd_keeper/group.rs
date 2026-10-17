@@ -236,7 +236,17 @@ impl Display {
             if *self.shutdown.borrow() || self.shutdown.has_changed().is_err() {
                 return Err(busy("group committed during teardown; replay required"));
             }
-            self.state.applied = Some(self.config(&prepared.config, streaming).await?);
+            self.state.applied = Some(
+                self.config(
+                    &prepared.config,
+                    if streaming {
+                        ConfigTarget::HostRotated
+                    } else {
+                        ConfigTarget::Requested
+                    },
+                )
+                .await?,
+            );
             if *self.shutdown.borrow() || self.shutdown.has_changed().is_err() {
                 return Err(busy("group committed during teardown; replay required"));
             }

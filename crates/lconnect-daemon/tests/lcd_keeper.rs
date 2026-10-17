@@ -1159,3 +1159,59 @@ async fn delayed_datetime_before_version_does_not_block_h264_startup_gate() {
     stop.send(true).unwrap();
     hid_task.await.unwrap();
 }
+
+#[tokio::test(start_paused = true)]
+async fn jpeg_settings_patch_preserves_active_image_instead_of_selecting_local_ui() {
+    let mut h = Harness::new();
+    let image = h.image(42).await;
+    complete(h.frame(false).await.1);
+    image.await.unwrap().unwrap();
+    let (reply, response) = oneshot::channel();
+    h.tx.send(LcdCommand::Patch {
+        patch: lconnect_ipc::LcdConfigPatch {
+            mode: None,
+            brightness_percent: Some(40),
+            rotation_degrees: Some(90),
+        },
+        reply,
+    })
+    .await
+    .unwrap();
+    let lconnect_daemon::actor::HidCommand::Write { bytes, reply } = h.hid.recv().await.unwrap()
+    else {
+        panic!("expected settings transaction");
+    };
+    assert_eq!(
+        &bytes[11..14],
+        &[4, 40, 1],
+        "JPEG settings must not select LocalUI"
+    );
+    reply.send(Ok(())).unwrap();
+    let state = response.await.unwrap().unwrap();
+    assert_eq!(state.source, lconnect_ipc::LcdSourceKind::Jpeg);
+    assert_eq!(state.requested.mode, "LocalUI");
+    assert_eq!(
+        state.applied.unwrap(),
+        lconnect_ipc::LcdConfig::new("LCDSetting", 40, 90)
+    );
+    tokio::time::advance(Duration::from_secs(15)).await;
+    let (packets, reply) = h.frame(false).await;
+    assert_eq!(packets[0][11], 42, "the active image remains the source");
+    complete(reply);
+
+    let replacement = h.image(43).await;
+    let lconnect_daemon::actor::HidCommand::Write { bytes, reply } = h.hid.recv().await.unwrap()
+    else {
+        panic!("expected JPEG orientation restoration");
+    };
+    assert_eq!(
+        &bytes[11..14],
+        &[4, 40, 1],
+        "replacement must not flash LocalUI"
+    );
+    reply.send(Ok(())).unwrap();
+    let (packets, reply) = h.frame(false).await;
+    assert_eq!(packets[0][11], 43);
+    complete(reply);
+    replacement.await.unwrap().unwrap();
+}
