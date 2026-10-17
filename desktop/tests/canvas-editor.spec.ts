@@ -98,6 +98,16 @@ test('rotated canvas drag maps to native coordinates',async({page})=>{
   await expect(layer(page,3).getByLabel('Y',{exact:true})).toHaveValue('60');
 });
 
+test('opening layer properties by keyboard transfers focus into the inspector',async({page})=>{
+  await setup(page);
+  await page.getByRole('button',{name:'Слои',exact:true}).click();
+  await page.locator('.layer-row[data-layer-index="3"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(layer(page,3).getByRole('heading',{name:'Текст',exact:true})).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(layer(page,3).locator('.layer-name summary')).toBeFocused();
+});
+
 test('layer list reaches an obscured image and keyboard ordering preserves selection',async({page})=>{
   await setup(page);
   for(const [name,value] of [['x','130'],['y','102'],['width','60'],['height','20']]) {
