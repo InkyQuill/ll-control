@@ -73,20 +73,32 @@ write('pci.ids','abcd  Fixture Vendor\n\t1234  Fixture GPU A\n\t5678  Fixture GP
 write('sys/class/dmi/id/board_name','Fixture Board')
 write('sys/block/sda/device/model','Fixture SSD');write('sys/block/sda/size','2097152')
 try:
- if any(flag in sys.argv for flag in ['--lcd-errors','--image-errors','--library-errors','--cooling-errors','--collection-readback-errors','--collection-plain-errors']):
+ if any(flag in sys.argv for flag in ['--lcd-errors','--image-errors','--library-errors','--cooling-errors','--collection-readback-errors','--collection-plain-errors','--collection-replacement-errors','--collection-video-errors','--collection-video-import-errors']):
   launch(['openbox'],'wm');start_fixture(with_device=True)
-  collection_errors=any(flag in sys.argv for flag in ['--collection-readback-errors','--collection-plain-errors'])
+  collection_errors=any(flag in sys.argv for flag in ['--collection-readback-errors','--collection-plain-errors','--collection-replacement-errors','--collection-video-errors','--collection-video-import-errors'])
   plain_errors='--collection-plain-errors' in sys.argv
+  replacement_errors='--collection-replacement-errors' in sys.argv
+  video_errors='--collection-video-errors' in sys.argv
+  video_import_errors='--collection-video-import-errors' in sys.argv
   image_errors='--image-errors' in sys.argv
   library_errors='--library-errors' in sys.argv
   cooling_errors='--cooling-errors' in sys.argv
   if image_errors or collection_errors:
-   dev=rpc('list_devices')[0]['id'];rpc('migrate_screen_collections',{'dev':dev})
+   dev=rpc('list_devices')[0]['id']
+   if replacement_errors:
+    rpc('import_theme_asset',{'bytes':list((repo/'crates/lconnect-image/assets/defaults/midnight.png').read_bytes()),'name':'R2 original {0} <CPU>.png'})
+   if video_errors:
+    builtin=next(clip for clip in rpc('list_prepared_clips') if clip['is_default'])
+    unit=rpc('load_media_first_frame',{'key':builtin['key']});key='a'*32
+    rpc('media_upload',{'request':{'action':'begin','id':key,'name':'R2 source.mp4','frames':48,'encoded_bytes':len(unit['bytes'])*48}})
+    for index in range(48):rpc('media_upload',{'request':{'action':'chunk','id':key,'index':index,'unit':unit}})
+    assert rpc('media_upload',{'request':{'action':'finish','id':key}})['phase']=='published'
+   rpc('migrate_screen_collections',{'dev':dev})
    original_collections=rpc('get_screen_collections',{'dev':dev})['collections']
   backend=root/'backend.sock';(root/'lconnectd.sock').rename(backend)
   spec=importlib.util.spec_from_file_location('lcd_fault_proxy',repo/'desktop/scripts/native-fault-proxy.py')
   proxy_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(proxy_module)
-  phase='collection-plain-errors' if plain_errors else 'collection-readback-errors' if collection_errors else 'cooling-errors' if cooling_errors else 'library-errors' if library_errors else 'image-errors' if image_errors else 'lcd-errors'
+  phase='collection-video-import-errors' if video_import_errors else 'collection-video-errors' if video_errors else 'collection-replacement-errors' if replacement_errors else 'collection-plain-errors' if plain_errors else 'collection-readback-errors' if collection_errors else 'cooling-errors' if cooling_errors else 'library-errors' if library_errors else 'image-errors' if image_errors else 'lcd-errors'
   proxy=proxy_module.FaultProxy(root/'lconnectd.sock',backend,lcd_messages=not (image_errors or library_errors or cooling_errors or collection_errors),collection_readbacks=collection_errors,image_messages=image_errors,library_messages=library_errors,cooling_messages=cooling_errors)
   gui=launch([repo/'target/debug/lconnect-gui'],f'gui-{phase}',dict(env,LCONNECT_NATIVE_DESKTOP_PHASE=phase))
   result=result_for(gui);close_gui(gui,f'gui-{phase}')
@@ -97,7 +109,8 @@ try:
    assert proxy.collection_writes==proxy.collection_faults
    current=rpc('get_screen_collections',{'dev':dev},backend)
    assert not current['persistence']['pending']
-   expected={**original_collections,'revision':original_collections['revision']+14,'images':original_collections['images']+[case['key'] for case in proxy.collection_writes]}
+   expected=proxy.collection_writes[-1]['expected'] if replacement_errors or video_errors or video_import_errors else {**original_collections,'revision':original_collections['revision']+14,'images':original_collections['images']+[case['key'] for case in proxy.collection_writes]}
+   assert expected['revision']==original_collections['revision']+14
    assert current['collections']==expected,(current,expected)
    assert [case['key'] for case in proxy.collection_writes]==[case['key'] for case in result['cases']]
    assert json.loads((root/'stats.json').read_text())['jpeg_starts']==0

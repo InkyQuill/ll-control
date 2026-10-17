@@ -118,6 +118,45 @@ try:
              selector+' restart value')
         results.append(dict(case=selector, error=error, pending_reported=True,
                             old_bytes_retained=before_rename, recovered_brightness=value))
+    # Crash after a real failed journal/profile fsync, not a synthesized snapshot.
+    for index, selector in enumerate(['journal-stage-sync', 'profiles-stage-sync']):
+        library_before = call('list_profiles')
+        if not any(p['content']['kind'] in ('screen','screen_media') and p['slot']==0 for p in library_before['profiles']):
+            library_before = call('edit_profile', {'expected_revision': library_before['revision'], 'edit': {
+                'action': 'reset', 'group': 'screen', 'slot': 0, 'sensor_id': None}})
+        call('edit_profile', {'expected_revision': library_before['revision'], 'edit': {
+            'action': 'rename', 'group': 'screen', 'slot': 0, 'name': 'Before interrupted reset'}})
+        if call('get_screen_collections', {'dev': dev})['collections'] is None:
+            call('migrate_screen_collections', {'dev': dev})
+        wait(lambda: persisted(dev), 'collections before reset durable')
+        library_before = call('list_profiles')
+        collections = call('get_screen_collections', {'dev': dev})['collections']
+        operation = f'{index+101:032x}'
+        arm(selector, 'EIO')
+        reply = rpc('reset_screen', {'dev': dev, 'operation_id': operation,
+            'expected_profile_revision': library_before['revision'],
+            'expected_collection_revision': collections['revision']})
+        assert 'error' in reply, reply
+        journal = root/'settings/screen-reset-transaction.json'
+        assert journal.exists() == (selector == 'profiles-stage-sync'), selector
+        # Prevent normal shutdown/retry from repairing state before startup recovery.
+        os.killpg(process.pid, signal.SIGKILL); process.wait(timeout=5)
+        assert process.returncode == -signal.SIGKILL
+        disarm(); dev = start()
+        recovered = call('list_profiles')
+        if selector == 'journal-stage-sync':
+            assert recovered == library_before, 'uncommitted journal changed profiles'
+        else:
+            assert recovered['revision'] == library_before['revision']+1, recovered
+            assert not any(p['content']['kind'] in ('screen','screen_media') and p['slot']==0 and p['name']=='Before interrupted reset'
+                           for p in recovered['profiles'])
+            assert not journal.exists(), 'recovered transaction journal not retired'
+            # Reading and a second restart must not commit the reset twice.
+            assert call('list_profiles') == recovered
+            stop(); dev = start(); assert call('list_profiles') == recovered
+        results.append(dict(case=selector, reset_reply=reply, killed=True,
+                            before_revision=library_before['revision'],
+                            recovered_revision=recovered['revision']))
     # Exercise publication before and after its rename independently of settings retry.
     builtin = next(clip for clip in call('list_prepared_clips') if clip['is_default'])
     unit = call('load_media_first_frame', {'key': builtin['key']})

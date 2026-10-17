@@ -39,6 +39,15 @@ static int fault(const char *path, const char *operation) {
     } else if (!strcmp(selector, "media-directory-sync") && !strcmp(operation, "fsync")) {
         suffix = "/settings/prepared-clips";
     }
+    if ((!strcmp(selector, "journal-stage-sync") || !strcmp(selector, "profiles-stage-sync"))
+        && !strcmp(operation, "fsync")) {
+        snprintf(marker, sizeof marker, "%s/settings/screen-reset-transaction.json", root);
+        int published = access(marker, F_OK) == 0;
+        if ((!strcmp(selector, "journal-stage-sync") && !published)
+            || (!strcmp(selector, "profiles-stage-sync") && published)) {
+            suffix = "/settings/.tmp"; prefix = 1;
+        }
+    }
     if (!suffix) return 0;
     snprintf(expected, sizeof expected, "%s%s", root, suffix);
     if (prefix ? strncmp(path, expected, strlen(expected)) : strcmp(path, expected)) return 0;

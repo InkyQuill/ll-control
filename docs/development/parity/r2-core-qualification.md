@@ -102,3 +102,36 @@ checks that documented distinction rather than treating `saved` as a revision AC
 The C fixture compiles with warnings treated as errors. This closes these six
 boundaries only; multi-file group journal/import ownership and remaining precise
 crash/link/partial-cleanup boundaries are still open in R2.
+
+
+## Replacement and video publication readback
+
+Native WebKitGTK/Unix IPC checks now cover image replacement, video replacement
+and ordinary GIF import under the same seven committed-readback faults in EN/RU
+(42 additional cases). Replacements retain the original asset, publish exactly
+one derivative and preserve adjacent collection membership. Each video derivative
+is decoded in native review before Save. Faults leave the LCD unapplied, retain
+translated diagnostics and never initiate another publication. Image replacement
+also checks that the existing composition draft remains unchanged.
+
+The GIF check uses semantic object equality: JSON member order is not part of the
+collection contract. A first assertion compared serialized field order; saved
+state showed correct membership. The corrected comparison passed all 14 cases.
+No production defect is claimed from that test-driver error.
+
+Reproduce with `native-interface-language.py` and respectively
+`--collection-replacement-errors`, `--collection-video-errors`, or
+`--collection-video-import-errors` after rebuilding the native-smoke GUI.
+Socket loss, timeout and reconnect timing still need separate qualification.
+
+## Transaction crash boundaries
+
+The storage syscall harness now also injects actual EIO during journal staging
+and during profile staging after the device settings file has changed. It kills
+the fixture with SIGKILL while the fault is armed, then starts a new daemon.
+Before journal publication, profiles remain unchanged. After partial transaction
+installation, startup recovers both files and retires the journal. Repeated
+readback/restart keeps one library revision increment, not a second commit.
+All eight syscall scenarios passed together. The existing publication journal
+suite passed 18 tests (one subprocess entry point ignored by the ordinary runner)
+and the shared state transaction suite passed four tests.
