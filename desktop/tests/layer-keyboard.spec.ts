@@ -20,14 +20,15 @@ test('keyboard reorder and deletion keep focus on the edited layer or add action
   await selectLayer(page,0);
   const editor=page.getByRole('region',{name:'Редактор темы'});
   await expect(editor.getByLabel('Текст',{exact:true})).toHaveValue('A');
+  await page.getByRole('button',{name:'Слои',exact:true}).click();
   await page.locator('.layer-row[data-layer-index="0"]').focus();await page.keyboard.press('Alt+ArrowUp');
   await expect(page.locator('.layer-row[data-layer-index="1"]')).toHaveAttribute('aria-pressed','true');
   await expect(editor.getByLabel('Текст',{exact:true})).toHaveValue('A');
   await editor.getByRole('button',{name:'Удалить слой',exact:true}).focus();await page.keyboard.press('Enter');
-  await expect(editor.getByRole('heading',{name:'Текст',exact:true})).toBeFocused();
+  await expect(page.locator('.layer-row[data-layer-index="0"]')).toBeFocused();
   await expect(editor.getByLabel('Текст',{exact:true})).toHaveValue('B');
   await editor.getByRole('button',{name:'Удалить слой',exact:true}).focus();await page.keyboard.press('Enter');
-  await expect(page.locator('.add-layer summary')).toBeFocused();
+  await expect(page.getByRole('button',{name:'Добавить слой',exact:true})).toBeFocused();
   await addControls(page);await editor.getByRole('button',{name:'+ Текст',exact:true}).focus();await page.keyboard.press('Enter');
   await expect(editor.getByLabel('Текст',{exact:true})).toHaveValue('Новый текст');
 

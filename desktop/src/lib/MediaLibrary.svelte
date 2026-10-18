@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import { ValidationError, type UiDiagnostic } from './validation-error';
   import {t, diagnosticText} from './i18n.svelte';
   import { untrack, tick } from 'svelte';
@@ -81,7 +82,9 @@
   let clipSelect: HTMLSelectElement | undefined = $state();
   let refreshButton: HTMLButtonElement | undefined = $state();
   let generation = 0, request = 0;
-  $effect(() => { const key = choice; untrack(() => onchoice(key)); });
+  // Keep the selected clip available to the separate profile popover after dismissal.
+  $effect(() => { const key = choice; if(open)untrack(() => onchoice(key)); });
+  $effect(() => { void device;void connected;void available;void collectionEpoch;untrack(() => onchoice('')); });
   const retainedChoice = $derived(keep.includes(choice));
   $effect(()=>{if(confirmDelete && keep.includes(confirmDelete))confirmDelete='';});
   const builtinChoice = $derived(clips.find(clip => clip.key === choice)?.is_default === true);
@@ -142,9 +145,8 @@
   });
 </script>
 
-<details bind:open class="media-library">
-  <summary>{t("Библиотека роликов")}</summary>
-  <p>{t("Выбранный ролик повторяется и восстанавливается после перезапуска. Применение темы или возврат LocalUI снимает выбор.")}</p>
+<StudioPopover label={`${t("Библиотека роликов")}`} bind:open text wide>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Выбранный ролик повторяется и восстанавливается после перезапуска. Применение темы или возврат LocalUI снимает выбор.")}</p></StudioPopover>
   {#if !connected}<p role="status">{t("Библиотека недоступна без связи с daemon.")}</p>
   {:else}
     {#if open && !editing && !captureDevice}<MediaImport onbusy={value=>importBusy=value} device={available ? device : null} onimport={(key, target) => { if(target)importNotice = ''; void imported(key, target); }} />{/if}
@@ -170,7 +172,7 @@
       <label><input type="checkbox" bind:checked={gallery}/>{t("Показать карточки роликов")}</label>
       {#if open && gallery}<MediaGallery {clips} {choice} disabled={disabled || deleting || loading || !ready} onchoose={key => { choice = key; confirmDelete = ''; }}/>{/if}
       {#if open && choice && !gallery}<MediaThumbnail clipKey={choice} name={clips.find(clip => clip.key === choice)?.name ?? t('Ролик')} />{/if}
-      {#if !selectable}<p>{t("Файл вне фоновой коллекции. Добавьте его через «Коллекции LCD» для воспроизведения.")}</p>{/if}
+      {#if !selectable}<StudioPopover label={t("Справка")} icon="help"><p>{t("Файл вне фоновой коллекции. Добавьте его через «Коллекции LCD» для воспроизведения.")}</p></StudioPopover>{/if}
       {#if onbackground}<button disabled={!selectable || disabled || deleting || loading || !choice || !!error} onclick={() => onbackground?.(choice)}>{t("Использовать фоном темы")}</button>{/if}
       <button disabled={!selectable || !available || disabled || deleting || loading || !ready || !choice || !!error} onclick={() => onselect(choice)}>{t("Выбрать ролик для LCD")}</button>
       <button bind:this={editButton} disabled={!!captureDevice || disabled || importBusy || editBusy || !!editing || deleting || loading || !ready || !selectable || !choice || builtinChoice} onclick={beginEdit}>{t("Редактировать выбранный ролик")}</button>
@@ -188,13 +190,13 @@
     {#if deleteNotice}<p role="status">{typeof deleteNotice==='string'?t(deleteNotice):t('Удаление не подтверждено: {0}. Проверьте обновлённый список перед повтором.',diagnosticText(deleteNotice.detail))}</p>{/if}
     {#if ready && available}<p role="status" aria-live="polite" aria-atomic="true">{selected ? t("Сохранённый выбор: {0}", selectedName ?? t('ролик недоступен в библиотеке')) : "" + t("Ролик для автовосстановления не выбран.") + ""}</p>{/if}
     <button disabled={!available || disabled} onclick={onstop}>{t("Остановить ролик и вернуть LocalUI")}</button>
-    {#if !available}<p>{t("Выберите доступное устройство для воспроизведения.")}</p>{/if}
+    {#if !available}<StudioPopover label={t("Справка")} icon="help"><p>{t("Выберите доступное устройство для воспроизведения.")}</p></StudioPopover>{/if}
   {/if}
-</details>
+</StudioPopover>
 
 <style>
-  .media-library { padding:16px; border:1px solid var(--border); border-radius:12px; margin:16px 0; }
-  summary { cursor:pointer; font-weight:600; }
+
+
   label { display:grid; gap:6px; margin:12px 0; }
   select { min-width:0; width:100%; }
   p { overflow-wrap:anywhere; }

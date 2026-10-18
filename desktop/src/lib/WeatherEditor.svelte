@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import TemperatureInput from './TemperatureInput.svelte';
   import {presentation} from './presentation.svelte';
@@ -87,10 +88,10 @@
   </select></label>
   {#if snow3d}
     <label>{t("Интенсивность Snow3D")}<select bind:value={snow3d.effect.intensity}><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label>
-    <p>{t("Интенсивность меняет скорость и плотность объёмного снега. Текст и изображения остаются поверх эффекта.")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Интенсивность меняет скорость и плотность объёмного снега. Текст и изображения остаются поверх эффекта.")}</p></StudioPopover>
   {/if}
   {#if weather}
-    <p>{t("Эффект движется на фоне; текст, часы и изображения остаются поверх него.")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Эффект движется на фоне; текст, часы и изображения остаются поверх него.")}</p></StudioPopover>
     <label>{t("Интенсивность эффекта")}<select bind:value={weather.effect.intensity}><option value={1}>{t("Низкая")}</option><option value={2}>{t("Средняя")}</option><option value={3}>{t("Высокая")}</option></select></label>
     <label><input type="checkbox" checked={weather.effect.dynamic} onchange={event=>dynamic(event.currentTarget.checked)}/>{t("Управлять эффектом от датчика")}</label>
     {#if binding || weather.effect.dynamic}
@@ -101,10 +102,10 @@
           {#if binding && !sources.some(source=>sourceKey(source)===bindingKey(binding))}<option value={binding?bindingKey(binding):''}>{t("Недоступен:")} {binding.sensor_id}</option>{/if}
         </select></label>
         {#if binding}
-        <p>{t("Единицы порогов:")} {binding.unit==='celsius'?displaySuffix:binding.unit==='percent'?'%':'RPM'}{t(". Диапазон:")} {binding.unit==='celsius'?temperatureFromCelsius(0,displayUnit):0}–{binding.unit==='celsius'?temperatureFromCelsius(rangeMax,displayUnit):rangeMax}.</p>
+        <StudioPopover label={t("Справка")} icon="help"><p>{t("Единицы порогов:")} {binding.unit==='celsius'?displaySuffix:binding.unit==='percent'?'%':'RPM'}{t(". Диапазон:")} {binding.unit==='celsius'?temperatureFromCelsius(0,displayUnit):0}–{binding.unit==='celsius'?temperatureFromCelsius(rangeMax,displayUnit):rangeMax}.</p></StudioPopover>
         <label>{t("Нижний порог эффекта")}{#if binding.unit==='celsius'}<TemperatureInput bind:value={binding.low} min={0} max={rangeMax} step={1} invalid={!Number.isInteger(binding.low)}/>{:else}<input type="number" step="1" min="0" max={rangeMax} bind:value={binding.low}/>{/if}</label>
         <label>{t("Верхний порог эффекта")}{#if binding.unit==='celsius'}<TemperatureInput bind:value={binding.high} min={0} max={rangeMax} step={1} invalid={!Number.isInteger(binding.high)}/>{:else}<input type="number" step="1" min="0" max={rangeMax} bind:value={binding.high}/>{/if}</label>
-        {#if weather.effect.kind==='snow' && binding.low===binding.high}<p>{t("При точном совпадении показания с порогом Snow использует минимальную скорость.")}</p>{/if}
+        {#if weather.effect.kind==='snow' && binding.low===binding.high}<StudioPopover label={t("Справка")} icon="help"><p>{t("При точном совпадении показания с порогом Snow использует минимальную скорость.")}</p></StudioPopover>{/if}
         {/if}
       </fieldset>
       {#if weather.effect.dynamic && !binding}<p role="status">{choosingSource?"" + t("Чтение источника CPU Load…") + "":sourceError?t("Источник CPU Load не прочитан: {0}. Выберите датчик вручную.", sourceError):"" + t("Выберите источник эффекта: CPU Load недоступен или неоднозначен.") + ""}</p>{/if}

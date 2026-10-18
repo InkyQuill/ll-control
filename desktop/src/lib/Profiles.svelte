@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import { ValidationError } from './validation-error';
   import {t} from './i18n.svelte';
   import { tick } from 'svelte';
@@ -75,9 +76,8 @@
     }
   }
 </script>
-<details class="profiles">
-  <summary>{t("Сохранённые профили")}</summary>
-  <p>{t("Загрузите профиль в редактор, затем примените его обычной кнопкой.")}</p>
+<StudioPopover label={`${t("Сохранённые профили")}`} text wide>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Загрузите профиль в редактор, затем примените его обычной кнопкой.")}</p></StudioPopover>
   <button bind:this={refreshButton} disabled={busy || disabled || !connected} onclick={refresh}>{t("Обновить список профилей")}</button>
   {#if library}
     <label>{t("Слот профиля")}<select bind:value={slot} disabled={unavailable} onchange={event => { const next = Number(event.currentTarget.value); name = library?.profiles.find(p => p.slot === next && profileGroup(p.content) === group)?.name ?? ''; notice = ''; }}>
@@ -109,10 +109,10 @@
     onlibrary={(result,target)=>{if(result.revision<(library?.revision??0))return;library=result;needsRefresh=false;if(target.group===group&&target.slot===slot)name=result.profiles.find(p=>p.slot===slot&&profileGroup(p.content)===group)?.name??name;}}/>{/if}
   {#if error}<p role="alert">{errorText(error)} {t("Обновите список перед повтором.")}</p>{/if}
   {#if notice}<p role="status">{t(notice)}</p>{/if}
-</details>
+</StudioPopover>
 <style>
-  .profiles { border:1px solid var(--border); border-radius:12px; padding:14px; margin:16px 0; }
-  summary { cursor:pointer; font-weight:600; }
+
+
   label { display:grid; gap:6px; margin:12px 0; }
   .buttons { display:flex; flex-wrap:wrap; gap:8px; }
 </style>

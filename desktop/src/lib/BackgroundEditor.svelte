@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import {isProcedural} from './lcd-pages';
   import MediaThumbnail from './MediaThumbnail.svelte';
@@ -26,9 +27,9 @@
   </select></label>
   {#if theme.background_video}
     <MediaThumbnail clipKey={theme.background_video} name={t('Видео фона')}/>
-    <p>{t("Видео выбрано фоном темы. Для замены используйте библиотеку роликов. Preview показывает первый кадр с текущими показаниями; движение начнётся после применения к LCD.")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Видео воспроизводится на холсте. Для замены откройте библиотеку роликов. Изменения LCD требуют применения.")}</p></StudioPopover>
   {:else if theme.background_image}
-    <p>{t("Изображение выбрано фоном темы. Замените его в библиотеке изображений, выбрав назначение «Фон».")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Изображение выбрано фоном темы. Замените его в библиотеке изображений, выбрав назначение «Фон».")}</p></StudioPopover>
     <label>{t("Размещение фона")}<select bind:value={theme.background_image.fit}>
       <option value="crop">{t("Заполнить с обрезкой")}</option><option value="contain">{t("Вписать")}</option>
       <option value="contain_native">{t("Вписать без увеличения")}</option><option value="stretch">{t("Растянуть")}</option>

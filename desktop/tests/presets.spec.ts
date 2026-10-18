@@ -27,7 +27,7 @@ test(preset + ' uses explicit selected sensors and stays a draft until Apply', a
   if (preset !== 'duo') await page.getByRole('checkbox', {name:'COOLANT · celsius'}).check();
   await create.click();
   await expect(page.getByLabel('Название', { exact:true })).toHaveValue(preset[0].toUpperCase()+preset.slice(1));
-  for(let index=0;index<await page.locator('.layer-row[data-layer-index]').count();index++){await selectLayer(page,index);if(await page.getByText('Дополнительные настройки текста',{exact:true}).count()){await openEditorSection(page,'Дополнительные настройки текста');await expect(page.getByRole('checkbox',{name:'Высота блока по строкам (CSS)',exact:true})).toBeChecked();}}
+  for(let index=0;index<await page.locator('.layer-row[data-layer-index]').count();index++){await selectLayer(page,index);if(await page.getByRole('button',{name:'Дополнительные настройки текста',exact:true}).count()){await openEditorSection(page,'Дополнительные настройки текста');await expect(page.getByRole('checkbox',{name:'Высота блока по строкам (CSS)',exact:true})).toBeChecked();}}
   const applied = () => page.evaluate(() => (window as unknown as { bridgeCalls: {method:string;params:{theme?:{layers:{kind:string;sensor_id?:string;interval_seconds?:number;sensors?:{sensor_id:string}[]}[]}}}[] }).bridgeCalls.filter(c => c.method === 'set_lcd_theme'));
   expect(await applied()).toHaveLength(0);
   if (preset === 'cycle') {
@@ -68,7 +68,7 @@ test('Clock preset exposes independent date, time and period colors', async ({pa
   await page.getByRole('button',{name:'Готовые темы',exact:true}).click();
   await page.getByLabel('Раскладка',{exact:true}).selectOption('clock');
   await page.getByRole('button',{name:'Создать черновик из раскладки'}).click();
-  for(let index=0;index<await page.locator('.layer-row[data-layer-index]').count();index++){await selectLayer(page,index);if(await page.getByText('Дополнительные настройки текста',{exact:true}).count()){await openEditorSection(page,'Дополнительные настройки текста');await expect(page.getByRole('checkbox',{name:'Высота блока по строкам (CSS)',exact:true})).toBeChecked();}}
+  for(let index=0;index<await page.locator('.layer-row[data-layer-index]').count();index++){await selectLayer(page,index);if(await page.getByRole('button',{name:'Дополнительные настройки текста',exact:true}).count()){await openEditorSection(page,'Дополнительные настройки текста');await expect(page.getByRole('checkbox',{name:'Высота блока по строкам (CSS)',exact:true})).toBeChecked();}}
   for(const [index,format,color] of [[0,'date','#ff0000'],[1,'time_without_period','#00ff00'],[2,'period','#0000ff']] as const){
     await selectLayer(page,index);await expect(page.getByLabel('Содержимое часов')).toHaveValue(format);await page.getByLabel('Цвет',{exact:true}).fill(color);
   }

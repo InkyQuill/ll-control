@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import { onMount, tick, untrack } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
@@ -266,7 +267,7 @@
 </script>
 
 <section aria-label="{t("Импорт ролика")}" class="media-import">
-  {#if existing}<p>{t("Редактирование «")}{existing.name}{t("». Исходный файл останется доступен другим темам и профилям.")}</p>{:else}<p>{t("GIF или MP4 до 1 часа и 256 MiB. Подготовленный ролик также должен укладываться в 256 MiB. Импорт сохраняет ролик; запуск на LCD выбирается отдельно.")}</p>{/if}
+  {#if existing}<p>{t("Редактирование «")}{existing.name}{t("». Исходный файл останется доступен другим темам и профилям.")}</p>{:else}<StudioPopover label={t("Справка")} icon="help"><p>{t("GIF или MP4 до 1 часа и 256 MiB. Подготовленный ролик также должен укладываться в 256 MiB. Импорт сохраняет ролик; запуск на LCD выбирается отдельно.")}</p></StudioPopover>{/if}
   <label>{t("Размещение видео")}
     <select bind:value={fit} disabled={active || recording || !ready}>
       <option value="contain">{t("Целиком, с чёрными полями")}</option>
@@ -291,7 +292,7 @@
   <label><input type="checkbox" bind:checked={cutEnabled} onchange={()=>{if(cutEnabled)rangeEnabled=false;else if(!effectsEnabled && !rangeEnabled)clearSource();}} disabled={active || sourceReady || recording || !ready} />{t("Выбрать фрагменты видео")}</label>
   <label><input type="checkbox" bind:checked={rangeEnabled} onchange={toggleRange} disabled={active || sourceReady || recording || !ready} />{t("Один диапазон VideoEdit")}</label>
   {#if rangeEnabled}
-    <p>{t("Начало и конец одного диапазона. Новый файл сначала загружается для проверки длительности и частоты кадров; кодирование начнётся по отдельной кнопке.")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Начало и конец одного диапазона. Новый файл сначала загружается для проверки длительности и частоты кадров; кодирование начнётся по отдельной кнопке.")}</p></StudioPopover>
     {#if rangeBounds}
       <fieldset disabled={active || recording || !ready}>
         <legend>{t("Диапазон VideoEdit")}</legend>
@@ -326,7 +327,7 @@
     {#if cropSegment && !recordMode}<p role="status">{t("Область для фрагмента")} {segments.indexOf(cropSegment)+1}{t(". Выберите её указателем под видео или задайте проценты в полях фрагмента.")}</p>{/if}
     <fieldset disabled={active || recording || !ready}>
       <legend>{t("Фрагменты в порядке воспроизведения")}</legend>
-      <p>{t("Укажите начало и конец в секундах. Фрагменты соединяются по порядку без звука, суммарно до 3 минут. До 64 фрагментов за импорт. Конец каждого фрагмента проверяется по длительности выбранного файла.")}</p>
+      <StudioPopover label={t("Справка")} icon="help"><p>{t("Укажите начало и конец в секундах. Фрагменты соединяются по порядку без звука, суммарно до 3 минут. До 64 фрагментов за импорт. Конец каждого фрагмента проверяется по длительности выбранного файла.")}</p></StudioPopover>
       {#each segments as segment, i (segment.id)}
         <div class="segment">
           {#if recordMode}

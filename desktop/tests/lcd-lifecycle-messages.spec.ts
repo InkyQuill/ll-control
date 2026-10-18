@@ -37,11 +37,11 @@ async function setup(page:Page,language:string){
 async function language(page:Page,language:string){await page.evaluate(language=>{(window as unknown as {lcdLifecycle:Fixture}).lcdLifecycle.language=language;},language);await expect(page.locator('html')).toHaveAttribute('lang',language==='en-US'?'en':'ru');}
 async function fault(page:Page,method:string,commit=false,code=-32000){await page.evaluate(({method,commit,code})=>{Object.assign((window as unknown as {lcdLifecycle:Fixture}).lcdLifecycle,{fail:method,commit,code});},{method,commit,code});}
 const writes=(page:Page)=>page.evaluate(()=>(window as unknown as {lcdLifecycle:Fixture}).lcdLifecycle.writes);
-const reset=(page:Page)=>page.locator('details').filter({has:page.locator('summary').filter({hasText:/^(LCD screen reset|Сброс экрана LCD)$/})});
-const collections=(page:Page)=>page.locator('details').filter({has:page.locator('summary').filter({hasText:/^(LCD collections|Коллекции LCD)$/})});
-async function openReset(page:Page){await page.getByText(/^(LCD screen reset|Сброс экрана LCD)$/,{exact:true}).click();}
+const reset=(page:Page)=>page.getByRole('dialog',{name:/^(LCD screen reset|Сброс экрана LCD)$/,exact:true});
+const collections=(page:Page)=>page.getByRole('dialog',{name:/^(LCD collections|Коллекции LCD)$/,exact:true});
+async function openReset(page:Page){await page.getByRole('button',{name:/^(LCD screen reset|Сброс экрана LCD)$/,exact:true}).click();}
 async function resetClick(page:Page){await page.getByRole('button',{name:/^(Reset screen…|Сбросить экран…)$/}).click();await page.getByRole('button',{name:/^(Confirm screen reset|Подтвердить сброс экрана)$/}).click();}
-async function openCollections(page:Page){await page.getByRole('button',{name:/^(Library|Библиотека)$/,exact:true}).click();await page.getByText(/^(LCD collections|Коллекции LCD)$/,{exact:true}).click();}
+async function openCollections(page:Page){await page.getByRole('button',{name:/^(Library|Библиотека)$/,exact:true}).click();await page.getByRole('button',{name:/^(LCD collections|Коллекции LCD)$/,exact:true}).click();}
 for(const initial of ['en-US','ru-RU']){
  const en=initial==='en-US',other=en?'ru-RU':'en-US';
  test(`LCD patch diagnostics and retained draft survive language switch (${initial})`,async({page})=>{

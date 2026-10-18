@@ -42,3 +42,5 @@ pub mod desktop_runtime;
 pub mod desktop_startup;
 
 pub mod archive_messages;
+
+pub mod system_fonts;

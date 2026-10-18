@@ -23,12 +23,15 @@ test('keyboard skips navigation, identifies current page and applies separate LC
   await page.keyboard.press('Enter');await expect(page.getByRole('main')).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   const settings=page.getByRole('button',{name:'Настройки',exact:true});
+  for(let step=0;step<4&&!await settings.evaluate(node=>node===document.activeElement);step++)await page.keyboard.press('Shift+Tab');
   await expect(settings).toBeFocused();
   expect(await settings.evaluate(el=>getComputedStyle(el).outlineWidth)).toBe('2px');
   await page.keyboard.press('Enter');await expect(settings).toHaveAttribute('aria-current','page');
   await expect(page.locator('nav [aria-current="page"]')).toHaveCount(1);
   await expect(page.getByRole('combobox',{name:'Единицы температуры',exact:true})).toBeEnabled();
-  await page.keyboard.press('Tab');await expect(page.getByRole('combobox',{name:'Устройство',exact:true})).toBeFocused();
+  const device=page.getByRole('combobox',{name:'Устройство',exact:true});
+  for(let step=0;step<4&&!await device.evaluate(node=>node===document.activeElement);step++)await page.keyboard.press('Tab');
+  await expect(device).toBeFocused();
   const units=page.getByRole('combobox',{name:'Единицы температуры',exact:true});
   // The collapsed group archive precedes display preferences in the tab order.
   for(let step=0;step<8&&!await units.evaluate(node=>node===document.activeElement);step++)await page.keyboard.press('Tab');

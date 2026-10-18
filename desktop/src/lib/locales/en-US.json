@@ -1393,5 +1393,12 @@
   "Тема отправлена, но настройки экрана не подтверждены: {0}": "Theme sent, but display settings are unconfirmed: {0}",
   "Сохранённые темы": "Saved themes",
   "Загрузить или остановить": "Load or stop",
-  "Добавить слой": "Add layer"
+  "Добавить слой": "Add layer",
+  "Справка": "Help",
+  "Системные шрифты": "System fonts",
+  "Справка о шрифтах": "About fonts",
+  "Системный шрифт копируется в библиотеку темы. Поддерживаются TTF и OTF до 16 MiB; коллекции TTC недоступны.": "A system font is copied into the theme library. TTF and OTF up to 16 MiB are supported; TTC collections are unavailable.",
+  "Видео воспроизводится на холсте. Для замены откройте библиотеку роликов. Изменения LCD требуют применения.": "Video plays on the canvas. Open the video library to replace it. Apply to update the LCD.",
+  "Закрыть": "Close",
+  "Переименовать слой": "Rename layer"
 }

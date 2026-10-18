@@ -25,8 +25,8 @@ async function setup(page:Page,language='ru-RU'){
  },language);
  await page.goto('/?view=display');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible();await open(page,language);
 }
-async function open(page:Page,language='ru-RU'){await page.getByText(language==='en-US'?'Saved profiles':'Сохранённые профили',{exact:true}).click();await page.getByRole('button',{name:language==='en-US'?'Refresh profile list':'Обновить список профилей',exact:true}).click();await page.getByText(language==='en-US'?'Profile import and export':'Импорт и экспорт профиля',{exact:true}).click();}
-const panel=(page:Page)=>page.getByText('Импорт и экспорт профиля',{exact:true}).locator('..');
+async function open(page:Page,language='ru-RU'){await page.getByRole('button',{name:language==='en-US'?'Saved profiles':'Сохранённые профили',exact:true}).click();await page.getByRole('button',{name:language==='en-US'?'Refresh profile list':'Обновить список профилей',exact:true}).click();await page.getByRole('button',{name:language==='en-US'?'Profile import and export':'Импорт и экспорт профиля',exact:true}).click();}
+const panel=(page:Page)=>page.getByRole('button',{name:'Импорт и экспорт профиля',exact:true}).locator('..');
 const start=(page:Page)=>panel(page).getByRole('button',{name:'Импортировать архив в слот…',exact:true});
 const count=(page:Page,command:string)=>page.evaluate(c=>(window as unknown as {archiveFixture:Fixture}).archiveFixture.calls.filter(x=>x.command===c).length,command);
 const complete=(page:Page)=>page.evaluate(()=>(window as unknown as {completeArchive:()=>void}).completeArchive());
@@ -55,7 +55,7 @@ test('commit cannot be cancelled or dismissed',async({page})=>{
 });
 
 test('English archive progress and completed import notice remain reactive after switching to Russian',async({page})=>{
- await setup(page,'en-US');const english=page.getByText('Profile import and export',{exact:true}).locator('..');
+ await setup(page,'en-US');const english=page.getByRole('button',{name:'Profile import and export',exact:true}).locator('..');
  await page.getByLabel('Name',{exact:true}).fill('Настройки');
  await english.getByRole('button',{name:'Import archive into slot…',exact:true}).click();
  await expect(english.getByRole('status').filter({hasText:'Uploading archive · Screen · slot 1 · portable.lcp'})).toBeVisible();
@@ -73,11 +73,11 @@ test('English archive progress and completed import notice remain reactive after
 });
 
 test('typed worker errors relabel on language switch while raw filename diagnostics stay literal',async({page})=>{
- await setup(page,'en-US');const english=page.getByText('Profile import and export',{exact:true}).locator('..');
+ await setup(page,'en-US');const english=page.getByRole('button',{name:'Profile import and export',exact:true}).locator('..');
  await english.getByRole('button',{name:'Import archive into slot…',exact:true}).click();
  await page.evaluate(()=>{const j=(window as unknown as {archiveFixture:Fixture}).archiveFixture.job!;j.phase='failed';j.message='Настройки {1} <CPU>.lcp';j.message_code='destination_exists';});
  await expect(english.getByRole('alert').filter({hasText:'The file already exists. Choose a new name.'})).toBeVisible();
- await english.getByText('Technical diagnostics',{exact:true}).click();
+ await english.getByRole('button',{name:'Technical diagnostics',exact:true}).click();
  await expect(english.locator('pre')).toHaveText('Настройки {1} <CPU>.lcp');
  expect(await english.locator('pre cpu').count()).toBe(0);
  await page.evaluate(()=>{(window as unknown as {archiveFixture:Fixture&{language:string}}).archiveFixture.language='ru-RU';});

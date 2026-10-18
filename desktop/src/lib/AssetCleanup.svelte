@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import { rpc, message } from './api';
   interface Report { candidates: string[]; deleted: string[]; retained_referenced: number; retained_session: number; retained_draft: number; skipped: number; failures: { key: string; error: string }[] }
@@ -19,9 +20,8 @@
     finally { busy = false; }
   }
 </script>
-<details>
-  <summary>{t("Очистка неиспользуемых")} {kind === 'font' ? "" + t("шрифтов") + "" : "" + t("изображений") + ""}</summary>
-  <p>{t("Сохранённые профили, текущий черновик и")} {kind === 'font' ? "" + t("шрифты") + "" : "" + t("изображения") + ""}{t(", использованные в этом запуске daemon, сохраняются. Последние можно очистить после перезапуска, если они больше не используются.")}</p>
+<StudioPopover label={`${t("Очистка неиспользуемых")} ${kind === 'font' ? "" + t("шрифтов") + "" : "" + t("изображений") + ""}`} text>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Сохранённые профили, текущий черновик и")} {kind === 'font' ? "" + t("шрифты") + "" : "" + t("изображения") + ""}{t(", использованные в этом запуске daemon, сохраняются. Последние можно очистить после перезапуска, если они больше не используются.")}</p></StudioPopover>
   <button disabled={!connected || disabled || busy} onclick={() => scan(false)}>{t("Проверить неиспользуемые")} {kind === 'font' ? "" + t("шрифты") + "" : "" + t("изображения") + ""}</button>
   {#if report}
     <p role="status">{deleted ? t("Удалено: {0}", report.deleted.length) : t("Можно удалить: {0}", report.candidates.length)} {t("· В профилях/настройках:")} {report.retained_referenced} {t("· В этом запуске:")} {report.retained_session} {t("· В черновике:")} {report.retained_draft}</p>
@@ -29,8 +29,8 @@
     {#each report.failures as failure}<p role="alert">{failure.key}: {failure.error}</p>{/each}
   {/if}
   {#if error}<p role="alert">{failedDelete?t('Результат очистки не подтверждён:'):t('Не удалось проверить очистку:')} <span>{error}</span></p>{/if}
-</details>
+</StudioPopover>
 <style>
-  details { padding:14px; border:1px solid var(--border); border-radius:12px; margin:16px 0; }
-  summary { cursor:pointer; font-weight:600; }
+
+
 </style>

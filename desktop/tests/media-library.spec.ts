@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
 test('select and stop saved media target selected device and retain theme draft',async({page})=>{
   await page.getByLabel('Название',{exact:true}).fill('Несохранённая тема');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByLabel('Сохранённый ролик').selectOption('b'.repeat(32));
   await page.getByRole('button',{name:'Выбрать ролик для LCD',exact:true}).click();
   await expect(page.getByText('Сохранённый выбор: Облака',{exact:true})).toBeVisible();
@@ -50,7 +50,7 @@ test('select and stop saved media target selected device and retain theme draft'
 test('library failure retries and lost device never redirects playback',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{fail:boolean}}).fixture.fail=true;});
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText('Damaged clip');
   await expect(page.getByText('Ролик для автовосстановления не выбран.',{exact:true})).toHaveCount(0);
   await page.evaluate(()=>{Object.assign((window as unknown as {fixture:object}).fixture,{fail:false,ids:['B']});});
@@ -65,7 +65,7 @@ test('library failure retries and lost device never redirects playback',async({p
 test('late selection response from old device is discarded',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{delay:boolean}}).fixture.delay=true;});
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByText('Загрузка роликов…',{exact:true})).toBeVisible();
   await page.getByLabel('Устройство',{exact:true}).selectOption('B');
   await expect(page.getByText('Ролик для автовосстановления не выбран.',{exact:true})).toBeVisible();
@@ -78,7 +78,7 @@ test('late selection response from old device is discarded',async({page})=>{
 test('video selection uses the selected device background collection',async({page})=>{
   await page.evaluate(() => { (window as unknown as {fixture:{scoped:boolean}}).fixture.scoped=true; });
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByLabel('Сохранённый ролик').locator('option')).toHaveCount(1);
   await expect(page.getByLabel('Сохранённый ролик')).toHaveValue('a'.repeat(32));
   await page.getByLabel('Устройство',{exact:true}).selectOption('B');
@@ -89,7 +89,7 @@ test('video selection uses the selected device background collection',async({pag
 test('full video catalog permits file management but not playback outside collection',async({page})=>{
   await page.evaluate(() => { (window as unknown as {fixture:{scoped:boolean}}).fixture.scoped=true; });
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByLabel('Показать все файлы видео для управления').check();
   await page.getByLabel('Сохранённый ролик').selectOption('b'.repeat(32));
   await expect(page.getByRole('button',{name:'Выбрать ролик для LCD'})).toBeDisabled();
@@ -102,7 +102,7 @@ for(const language of ['en-US','ru-RU'] as const) test(`media selection preserve
   const english=language==='en-US';await expect(page.locator('html')).toHaveAttribute('lang',english?'en':'ru');
   await page.getByLabel(english?'Name':'Название',{exact:true}).fill('Имя {1} <CPU>');
   await page.getByRole('button',{name:english?'Library':'Библиотека',exact:true}).click();
-  await page.getByText(english?'Video library':'Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:english?'Video library':'Библиотека роликов',exact:true}).click();
   await page.getByLabel(english?'Saved video':'Сохранённый ролик').selectOption('b'.repeat(32));
   await page.getByRole('button',{name:english?'Select video for LCD':'Выбрать ролик для LCD',exact:true}).click();
   const alert=page.getByRole('alert').filter({hasText:'Настройки'});await expect(alert).toBeVisible();

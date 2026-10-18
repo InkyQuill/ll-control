@@ -35,8 +35,8 @@ for (const initial of ['en-US', 'ru-RU'] as const) {
       const english = initial === 'en-US';
       const title = page.getByLabel(english ? 'Name' : 'Название', { exact: true });
       await title.fill('Unsent LCD draft');
-      await page.getByText(english ? 'Saved profiles' : 'Сохранённые профили', { exact: true }).click();
-      const panel = page.locator('.profiles');
+      await page.getByRole('button',{name:english ? 'Saved profiles' : 'Сохранённые профили',exact:true}).click();
+      const panel = page.getByRole('dialog',{name:/^(Saved profiles|Сохранённые профили)$/,exact:true});
       await panel.getByRole('button', { name: english ? 'Refresh profile list' : 'Обновить список профилей', exact: true }).click();
       if (operation === 'rename') {
         await expect(panel.getByRole('combobox')).toContainText('Настройки {1} <CPU>');

@@ -50,7 +50,7 @@ test('composition survives library navigation and overview; disconnected selecti
   await page.getByLabel('Название', { exact: true }).fill('Мой несохранённый экран');
   await page.getByRole('button', { name: 'Библиотека', exact: true }).click();
   await expect(page.getByLabel('Название', { exact: true })).toHaveValue('Мой несохранённый экран');
-  await page.getByText('Сохранённые профили', { exact: true }).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button', { name: 'Обновить список профилей', exact: true }).click();
   await page.getByLabel('Имя профиля').fill('Сохранить позже');
   await page.getByRole('button', { name: 'Композиция', exact: true }).click();

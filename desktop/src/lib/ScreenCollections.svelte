@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import { tick, untrack } from 'svelte';
   import { rpc, message, type ScreenCollections, type ScreenCollectionsState, type CollectionContext, type CollectionAsset } from './api';
@@ -81,16 +82,15 @@
   }
 </script>
 
-<details bind:open>
-  <summary>{t("Коллекции LCD")}</summary>
-  <p>{t("Состав списков для этого устройства. Удаление из списка сохраняет файл в каталоге и не изменяет текущую тему.")}</p>
+<StudioPopover label={`${t("Коллекции LCD")}`} bind:open text wide>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Состав списков для этого устройства. Удаление из списка сохраняет файл в каталоге и не изменяет текущую тему.")}</p></StudioPopover>
   <button bind:this={refreshButton} disabled={!connected || busy || loading} onclick={() => refresh()}>{t("Обновить коллекции")}</button>
   {#if loading}<p role="status">{t("Чтение коллекций…")}</p>{/if}
   {#if error}<p role="alert">{t('Не удалось проверить коллекции:')} <span>{error}</span></p>{/if}
   {#if notice}<p role="status">{#if notice.kind === 'unconfirmed'}{t('Результат записи требует проверки:')} <span>{notice.diagnostic}</span>{:else}{notice.kind === 'migrated' ? t('Каталог перенесён в коллекции.') : t('Состав коллекций сохранён.')}{/if}</p>{/if}
   {#if currentState?.persistence.pending}<p role="alert">{t("Состав ожидает записи.")} {currentState.persistence.last_error ?? ''} {t("Обновите коллекции для проверки.")}</p>{/if}
   {#if currentState && !draft}
-    <p>{t("Используется общий каталог. Перенос сохранит доступные изображения и видео в отдельных списках.")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Используется общий каталог. Перенос сохранит доступные изображения и видео в отдельных списках.")}</p></StudioPopover>
     <button disabled={locked} onclick={() => save(true)}>{t("Перенести каталог в коллекции")}</button>
   {:else if draft}
     <label>{t("Коллекция")}<select bind:value={context} onchange={() => choice = ''}><option value="image">{t("Изображения")}</option><option value="background">{t("Фоны")}</option><option value="watermark">{t("Водяные знаки")}</option></select></label>
@@ -100,11 +100,11 @@
     <button disabled={locked || !changed} onclick={() => save()}>{t("Сохранить коллекции")}</button>
     {#if changed}<p role="status">{t("Состав изменён в черновике. Сохраните или обновите коллекции для отмены.")}</p>{/if}
   {/if}
-</details>
+</StudioPopover>
 
 <style>
-  details { border: 1px solid var(--border-strong); border-radius: .6rem; padding: .8rem; margin-block: 1rem; }
-  summary { cursor: pointer; font-weight: 600; }
+
+
   label { display: grid; gap: .3rem; margin-block: .6rem; }
   ul { padding: 0; list-style: none; }
   li { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-block: .4rem; }

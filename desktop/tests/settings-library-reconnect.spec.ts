@@ -42,7 +42,7 @@ for(const fail of [false,true])test(`settings ignores old-device ${fail?'failure
 });
 
 test('profile edit result after disconnect requires fresh library and preserves local draft',async({page})=>{
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей'}).click();
   await page.getByLabel('Имя профиля').fill('My draft');
   await page.getByLabel('Название',{exact:true}).fill('Unsaved LCD');
@@ -64,13 +64,14 @@ test('cleanup discards scan after draft asset set changes and requires rescan',a
   await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему'}).click();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Image draft');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Очистка неиспользуемых изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Очистка неиспользуемых изображений',exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {raceFixture:Fixture}).raceFixture.hold='cleanup_theme_assets';});
   const scan=page.getByRole('button',{name:'Проверить неиспользуемые изображения'});
   await scan.click();await expect(scan).toBeDisabled();
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await page.getByRole('button',{name:/^(Слои|Layers)$/,exact:true}).click();await page.locator('.layer-row[data-layer-index="0"]').click();await page.getByRole('button',{name:'Удалить слой',exact:true}).click();
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
+  await page.getByRole('button',{name:'Очистка неиспользуемых изображений',exact:true}).click();
   await page.evaluate(()=>{(window as unknown as {raceFixture:Fixture}).raceFixture.finish();});
   await expect(scan).toBeEnabled();
   await expect(page.getByText('Можно удалить:',{exact:false})).toHaveCount(0);

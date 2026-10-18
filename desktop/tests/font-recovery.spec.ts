@@ -42,7 +42,7 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
     await expect(page.getByText('Daemon подключён')).toBeVisible();await selectLayer(page,0);
     await page.getByLabel('Название', { exact: true }).fill('Keep my draft');
     await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Пользовательские шрифты', { exact: true }).click();
+  await page.getByRole('button',{name:'Пользовательские шрифты',exact:true}).click();
     const file = page.getByLabel('Загрузить шрифт', { exact: true });
     await file.setInputFiles({ name: 'First.ttf', mimeType: 'font/ttf', buffer: Buffer.alloc(70000, 1) });
     if (mode === 'disconnect') {
@@ -67,9 +67,9 @@ for (const mode of ['disconnect', 'invalid-font'] as const) {
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
     const calls = await page.evaluate(() => (window as unknown as FixtureWindow).fontRecovery.calls);
     expect(calls.filter(c => c.method === 'set_lcd_theme')).toHaveLength(0);
-    expect(calls.filter(c => c.params.request?.action === 'begin')).toHaveLength(2);
-    expect(calls.filter(c => c.params.request?.action === 'cancel')).toHaveLength(2);
-    expect(calls.filter(c => c.params.request?.action === 'chunk' && c.params.request.id === '00000000000000000000000000000001')).toHaveLength(mode === 'disconnect' ? 1 : 2);
-    expect(calls.filter(c => c.params.request?.action === 'finish' && c.params.request.id === '00000000000000000000000000000001')).toHaveLength(mode === 'disconnect' ? 0 : 1);
+    expect(calls.filter(c => c.params?.request?.action === 'begin')).toHaveLength(2);
+    expect(calls.filter(c => c.params?.request?.action === 'cancel')).toHaveLength(2);
+    expect(calls.filter(c => c.params?.request?.action === 'chunk' && c.params?.request.id === '00000000000000000000000000000001')).toHaveLength(mode === 'disconnect' ? 1 : 2);
+    expect(calls.filter(c => c.params?.request?.action === 'finish' && c.params?.request.id === '00000000000000000000000000000001')).toHaveLength(mode === 'disconnect' ? 0 : 1);
   });
 }

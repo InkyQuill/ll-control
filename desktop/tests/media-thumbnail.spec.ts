@@ -37,7 +37,7 @@ test.beforeEach(async ({page})=>{
 test('late old thumbnail cannot replace selected clip; unmount releases image URL',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{delay:boolean}}).fixture.delay=true;});
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{release:unknown}}).fixture.release!==null)).toBe(true);
   await page.getByLabel('Сохранённый ролик').selectOption('b'.repeat(32));
   const image=page.getByRole('img',{name:'Первый кадр: Облака'});
@@ -45,9 +45,8 @@ test('late old thumbnail cannot replace selected clip; unmount releases image UR
   await expect(image).toHaveCount(0);
   await page.evaluate(()=>{(window as unknown as {fixture:{release:()=>void}}).fixture.release();});
   await expect(image).toBeVisible(); const source=await image.getAttribute('src');
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
-  // Native details toggle is delivered asynchronously; wait for Svelte cleanup.
+  await page.keyboard.press('Escape');
+  // Popover toggle is delivered asynchronously; wait for Svelte cleanup.
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{revoked:string[]}}).fixture.revoked)).toEqual([source]);
   const state=await page.evaluate(()=>(window as unknown as {fixture:{created:string[];revoked:string[];cancelled:string[];writes:string[]}}).fixture);
   expect(state.created).toEqual([source]);expect(state.revoked).toEqual([source]);
@@ -57,7 +56,7 @@ test('late old thumbnail cannot replace selected clip; unmount releases image UR
 test('busy decoder retries within bound without applying playback',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{busy:number}}).fixture.busy=3;});
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByRole('img',{name:'Первый кадр: Волны'})).toBeVisible();
   expect(await page.evaluate(()=>(window as unknown as {fixture:{requests:number}}).fixture.requests)).toBe(4);
 });
@@ -65,7 +64,7 @@ test('busy decoder retries within bound without applying playback',async({page})
 test('thumbnail failure does not block selecting media and allows explicit retry',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{fail:boolean}}).fixture.fail=true;});
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByText('Миниатюра недоступна: Decoder unavailable',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Выбрать ролик для LCD',exact:true})).toBeEnabled();
   await page.evaluate(()=>{(window as unknown as {fixture:{fail:boolean}}).fixture.fail=false;});
@@ -75,12 +74,12 @@ test('thumbnail failure does not block selecting media and allows explicit retry
 
 test('browser decode failure exposes explicit retry and releases both thumbnail URLs',async({page})=>{
  await page.evaluate(()=>{(window as unknown as {fixture:{corrupt:boolean}}).fixture.corrupt=true;});
- await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();await page.getByText('Библиотека роликов',{exact:true}).click();
+ await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
  await expect(page.getByRole('status').filter({hasText:'Не удалось показать миниатюру. Повторите запрос.'})).toBeVisible();
  expect(await page.evaluate(()=>(window as unknown as {fixture:{requests:number}}).fixture.requests)).toBe(1);
  await page.evaluate(()=>{(window as unknown as {fixture:{corrupt:boolean}}).fixture.corrupt=false;});await page.getByRole('button',{name:'Обновить миниатюру',exact:true}).click();
  const image=page.getByRole('img',{name:'Первый кадр: Волны',exact:true});await image.evaluate((node:HTMLImageElement)=>node.decode());await expect(image).toBeVisible();
- await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();await page.getByText('Библиотека роликов',{exact:true}).click();
+ await page.keyboard.press('Escape');
  await expect.poll(()=>page.evaluate(()=>{const f=(window as unknown as {fixture:{created:string[];revoked:string[]}}).fixture;return f.revoked.length;})).toBe(2);
  const state=await page.evaluate(()=>(window as unknown as {fixture:{created:string[];revoked:string[];requests:number;writes:string[]}}).fixture);expect(state.revoked).toEqual(state.created);expect(state.requests).toBe(2);expect(state.writes).toEqual([]);
 });

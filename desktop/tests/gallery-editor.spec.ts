@@ -34,7 +34,7 @@ async function setup(page:Page, failure = '') {
   },{failure});
   await page.goto('/?view=display');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
 }
 for(const context of ['image','background','watermark']) test(`gallery edit replaces ${context} membership and retains other contexts/files`,async({page})=>{
   await setup(page);
@@ -45,7 +45,7 @@ for(const context of ['image','background','watermark']) test(`gallery edit repl
   await page.getByRole('button',{name:'Подготовить preview изображения'}).click();
   await page.getByRole('button',{name:'Сохранить изображение в галерею'}).click();
   await expect(page.getByText('Запись коллекции заменена.',{exact:false})).toBeVisible();
-  await expect(page.locator('summary').filter({hasText:'Библиотека изображений'})).toBeFocused();
+  await expect(page.getByRole('button',{name:'Библиотека изображений',exact:true})).toBeFocused();
   const result=await page.evaluate(()=>(window as unknown as {galleryEditor:{collections:{images:string[];backgrounds:{key:string}[];watermarks:string[]};calls:{command:string;args:{method?:string}}[]}}).galleryEditor);
   expect(result.collections.images).toContain((context==='image'?'b':'a').repeat(32));
   expect(result.collections.backgrounds[0].key).toBe((context==='background'?'b':'a').repeat(32));

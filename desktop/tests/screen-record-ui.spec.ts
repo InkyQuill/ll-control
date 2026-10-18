@@ -48,7 +48,7 @@ async function setup(page:Page,videoUrl='data:video/mp4;base64,',language='ru-RU
     }}});
   },{videoUrl,language});
   await page.goto('/?view=display');await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText(language==='en-US'?'Video library':'Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:language==='en-US'?'Video library':'Библиотека роликов',exact:true}).click();
   await page.getByRole('button',{name:language==='en-US'?'Record screen…':'Записать экран…',exact:true}).click();
 }
 test('capture pause resume review and explicit save add gallery membership',async({page})=>{
@@ -252,7 +252,7 @@ test('failed pause does not open operation chooser or finalize capture',async({p
   await page.evaluate(()=>{(window as unknown as {recordingFixture:{failPause:boolean}}).recordingFixture.failPause=true;});
   await page.getByRole('button',{name:'Завершить и просмотреть запись',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText('pause rejected');
-  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.getByRole('dialog',{name:'Что сделать с записью?'})).not.toBeVisible();
   await expect(page.getByRole('button',{name:'Приостановить запись',exact:true})).toBeEnabled();
 });
 for(const clear of [false,true])test(`deferred finish preserves import intent and clear cancels it, clear=${clear}`,async({page})=>{

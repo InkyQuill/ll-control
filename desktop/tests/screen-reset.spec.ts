@@ -41,7 +41,7 @@ async function setup(page: Page) {
     });
   });
   await page.goto('/?view=display');
-  await page.getByText('Сброс экрана LCD',{exact:true}).click();
+  await page.getByRole('button',{name:'Сброс экрана LCD',exact:true}).click();
   await expect(page.getByRole('button',{name:'Сбросить экран…',exact:true})).toBeEnabled();
 }
 async function confirm(page:Page) {
@@ -87,6 +87,7 @@ test('pending reset survives tab changes and locks Apply and device selection', 
   await expect(page.getByLabel('Устройство',{exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Датчики',exact:true}).click();
   await page.getByRole('button',{name:'Экран помпы',exact:true}).click();
+  await page.getByRole('button',{name:'Сброс экрана LCD',exact:true}).click();
   await expect(page.getByRole('button',{name:'Повторить запрос сброса'})).toBeDisabled();
   await page.evaluate(() => (window as unknown as {releaseReset:()=>void}).releaseReset());
   await expect(page.getByRole('button',{name:'Сбросить экран…',exact:true})).toBeEnabled();
@@ -107,10 +108,13 @@ test('definitive revision rejection requires a fresh confirmation', async ({page
 test('late receipt confirmation invalidates a profile list reloaded before commit', async ({page}) => {
   await setup(page);await fault(page,'late');await confirm(page);
   await expect(page.getByRole('button',{name:'Повторить запрос сброса'})).toBeEnabled();
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей'}).click();
   await expect(page.getByRole('combobox',{name:'Слот профиля',exact:true})).toBeVisible();
   await page.evaluate(() => (window as unknown as {releaseReset:()=>void}).releaseReset());
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Сброс экрана LCD',exact:true}).click();
   await page.getByRole('button',{name:'Проверить результат сброса'}).click();
   await expect(page.getByText('Сброс сохранён, базовая тема отправлена на LCD.')).toBeVisible();
   await expect(page.getByText(/Ответ не подтверждён:/)).toHaveCount(0);

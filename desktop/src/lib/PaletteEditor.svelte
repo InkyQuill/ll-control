@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import {onDestroy,untrack} from 'svelte';
   import {rpc,message,hex,rgb,type Theme,type Sensor,type MeteorSensor,type FireworksSensor,type EffectSensor,type SensorDefaultsState,fireworksColors} from './api';
@@ -64,7 +65,7 @@
 {#if active}
 <fieldset disabled={disabled}>
   <legend>{active.kind==='fireworks'?"" + t("Фейерверк") + "":"" + t("Метеоры") + ""}</legend>
-  <p>{t("Текст, часы и изображения остаются поверх анимации.")}</p>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Текст, часы и изображения остаются поверх анимации.")}</p></StudioPopover>
   <fieldset disabled={active.effect.dynamic}><legend>{t("Статические настройки")} {family}</legend>
     {#if active.kind==='meteor'}<label>{t("Скорость метеоров")}<select bind:value={active.effect.speed}><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label>{:else}<label>{t("Интенсивность Fireworks")}<select bind:value={active.effect.intensity}><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label>{/if}
     {#each indices as index}
@@ -81,7 +82,7 @@
       {#if source&&!sources.some(sensor=>key(sensor)===savedKey(source))}<option value={savedKey(source)}>{t("Недоступен:")} {source.binding.sensor_id}</option>{/if}
     </select></label>
     {#if source}
-      <p>{t("Пороги в исходных единицах:")} {source.binding.unit==='celsius'?'°C':source.binding.unit==='percent'?'%':'RPM'}{t(". Диапазон: 0–")}{maximum}.</p>
+      <StudioPopover label={t("Справка")} icon="help"><p>{t("Пороги в исходных единицах:")} {source.binding.unit==='celsius'?'°C':source.binding.unit==='percent'?'%':'RPM'}{t(". Диапазон: 0–")}{maximum}.</p></StudioPopover>
       <label>{t("Нижний порог эффекта")}<input type="number" min="0" max={maximum} step="1" bind:value={source.binding.low}/></label>
       <label>{t("Верхний порог эффекта")}<input type="number" min="0" max={maximum} step="1" bind:value={source.binding.high}/></label>
       {#each indices as index}
@@ -89,7 +90,7 @@
         <label>{t("Нижний цвет")} {family} {index+1}<input type="color" value={hex(paletteSource.low_colors[index])} oninput={event=>{if(source===paletteSource)paletteSource.low_colors[index]=color(event.currentTarget.value);}}/></label>
         <label>{t("Верхний цвет")} {family} {index+1}<input type="color" value={hex(paletteSource.high_colors[index])} oninput={event=>{if(source===paletteSource)paletteSource.high_colors[index]=color(event.currentTarget.value);}}/></label>
       {/each}
-      {#if source.binding.low===source.binding.high}<p>{t("На равном пороге используются нижняя интенсивность и палитра; выше порога — верхние.")}</p>{/if}
+      {#if source.binding.low===source.binding.high}<StudioPopover label={t("Справка")} icon="help"><p>{t("На равном пороге используются нижняя интенсивность и палитра; выше порога — верхние.")}</p></StudioPopover>{/if}
     {/if}
   </fieldset>
   {/if}

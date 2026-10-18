@@ -21,7 +21,7 @@ test('cleanup previews before deletion and protects current draft assets', async
   await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему'}).click();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Draft');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Очистка неиспользуемых изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Очистка неиспользуемых изображений',exact:true}).click();
   await expect(page.getByRole('button',{name:'Удалить неиспользуемые изображения'})).toHaveCount(0);
   await page.getByRole('button',{name:'Проверить неиспользуемые изображения'}).click();
   await expect(page.getByRole('status')).toContainText('Можно удалить: 1');

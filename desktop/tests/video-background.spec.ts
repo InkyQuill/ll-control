@@ -59,25 +59,29 @@ test.beforeEach(async ({ page }) => {
 
 test('video background preserves layers and gradient, previews and saves complete slot without implicit Apply', async ({ page }) => {
   const mode = page.getByRole('combobox',{name:'Тип фона',exact:true,includeHidden:true});
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await mode.selectOption('horizontal');
   await page.getByLabel('Первый цвет фона',{exact:true}).fill('#123456');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByRole('button',{name:'Использовать фоном темы',exact:true}).click();
   await expect(mode).toHaveValue('video');
   const writes = () => page.evaluate(() => window.compositionFixture.calls.filter(c=>c.method.startsWith('set_lcd')));
   expect(await writes()).toEqual([]);
   await expect.poll(() => page.evaluate(() => window.compositionFixture.calls.filter(c=>c.method==='preview_lcd_editor').length)).toBeGreaterThan(0);
   expect(await writes()).toEqual([]);
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();
   await page.getByLabel('Имя профиля').fill('Video theme');
   await page.getByRole('button',{name:'Сохранить черновик в слот',exact:true}).click();
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await mode.selectOption('horizontal');
   await expect(page.getByLabel('Первый цвет фона',{exact:true})).toHaveValue('#123456');
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Загрузить профиль в редактор',exact:true}).click();
+  await page.keyboard.press('Escape');
   await expect(mode).toHaveValue('video');
   expect(await writes()).toEqual([]);
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
@@ -85,6 +89,7 @@ test('video background preserves layers and gradient, previews and saves complet
   const composed = (await writes())[0].params.theme as Theme;
   expect(composed).toMatchObject({version:2,background_video:'a'.repeat(32)});
   expect(composed.layers.length).toBeGreaterThan(0);
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await mode.selectOption('solid');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
@@ -97,7 +102,7 @@ test('video background preserves layers and gradient, previews and saves complet
 
 test('missing draft video is not silently replaced and failed Apply is visible', async ({ page }) => {
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByRole('button',{name:'Использовать фоном темы',exact:true}).click();
   await page.evaluate(() => { window.compositionFixture.missing = true; });
   await page.getByRole('button',{name:'Обновить ролики',exact:true}).click();
@@ -109,13 +114,15 @@ test('missing draft video is not silently replaced and failed Apply is visible',
 
 test('image background and watermark contexts preserve overlays and switch exclusively with video',async({page})=>{
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
   await page.getByLabel('Назначение изображения').selectOption('background');
   await page.getByRole('button',{name:'Сделать фоном Полночь',exact:true}).click();
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await expect(page.getByLabel('Тип фона')).toHaveValue('image');
   await page.getByLabel('Размещение фона').selectOption('contain');
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
   await page.getByLabel('Назначение изображения').selectOption('watermark');
   await expect(page.getByRole('button',{name:'Добавить водяной знак Полночь',exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Добавить водяной знак Орбита',exact:true}).click();
@@ -128,15 +135,18 @@ test('image background and watermark contexts preserve overlays and switch exclu
   expect(first.layers.at(-1)).toMatchObject({kind:'image',asset:'builtin-orbit-mark-v1',fit:'contain_native',watermark_position:{horizontal:50,vertical:50}});
   expect(first.layers.some(l=>l.kind==='clock')).toBe(true);
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByRole('button',{name:'Использовать фоном темы',exact:true}).click();
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.compositionFixture.calls.filter(c=>c.method==='set_lcd_theme').length)).toBe(2);
   const video=await page.evaluate(()=>window.compositionFixture.calls.filter(c=>c.method==='set_lcd_theme').at(-1)!.params.theme as Theme);
   expect(video.background_image).toBeUndefined();expect(video.background_video).toBe('a'.repeat(32));
   expect(video.layers).toEqual(first.layers);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
   await page.getByLabel('Назначение изображения').selectOption('background');
   await page.getByRole('button',{name:'Сделать фоном Полночь',exact:true}).click();
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();await page.getByLabel('Тип фона').selectOption('solid');
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();

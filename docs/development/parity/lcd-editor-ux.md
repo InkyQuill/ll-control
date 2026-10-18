@@ -297,3 +297,41 @@ only one device writer remained. Pump telemetry stayed at 3060 RPM and coolant
 at 36.2°C. Saved theme output resumed with requested/applied brightness 50% and
 orientation 0°, with no reported LCD error. This is process/telemetry confirmation;
 user-visible editor usability and physical image confirmation remain pending.
+
+## UX4 — Editor finish and installed fonts (2026-10-18)
+
+Requested after installed-app review: icon actions, flatter tonal surfaces, no inline
+expanding blocks, question-mark help popovers, and access to system fonts.
+
+- [x] Replace LCD disclosures with keyboard-accessible floating panels; retain their
+      drafts and close them when their owning workspace becomes hidden.
+- [x] Use consistent stroke icons for common actions, retaining accessible names,
+      tooltips and explicit text for navigation, field labels and Apply.
+- [x] Reduce repeated borders; retain focus, selected, error and disabled states.
+- [x] Expose the fontconfig TTF/OTF catalogue through opaque desktop-owned IDs.
+      Selecting a font imports bounded bytes through the existing managed upload;
+      theme serialization still stores a managed asset, never a host path.
+- [x] Verify native Wayland layout and real font import at 1024×768 and 1280×800
+      in EN/RU, plus browser keyboard/popover positioning checks.
+- [x] Complete affected regressions, including popup dismissal, cancellation, focus
+      recovery and preserving video selection for the separate profile panel.
+- [ ] Package/install the reviewed source.
+
+The previous picker contained only bundled and explicitly imported fonts; it never
+queried installed fonts. TTC collections remain outside the supported renderer
+format; named variable-font instances are omitted because the renderer loads the
+default face. System-font selection changes the local theme, with explicit device Apply.
+All raw captures and logs remain outside Git. This slice does not close R3 hardware
+rotation, brightness-step, long-duration performance or release qualification gates.
+
+Native EN/RU input checks also passed selection, movement, resizing, cancellation,
+undo/redo, sensor rebinding, profile persistence, decoded mock output and restart.
+These are software checks with a private MockBackend, not physical LCD acceptance.
+
+Software qualification: Svelte has zero errors/warnings; strict locale coverage is
+1179/1179. Font catalogue tests, GUI Clippy and workspace formatting passed. The
+778-case browser run passed 754 initially; all 24 failures were resolved and
+covered by a 21-case passing rerun followed by 73 passing affected scenarios.
+The fixes include explicit popover navigation in tests, visible focus targets,
+and retaining video selection across dismissal without retaining it across a
+device/connection change. No physical acceptance gate is closed by these results.

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import {ArchiveUiError,archiveError,archiveMessage,archiveDiagnostic,type ArchiveMessage} from './archive-messages';
   import {presentation} from './presentation.svelte';
@@ -98,20 +99,19 @@
     catch(e){if(epoch===view)error=archiveError(e);}finally{mutation++;}
   }
 </script>
-<details ontoggle={event=>open=event.currentTarget.open}>
-  <summary>{t("Импорт и экспорт профиля")}</summary>
-  <p>{t("Архив L-Connect Linux (.lcp) содержит один слот и его изображения, видео и шрифты. Импорт заменит выбранный слот. Применение к устройству остаётся отдельным действием.")}</p>
+<StudioPopover label={`${t("Импорт и экспорт профиля")}`} bind:open text wide>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Архив L-Connect Linux (.lcp) содержит один слот и его изображения, видео и шрифты. Импорт заменит выбранный слот. Применение к устройству остаётся отдельным действием.")}</p></StudioPopover>
   <div class="buttons">
     <button disabled={unavailable||!hasProfile} onclick={()=>start('export')}>{t("Экспортировать слот в архив…")}</button>
     <button disabled={unavailable} onclick={()=>start('import')}>{t("Импортировать архив в слот…")}</button>
   </div>
-  <p>{t("При экспорте выберите новое имя: существующие файлы не заменяются.")}</p>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("При экспорте выберите новое имя: существующие файлы не заменяются.")}</p></StudioPopover>
   {#if job}
     <p role="status">{t('{0} · {1} · слот {2}',t(archivePhase[job.phase]),t(profileGroupNames[job.group]),job.slot+1)}{job.file_name?` · ${job.file_name}`:''}</p>
     {#if active}<progress aria-label="{t("Передача архива")}" max={job.total||1} value={job.total?job.transferred:undefined}></progress><p>{job.transferred.toLocaleString(presentation.language)} / {job.total?job.total.toLocaleString(presentation.language):'…'} {t("байт")}</p>{/if}
     {#if cancellable}<button onclick={cancel}>{t("Отменить передачу архива")}</button>{/if}
     {#if job.phase==='committing'}<p>{t("Сохранение уже началось. Дождитесь результата; при потере связи его можно прочитать по ID операции.")}</p>{/if}
-    {#if job.message||job.message_code}<p role={job.phase==='failed'||job.phase==='uncertain'?'alert':'status'}>{archiveMessage(job,presentation.language)}</p>{#if archiveDiagnostic(job,presentation.language)}<details><summary>{t('Техническая диагностика')}</summary><pre>{archiveDiagnostic(job,presentation.language)}</pre></details>{/if}{/if}
+    {#if job.message||job.message_code}<p role={job.phase==='failed'||job.phase==='uncertain'?'alert':'status'}>{archiveMessage(job,presentation.language)}</p>{#if archiveDiagnostic(job,presentation.language)}<StudioPopover label={`${t('Техническая диагностика')}`} text><pre>{archiveDiagnostic(job,presentation.language)}</pre></StudioPopover>{/if}{/if}
   {/if}
   {#if pending}<p>{t("Сохранён ID незавершённой операции:")} <code>{pending.id}</code>{t(". Перед новой операцией прочитайте результат и обновите список профилей.")}</p>{/if}
   <label>{t("ID операции для восстановления")}<input bind:value={recoveryId} maxlength="32" spellcheck="false" disabled={active}/></label>
@@ -121,10 +121,10 @@
     {#if job?.phase==='uncertain'}<button disabled={!connected||!recoveryValid} onclick={()=>recover('cancel')}>{t("Подтвердить отмену передачи")}</button>{/if}
     {#if pending||job&&archiveTerminal(job.phase)}<button disabled={active||disabled} onclick={dismiss}>{t("Закрыть сведения об архиве")}</button>{/if}
   </div>
-  {#if error}<p role="alert">{archiveMessage(error,presentation.language)}</p>{#if archiveDiagnostic(error,presentation.language)}<details><summary>{t('Техническая диагностика')}</summary><pre>{archiveDiagnostic(error,presentation.language)}</pre></details>{/if}{/if}
+  {#if error}<p role="alert">{archiveMessage(error,presentation.language)}</p>{#if archiveDiagnostic(error,presentation.language)}<StudioPopover label={`${t('Техническая диагностика')}`} text><pre>{archiveDiagnostic(error,presentation.language)}</pre></StudioPopover>{/if}{/if}
   {#if notice}<p role="status">{t(notice.source,...notice.values)}</p>{/if}
-</details>
+</StudioPopover>
 <style>
   pre{white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
-  details{border-top:1px solid var(--border);padding-top:14px;display:grid;gap:12px}summary{cursor:pointer;font-weight:600}p{line-height:1.5}label{display:grid;gap:6px;margin:12px 0}.buttons{display:flex;flex-wrap:wrap;gap:8px}progress{width:100%}[role=alert]{color:var(--danger)}code{user-select:all;overflow-wrap:anywhere}
+  p{line-height:1.5}label{display:grid;gap:6px;margin:12px 0}.buttons{display:flex;flex-wrap:wrap;gap:8px}progress{width:100%}[role=alert]{color:var(--danger)}code{user-select:all;overflow-wrap:anywhere}
 </style>

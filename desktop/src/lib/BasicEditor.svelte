@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import type { BasicBackground, BasicOverlay, Theme } from './api';
   import { basicOverlays, selectBasicEditor } from './basic-editor';
   import { lcdPageKind } from './lcd-pages';
@@ -38,7 +39,7 @@
         {#each availableOverlays as overlay (overlay)}<option value={overlay}>{overlays[overlay]}</option>{/each}
       </select>
     </label>
-    <p>{t('Каждый вариант сохраняет свои правки. Изменения остаются в черновике до применения.')}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t('Каждый вариант сохраняет свои правки. Изменения остаются в черновике до применения.')}</p></StudioPopover>
     {#if error}<p role="alert">{t(error.resource,...error.values)}</p>{/if}
   </fieldset>
 {/if}

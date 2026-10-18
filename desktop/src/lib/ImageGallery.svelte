@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import { ValidationError, type UiDiagnostic } from './validation-error';
   import {t, diagnosticText} from './i18n.svelte';
   import { tick } from 'svelte';
@@ -18,7 +19,7 @@
   type Diagnostic = {detail:string};
   let edit = $state<AssetInfo | null>(null), saving = $state(false), renameError = $state<Diagnostic|null>(null), renameReadback = $state(false);
   let confirmDelete = $state<AssetInfo | null>(null), deleteNotice = $state<string|Diagnostic>(''), deleteReadback = $state(false);
-  let summaryElement: HTMLElement | undefined = $state();
+  let summaryElement: HTMLButtonElement | undefined = $state();
   let generation = 0, mutationEpoch = 0;
   $effect(() => { void device; void collectionEpoch; void connected; void open; void context; generation++; edit = null; renameError = null; renameReadback = false; confirmDelete = null; deleteNotice = ''; });
   async function publishEdit(key: string, png: number[], name: string) {
@@ -101,16 +102,15 @@
     return () => { active = false; urls.forEach(url => URL.revokeObjectURL(url)); };
   });
 </script>
-<details bind:open>
-  <summary bind:this={summaryElement}>{t("Библиотека изображений")}</summary>
-  <p>{t("Добавьте сохранённое изображение в черновик. Вывод на LCD изменится после применения темы.")}</p>
+<StudioPopover label={t("Библиотека изображений")} bind:open bind:trigger={summaryElement} icon="image" text wide>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Добавьте сохранённое изображение в черновик. Вывод на LCD изменится после применения темы.")}</p></StudioPopover>
   {#if !connected}<p role="status">{t("Библиотека недоступна без связи с daemon.")}</p>
   {:else}
     <label><input type="checkbox" bind:checked={catalogMode}/>{t("Показать все файлы изображений для управления")}</label>
     <label>{t("Назначение изображения")}<select bind:value={context} disabled={saving}>
       <option value="image">{t("Слой изображения")}</option><option value="background">{t("Фон")}</option><option value="watermark">{t("Водяной знак")}</option>
     </select></label>
-    <p>{context === 'background' ? "" + t("Выбранное изображение заменит фон, сохранив все слои. Видео для фона доступно в библиотеке роликов.") + "" : context === 'watermark' ? "" + t("Водяной знак добавится поверх остальных слоёв. Размер, положение и прозрачность можно изменить в редакторе.") + "" : "" + t("Изображение добавится отдельным слоем.") + ""}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{context === 'background' ? "" + t("Выбранное изображение заменит фон, сохранив все слои. Видео для фона доступно в библиотеке роликов.") + "" : context === 'watermark' ? "" + t("Водяной знак добавится поверх остальных слоёв. Размер, положение и прозрачность можно изменить в редакторе.") + "" : "" + t("Изображение добавится отдельным слоем.") + ""}</p></StudioPopover>
     <button disabled={loading || saving} onclick={() => revision++}>{t("Обновить изображения")}</button>
     {#if error}<p role="alert">{t("Не удалось загрузить изображения:")} {diagnosticText(error)}</p>{/if}
     {#if loading}<p role="status">{t("Загрузка изображений…")}</p>
@@ -119,7 +119,7 @@
       {#each visible as key (key)}
         <article>
           <p>{title(key)}</p>
-          {#if !imageInCollection(membership, key, context)}<p>{t("Файл вне выбранной коллекции. Добавьте его через «Коллекции LCD» для выбора в тему.")}</p>{/if}
+          {#if !imageInCollection(membership, key, context)}<StudioPopover label={t("Справка")} icon="help"><p>{t("Файл вне выбранной коллекции. Добавьте его через «Коллекции LCD» для выбора в тему.")}</p></StudioPopover>{/if}
           {#if builtin(key)}<p>{t("Встроенное изображение")}</p>{/if}
           {#if previews[key]}<img src={previews[key]} alt={title(key)} width="144" height="144"/>
           {:else if failures[key]}<p role="status">{t("Миниатюра недоступна:")} {failures[key]}</p>
@@ -152,10 +152,10 @@
       <button disabled={currentPage + 1 >= pages} onclick={() => page = currentPage + 1}>{t("Следующие изображения")}</button>
     </nav>{/if}
   {/if}
-</details>
+</StudioPopover>
 <style>
-  details { padding:16px; border:1px solid var(--border); border-radius:12px; margin:16px 0; }
-  summary { cursor:pointer; font-weight:600; }
+
+
   .images { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr)); gap:12px; }
   article { min-width:0; border:1px solid var(--border-strong); border-radius:10px; padding:10px; }
   img { display:block; max-width:100%; height:144px; object-fit:contain; }

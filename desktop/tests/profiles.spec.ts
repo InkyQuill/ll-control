@@ -37,7 +37,7 @@ test('screen profiles save and reload drafts, rename and delete without applying
   await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByLabel('Название', { exact:true }).fill('Saved composition');
-  await page.getByText('Сохранённые профили', { exact:true }).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button', { name:'Обновить список профилей' }).click();
   await page.getByLabel('Имя профиля').fill('My slot');
   await page.getByRole('button', { name:'Сохранить черновик в слот' }).click();
@@ -104,13 +104,13 @@ test('pump and fan profile loads remain separate local cooling drafts', async ({
   await page.goto('/?view=display');
   await page.getByRole('button', { name:'Охлаждение', exact:true }).click();
   await expect(page.getByText('Applied: 80%')).toBeVisible();
-  await page.getByText('Сохранённые профили', { exact:true }).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button', { name:'Обновить список профилей' }).click();
   await expect(page.getByLabel('Слот профиля')).toContainText('Pump quiet');
   await page.getByRole('button', { name:'Загрузить профиль в редактор' }).click();
   await expect(page.getByRole('combobox', { name:'Режим', exact:true })).toHaveValue('fixed_rpm');
   await page.getByRole('combobox', { name:'Канал', exact:true }).selectOption('fan');
-  await page.getByText('Сохранённые профили', { exact:true }).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button', { name:'Обновить список профилей' }).click();
   await expect(page.getByLabel('Слот профиля')).toContainText('Fan quiet');
   await page.getByRole('button', { name:'Загрузить профиль в редактор' }).click();

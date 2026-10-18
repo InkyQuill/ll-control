@@ -38,8 +38,8 @@ async function setup(page:Page,language:string){
 }
 async function language(page:Page,value:string){await page.evaluate(value=>{(window as unknown as {libraryResources:Fixture}).libraryResources.language=value;},value);await expect(page.locator('html')).toHaveAttribute('lang',value==='en-US'?'en':'ru');}
 const calls=(page:Page,method:string)=>page.evaluate(method=>(window as unknown as {libraryResources:Fixture}).libraryResources.calls.filter(c=>c.method===method),method);
-const font=(page:Page)=>page.locator('details').filter({has:page.locator('summary').filter({hasText:/^(Custom fonts|Пользовательские шрифты)$/})});
-async function upload(page:Page,mode:string){await page.evaluate(mode=>{(window as unknown as {libraryResources:Fixture}).libraryResources.fontMode=mode;},mode);await font(page).locator('summary').first().click();await font(page).locator('input[type=file]').setInputFiles({name:'Настройки {0}.ttf',mimeType:'font/ttf',buffer:Buffer.alloc(mode==='empty'?0:4,1)});}
+const font=(page:Page)=>page.getByRole('dialog',{name:/^(Custom fonts|Пользовательские шрифты)$/,exact:true});
+async function upload(page:Page,mode:string){await page.evaluate(mode=>{(window as unknown as {libraryResources:Fixture}).libraryResources.fontMode=mode;},mode);await page.getByRole('button',{name:/^(Custom fonts|Пользовательские шрифты)$/,exact:true}).click();await font(page).locator('input[type=file]').setInputFiles({name:'Настройки {0}.ttf',mimeType:'font/ttf',buffer:Buffer.alloc(mode==='empty'?0:4,1)});}
 for(const initial of ['en-US','ru-RU']){
  const en=initial==='en-US',other=en?'ru-RU':'en-US';
  for(const mode of ['success','hold','raw','empty','offset','not-saved'])test(`font ${mode} resource ownership follows language with one upload (${initial})`,async({page})=>{
@@ -49,7 +49,7 @@ for(const initial of ['en-US','ru-RU']){
   await expect(p.getByText(text(en),{exact:true})).toBeVisible();const before=await calls(page,'font_upload');await language(page,other);await expect(p.getByText(text(!en),{exact:true})).toBeVisible();expect(await calls(page,'font_upload')).toEqual(before);expect(before.filter(c=>(c.params.request as {action:string}).action==='begin')).toHaveLength(mode==='empty'?0:1);expect(await calls(page,'set_lcd_theme')).toEqual([]);
  });
  for(const kind of ['fonts','images'])for(const stage of ['scan','delete'])test(`${kind} cleanup ${stage} keeps raw error and requires explicit rescan (${initial})`,async({page})=>{
-  await setup(page,initial);const ru=kind==='fonts'?'шрифтов':'изображений';const p=page.locator('details').filter({has:page.locator('summary').filter({hasText:new RegExp(`^(Clean up unused ${kind}|Очистка неиспользуемых ${ru})$`)})});await p.locator('summary').click();
+  await setup(page,initial);const ru=kind==='fonts'?'шрифтов':'изображений';const p=page.getByRole('dialog',{name:new RegExp(`^(Clean up unused ${kind}|Очистка неиспользуемых ${ru})$`),exact:true});await page.getByRole('button',{name:new RegExp(`^(Clean up unused ${kind}|Очистка неиспользуемых ${ru})$`),exact:true}).click();
   const scan=p.getByRole('button',{name:new RegExp(`^(Check unused ${kind}|Проверить неиспользуемые ${kind==='fonts'?'шрифты':'изображения'})$`)});
   if(stage==='delete')await scan.click();await page.evaluate(stage=>{(window as unknown as {libraryResources:Fixture}).libraryResources.cleanupFail=stage;},stage);
   if(stage==='scan')await scan.click();else await p.getByRole('button',{name:new RegExp(`^(Delete unused ${kind}|Удалить неиспользуемые ${kind==='fonts'?'шрифты':'изображения'})$`)}).click();
@@ -57,7 +57,7 @@ for(const initial of ['en-US','ru-RU']){
   await language(page,other);await expect(p.getByRole('alert')).toContainText(prefix(!en));await expect(p.getByRole('alert').locator('span')).toHaveText('Настройки');expect(await calls(page,method)).toEqual(before);expect(before.filter(c=>c.params.delete===true)).toHaveLength(stage==='delete'?1:0);await expect(p.getByRole('button',{name:/^(Delete unused|Удалить неиспользуемые)/})).toHaveCount(0);
  });
  for(const broken of [false,true])test(`thumbnail ${broken?'decode':'native'} failure retains language and retries explicitly (${initial})`,async({page})=>{
-  await setup(page,initial);await page.evaluate(broken=>{const f=(window as unknown as {libraryResources:Fixture}).libraryResources;f.thumbnailFail=!broken;f.corrupt=broken;},broken);await page.getByText(/^(Video library|Библиотека роликов)$/,{exact:true}).click();if(broken)await page.getByRole('checkbox',{name:/^(Show video cards|Показать карточки роликов)$/}).check();
+  await setup(page,initial);await page.evaluate(broken=>{const f=(window as unknown as {libraryResources:Fixture}).libraryResources;f.thumbnailFail=!broken;f.corrupt=broken;},broken);await page.getByRole('button',{name:/^(Video library|Библиотека роликов)$/,exact:true}).click();if(broken)await page.getByRole('checkbox',{name:/^(Show video cards|Показать карточки роликов)$/}).check();
   const figure=page.locator('figure').filter({has:page.locator('figcaption').filter({hasText:/^(First video frame|Первый кадр)/})});
   const text=(english:boolean)=>english?'Could not display the thumbnail. Retry the request.':'Не удалось показать миниатюру. Повторите запрос.';
   if(broken)await expect(figure.getByRole('status')).toContainText(text(en));else await expect(figure.getByRole('status').locator('span')).toHaveText('Настройки');const before=await calls(page,'media_thumbnail');await language(page,other);
@@ -67,7 +67,7 @@ for(const initial of ['en-US','ru-RU']){
 }
 
 test('compact thumbnail decode failure survives metadata polls without automatic retries',async({page})=>{
- await setup(page,'en-US');await page.evaluate(()=>{(window as unknown as {libraryResources:Fixture}).libraryResources.corrupt=true;});await page.getByText('Video library',{exact:true}).click();await page.getByRole('checkbox',{name:'Show video cards',exact:true}).check();
+ await setup(page,'en-US');await page.evaluate(()=>{(window as unknown as {libraryResources:Fixture}).libraryResources.corrupt=true;});await page.getByRole('button',{name:'Video library',exact:true}).click();await page.getByRole('checkbox',{name:'Show video cards',exact:true}).check();
  const figure=page.locator('figure.compact');await expect(figure.getByRole('status')).toContainText('Could not display the thumbnail. Retry the request.');const before=await calls(page,'media_thumbnail'),reads=(await calls(page,'list_prepared_clips')).length;
  await expect.poll(async()=>(await calls(page,'list_prepared_clips')).length).toBeGreaterThan(reads+1);expect(await calls(page,'media_thumbnail')).toEqual(before);await expect(figure.getByRole('button',{name:'Retry thumbnail: Настройки {0} <clip>',exact:true})).toBeEnabled();
 });

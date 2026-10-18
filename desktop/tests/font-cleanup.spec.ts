@@ -22,13 +22,14 @@ test('font cleanup protects loaded draft keys and requires fresh scan after sele
   await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему'}).click();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Font draft');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Очистка неиспользуемых шрифтов',{exact:true}).click();
+  await page.getByRole('button',{name:'Очистка неиспользуемых шрифтов',exact:true}).click();
   await page.getByRole('button',{name:'Проверить неиспользуемые шрифты',exact:true}).click();
   await expect(page.getByText('Можно удалить: 0',{exact:false})).toBeVisible();
   await expect(page.getByText('В черновике: 1',{exact:false})).toBeVisible();
   await page.getByRole('button',{name:'Композиция',exact:true}).click();await selectLayer(page,0);
   await page.getByRole('combobox',{name:'Шрифт',exact:true,includeHidden:true}).selectOption('sans');
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
+  await page.getByRole('button',{name:'Очистка неиспользуемых шрифтов',exact:true}).click();
   await expect(page.getByText('Можно удалить:',{exact:false})).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Удалить неиспользуемые шрифты',exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Проверить неиспользуемые шрифты',exact:true}).click();
@@ -61,7 +62,7 @@ test('partial font cleanup shows failure and supports explicit rescan and retry'
   await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Очистка неиспользуемых шрифтов',{exact:true}).click();
+  await page.getByRole('button',{name:'Очистка неиспользуемых шрифтов',exact:true}).click();
   const scan=page.getByRole('button',{name:'Проверить неиспользуемые шрифты',exact:true});
   const remove=page.getByRole('button',{name:'Удалить неиспользуемые шрифты',exact:true});
   await scan.click();

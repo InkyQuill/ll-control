@@ -110,13 +110,13 @@ for (const initial of ['en-US', 'ru-RU'] as const) {
     await page.getByRole('button', { name: names[other].apply, exact: true }).click();
     await expect(page.getByRole('alert')).toContainText(other === 'en-US' ? 'Fallback PWM must be an integer from 20 to 100%' : 'Fallback PWM должен быть целым от 20 до 100%');
     expect(await page.evaluate(() => window.coolingMessages.calls.filter(c => c === 'set_cooling_policy'))).toEqual([]);
-    await page.getByText(other === 'en-US' ? 'Saved profiles' : 'Сохранённые профили', { exact: true }).click();
+    await page.getByRole('button',{name:other === 'en-US' ? 'Saved profiles' : 'Сохранённые профили',exact:true}).click();
     await page.getByRole('button', { name: other === 'en-US' ? 'Refresh profile list' : 'Обновить список профилей', exact: true }).click();
     await page.getByLabel(other === 'en-US' ? 'Profile name' : 'Имя профиля', { exact: true }).fill('Invalid curve');
     await page.getByRole('button', { name: other === 'en-US' ? 'Save draft to slot' : 'Сохранить черновик в слот', exact: true }).click();
-    await expect(page.locator('.profiles [role="alert"]')).toContainText(other === 'en-US' ? 'Fallback PWM must be an integer from 20 to 100%' : 'Fallback PWM должен быть целым от 20 до 100%');
+    await expect(page.getByRole('dialog',{name:/^(Saved profiles|Сохранённые профили)$/,exact:true}).locator('[role="alert"]')).toContainText(other === 'en-US' ? 'Fallback PWM must be an integer from 20 to 100%' : 'Fallback PWM должен быть целым от 20 до 100%');
     await language(page, initial);
-    await expect(page.locator('.profiles [role="alert"]')).toContainText(initial === 'en-US' ? 'Fallback PWM must be an integer from 20 to 100%' : 'Fallback PWM должен быть целым от 20 до 100%');
+    await expect(page.getByRole('dialog',{name:/^(Saved profiles|Сохранённые профили)$/,exact:true}).locator('[role="alert"]')).toContainText(initial === 'en-US' ? 'Fallback PWM must be an integer from 20 to 100%' : 'Fallback PWM должен быть целым от 20 до 100%');
     expect(await page.evaluate(() => window.coolingMessages.calls.filter(c => c === 'edit_profile'))).toEqual([]);
   });
 }

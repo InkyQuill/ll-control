@@ -207,7 +207,7 @@ test('profile Save validates the active weather range and permits explicit corre
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('rain');
   await enableTemperature(page);
   const high=page.getByLabel('Верхний порог эффекта',{exact:true});await high.fill('101');
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();
   await page.getByLabel('Имя профиля',{exact:true}).fill('Weather bounds');await page.getByRole('button',{name:'Сохранить черновик в слот',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText('Проверьте пороги эффекта');
@@ -290,7 +290,7 @@ test('unresolved CPU Load cannot enter a saved profile and manual correction rem
   await page.evaluate(()=>window.weatherFixture.defaultMode='none');
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('rain');
   await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();
   await page.getByLabel('Имя профиля',{exact:true}).fill('CPU Load draft');
   await page.getByRole('button',{name:'Сохранить черновик в слот',exact:true}).click();
@@ -308,7 +308,12 @@ for(const kind of ['rain','snow'] as const)test(`${kind} equal thresholds surviv
   const low=page.getByLabel('Нижний порог эффекта',{exact:true});const high=page.getByLabel('Верхний порог эффекта',{exact:true});
   await low.fill('40');await high.fill('40');
   await expect(page.getByText('Задайте целые пороги; нижний не должен превышать верхний.',{exact:true})).toHaveCount(0);
-  if(kind==='snow')await expect(page.getByText('При точном совпадении показания с порогом Snow использует минимальную скорость.',{exact:true})).toBeVisible();
+  if(kind==='snow'){
+    const help=page.getByText('При точном совпадении показания с порогом Snow использует минимальную скорость.',{exact:true});
+    const id=await help.locator('..').getAttribute('id');
+    await page.locator(`button.popover-trigger[popovertarget="${id}"]`).click();
+    await expect(help).toBeVisible();await page.keyboard.press('Escape');
+  }
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>window.weatherFixture.active?.version)).toBe(3);
   expect(await page.evaluate(()=>window.weatherFixture.active?.layers[0])).toMatchObject({kind:'weather',effect:{kind,sensor:{low:40,high:40}}});
@@ -352,15 +357,17 @@ test('inactive Basic video cannot be deleted until its draft reference is remove
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('rain');
   await page.getByRole('combobox',{name:'Тип фона',exact:true}).selectOption('solid');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByLabel('Показать все файлы видео для управления',{exact:true}).check();
   await expect(page.getByRole('combobox',{name:'Сохранённый ролик',exact:true})).toHaveValue('a'.repeat(32));
   await expect(page.getByRole('button',{name:'Удалить ролик…',exact:true})).toBeDisabled();
   await expect(page.getByText('Ролик используется в черновике страницы LCD. Замените его фон перед удалением.',{exact:true})).toBeVisible();
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Композиция',exact:true}).click();
   await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('none');
   await page.getByRole('combobox',{name:'Тип фона',exact:true}).selectOption('solid');
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByRole('button',{name:'Удалить ролик…',exact:true})).toBeEnabled();
   expect(await page.evaluate(()=>window.weatherFixture.calls.filter(call=>call.method==='delete_prepared_clip').length)).toBe(0);
 });
@@ -393,7 +400,7 @@ test('Meteor missing CPU Load blocks Apply and profile Save until explicit corre
   await page.evaluate(()=>window.weatherFixture.defaultMode='none');await page.getByRole('combobox',{name:'Эффект LCD',exact:true}).selectOption('meteor');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();
   await expect(page.getByText('Выберите источник эффекта: CPU Load недоступен или неоднозначен.',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();await expect(page.getByText('Выберите источник эффекта перед сохранением или Apply.',{exact:true})).toBeVisible();
-  await page.getByText('Сохранённые профили',{exact:true}).click();await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();await page.getByLabel('Имя профиля',{exact:true}).fill('Meteor draft');await page.getByRole('button',{name:'Сохранить черновик в слот',exact:true}).click();
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();await page.getByLabel('Имя профиля',{exact:true}).fill('Meteor draft');await page.getByRole('button',{name:'Сохранить черновик в слот',exact:true}).click();
   expect(await page.evaluate(()=>window.weatherFixture.calls.filter(call=>call.method==='edit_profile').length)).toBe(0);
   await expect(page.getByRole('combobox',{name:'Эффект LCD',exact:true}).locator('option[value="rain"]')).toHaveJSProperty('disabled',true);
   await page.getByRole('combobox',{name:'Источник эффекта',exact:true}).selectOption(JSON.stringify(['pump/rpm','rpm']));await expect(page.getByLabel('Нижний порог эффекта',{exact:true})).toHaveValue('800');

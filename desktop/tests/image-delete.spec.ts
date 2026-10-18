@@ -27,7 +27,7 @@ test.beforeEach(async({page})=>{
   });
   await page.goto('/?view=display');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
 });
 test('confirmation deletes only selected image, restores focus and protects draft images',async({page})=>{
   await page.getByRole('button',{name:'Добавить в тему bbbbbbbb',exact:true}).click();
@@ -38,7 +38,7 @@ test('confirmation deletes only selected image, restores focus and protects draf
   await page.getByRole('button',{name:'Удалить Garden…',exact:true}).click();
   await page.getByRole('button',{name:'Подтвердить удаление изображения',exact:true}).click();
   await expect(page.getByRole('button',{name:'Удалить Garden…',exact:true})).toHaveCount(0);
-  await expect(page.locator('summary').filter({hasText:'Библиотека изображений'})).toBeFocused();
+  await expect(page.getByRole('button',{name:'Библиотека изображений',exact:true})).toBeFocused();
   expect(await page.evaluate(()=>window.imageDelete.writes)).toEqual([{key:'a'.repeat(32),expected_revision:1,keep:['b'.repeat(32)]}]);
 });
 test('lost reply reads back actual deletion without retry',async({page})=>{
@@ -54,8 +54,8 @@ test('close and reopen during pending deletion still refreshes after settlement'
   await page.getByRole('button',{name:'Удалить Garden…',exact:true}).click();
   await page.getByRole('button',{name:'Подтвердить удаление изображения',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>!!window.imageDelete.release)).toBe(true);
-  const summary=page.getByText('Библиотека изображений',{exact:true});
-  await summary.click();await summary.click();
+  const summary=page.getByRole('button',{name:'Библиотека изображений',exact:true});
+  await page.keyboard.press('Escape');await summary.click();
   await expect(page.getByRole('button',{name:'Удалить Garden…',exact:true})).toBeDisabled();
   await page.evaluate(()=>window.imageDelete.release!());
   await expect(page.getByRole('button',{name:'Удалить Garden…',exact:true})).toHaveCount(0);
