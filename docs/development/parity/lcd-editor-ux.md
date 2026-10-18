@@ -286,3 +286,14 @@ with a private mock session and no hardware writes.
 The existing user window has not been replaced while its unsaved-draft status is
 unknown. GitHub run 39068310079 is in progress; a passing remote run is not yet
 claimed. This checkpoint does not close installed-user or physical acceptance.
+
+
+### Installed replacement — 2026-10-18
+
+After Pavel confirmed there was no unsaved work, the `e6d72d7` production package
+was installed and its GUI launched on native Wayland. The previous daemon was
+stopped before starting the installed daemon against the same backed-up config;
+only one device writer remained. Pump telemetry stayed at 3060 RPM and coolant
+at 36.2°C. Saved theme output resumed with requested/applied brightness 50% and
+orientation 0°, with no reported LCD error. This is process/telemetry confirmation;
+user-visible editor usability and physical image confirmation remain pending.
