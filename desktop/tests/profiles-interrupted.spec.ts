@@ -63,7 +63,7 @@ for (const action of Object.keys(actions) as (keyof typeof actions)[]) {
       await expect(page.getByText('Daemon подключён')).toBeVisible();
       const title = page.getByLabel('Название', { exact: true });
       await title.fill('Submitted theme');
-      await page.getByText('Сохранённые профили', { exact: true }).click();
+      await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
       const refresh = page.getByRole('button', { name: 'Обновить список профилей' });
       await refresh.click();
       await page.getByLabel('Имя профиля').fill('Submitted slot');
@@ -87,7 +87,7 @@ for (const action of Object.keys(actions) as (keyof typeof actions)[]) {
       await expect(page.getByText('Библиотека сохранена.', { exact: false })).toHaveCount(0);
       if (!outcome.startsWith('late-') && outcome !== 'rejected-disconnect') await expect(page.getByRole('alert')).toContainText('Обновите список');
       else await expect(page.getByText('ambiguous reply', { exact: false })).toHaveCount(0);
-      if (outcome === 'rejected-disconnect') await expect(page.locator('.profiles [role=alert]')).toHaveCount(0);
+      if (outcome === 'rejected-disconnect') await expect(page.getByRole('dialog',{name:/^(Saved profiles|Сохранённые профили)$/,exact:true}).locator('[role=alert]')).toHaveCount(0);
       await refresh.click();
       await expect(page.getByLabel('Слот профиля')).toContainText(outcome.startsWith('rejected') ? 'Original slot' : action === 'delete' ? 'Пусто' : action === 'reset' ? 'Screen 1' : 'Submitted slot');
       await expect(title).toHaveValue('New unsent draft');

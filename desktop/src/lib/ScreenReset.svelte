@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import { tick, untrack } from 'svelte';
   import { rpc, message, type ScreenResetReadback, type ProfileLibrary, type ScreenCollectionsState } from './api';
@@ -73,8 +74,7 @@
   }
 </script>
 
-<details bind:open>
-  <summary>{t("Сброс экрана LCD")}</summary>
+<StudioPopover label={t("Сброс экрана LCD")} bind:open icon="rotate" text>
   <p>{t("Восстановить базовую тему, яркость 50%, поворот 0°, встроенный состав коллекций этого устройства и все восемь общих Screen-слотов. Общие слоты изменятся для всех устройств.")}</p>
   <p>{t("Файлы изображений, видео и шрифтов, охлаждение и подсветка сохранятся. Локальный черновик темы не изменится; базовую тему можно загрузить кнопкой «Загрузить активную тему».")}</p>
   <button bind:this={refreshButton} disabled={!connected || busy || loading} onclick={() => refresh()}>{t("Проверить результат сброса")}</button>
@@ -100,9 +100,9 @@
     <p>{t("Сброс сохранён. Можно повторить только отправку базовой темы на LCD.")}</p>
     <button disabled={locked || !!pending} onclick={() => mutate(true)}>{t("Повторно применить к LCD")}</button>
   {/if}
-</details>
+</StudioPopover>
 <style>
-  details { border: 1px solid var(--border-strong); border-radius: .6rem; padding: .8rem; margin-block: 1rem; }
-  summary { cursor: pointer; font-weight: 600; }
+
+
   button { margin: .2rem; }
 </style>

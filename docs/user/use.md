@@ -14,12 +14,16 @@ Unavailable sensor values appear as a dash; they are not zero.
 4. Choose **Apply to LCD** when the composition is ready.
 
 Canvas arrows move a layer; Shift + arrows resize it. Escape cancels a drag.
-Open **Canvas controls** for the remaining shortcuts. Animation plays automatically;
+Use the **?** beside the canvas for shortcuts. Hover an icon to see its action. Animation plays automatically;
 **Pause animation** freezes it while you edit.
 
 **Screen orientation** rotates the whole canvas. Brightness is under **Display
-settings**. These settings reach the device only when you choose **Apply to LCD**.
+settings** (sliders icon). These settings reach the device only when you choose **Apply to LCD**.
 Brightness does not dim the editing canvas.
+
+Advanced controls open in floating panels; press Escape or click outside to close them.
+The font selector includes installed system fonts. Selecting one copies it into the
+theme library, so the theme keeps its font. TTF/OTF are supported; TTC collections are not.
 
 **Save** stores a profile. **Load** puts a profile into the editor.
 **Apply** changes the device. These are separate actions.

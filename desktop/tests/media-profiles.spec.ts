@@ -36,14 +36,16 @@ test.beforeEach(async ({page})=>{
 test('save and load media slot preserve theme draft and require explicit Apply',async({page})=>{
   await page.getByLabel('Название',{exact:true}).fill('Мой черновик');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByLabel('Сохранённый ролик')).toHaveValue('a'.repeat(32));
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();
   await page.getByLabel('Слот профиля').selectOption('7');
   await page.getByLabel('Имя профиля').fill('Cinema slot');
   await page.getByRole('button',{name:'Сохранить выбранный ролик в слот',exact:true}).click();
   await page.getByRole('button',{name:'Загрузить профиль в редактор',exact:true}).click();
+  await page.keyboard.press('Escape');
   await expect(page.getByRole('button',{name:'Применить ролик из профиля',exact:true})).toBeVisible();
   await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Мой черновик');
   expect(await page.evaluate(()=>(window as unknown as {fixture:{writes:unknown[]}}).fixture.writes)).toEqual([{method:'edit_profile',params:{expected_revision:0,edit:{action:'save',profile:{slot:7,name:'Cinema slot',content:{kind:'screen_media',value:'a'.repeat(32)}}}}}]);
@@ -53,7 +55,8 @@ test('save and load media slot preserve theme draft and require explicit Apply',
 });
 test('restored media slot uses screen rename and delete controls',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{library:unknown}}).fixture.library={version:1,revision:4,profiles:[{slot:0,name:'Restored video',content:{kind:'screen_media',value:'a'.repeat(32)}}]};});
-  await page.getByText('Сохранённые профили',{exact:true}).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
   await page.getByRole('button',{name:'Обновить список профилей',exact:true}).click();
   await expect(page.getByLabel('Слот профиля').locator('option:checked')).toHaveText('1 · Restored video');
   await page.getByLabel('Имя профиля').fill('Renamed video');

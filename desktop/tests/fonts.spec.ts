@@ -33,7 +33,7 @@ for (const mode of ['success','success-moved','lost-finish','cancel','cancel-mov
     await page.goto('/?view=display');
     await expect(page.getByText('Daemon подключён')).toBeVisible();await selectLayer(page,0);
     await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Пользовательские шрифты',{exact:true}).click();
+  await page.getByRole('button',{name:'Пользовательские шрифты',exact:true}).click();
     await page.getByLabel('Загрузить шрифт',{exact:true}).focus();
     await page.getByLabel('Загрузить шрифт',{exact:true}).setInputFiles({name:'Custom.ttf',mimeType:'font/ttf',buffer:Buffer.alloc(70000,1)});
     if(mode==='success-moved') await page.getByLabel('Название',{exact:true}).focus();

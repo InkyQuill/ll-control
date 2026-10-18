@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StudioIcon from "$lib/StudioIcon.svelte";
+  import StudioPopover from "$lib/StudioPopover.svelte";
   import { ValidationError, type UiDiagnostic } from '$lib/validation-error';
   import {t, diagnosticText} from '$lib/i18n.svelte';
   import {syncNativeLanguage} from '$lib/native-language';
@@ -209,7 +211,7 @@
   function toggleAnimation(){if(livePreview)animationElapsed+=performance.now()-animationOrigin;else animationOrigin=performance.now();livePreview=!livePreview;}
   let livePreview=$state(true), previewRequest=$state(0), previewBusy=$state(false), previewError=$state('');
   const canvasEditing=true; let canvasBounds=$state<(LayerBounds|null)[]>([]), canvasDraft=$state(''), selectedLayer=$state(-1);
-  let propertiesOpen=$state(true);
+  let propertiesOpen=$state(true), addOpen=$state(false);
   $effect(()=>{if(selectedLayer>=theme.layers.length)selectedLayer=-1;});
   const layerIdentities=new WeakMap<Layer,number>();
   let nextLayerIdentity=0;
@@ -337,7 +339,7 @@
   function addLayer(layer:Layer) {
     if(theme.layers.length>=32)return;
     layer.editor={id:crypto.randomUUID(),name:'',hidden:false,locked:false};
-    theme.layers.push(layer);propertiesOpen=true;selectedLayer=theme.layers.length-1;lcdPanel='composition';
+    theme.layers.push(layer);addOpen=false;propertiesOpen=true;selectedLayer=theme.layers.length-1;lcdPanel='composition';
   }
   function addSensor() {
     const sensor = sensors.find(s => s.id === selectedSensor); if (!sensor) return;
@@ -357,14 +359,16 @@
       collectionEpoch++;
       if (selection !== selectionRevision) return;
       prependLayer({ kind: 'image', asset, x: 0, y: 0, width: 480, height: 480, fit: 'crop', opacity: 255 });
+      // Keep an explicitly moved focus target in the add menu; otherwise reveal the new layer.
+      if(document.activeElement===input || document.activeElement===document.body || document.activeElement?.getAttribute('aria-label')===t('Добавить слой'))addOpen=false;
       notice = 'Изображение добавлено в черновик темы.';
     }, () => selection === selectionRevision, 'image-import');
     input.value = '';
     await tick();
     // Disabling the picker during import can drop its focus; keep a user's new target.
     if (restoreFocus && input.isConnected && document.hasFocus()
-        && (document.activeElement === document.body || (input.disabled && document.activeElement === input))) {
-      const target = input.disabled ? editorElement?.querySelector<HTMLElement>('.layer h2') : input;
+        && (document.activeElement === document.body || (input.disabled && document.activeElement === input) || (!addOpen && (document.activeElement===input || document.activeElement?.getAttribute('aria-label')===t('Добавить слой'))))) {
+      const target = !addOpen || input.disabled ? editorElement?.querySelector<HTMLElement>('.layer h2') ?? editorElement?.querySelector<HTMLElement>('[data-studio-panel="composition"] > .popover-trigger') : input;
       target?.focus();
     }
   }
@@ -410,7 +414,7 @@
     await tick();
     if (!editor?.isConnected || editor !== editorElement || layers !== theme.layers) return;
     const items = editor.querySelectorAll<HTMLElement>('.layer h2');
-    const target = items[0] ?? editor.querySelector<HTMLElement>('.add-layer summary');
+    const target = (propertiesOpen ? items[0] : editor.querySelector<HTMLElement>(`.layer-row[data-layer-index="${selectedLayer}"]`)) ?? editor.querySelector<HTMLElement>('[data-studio-panel="composition"] > .popover-trigger');
     target?.focus();
   }
   function prependLayer(layer:Layer) {
@@ -470,7 +474,7 @@
       </div>
     </nav>
     <div id="connection-status" class="connection" aria-live="polite" aria-atomic="true"><span class="connection-dot" class:online={connected} aria-hidden="true"></span>{#key connected}<p>{connected ? t("Daemon подключён") : t("Нет связи с daemon")}</p>{/key}</div>
-    <p class="aside-note">{t("Настройки применяются только кнопкой. Закрытие окна не останавливает экран.")}</p>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Настройки применяются только кнопкой. Закрытие окна не останавливает экран.")}</p></StudioPopover>
   </aside>
   <main id="main-content" tabindex="-1">
     <header><div><h1>{tab === 'overview' ? t("Ваши устройства") : tab === 'display' ? t("Экран помпы") : tab === 'cooling' ? t("Охлаждение") : tab === 'lighting' ? t("Подсветка") : tab === 'settings' ? t("Настройки") : tab === 'spec' ? t("Сведения о системе") : t("Датчики")}</h1><p class="page-description">{['display','cooling','lighting'].includes(tab) ? selectedDevice?.display_name ?? t("Нет устройства") : tab === 'overview' ? t("Настройте свет, охлаждение и оформление своего компьютера.") : t("L-Connect Linux")}</p></div>
@@ -521,23 +525,24 @@
           <div class="editor-tabs" aria-label={t('Рабочая область LCD')}><button aria-pressed={lcdPanel === 'presets'} onclick={() => lcdPanel = 'presets'}>{t('Готовые темы')}</button><button aria-pressed={lcdPanel === 'composition'} onclick={() => lcdPanel = 'composition'}>{t('Композиция')}</button><button aria-pressed={lcdPanel === 'library'} onclick={() => lcdPanel = 'library'}>{t('Библиотека')}</button></div>
 </div>
         <section class="visual" class:canvas-mode={canvasEditing} aria-label="{t("Предпросмотр LCD")}">
-          <div class="canvas-toolbar"><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button><label>{t('Ориентация экрана')}<select aria-label={t('Ориентация экрана')} value={canvasRotation} onchange={event=>stageDisplay({rotation_degrees:Number(event.currentTarget.value) as QuarterTurn})}>{#each [0,90,180,270] as angle (angle)}<option value={angle}>{angle}°</option>{/each}</select></label></div>
+          <div class="canvas-toolbar"><button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}>{t("Применить к LCD")}</button><div class="orientation-control" title={t('Ориентация экрана')}><StudioIcon name="rotate"/><select aria-label={t('Ориентация экрана')} value={canvasRotation} onchange={event=>stageDisplay({rotation_degrees:Number(event.currentTarget.value) as QuarterTurn})}>{#each [0,90,180,270] as angle (angle)}<option value={angle}>{angle}°</option>{/each}</select></div></div>
           <LcdPreview geometry={capabilities.display}>{#if canvasEditing}<CanvasEditor image={preview} images={editorImages} background={editorBackground} keys={canvasLayerKeys} layers={theme.layers} bounds={canvasBounds} selected={selectedLayer} rotation={canvasRotation} ready={canvasDraft===previewDraft && connected} {labels} onselect={selectCanvasLayer} onchange={changeCanvasLayer} onorder={move}/>{:else if preview}<img src={preview} alt="{t("Подготовленная композиция LCD — preview, не подтверждение вывода на устройство")}"/>{:else}<div class="empty"><span>{capabilities.display?.width ?? 480} × {capabilities.display?.height ?? 480}</span><p>{t("Создайте тему")}<br/>{t("и обновите preview")}</p></div>{/if}</LcdPreview>
-          <div class="status"><span>{t("Источник:")} {lcdSourceLabel(lcd?.source)}</span><span>{lcd?.last_error ?? t('Preview не подтверждает физический вывод')}</span></div>
-          {#if canvasEditing}
-            <details><summary>{t('Управление холстом')}</summary>
+          <div class="status"><span>{t("Источник:")} {lcdSourceLabel(lcd?.source)}</span>{#if lcd?.last_error}<span role="alert">{lcd.last_error}</span>{:else}<StudioPopover label={t('Предпросмотр LCD')} icon="help"><p>{t('Preview не подтверждает физический вывод')}</p></StudioPopover>{/if}</div>
+<div class="canvas-actions">          {#if canvasEditing}
+            <StudioPopover label={t('Управление холстом')} icon="help">
             <p>{t('Стрелки — перемещение; Shift + стрелки — размер; Ctrl + стрелки — шаг 10; Alt + стрелки — порядок. Escape — отмена жеста.')}</p>
-            <p>{t('Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.')}</p></details>
+            <p>{t('Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.')}</p></StudioPopover>
           {/if}
-          <div class="actions"><button disabled={!undoDrafts.length} onclick={()=>restoreDraft()}>{t('Отменить правку')}</button><button disabled={!redoDrafts.length} onclick={()=>restoreDraft(true)}>{t('Повторить правку')}</button></div>
-          <button aria-pressed={!livePreview} onclick={toggleAnimation}>{livePreview?t('Приостановить анимацию'):t('Продолжить анимацию')}</button>
+          <button disabled={!undoDrafts.length} onclick={()=>restoreDraft()} class="icon-action" aria-label={t('Отменить правку')} title={t('Отменить правку')}><StudioIcon name="undo"/></button><button disabled={!redoDrafts.length} onclick={()=>restoreDraft(true)} class="icon-action" aria-label={t('Повторить правку')} title={t('Повторить правку')}><StudioIcon name="redo"/></button>
+          <button class="icon-action" aria-pressed={!livePreview} aria-label={livePreview?t('Приостановить анимацию'):t('Продолжить анимацию')} title={livePreview?t('Приостановить анимацию'):t('Продолжить анимацию')} onclick={toggleAnimation}><StudioIcon name={livePreview?'pause':'play'}/></button>
           {#if previewError}<p role="alert">{t('Не удалось создать preview: {0}', previewError)}</p>{/if}
 
-          <details><summary>{t('Настройки экрана')}</summary><label>{t('Яркость экрана, %')}<input type="range" min="0" max="100" value={displayBrightness} oninput={event=>stageDisplay({brightness_percent:Number(event.currentTarget.value)})}/><output>{displayBrightness}%</output></label><p>{t('Настройки экрана изменятся после применения.')}</p></details>
+          <StudioPopover label={t('Настройки экрана')} icon="settings"><label>{t('Яркость экрана, %')}<input type="range" min="0" max="100" value={displayBrightness} oninput={event=>stageDisplay({brightness_percent:Number(event.currentTarget.value)})}/><output>{displayBrightness}%</output></label><p>{t('Настройки экрана изменятся после применения.')}</p></StudioPopover>
           {#if Object.keys(pendingDisplay[device]??{}).length}<p class="status">{t('Настройки экрана изменятся после применения.')}</p>{/if}
-          <details><summary>{t("Загрузить или остановить")}</summary><div class="document-actions">          <button disabled={busy || !deviceAvailable} onclick={() => loadTheme()}>{t("Загрузить активную тему")}</button>
+          <StudioPopover label={t('Загрузить или остановить')} icon="download"><div class="document-actions">          <button disabled={busy || !deviceAvailable} onclick={() => loadTheme()}>{t("Загрузить активную тему")}</button>
           <button disabled={busy || !deviceAvailable} onclick={() => loadTheme(true)}>{t("Загрузить импортированный редактор")}</button>
-          <button disabled={busy || !deviceAvailable} onclick={clearTheme}>{t("Вернуть LocalUI")}</button></div></details>
+          <button disabled={busy || !deviceAvailable} onclick={clearTheme}>{t("Вернуть LocalUI")}</button></div></StudioPopover>
+</div>
         </section>
         <section class="editor" aria-label="{t("Редактор темы")}" bind:this={editorElement}>
           <div data-studio-panel="presets" hidden={lcdPanel !== 'presets'}>
@@ -577,15 +582,15 @@
 
           </div>
           <div data-studio-panel="composition" hidden={lcdPanel !== 'composition'}>
-          <details class="add-layer"><summary>{t('Добавить слой')}</summary>          <div class="toolbar"><button disabled={busy || theme.layers.length >= 32} onclick={() => addLayer({kind:'divider',axis:'horizontal',x:34,y:240,length:412,thickness:2,color:[144,177,201],opacity:100,shadow:{x:0,y:0,blur:5,color:[0,0,0],opacity:100}})}>{t('+ Разделитель')}</button><button data-add-text disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'text', text: t('Новый текст'), style: style(180) })}>{t("+ Текст")}</button><button disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) })}>{t("+ Часы")}</button><label class="file">{t("+ Изображение")}<input type="file" accept="image/png,image/jpeg,image/webp,image/bmp" onchange={importImage} disabled={busy || theme.layers.length >= 32}/></label></div>
+          <StudioPopover label={t('Добавить слой')} icon="plus" bind:open={addOpen}>          <div class="toolbar"><button disabled={busy || theme.layers.length >= 32} onclick={() => addLayer({kind:'divider',axis:'horizontal',x:34,y:240,length:412,thickness:2,color:[144,177,201],opacity:100,shadow:{x:0,y:0,blur:5,color:[0,0,0],opacity:100}})}>{t('+ Разделитель')}</button><button data-add-text disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'text', text: t('Новый текст'), style: style(180) })}>{t("+ Текст")}</button><button disabled={theme.layers.length >= 32} onclick={() => addLayer({ kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) })}>{t("+ Часы")}</button><label class="file">{t("+ Изображение")}<input type="file" accept="image/png,image/jpeg,image/webp,image/bmp" onchange={importImage} disabled={busy || theme.layers.length >= 32}/></label></div>
           <div class="row"><label>{t("Привязать датчик")}<select bind:value={selectedSensor}><option value="">{t("Выберите источник")}</option>{#each sensors as s}<option value={s.id}>{s.label} · {s.unit}</option>{/each}</select></label><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}>{t("Добавить")}</button></div>
-</details>
+</StudioPopover>
           <div class="pane-tabs"><button aria-pressed={!propertiesOpen} onclick={()=>propertiesOpen=false}>{t('Слои')}</button><button aria-pressed={propertiesOpen} onclick={()=>propertiesOpen=true}>{t('Свойства')}</button></div>
           <LayerStack collapsed={propertiesOpen} layers={theme.layers} {labels} selected={selectedLayer} onselect={selectStackLayer} onmove={reorderLayer} onduplicate={duplicateLayer} onremove={removeLayer} onvisibility={index=>{const meta=layerMetadata(index);meta.hidden=!meta.hidden;}} onlock={index=>{const meta=layerMetadata(index);meta.locked=!meta.locked;}}/>
           {#if selectedLayer>=0 && theme.layers[selectedLayer] && !isProcedural(theme.layers[selectedLayer])}
             <article hidden={!propertiesOpen} class="layer inspector" data-layer-index={selectedLayer} aria-label={t('Свойства выбранного слоя')}>
-              <h2 tabindex="-1">{labels[theme.layers[selectedLayer].kind]}</h2>
-              <details class="layer-name"><summary>{t('Имя слоя')}</summary><label>{t('Имя слоя')}<input value={theme.layers[selectedLayer].editor?.name??''} maxlength="128" oninput={event=>layerMetadata(selectedLayer).name=event.currentTarget.value}/></label></details>
+              <div class="inspector-heading"><h2 tabindex="-1">{labels[theme.layers[selectedLayer].kind]}</h2>
+              <StudioPopover label={t('Переименовать слой')} icon="edit"><label>{t('Имя слоя')}<input value={theme.layers[selectedLayer].editor?.name??''} maxlength="128" oninput={event=>layerMetadata(selectedLayer).name=event.currentTarget.value}/></label></StudioPopover></div>
               <fieldset class="layer-fields" disabled={theme.layers[selectedLayer].editor?.locked}><LayerInspector bind:value={theme.layers[selectedLayer]} {sensors} {fontChoices}/></fieldset>
             </article>
           {:else}
@@ -602,13 +607,14 @@
   </main>
 </div>
 <style>
-.pane-tabs{display:flex;gap:6px;margin-bottom:8px}.pane-tabs button{flex:1}.pane-tabs button[aria-pressed=true]{background:var(--accent-surface);border-color:var(--accent);color:var(--accent-text)}.layer-name{margin:0}.inspector[hidden]{display:none}
-.document-head{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.document-head>.row{flex:1;min-width:160px;margin:0}.document-head .editor-tabs{margin:0;padding:0;border:0}.document-head :global(details){margin:0}.document-actions{display:grid;gap:8px}.add-layer{margin:0 0 8px}.file input{width:100%}.toolbar>.file{flex-basis:100%}.canvas-toolbar{display:flex;align-items:end;justify-content:space-between;gap:8px}.canvas-toolbar>.primary{align-self:stretch}.canvas-toolbar label{max-width:180px}
+.pane-tabs{display:flex;gap:6px;margin-bottom:8px}.pane-tabs button{flex:1}.pane-tabs button[aria-pressed=true]{background:var(--accent-surface);border-color:var(--accent);color:var(--accent-text)}.inspector[hidden]{display:none}
+.document-head{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.document-head>.row{flex:1;min-width:160px;margin:0}.document-head .editor-tabs{margin:0;padding:0;border:0}.document-head :global(details){margin:0}.document-actions{display:grid;gap:8px}.file input{width:100%}.toolbar>.file{flex-basis:100%}.inspector-heading{display:flex;align-items:center;justify-content:space-between}.inspector-heading h2{margin:0}.canvas-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.canvas-actions>p{flex-basis:100%}.canvas-toolbar{display:flex;align-items:end;justify-content:space-between;gap:8px}.canvas-toolbar>.primary{align-self:center}.orientation-control{display:flex;align-items:center;gap:8px}.orientation-control select{width:90px}
 
   .visual.canvas-mode{grid-auto-rows:max-content;align-content:start;}
+  .visual.canvas-mode :global(.lcd){max-width:min(400px,max(240px,calc(100vh - 440px)))}
 
-.shell{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.aside-note,.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}.aside-note{margin-top:14px}main{padding:24px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,360px);gap:20px}.visual{position:sticky;top:16px;align-self:start;display:grid;gap:10px;padding:16px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.actions,.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{padding:12px 0;margin-top:8px;display:grid;gap:8px}.layer-fields{border:0;padding:0;margin:0}.inspector{max-height:calc(100vh - 480px);min-height:260px;overflow:auto;scrollbar-gutter:stable}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
-@media(min-width:981px){header{margin-bottom:16px;padding-bottom:16px}h1{font-size:26px;margin-bottom:4px}.workspace{gap:12px}.visual{padding:12px}.document-head{gap:8px}.document-head>.row{max-width:210px}.editor :global(.stack){margin-block:8px;padding-block:8px}.editor :global(.rows){max-height:calc(100vh - 440px);min-height:250px}.editor :global(.layer-row){padding:4px 8px;min-height:28px}.editor :global(.stack footer){padding-top:6px}.visual .status{max-height:48px;overflow:auto}.visual>.actions{margin:0}.visual>details{margin:0}}
+.shell{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:100vh}aside{padding:30px 18px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}.brand{font-family:Exo,sans-serif;font-size:24px;letter-spacing:-.025em;margin:0 12px 36px}.brand span{color:var(--accent)}.brand small{display:block;font-size:11px;letter-spacing:.12em;color:var(--text-muted);margin-top:8px}nav,.global-nav{display:grid;gap:6px}nav button{text-align:left;background:transparent;border-color:transparent}.nav-label{font-size:12px;color:var(--text-muted);margin:24px 12px 8px}.device-section{padding-left:24px;font-size:13px}nav button.active{background:var(--accent-surface);color:var(--accent-text)}.global-nav{border-top:1px solid var(--border);padding-top:20px;margin-top:20px}.connection{display:flex;align-items:center;gap:8px;margin:38px 10px 0;font-size:12px}.connection p{margin:0}.connection-dot{width:6px;height:6px;border-radius:50%;background:var(--danger)}.connection-dot.online{background:var(--success)}.disconnected-device{font-size:12px;line-height:1.7;color:var(--text-muted);padding:0 10px}main{padding:24px;min-width:0;max-width:1700px;width:100%;margin-inline:auto}header{display:flex;gap:24px;align-items:center;justify-content:space-between;margin-bottom:30px;padding-bottom:24px;border-bottom:1px solid var(--border)}h1{font-size:32px;margin:0 0 10px}.page-description{margin:0;color:var(--text-muted);line-height:1.6}.device-picker{max-width:270px}.workspace{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,360px);gap:20px}.visual{position:sticky;top:16px;align-self:start;display:grid;gap:10px;padding:16px;background:var(--canvas);border-radius:14px}.empty{text-align:center;color:var(--text-muted)}.empty span{font-family:Exo,sans-serif;font-size:28px}.status{display:grid;gap:6px;color:var(--text-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.row,.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.editor{min-width:0}.editor-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px}.editor-tabs button[aria-pressed=true]{background:var(--accent-surface);color:var(--accent-text);border-color:var(--accent)}.layer{padding:12px 0;margin-top:8px;display:grid;gap:8px}.layer-fields{border:0;padding:0;margin:0}.inspector{max-height:calc(100vh - 480px);min-height:260px;overflow:auto;scrollbar-gutter:stable}.file{border:1px solid var(--border-strong);border-radius:8px;padding:10px;cursor:pointer}.file input{max-width:160px;font-size:12px}.error{background:var(--danger-surface);border:1px solid var(--danger);padding:16px;border-radius:8px;margin-bottom:16px;overflow-wrap:anywhere}.error button{margin-left:12px}.notice{color:var(--success);line-height:1.6}.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 24px}.sensors article{border-top:1px solid var(--border);padding:24px 0;min-width:0}.sensors strong{font-size:30px;font-variant-numeric:tabular-nums}.sensors p{color:var(--text-muted);font-size:12px}.skip-link{position:fixed;top:12px;left:12px;z-index:100;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:8px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
+@media(min-width:981px){header{margin-bottom:16px;padding-bottom:16px}h1{font-size:26px;margin-bottom:4px}.workspace{gap:12px}.visual{padding:12px}.document-head{gap:8px}.document-head>.row{max-width:210px}.editor :global(.stack){margin-block:8px;padding-block:8px}.editor :global(.rows){max-height:calc(100vh - 440px);min-height:250px}.editor :global(.layer-row){padding:4px 8px;min-height:28px}.editor :global(.stack footer){padding-top:6px}.visual .status{max-height:48px;overflow:auto}}
 @media(max-width:980px){.shell{grid-template-columns:190px minmax(0,1fr)}main{padding:24px}.workspace{grid-template-columns:minmax(0,1fr)}.visual{position:static;max-width:560px;width:100%;justify-self:center}}
-@media(max-width:760px){.shell{grid-template-columns:minmax(0,1fr)}aside{padding:16px;border-right:0;border-bottom:1px solid var(--border)}.brand{margin-bottom:16px}nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-label,.global-nav{grid-column:1/-1}.global-nav{display:flex;flex-wrap:wrap;margin-top:10px;padding-top:10px}.connection{margin-top:16px}.aside-note{margin-bottom:0}main{padding:16px}header{flex-wrap:wrap;gap:16px}.device-picker{flex-basis:100%;max-width:none}h1{font-size:28px}.visual{padding:18px}}
+@media(max-width:760px){.shell{grid-template-columns:minmax(0,1fr)}aside{padding:16px;border-right:0;border-bottom:1px solid var(--border)}.brand{margin-bottom:16px}nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-label,.global-nav{grid-column:1/-1}.global-nav{display:flex;flex-wrap:wrap;margin-top:10px;padding-top:10px}.connection{margin-top:16px}main{padding:16px}header{flex-wrap:wrap;gap:16px}.device-picker{flex-basis:100%;max-width:none}h1{font-size:28px}.visual{padding:18px}}
 </style>

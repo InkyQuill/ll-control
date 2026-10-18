@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {tick} from 'svelte';
   import {t} from './i18n.svelte';
   import {hex,rgb,type Layer,type Sensor} from './api';
@@ -17,8 +18,8 @@
 </script>
 {#each [value] as layer (layer)}
               {#if layer.kind==='divider'}<DividerEditor bind:layer={()=>layer,next=>value=next}/>{/if}
-              {#if layer.kind==='meteor'}<p>{t("Настройки MeteorShower находятся в блоке «Метеоры».")}</p>{/if}
-              {#if layer.kind==='weather'}<p>{t("Настройки Rain/Snow находятся в блоке «Анимация LCD».")}</p>{/if}
+              {#if layer.kind==='meteor'}<StudioPopover label={t("Справка")} icon="help"><p>{t("Настройки MeteorShower находятся в блоке «Метеоры».")}</p></StudioPopover>{/if}
+              {#if layer.kind==='weather'}<StudioPopover label={t("Справка")} icon="help"><p>{t("Настройки Rain/Snow находятся в блоке «Анимация LCD».")}</p></StudioPopover>{/if}
               {#if layer.kind === 'text'}<label>{t("Текст")}<textarea bind:value={layer.text} maxlength="2048"></textarea></label>{/if}
               {#if layer.kind === 'sensor'}<label>{t('Источник датчика')}<select aria-label={t('Источник датчика')} value={layer.sensor_id} onchange={event=>{const source=sensors.find(s=>s.id===event.currentTarget.value);if(source){layer.sensor_id=source.id;layer.unit=source.unit;}}}>
                 {#each sensors as source}<option value={source.id}>{source.label} · {source.unit}</option>{/each}
@@ -52,7 +53,7 @@
               {#if layer.kind === 'image'}
                 <label><input type="checkbox" checked={!!layer.watermark_position} onchange={e => layer.watermark_position=e.currentTarget.checked?{horizontal:50,vertical:50}:null}/>{t("Положение watermark как в L-Connect")}</label>
                 {#if layer.watermark_position}
-                  <p>{t("Центр изображения задаётся в процентах экрана. Значение 0 размещает центр в 22 px от края, как в L-Connect.")}</p>
+                  <StudioPopover label={t("Справка")} icon="help"><p>{t("Центр изображения задаётся в процентах экрана. Значение 0 размещает центр в 22 px от края, как в L-Connect.")}</p></StudioPopover>
                   <label>{t("Watermark по горизонтали")}<input type="number" min="0" max="100" bind:value={layer.watermark_position.horizontal}/></label>
                   <label>{t("Watermark по вертикали")}<input type="number" min="0" max="100" bind:value={layer.watermark_position.vertical}/></label>
                 {/if}

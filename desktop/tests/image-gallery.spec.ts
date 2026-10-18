@@ -32,8 +32,8 @@ test.beforeEach(async ({page}) => {
 });
 test('saved images page, isolate corrupt previews and add to draft until Apply',async({page})=>{
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
-  const library=page.locator('details').filter({has:page.locator('summary',{hasText:'Библиотека изображений'})});
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
+  const library=page.getByRole('dialog',{name:'Библиотека изображений',exact:true});
   await expect(library.getByRole('img')).toHaveCount(7);
   await expect(library.getByRole('button',{name:'Добавить в тему 11111111'})).toBeDisabled();
   await library.getByRole('button',{name:'Следующие изображения'}).click();
@@ -43,16 +43,15 @@ test('saved images page, isolate corrupt previews and add to draft until Apply',
   await page.getByRole('button',{name:'Применить к LCD',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{calls:{method:string;params:{theme?:{layers:{kind:string;asset?:string}[]}}}[]}}).fixture.calls.find(c=>c.method==='set_lcd_theme')?.params.theme?.layers.some(l=>l.kind==='image'&&l.asset==='9'.repeat(32)))).toBe(true);
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>{const f=(window as unknown as {fixture:{created:string[];revoked:string[]}}).fixture;return f.created.every(url=>f.revoked.includes(url));})).toBe(true);
 });
 test('close discards late image and stops loading the remaining page',async({page})=>{
   await page.evaluate(()=>{(window as unknown as {fixture:{hold:boolean}}).fixture.hold=true;});
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{release:unknown}}).fixture.release!==null)).toBe(true);
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.keyboard.press('Escape');
   await expect(page.getByRole('button',{name:'Добавить в тему 00000000',includeHidden:true})).toHaveCount(0);
   await page.evaluate(()=>{(window as unknown as {fixture:{release:()=>void}}).fixture.release();});
   const state=await page.evaluate(()=>(window as unknown as {fixture:{calls:{method:string}[];created:string[]}}).fixture);
@@ -63,7 +62,7 @@ test('close discards late image and stops loading the remaining page',async({pag
 for (const lost of [false,true]) test(`image rename ${lost ? 'lost reply reads back without retry' : 'updates card without applying theme'}`,async({page})=>{
   await page.evaluate(lost=>{(window as unknown as {fixture:{loseRename:boolean}}).fixture.loseRename=lost;},lost);
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
   await page.getByRole('button',{name:'Переименовать Изображение 00000000',exact:true}).click();
   await page.getByLabel('Имя изображения',{exact:true}).fill('Сад');
   await page.getByRole('button',{name:'Сохранить имя изображения',exact:true}).click();
@@ -78,8 +77,8 @@ for (const lost of [false,true]) test(`image rename ${lost ? 'lost reply reads b
 test('image selection follows each collection and failed readback hides stale entries', async ({page}) => {
   await page.evaluate(() => { (window as unknown as {fixture:{scoped:boolean}}).fixture.scoped=true; });
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека изображений',{exact:true}).click();
-  const gallery=page.locator('details').filter({has:page.locator('summary',{hasText:'Библиотека изображений'})});
+  await page.getByRole('button',{name:'Библиотека изображений',exact:true}).click();
+  const gallery=page.getByRole('dialog',{name:'Библиотека изображений',exact:true});
   await expect(gallery.locator('article')).toHaveCount(1);
   await expect(gallery.getByRole('button',{name:'Добавить в тему 00000000'})).toBeEnabled();
   await gallery.getByLabel('Назначение изображения').selectOption('background');
@@ -98,7 +97,7 @@ test('image selection follows each collection and failed readback hides stale en
 
 test('unnamed image fallback labels use English without changing asset metadata',async({page})=>{
  await page.evaluate(()=>localStorage.setItem('lconnect.interface-language','en-US'));await page.reload();
- await page.getByRole('button',{name:'Library',exact:true}).click();await page.getByText('Image library',{exact:true}).click();
+ await page.getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('button',{name:'Image library',exact:true}).click();
  await expect(page.getByRole('button',{name:'Rename Image 00000000',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{method:string}[]}}).fixture.calls.filter(c=>c.method==='rename_theme_asset'||c.method==='set_lcd_theme'))).toEqual([]);
 });

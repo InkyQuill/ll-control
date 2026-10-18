@@ -49,6 +49,8 @@
     "allow-desktop-settings-get",
     "allow-desktop-set-language",
     "allow-desktop-settings-save",
-    "allow-desktop-exit"
+    "allow-desktop-exit",
+    "allow-system-fonts",
+    "allow-system-font-read"
   ]
 }

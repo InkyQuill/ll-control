@@ -344,7 +344,7 @@
       "kind": "nav",
       "description": "Switch between compact layer selection and the contextual inspector; selecting a layer opens its properties.",
       "html": "<nav class=\"ds-pane\" aria-label=\"Composition pane\"><button aria-pressed=\"false\">Layers</button><button aria-pressed=\"true\">Properties</button></nav>",
-      "css": ".ds-pane{display:flex;gap:6px;margin-bottom:8px}.ds-pane button{flex:1;font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:10px 14px;min-height:38px;border:1px solid #787b8c;border-radius:8px;background:#232630;color:#eff0f6}.ds-pane button[aria-pressed=true]{background:#2c263d;border-color:#b9a7ff;color:#ded3ff}.ds-pane button:hover{background:#32333f}.ds-pane button:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
+      "css": ".ds-pane{display:flex;gap:6px;margin-bottom:8px;background:#191b22;padding:3px;border-radius:8px}.ds-pane button{flex:1;font-family:Segoe UI,system-ui,sans-serif;font-size:14px;padding:10px 14px;min-height:38px;border:1px solid transparent;border-radius:8px;background:#232630;color:#eff0f6}.ds-pane button[aria-pressed=true]{background:#2c263d;border-color:#b9a7ff;color:#ded3ff}.ds-pane button:hover{background:#32333f}.ds-pane button:focus-visible{outline:2px solid #b9a7ff;outline-offset:3px}"
     }
   ],
   "narrative": {
@@ -376,6 +376,11 @@
       {
         "name": "Display geometry",
         "body": "GALAHAD II LCDV2 has a square 480×480 LCD. Preview and device glyph share model metadata; preserve square corners and use a circular mask only for explicitly round displays. Do not register unsupported families to demonstrate shapes.",
+        "section": "components"
+      },
+      {
+        "name": "LCD floating controls",
+        "body": "Icon actions retain accessible names and hover titles. Help opens from small question marks. Secondary tools float above the workspace without expanding inline; fields keep one contrasting bottom edge on tonal surfaces.",
         "section": "components"
       }
     ],

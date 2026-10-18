@@ -124,10 +124,10 @@ test('enabled text fields and selects have distinguishable boundaries on every p
         while (parent && getComputedStyle(parent).backgroundColor === 'rgba(0, 0, 0, 0)') parent = parent.parentElement;
         if (!parent) throw new Error('No opaque parent background');
         const style = getComputedStyle(el);
-        return { inside: contrast(style.borderTopColor, style.backgroundColor), outside: contrast(style.borderTopColor, getComputedStyle(parent).backgroundColor) };
+        return { inside: contrast(style.borderBottomColor, style.backgroundColor), outside: contrast(style.borderBottomColor, getComputedStyle(parent).backgroundColor) };
       });
-      expect(ratios.inside, `${name}: border against field fill`).toBeGreaterThanOrEqual(3);
-      expect(ratios.outside, `${name}: border against parent background`).toBeGreaterThanOrEqual(3);
+      expect(ratios.inside, `${name}: control edge against field fill`).toBeGreaterThanOrEqual(3);
+      expect(ratios.outside, `${name}: control edge against parent background`).toBeGreaterThanOrEqual(3);
     }
   }
 });

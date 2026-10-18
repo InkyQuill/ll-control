@@ -41,7 +41,7 @@ async function setup(page:Page,language:Language,operation:Operation){
  },{language,operation,name});
  await page.goto('/?view=display');await expect(page.getByText(language==='en-US'?'Daemon connected':'Daemon подключён',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:language==='en-US'?'Library':'Библиотека',exact:true}).click();
- await page.getByText(operation.startsWith('video')?(language==='en-US'?'Video library':'Библиотека роликов'):(language==='en-US'?'Image library':'Библиотека изображений'),{exact:true}).click();
+ await page.getByRole('button',{name:operation.startsWith('video')?(language==='en-US'?'Video library':'Библиотека роликов'):(language==='en-US'?'Image library':'Библиотека изображений'),exact:true}).click();
 }
 async function switchLanguage(page:Page,language:Language){
  await page.evaluate(language=>{window.libraryMessages.settings.interface_language=language;window.libraryMessages.settings.revision++;},language);
@@ -109,7 +109,7 @@ for(const fail of [false,true])test(`late video editor snapshot after reconnect 
  await page.evaluate(()=>window.libraryMessages.holdCollection=true);await edit.click();await expect.poll(()=>page.evaluate(()=>!!window.libraryMessages.release)).toBe(true);
  await page.evaluate(()=>window.libraryMessages.online=false);await expect(page.getByText('Daemon disconnected',{exact:true})).toBeVisible();
  await page.evaluate(()=>window.libraryMessages.online=true);await page.getByRole('button',{name:'Reconnect',exact:true}).click();await expect(page.getByText('Daemon connected',{exact:true})).toBeVisible();
- await page.evaluate(fail=>window.libraryMessages.release!(fail),fail);await expect(edit).toBeEnabled();
+ await page.evaluate(fail=>window.libraryMessages.release!(fail),fail);await page.getByRole('button',{name:'Video library',exact:true}).click();await expect(edit).toBeEnabled();
  await expect(page.getByRole('region',{name:'Saved video editor',exact:true})).toHaveCount(0);await expect(page.getByRole('alert').filter({hasText:'Obsolete video editor failure'})).toHaveCount(0);
  expect(await page.evaluate(()=>window.libraryMessages.writes)).toEqual([]);
 });

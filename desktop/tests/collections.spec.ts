@@ -34,7 +34,7 @@ test('collections migrate, remove and restore membership without deleting assets
   await page.goto('/?view=display');
   await expect(page.getByText('Daemon подключён')).toBeVisible();
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Коллекции LCD',{exact:true}).click();
+  await page.getByRole('button',{name:'Коллекции LCD',exact:true}).click();
   await page.getByRole('button',{name:'Перенести каталог в коллекции'}).click();
   const remove = page.getByRole('button',{name:'Убрать из коллекции: Мой рисунок'});
   await expect(remove).toBeVisible();
@@ -43,10 +43,10 @@ test('collections migrate, remove and restore membership without deleting assets
   await expect(page.getByRole('button',{name:'Обновить коллекции'})).toBeFocused();
   await page.evaluate(() => (window as unknown as {holdCollectionWrite:()=>void}).holdCollectionWrite());
   await page.getByRole('button',{name:'Сохранить коллекции'}).click();
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Коллекции LCD',{exact:true}).click();
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Коллекции LCD',{exact:true}).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Коллекции LCD',exact:true}).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Коллекции LCD',exact:true}).click();
   await expect(remove).toBeVisible();
   await expect(remove).toBeDisabled();
   await page.evaluate(() => (window as unknown as {releaseCollectionWrite:()=>void}).releaseCollectionWrite());

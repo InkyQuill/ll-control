@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StudioIcon from './StudioIcon.svelte';
+  import StudioPopover from "./StudioPopover.svelte";
   import { ValidationError, type UiDiagnostic } from './validation-error';
   import {t, diagnosticText} from './i18n.svelte';
   import { onDestroy, tick } from 'svelte';
@@ -38,6 +40,17 @@
   const filtersValid = $derived(colorControls.every(c => typeof filters[c.key] === 'number' && Number.isFinite(filters[c.key]) && filters[c.key]! >= c.min && filters[c.key]! <= c.max));
   let sourceUrl = $state(''), previewUrl = $state(''), preparedSignature = $state('');
   let trigger: HTMLButtonElement | undefined = $state();
+  let panel: HTMLElement | undefined = $state();
+  $effect(()=>{
+    const node=panel;if(!node)return;
+    const ancestors:HTMLElement[]=[];
+    for(let parent=node.parentElement;parent;parent=parent.parentElement)ancestors.push(parent);
+    const sync=()=>{if(ancestors.some(parent=>parent.hidden))node.hidePopover();else node.showPopover();};
+    sync();
+    const observer=new MutationObserver(sync);
+    for(const parent of ancestors)observer.observe(parent,{attributes:true,attributeFilter:['hidden']});
+    return ()=>observer.disconnect();
+  });
   let generation = 0, dragging = false;
   let capturing = $state(false), cancelling = $state(false), cancelRequested = $state(false), captureOwnerGone = $state(false);
   let captureId: string | null = null;
@@ -86,7 +99,8 @@
   }
   function reset() { x = Math.floor((width - Math.min(width,height))/2); y = Math.floor((height - Math.min(width,height))/2); side = Math.min(width,height); crop = true; transforms = []; filters={hue:0,saturation:0,brightness:0,contrast:0,sharpen:0,blur:0}; }
   async function start() {
-    if (disabled || open || saving) return;
+    if (disabled || saving) return;
+    if(open){panel?.showPopover();return;}
     open = true; error = ''; notice = ''; attempted = false; loading = false;
     if (!existing) return;
     const selected = {...existing}, started = ++generation;
@@ -194,12 +208,12 @@
   }
   function transform(value: Transform) { if (transforms.length < 64) transforms.push(value); }
 </script>
-<button bind:this={trigger} disabled={disabled || saving || open} onclick={start}>{existing ? t("Редактировать {0}…", existing.name) : "" + t("Импорт с редактированием…") + ""}</button>
+<button bind:this={trigger} disabled={disabled || saving} onclick={start}>{existing ? t("Редактировать {0}…", existing.name) : "" + t("Импорт с редактированием…") + ""}</button>
 {#if open}
-  <section aria-label="{t("Редактор изображения")}">
-    <h3>{t("Редактор изображения")}</h3>
-    <p>{t("Выберите квадратную область и преобразования. Исходный файл сохранится. На LCD ничего не отправляется до применения темы.")}</p>
-    {#if existing}<p>{t("Результат заменит запись выбранной коллекции. Прежний файл останется доступен сохранённым темам.")}</p>{:else}<label>{t("Файл для редактирования")}<input type="file" accept=".png,.jpg,.jpeg,.webp,.bmp" disabled={loading || saving || disabled} onchange={choose}/></label>{/if}
+  <section bind:this={panel} popover="auto" aria-label="{t("Редактор изображения")}">
+    <header><h3>{t("Редактор изображения")}</h3><button class="icon-action" aria-label={t('Закрыть редактор изображения')} title={t('Закрыть редактор изображения')} disabled={saving || cancelling} onclick={close}><StudioIcon name="close"/></button></header>
+    <StudioPopover label={t("Справка")} icon="help"><p>{t("Выберите квадратную область и преобразования. Исходный файл сохранится. На LCD ничего не отправляется до применения темы.")}</p></StudioPopover>
+    {#if existing}<StudioPopover label={t("Справка")} icon="help"><p>{t("Результат заменит запись выбранной коллекции. Прежний файл останется доступен сохранённым темам.")}</p></StudioPopover>{:else}<label>{t("Файл для редактирования")}<input type="file" accept=".png,.jpg,.jpeg,.webp,.bmp" disabled={loading || saving || disabled} onchange={choose}/></label>{/if}
     {#if !existing}
       <button disabled={loading || saving || disabled} onclick={screenshot}>{t("Снять экран…")}</button>
       {#if capturing}<p role="status">{cancelRequested?t('Отмена снимка не подтверждена. Повторите отмену перед новым снимком.'):t("Выберите область или экран в системном окне.")}</p><button disabled={cancelling} onclick={cancelCapture}>{t("Отменить снимок")}</button>{/if}
@@ -213,7 +227,7 @@
           <label>Crop X<input type="number" min="0" max={width-1} step="1" bind:value={x}/></label>
           <label>Crop Y<input type="number" min="0" max={height-1} step="1" bind:value={y}/></label>
           <label>{t("Сторона crop")}<input type="number" min="1" max={Math.min(width,height)} step="1" bind:value={side}/></label>
-        {:else}<p>{t("Всё изображение будет растянуто до 480 × 480.")}</p>{/if}
+        {:else}<StudioPopover label={t("Справка")} icon="help"><p>{t("Всё изображение будет растянуто до 480 × 480.")}</p></StudioPopover>{/if}
         <button class="source" aria-label="{t("Переместить область crop указателем; точные координаты доступны в полях выше")}" onpointerdown={e => {if(e.button!==0)return; dragging=true; e.currentTarget.setPointerCapture(e.pointerId); move(e);}} onpointermove={move} onpointerup={() => dragging=false} onpointercancel={() => dragging=false} onlostpointercapture={() => dragging=false}>
           <img src={sourceUrl} draggable={false} alt="{t("Исходное изображение для crop")}"/>
           {#if crop && valid}<span class="selection" style:left={`${x!/width*100}%`} style:top={`${y!/height*100}%`} style:width={`${side!/width*100}%`} style:height={`${side!/height*100}%`}></span>{/if}
@@ -244,11 +258,12 @@
     {#if saving}<p role="status">{t("Сохранение изображения…")}</p>{/if}
     {#if notice}<p role="status">{t(notice)}</p>{/if}
     {#if error}<p role="alert">{errorText(error)}</p>{/if}
-    <button disabled={saving || cancelling} onclick={close}>{t("Закрыть редактор изображения")}</button>
+
   </section>
 {/if}
 <style>
-  section { margin:16px 0; padding:16px; border:1px solid var(--border-strong); border-radius:12px; }
+  section { position:fixed;inset:24px 16px auto auto;margin:0;width:min(620px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;padding:16px;border:0;border-radius:12px;background:var(--surface-raised);color:var(--text);box-shadow:0 12px 32px #0008; }
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px}h3{margin:0}
   fieldset { min-width:0; }
   .source { display:block; position:relative; width:min(100%,480px); padding:0; border:0; touch-action:none; margin:12px 0; }
   .source img { display:block; width:100%; height:auto; }

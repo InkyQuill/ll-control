@@ -73,13 +73,15 @@ test('lost publication reply requires catalog inspection and does not offer blin
   await page.getByRole('button',{name:'Сохранить изображение в галерею'}).click();
   await expect(page.getByRole('alert')).toContainText('Проверьте библиотеку');
   await expect(page.getByRole('button',{name:'Сохранить изображение в галерею'})).toBeDisabled();
-  await expect(page.getByRole('button',{name:'Импорт с редактированием…'})).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Импорт с редактированием…'}).click();
+  await expect(page.getByRole('button',{name:'Сохранить изображение в галерею'})).toBeDisabled();
   expect(await page.evaluate(()=> (window as unknown as {editorCalls:{command:string}[]}).editorCalls.filter(c=>c.command==='import_image').length)).toBe(1);
 });
 
 test('publication rechecks layer capacity after delayed import',async({page})=>{
   await setup(page,false,false,true);
-  await addControls(page);while (await page.locator('.layer-row[data-layer-index]').count() < 31) await page.getByRole('button',{name:'+ Текст',exact:true}).click();
+  while (await page.locator('.layer-row[data-layer-index]').count() < 31) {await addControls(page);await page.getByRole('button',{name:'+ Текст',exact:true}).click();}
   await page.getByRole('button',{name:'Фон и композиция',exact:true}).click();
   await page.getByRole('button',{name:'Подготовить preview изображения'}).click();
   await page.getByRole('button',{name:'Сохранить изображение в галерею'}).click();

@@ -55,13 +55,13 @@ test('English image import previews crop/filters, saves the original filename on
  expect(calls.some(c=>c.args.method==='set_lcd_theme')).toBe(false);
 });
 test('English gallery rename preserves resource-like user names and cancelling deletion never deletes the file',async({page})=>{
- await setup(page);await page.getByRole('button',{name:'Library',exact:true}).click();await page.getByText('Image library',{exact:true}).click();await page.getByRole('button',{name:'Rename Фон',exact:true}).click();await page.getByLabel('Image name',{exact:true}).fill('Редактор изображения');await page.getByRole('button',{name:'Save image name',exact:true}).click();
+ await setup(page);await page.getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('button',{name:'Image library',exact:true}).click();await page.getByRole('button',{name:'Rename Фон',exact:true}).click();await page.getByLabel('Image name',{exact:true}).fill('Редактор изображения');await page.getByRole('button',{name:'Save image name',exact:true}).click();
  await expect(page.getByRole('button',{name:'Rename Редактор изображения',exact:true})).toBeVisible();await page.getByRole('button',{name:'Delete Редактор изображения…',exact:true}).click();await page.getByRole('button',{name:'Cancel image deletion',exact:true}).click();await expect(page.getByRole('button',{name:'Confirm image deletion',exact:true})).toHaveCount(0);
  const calls=await page.evaluate(()=>(window as unknown as {englishMedia:{calls:{command:string;args:Record<string,unknown>}[]}}).englishMedia.calls);
  expect(calls.find(c=>c.args.method==='rename_theme_asset')?.args.params).toEqual({key:'a'.repeat(32),name:'Редактор изображения',expected_revision:1});expect(calls.some(c=>c.args.method==='delete_theme_asset')).toBe(false);
 });
 test('English video review and cancellation keep source filename and fit settings and never confirm publication',async({page})=>{
- await setup(page);await page.getByRole('button',{name:'Library',exact:true}).click();await page.getByText('Video library',{exact:true}).click();await page.getByRole('checkbox',{name:'Video color correction',exact:true}).check();
+ await setup(page);await page.getByRole('button',{name:'Library',exact:true}).click();await page.getByRole('button',{name:'Video library',exact:true}).click();await page.getByRole('checkbox',{name:'Video color correction',exact:true}).check();
  await page.getByLabel('Import GIF/MP4',{exact:true}).setInputFiles({name:'Импорт ролика.mp4',mimeType:'video/mp4',buffer:Buffer.from([1,2,3])});
  await page.getByRole('button',{name:'Prepare video',exact:true}).click();
  await expect(page.getByRole('status').filter({hasText:'Video ready for review: Импорт ролика.mp4'})).toBeVisible();await expect(page.getByRole('button',{name:'Save prepared video',exact:true})).toBeEnabled();await page.getByRole('button',{name:'Cancel import',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Import cancelled: Импорт ролика.mp4'})).toBeVisible();
@@ -125,7 +125,7 @@ for(const language of ['en-US','ru-RU'] as const){
  });
  test(`gallery replacement lost reply preserves raw diagnostic without repeating publication (${language})`,async({page})=>{
   const english=language==='en-US';await setup(page,language,'replacement');
-  await page.getByRole('button',{name:english?'Library':'Библиотека',exact:true}).click();await page.getByText(english?'Image library':'Библиотека изображений',{exact:true}).click();
+  await page.getByRole('button',{name:english?'Library':'Библиотека',exact:true}).click();await page.getByRole('button',{name:english?'Image library':'Библиотека изображений',exact:true}).click();
   await page.getByRole('button',{name:english?'Edit Фон…':'Редактировать Фон…',exact:true}).click();
   await page.getByRole('button',{name:english?'Prepare image preview':'Подготовить preview изображения',exact:true}).click();await page.getByRole('button',{name:english?'Save image to gallery':'Сохранить изображение в галерею',exact:true}).click();
   const alert=page.locator('main > .error[role=alert]');await expect(alert).toContainText('Настройки');await expect(alert).toContainText(english?'Replacement was not confirmed':'Замена не подтверждена');

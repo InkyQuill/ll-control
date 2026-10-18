@@ -2,6 +2,8 @@ fn main() {
     let commands: &'static [&'static str] =
         if std::env::var_os("CARGO_FEATURE_NATIVE_SMOKE").is_some() {
             &[
+                "system_fonts",
+                "system_font_read",
                 "desktop_settings_get",
                 "desktop_set_language",
                 "desktop_settings_save",
@@ -54,6 +56,8 @@ fn main() {
             ]
         } else {
             &[
+                "system_fonts",
+                "system_font_read",
                 "desktop_settings_get",
                 "desktop_set_language",
                 "desktop_settings_save",

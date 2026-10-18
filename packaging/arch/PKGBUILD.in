@@ -9,7 +9,7 @@ license=('GPL-3.0-or-later')
 # Payload binaries are already release artifacts. Further strip/debug splitting
 # changes bytes after the manifest is signed by its checksum.
 options=('!strip' '!debug')
-depends=('hidapi' 'systemd-libs' 'gtk3' 'webkit2gtk-4.1'
+depends=('hidapi' 'systemd-libs' 'gtk3' 'fontconfig' 'webkit2gtk-4.1'
          'libayatana-appindicator' 'ffmpeg' 'gstreamer' 'gst-plugins-base'
          'gst-plugins-good' 'gst-plugins-bad' 'gst-plugins-ugly'
          'gst-plugin-pipewire' 'qt6-declarative')

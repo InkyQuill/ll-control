@@ -1,4 +1,5 @@
 <script lang="ts">
+  import StudioPopover from "./StudioPopover.svelte";
   import {t} from './i18n.svelte';
   import {ValidationError} from './validation-error';
   import { onDestroy, tick } from 'svelte';
@@ -42,13 +43,12 @@
     }
   }
 </script>
-<details>
-  <summary>{t("Пользовательские шрифты")}</summary>
-  <p>{t("TTF/OTF, до 16 MiB. Загрузка не меняет тему и экран. Коллекции TTC и веб-шрифты не поддерживаются.")}</p>
-  <details><summary>{t("Лицензии встроенных шрифтов")}</summary><pre>{fontLicenses}</pre></details>
+<StudioPopover label={`${t("Пользовательские шрифты")}`} text>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("TTF/OTF, до 16 MiB. Загрузка не меняет тему и экран. Коллекции TTC и веб-шрифты не поддерживаются.")}</p></StudioPopover>
+  <StudioPopover label={`${t("Лицензии встроенных шрифтов")}`} text><pre>{fontLicenses}</pre></StudioPopover>
   <label>{t("Загрузить шрифт")}<input bind:this={fileInput} type="file" accept=".ttf,.otf" disabled={!connected || uploading} onchange={choose}/></label>
   {#if uploading}<progress max={size} value={received} aria-label="{t("Загрузка шрифта")}"></progress><button bind:this={cancelButton} onclick={() => controller?.abort()}>{t("Отменить загрузку шрифта")}</button>{/if}
   {#if status}<p role="status">{status==='uploaded'?t('Шрифт загружен. Выберите его в настройках слоя, затем примените тему.'):t('Загрузка отменена. Тема не изменена.')}</p>{/if}
   {#if error}<p role="alert">{#if error instanceof ValidationError}{t(error.resource,...error.values)}{:else}{t('Не удалось загрузить шрифт:')} <span>{error}</span>{/if}</p>{/if}
-</details>
-<style>pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}details{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px}summary{cursor:pointer}p{color:var(--text-muted);line-height:1.6}label{display:grid;gap:8px}progress{width:100%;margin:10px 0}[role=alert]{color:var(--danger)}</style>
+</StudioPopover>
+<style>pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}p{color:var(--text-muted);line-height:1.6}label{display:grid;gap:8px}progress{width:100%;margin:10px 0}[role=alert]{color:var(--danger)}</style>

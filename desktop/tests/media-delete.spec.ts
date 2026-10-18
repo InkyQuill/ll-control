@@ -27,7 +27,7 @@ test.beforeEach(async ({page}) => {
   });
   await page.goto('/?view=display');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByLabel('Сохранённый ролик')).toHaveValue('a'.repeat(32));
 });
 

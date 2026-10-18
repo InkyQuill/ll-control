@@ -52,7 +52,8 @@ for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-p
     const input = page.locator('.file input[type=file]');
     const other = page.getByRole('button', { name: '+ Текст', exact: true });
     if (outcome === 'layer-limit') {
-      while (await page.locator('.layer-row[data-layer-index]').count() < 31) await other.click();
+      while (await page.locator('.layer-row[data-layer-index]').count() < 31) {await addControls(page);await other.click();}
+      await addControls(page);
     }
     await input.focus();
     await input.setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: Buffer.from('fixture') });
@@ -75,9 +76,9 @@ for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-p
     await expect(input).toHaveValue('');
     if (outcome === 'error') await expect(page.getByRole('alert')).toContainText('Invalid image fixture');
     else await expect(page.getByRole('status').filter({hasText:'Изображение добавлено'})).toBeVisible();
-    const target = outcome === 'layer-limit' ? page.locator('.inspector h2') : outcome === 'move-focus' ? other : input;
+    const target = outcome === 'layer-limit' ? page.locator('.inspector h2[tabindex]') : outcome === 'success' ? page.getByRole('button',{name:'Добавить слой',exact:true}) : outcome === 'move-focus' ? other : input;
     await expect(target).toBeFocused();
-    if (outcome === 'success' || outcome === 'error') {
+    if (outcome === 'error') {
       await page.keyboard.press('Tab');
       await expect(page.getByRole('combobox', { name: 'Привязать датчик', exact: true })).toBeFocused();
     }

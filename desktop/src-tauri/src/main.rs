@@ -29,6 +29,21 @@ fn archive_error(e: anyhow::Error) -> BridgeError {
         code: None,
     }
 }
+#[tauri::command]
+async fn system_fonts() -> Result<Vec<lconnect_gui::system_fonts::SystemFont>, BridgeError> {
+    tauri::async_runtime::spawn_blocking(lconnect_gui::system_fonts::list)
+        .await
+        .map_err(error)?
+        .map_err(error)
+}
+#[tauri::command]
+async fn system_font_read(id: String) -> Result<tauri::ipc::Response, BridgeError> {
+    let bytes = tauri::async_runtime::spawn_blocking(move || lconnect_gui::system_fonts::read(&id))
+        .await
+        .map_err(error)?
+        .map_err(error)?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
 fn allowed(method: &str) -> bool {
     matches!(
         method,
@@ -970,6 +985,8 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            system_fonts,
+            system_font_read,
             desktop_settings_get,
             desktop_set_language,
             desktop_settings_save,
@@ -1309,7 +1326,7 @@ fn main() {
         Some(root.as_os_str())
     );
     with_media_preview(desktop_builder()).manage(lconnect_gui::group_jobs::Groups::default()).manage(lconnect_gui::archive_jobs::Archives::default()).manage(Bridge::default()).manage(lconnect_gui::screenshot::Screenshots::default()).manage(lconnect_gui::screen_record_jobs::Recordings::default()).manage(lconnect_gui::image_editor::Editor::default()).manage(MediaImports::default()).manage(MediaSources::default()).manage(lconnect_gui::media_http::MediaHttp::default()).manage(Thumbnails::default()).manage(Closing::default()).on_window_event(close_after_media)
-        .invoke_handler(tauri::generate_handler![desktop_set_language,desktop_settings_get,desktop_settings_save,desktop_exit,group_archive_start,group_windows_prepare,group_archive_status,group_archive_action,daemon_call,profile_archive_start,profile_archive_status,profile_archive_cancel,profile_archive_recover,profile_archive_dismiss,cooling_preset,cooling_mode_default,import_image,image_editor,capture_screenshot,begin_screenshot,cancel_screenshot,pending_screenshot_cleanup,screen_record_begin,screen_record_start,screen_record_status,screen_record_snapshot,screen_record_control,screen_record_cancel,screen_record_prepare,screen_record_admit,media_playback_url,media_begin,media_append,media_inspect,media_prepare_inspected,media_start,media_source_prepare,media_source_start,media_source_status,media_source_cancel,media_confirm,media_status,media_cancel,media_thumbnail,media_thumbnail_cancel,native_smoke_result,native_keyboard_step,native_media_step,native_desktop_step])
+        .invoke_handler(tauri::generate_handler![system_fonts,system_font_read,desktop_set_language,desktop_settings_get,desktop_settings_save,desktop_exit,group_archive_start,group_windows_prepare,group_archive_status,group_archive_action,daemon_call,profile_archive_start,profile_archive_status,profile_archive_cancel,profile_archive_recover,profile_archive_dismiss,cooling_preset,cooling_mode_default,import_image,image_editor,capture_screenshot,begin_screenshot,cancel_screenshot,pending_screenshot_cleanup,screen_record_begin,screen_record_start,screen_record_status,screen_record_snapshot,screen_record_control,screen_record_cancel,screen_record_prepare,screen_record_admit,media_playback_url,media_begin,media_append,media_inspect,media_prepare_inspected,media_start,media_source_prepare,media_source_start,media_source_status,media_source_cancel,media_confirm,media_status,media_cancel,media_thumbnail,media_thumbnail_cancel,native_smoke_result,native_keyboard_step,native_media_step,native_desktop_step])
         .setup(|app| {
             lconnect_gui::desktop_runtime::setup(app, request_exit)?;
             app.add_capability(r#"{"identifier":"smoke","windows":["main"],"permissions":["allow-native-smoke-result","allow-native-keyboard-step","allow-native-media-step","allow-native-desktop-step"]}"#)?;

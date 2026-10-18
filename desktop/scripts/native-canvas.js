@@ -18,7 +18,7 @@
   const layers=()=>[...document.querySelectorAll('.layer-row[data-layer-index]')];
   const inspector=()=>document.querySelector('.inspector');
   const select=async index=>{document.querySelector(`.layer-row[data-layer-index="${index}"]`).click();await delay(30);};
-  const open=async(en,ru)=>{const summary=[...document.querySelectorAll('summary')].find(node=>node.textContent.trim()===text(en,ru));if(summary&&!summary.parentElement.open){summary.click();await delay(30);}};
+  const open=async(en,ru)=>{const trigger=button(text(en,ru));if(trigger){const panel=document.getElementById(trigger.getAttribute('popovertarget'));if(panel&&!panel.matches(':popover-open')){trigger.click();await delay(30);}}};
   const ready=async()=>{await wait(()=>document.querySelector('.canvas img')&&!document.querySelector('.canvas .pending'),'measured preview ready');await delay(60);};
   const field=(index,name)=>control(name,inspector());
   const region=index=>button(text(`Select layer ${index+1}: ${['Image','Text','Clock','Sensor'][index]}`,`Выбрать слой ${index+1}: ${['Изображение','Текст','Часы','Датчик'][index]}`));
@@ -52,9 +52,9 @@
     await wait(()=>control(text('Bind sensor','Привязать датчик'))?.querySelector('option[value="amdgpu:2f61:utilization"]'),'GPU sensor');
     set(text('Bind sensor','Привязать датчик'),'amdgpu:2f61:utilization');
     await click(text('Add','Добавить'));
-    for(let index=0;index<3;index++)await click(text('+ Text','+ Текст'));
+    for(let index=0;index<3;index++){await open('Add layer','Добавить слой');await click(text('+ Text','+ Текст'));}
     await click(text('Library','Библиотека'));
-    const gallery=[...document.querySelectorAll('summary')].find(node=>node.textContent.trim()===text('Image library','Библиотека изображений'));
+    const gallery=button(text('Image library','Библиотека изображений'));
     assert(gallery,'image library');gallery.click();
     const addImage=node=>visible(node)&&!node.disabled&&(window.__nativeDesktopLanguage==='en-US'?/^Add .+ to theme$/.test(node.textContent.trim()):node.textContent.trim().startsWith('Добавить в тему '));
     await wait(()=>[...document.querySelectorAll('button')].some(addImage),'builtin image');
@@ -108,7 +108,7 @@
     await wait(async()=>(await rpc('get_lcd_theme',{dev}))?.name==='Native canvas acceptance','explicit Apply');
     const applied=await rpc('get_lcd_theme',{dev});assert(JSON.stringify(applied)===JSON.stringify(saved),'applied scene equals saved profile');
     assert(trustedPointers===3&&trustedKeys>=6,'trusted input evidence');
-    for(const detail of document.querySelectorAll('.profiles-disclosure details,.visual details,.add-layer'))detail.open=false;
+    for(const panel of document.querySelectorAll('[popover]:popover-open'))panel.hidePopover();
     await select(1);document.activeElement?.blur();window.scrollTo(0,0);await delay(200);
     await invoke('native_smoke_result',{keepOpen:true,result:{ok:true,phase,dev,theme:applied,trustedPointers,trustedKeys,steps:sequence,events}});
   }catch(error){await invoke('native_smoke_result',{keepOpen:true,result:{ok:false,phase,events,error:String(error),stack:error?.stack,body:document.body.innerText}});}

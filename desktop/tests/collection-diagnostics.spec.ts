@@ -37,8 +37,8 @@ for(const language of ['en-US','ru-RU'])for(const panel of ['images','videos'])f
  test(`${panel} membership ${mode}: local resources versus literal backend diagnostic (${language})`,async({page})=>{
   await setup(page,language,mode);
   const images=panel==='images';
-  const container=page.locator('details').filter({has:page.locator('summary').filter({hasText:images?/^(Image library|Библиотека изображений)$/:/^(Video library|Библиотека роликов)$/})});
-  await container.locator('summary').first().click();
+  const container=page.getByRole('dialog',{name:images?/^(Image library|Библиотека изображений)$/:/^(Video library|Библиотека роликов)$/,exact:true});
+  await page.getByRole('button',{name:images?/^(Image library|Библиотека изображений)$/:/^(Video library|Библиотека роликов)$/,exact:true}).click();
   const expected=(lang:string)=>{
    if(mode==='raw')return 'Не удалось прочитать состав коллекций';
    if(mode==='pending-detail')return lang==='en-US'?'Collections are awaiting persistence. Настройки {0} <disk>':'Коллекции ожидают сохранения. Настройки {0} <disk>';

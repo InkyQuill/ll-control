@@ -101,7 +101,7 @@ test.beforeEach(async ({ page }) => {
   });
   await page.goto('/?view=display');
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await expect(page.getByLabel('Импортировать GIF/MP4')).toBeEnabled();
 });
 
@@ -134,8 +134,7 @@ test('closing panel during delayed begin cancels its eventual upload without sta
   await page.evaluate(()=>{(window as unknown as {fixture:{delayBegin:boolean}}).fixture.delayBegin=true;});
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'x.gif',mimeType:'image/gif',buffer:Buffer.from('fixture')});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{release:unknown}}).fixture.release!==null)).toBe(true);
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.keyboard.press('Escape');
   await page.evaluate(()=>{(window as unknown as {fixture:{release:()=>void}}).fixture.release();});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}|null}}).fixture.job?.phase)).toBe('cancelled');
   const calls=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.map(c=>c.command));
@@ -216,7 +215,7 @@ test('local source preview seeks real frames under app CSP and sets cut boundari
   });
   await page.reload();
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.getByLabel('Выбрать фрагменты видео').check();
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'preview.mp4',mimeType:'video/mp4',buffer:videoFixture});
   const video=page.getByLabel('Исходное видео',{exact:true});
@@ -259,8 +258,7 @@ test('changing and closing local preview releases URLs and an unreadable source 
   await expect(page.getByRole('button',{name:'Подготовить выбранные фрагменты'})).toBeEnabled();
   expect(await page.evaluate(()=>(window as unknown as {previewRevoked:string[]}).previewRevoked)).toContain(first);
   const second=await video.getAttribute('src');
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.keyboard.press('Escape');
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {previewRevoked:string[]}).previewRevoked)).toContain(second);
   expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.some(c=>c.command==='media_begin'))).toBe(false);
 });
@@ -360,7 +358,7 @@ test('prepared movie streams bounded ranges and publication requires one explici
   });
   await page.reload();
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   const ranges:string[]=[];
   await page.route('http://media-preview.localhost/**',async route=>{
     const requested=route.request().headers()['range'] ?? '';
@@ -402,8 +400,7 @@ test('closing a ready review cancels staging without publication even if the pla
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'prepared.mp4',mimeType:'video/mp4',buffer:videoFixture});
   await page.getByRole('button',{name:'Подготовить выбранные фрагменты'}).click();
   await expect(page.getByText('Не удалось воспроизвести готовый ролик в этом окне.',{exact:false})).toBeVisible();
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.keyboard.press('Escape');
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('cancelled');
   const commands=await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.map(c=>c.command));
   expect(commands).not.toContain('media_confirm');
@@ -516,7 +513,7 @@ async function openSavedEditor(page:import('@playwright/test').Page) {
   });
   await page.reload();
   await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.getByRole('button',{name:'Библиотека роликов',exact:true}).click();
   await page.route('http://media-source.localhost/**',route=>route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*'},contentType:'video/mp4',body:videoFixture}));
   await page.route('http://media-preview.localhost/**',route=>route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*'},contentType:'video/mp4',body:videoFixture}));
   await page.evaluate(()=>{
@@ -679,8 +676,7 @@ test('VideoEdit unknown FPS blocks preparation and close during inspection cance
   await page.evaluate(()=>{(window as unknown as {fixture:{delayInspect:boolean}}).fixture.delayInspect=true;});
   await page.getByLabel('Импортировать GIF/MP4').setInputFiles({name:'delayed.mp4',mimeType:'video/mp4',buffer:videoFixture});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{inspectRelease:unknown}}).fixture.inspectRelease!==null)).toBe(true);
-  await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
-  await page.getByText('Библиотека роликов',{exact:true}).click();
+  await page.keyboard.press('Escape');
   await page.evaluate(()=>{(window as unknown as {fixture:{inspectRelease:()=>void}}).fixture.inspectRelease();});
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {fixture:{job:{phase:string}}}).fixture.job.phase)).toBe('cancelled');
   expect(await page.evaluate(()=>(window as unknown as {fixture:{calls:{command:string}[]}}).fixture.calls.some(c=>c.command==='media_prepare_inspected'))).toBe(false);

@@ -47,7 +47,7 @@ for (const fail of [false, true]) {
     await expect(page.getByText('Applied: 80%')).toBeVisible();
     await page.getByLabel('PWM, %', { exact: true }).fill('70');
     const open = async () => {
-      await page.getByText('Сохранённые профили', { exact: true }).click();
+      await page.getByRole('button',{name:'Сохранённые профили',exact:true}).click();
       await page.getByRole('button', { name: 'Обновить список профилей' }).click();
     };
     await open();

@@ -42,14 +42,17 @@ test.beforeEach(async ({ page }) => {
 test('expanded layer, profile, font and cleanup controls have names and readable text', async ({ page }) => {
   await page.getByRole('button',{name:'Библиотека',exact:true}).click();
 
-  for (const text of ['Пользовательские шрифты', 'Лицензии встроенных шрифтов', 'Сохранённые профили', 'Очистка неиспользуемых шрифтов', 'Очистка неиспользуемых изображений']) {
-    await page.getByText(text, { exact: true }).click();
+  for (const name of ['Пользовательские шрифты', 'Сохранённые профили', 'Очистка неиспользуемых шрифтов', 'Очистка неиспользуемых изображений']) {
+    await openEditorSection(page,name);
+    if(name==='Пользовательские шрифты')await page.getByRole('button',{name:'Лицензии встроенных шрифтов',exact:true}).click();
+    if(name==='Сохранённые профили')await page.getByRole('button',{name:'Обновить список профилей'}).click();
+    if(name.startsWith('Очистка')){
+      await page.getByRole('button',{name:name.endsWith('шрифтов')?'Проверить неиспользуемые шрифты':'Проверить неиспользуемые изображения'}).click();
+      await expect(page.getByRole('alert')).toHaveCount(1);
+    }
+    await inspect(page);
+    await page.keyboard.press('Escape');await page.keyboard.press('Escape');
   }
-  await page.getByRole('button', { name: 'Обновить список профилей' }).click();
-  await page.getByRole('button', { name: 'Проверить неиспользуемые шрифты' }).click();
-  await page.getByRole('button', { name: 'Проверить неиспользуемые изображения' }).click();
-  await expect(page.getByRole('alert')).toHaveCount(2);
-  await inspect(page);
 });
 
 test('expanded editor reflows at 320 pixels with all five layer types', async ({ page }) => {
