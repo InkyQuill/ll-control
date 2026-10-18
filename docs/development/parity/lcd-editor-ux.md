@@ -315,7 +315,7 @@ expanding blocks, question-mark help popovers, and access to system fonts.
       in EN/RU, plus browser keyboard/popover positioning checks.
 - [x] Complete affected regressions, including popup dismissal, cancellation, focus
       recovery and preserving video selection for the separate profile panel.
-- [ ] Package/install the reviewed source.
+- [x] Package/install the reviewed source.
 
 The previous picker contained only bundled and explicitly imported fonts; it never
 queried installed fonts. TTC collections remain outside the supported renderer
@@ -335,3 +335,14 @@ covered by a 21-case passing rerun followed by 73 passing affected scenarios.
 The fixes include explicit popover navigation in tests, visible focus targets,
 and retaining video selection across dismissal without retaining it across a
 device/connection change. No physical acceptance gate is closed by these results.
+
+### UX4 packaged delivery — `83470d4`
+
+The production package embeds the frontend without native-smoke instrumentation.
+Private install, upgrade and removal checks passed, preserving user intent; the
+extracted GUI launched and closed normally without hardware access. The package
+was installed on 2026-10-18 and installed binary hashes match its manifest.
+The user GUI and daemon were already stopped; this delivery did not start a
+physical-device writer. Clean-history publication is `e73a2c7`; its GitHub CI run
+39114975438 was still running at this checkpoint. User review of the polish and
+the existing R3 physical acceptance gates remain open.
