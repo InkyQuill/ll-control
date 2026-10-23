@@ -95,7 +95,7 @@ def case(root, language):
 
     def window(gui):
         return run(['xdotool', 'search', '--onlyvisible', '--pid', gui.pid,
-                    '--name', '^L-Connect Linux$']).splitlines()[0]
+                    '--name', '^LL-Control$']).splitlines()[0]
 
     def close(gui):
         run(['xdotool', 'windowquit', window(gui)])

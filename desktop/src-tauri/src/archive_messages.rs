@@ -31,7 +31,7 @@ impl fmt::Display for ArchiveNotice {
             Self::GroupExportUnconfirmed => "The local file is unconfirmed. Cancel the transfer and export again.",
             Self::CancelUnconfirmed => "Transfer cancellation is unconfirmed. Read the result using the operation ID.",
             Self::InvalidArchiveFile => "Choose a regular archive file within the size limit.",
-            Self::InvalidProfileArchive => "This is not an L-Connect Linux profile archive.",
+            Self::InvalidProfileArchive => "This is not an LL-Control profile archive.",
             Self::InvalidManifestLength => "Invalid archive manifest length.",
             Self::DestinationExists => "The file already exists. Choose a new name.",
         })

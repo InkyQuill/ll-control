@@ -34,7 +34,7 @@ try:
  result=json.loads((root/'result.json').read_text());assert result['ok'],result
  wait(lambda:json.loads((root/'stats.json').read_text()).get('firmware_queries')==1,'one firmware query')
  stats=json.loads((root/'stats.json').read_text());assert stats['firmware_update_writes']==0 and stats['firmware_activations']==0,stats
- window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+ window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
  subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=20);assert gui.returncode==0
  close_log=(root/'gui.log').read_text()
  for marker in ['native close: request admitted','native close: all workers joined']:assert marker in close_log,marker

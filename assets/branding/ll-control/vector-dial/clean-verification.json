@@ -1,0 +1,20 @@
+{
+  "viewBox": [
+    0,
+    0,
+    64,
+    64
+  ],
+  "accent": "#00fbfd",
+  "pointerWidth": 6,
+  "pointerWidthAt16px": 1.5,
+  "pointerWidthAt24px": 2.25,
+  "identicalVariantGeometry": true,
+  "deviceScaleFactor": 1,
+  "previewSizes": [
+    16,
+    24,
+    96
+  ],
+  "nativeTrayTested": false
+}

@@ -152,7 +152,11 @@ def main():
         copy(REPO / "packaging/net.inkyquill.lconnect.desktop", stage,
              "usr/share/applications/net.inkyquill.lconnect.desktop")
         copy(REPO / "desktop/src-tauri/icons/icon.png", stage,
-             "usr/share/icons/hicolor/32x32/apps/net.inkyquill.lconnect.png")
+             "usr/share/icons/hicolor/256x256/apps/ll-control.png")
+        copy(REPO / "desktop/src-tauri/icons/32x32.png", stage,
+             "usr/share/icons/hicolor/32x32/apps/ll-control.png")
+        copy(REPO / "desktop/static/ll-control.svg", stage,
+             "usr/share/icons/hicolor/scalable/apps/ll-control.svg")
         copy(REPO / "LICENSE", stage, "usr/share/licenses/lconnect-linux/LICENSE")
         copy(REPO / "desktop/static/fonts/OFL.txt", stage,
              "usr/share/licenses/lconnect-linux/fonts/Exo2-OFL.txt")

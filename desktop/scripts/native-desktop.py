@@ -10,7 +10,7 @@ if '--inside-xvfb' not in sys.argv:
  raise SystemExit(subprocess.call(['xvfb-run','-a','-s','-screen 0 1600x1200x24','dbus-run-session','--',sys.executable,__file__,'--inside-xvfb'],env=env))
 assert os.environ.get('LCONNECT_DESKTOP_ISOLATED')=='1'
 language=os.environ['LCONNECT_NATIVE_DESKTOP_LANGUAGE']
-show_label='Show L-Connect Linux' if language=='en-US' else 'Показать L-Connect Linux'
+show_label='Show LL-Control' if language=='en-US' else 'Показать LL-Control'
 exit_label='Exit application' if language=='en-US' else 'Выйти из приложения'
 root=Path(tempfile.mkdtemp(prefix='lconnect-native-desktop-'));(root/'fixture-marker').write_text('MockBackend only\n')
 env=dict(os.environ,LCONNECT_SMOKE_ROOT=str(root),LCONNECT_NATIVE_TRAY='1',XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CONFIG_DIRS=str(root/'system-config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',GIO_USE_VFS='local',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='1');env.pop('WAYLAND_DISPLAY',None)
@@ -35,10 +35,10 @@ def rpc(method,params=None):
     return reply['result']
 
 def visible():
- return subprocess.run(['xdotool','search','--onlyvisible','--name','^L-Connect Linux$'],env=env,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL).returncode==0
+ return subprocess.run(['xdotool','search','--onlyvisible','--name','^LL-Control$'],env=env,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL).returncode==0
 
 def close_window():
- window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+ window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
  subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5)
 
 def call(service,path,method,*args):
@@ -97,7 +97,7 @@ try:
    before_language=json.loads((root/'stats.json').read_text())
    other='ru-RU' if language=='en-US' else 'en-US'
    display=rpc('get_display_settings');display['interface_language']=other;rpc('set_display_settings',{'settings':display})
-   wait(lambda:menu_present('Показать L-Connect Linux' if other=='ru-RU' else 'Show L-Connect Linux') and menu_present('Выйти из приложения' if other=='ru-RU' else 'Exit application'),'runtime menu language switch')
+   wait(lambda:menu_present('Показать LL-Control' if other=='ru-RU' else 'Show LL-Control') and menu_present('Выйти из приложения' if other=='ru-RU' else 'Exit application'),'runtime menu language switch')
    display=rpc('get_display_settings');display['interface_language']=language;rpc('set_display_settings',{'settings':display})
    wait(lambda:menu_present(show_label) and menu_present(exit_label),'restore selected native language')
    after_language=json.loads((root/'stats.json').read_text())

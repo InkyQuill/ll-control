@@ -12,7 +12,7 @@ Wayland. Other distributions and devices are not yet qualified.
    (replace the filename with the actual package).
 4. Run `systemctl --user daemon-reload`, then
    `systemctl --user enable --now lconnectd`.
-5. Open **L-Connect Linux** from your application menu.
+5. Open **LL-Control** from your application menu.
 
 Starting the daemon can restore saved settings to connected hardware. Do not run
 another L-Connect daemon or a low-level device tool at the same time.

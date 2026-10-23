@@ -1,6 +1,6 @@
 ---
 name: lconnect-hardware
-description: Prepare or run scoped Galahad II LCDV2 hardware acceptance for L-Connect Linux and record reproducible results. Use for live smoke tests, display verification, and replay or hotplug checks.
+description: Prepare or run scoped Galahad II LCDV2 hardware acceptance for LL-Control and record reproducible results. Use for live smoke tests, display verification, and replay or hotplug checks.
 ---
 
 # LCDV2 hardware verification

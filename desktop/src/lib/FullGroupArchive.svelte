@@ -105,7 +105,7 @@
 </script>
 <details ontoggle={e=>open=e.currentTarget.open}>
   <summary>{t("Резервная копия группы настроек")}</summary>
-  <p>{t("Архив L-Connect Linux (.lcg) сохраняет всю выбранную группу и её слоты. «Экран» включает изображения, видео и шрифты. Windows ZIP 2.1.28 можно импортировать отдельно для экрана и FanAndLighting.")}</p>
+  <p>{t("Архив LL-Control (.lcg) сохраняет всю выбранную группу и её слоты. «Экран» включает изображения, видео и шрифты. Windows ZIP 2.1.28 можно импортировать отдельно для экрана и FanAndLighting.")}</p>
   <label>{t("Группа настроек")}<select aria-label="{t("Группа настроек")}" bind:value={group} disabled={active||!!pending}><option value="screen">{t("Экран")}</option><option value="fan_and_lighting">{t("Вентиляторы и подсветка")}</option></select></label>
   <p>{t("Устройство:")} <code>{pending?.dev||device||t('не выбрано')}</code> · {t(groupNames[group])}</p>
   {#if group==='fan_and_lighting'}

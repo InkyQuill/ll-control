@@ -57,9 +57,9 @@ try:
  result=json.loads((root/'result.json').read_text());assert result['ok'],result
  exported=root/'exported archive.lcp';assert exported.read_bytes().startswith(b'LCPROF01') and exported.stat().st_size>0
  events=[json.loads(line) for line in (root/'archive-portal-events.jsonl').read_text().splitlines()];assert [e['method'] for e in events]==['SaveFile','SaveFile','OpenFile'],events
- assert [e['title'] for e in events]==(['Export L-Connect Linux profile', 'Export L-Connect Linux profile', 'Import L-Connect Linux profile'] if '--english' in sys.argv else ['Экспорт профиля L-Connect Linux', 'Экспорт профиля L-Connect Linux', 'Импорт профиля L-Connect Linux']),events
- assert all(e['filters']==[[('L-Connect Linux profile' if '--english' in sys.argv else 'Профиль L-Connect Linux'),[[0,'*.lcp']]]] for e in events),events
- window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+ assert [e['title'] for e in events]==(['Export LL-Control profile', 'Export LL-Control profile', 'Import LL-Control profile'] if '--english' in sys.argv else ['Экспорт профиля LL-Control', 'Экспорт профиля LL-Control', 'Импорт профиля LL-Control']),events
+ assert all(e['filters']==[[('LL-Control profile' if '--english' in sys.argv else 'Профиль LL-Control'),[[0,'*.lcp']]]] for e in events),events
+ window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
  subprocess.run(['xdotool','windowactivate','--sync',window],env=env,check=True,timeout=5);subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=20);assert gui.returncode==0
  close_log=(root/'gui.log').read_text()
  for marker in ['native close: request admitted','native close: group worker joined (true)','native close: all workers joined']:assert marker in close_log,marker

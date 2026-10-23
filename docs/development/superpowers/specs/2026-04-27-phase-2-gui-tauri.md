@@ -5,7 +5,7 @@
 - **Status:** approved (brainstorming complete) — ready for Phase 2 plan
 - **Date:** 2026-04-27
 - **Author:** brainstorming session with user
-- **Scope:** the L-Connect Linux desktop GUI client, replacing the original
+- **Scope:** the LL-Control desktop GUI client, replacing the original
   spec's egui-based "Phase 2 GUI shell" with a Tauri 2 + SvelteKit + Svelte 5
   app aiming for L-Connect-3-equivalent polish using an original "Aurora"
   visual language
@@ -535,7 +535,7 @@ package() {
 
 ```ini
 [Desktop Entry]
-Name=L-Connect Linux
+Name=LL-Control
 Comment=Control panel for Lian Li hardware
 Exec=lconnect-gui
 Icon=lconnect-gui

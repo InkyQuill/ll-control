@@ -1,4 +1,4 @@
-# L-Connect Linux desktop
+# LL-Control desktop
 
 Tauri 2 + SvelteKit/Svelte 5, Linux. Device Studio starts with the device overview;
 the selected device exposes its implemented Screen, Cooling and Lighting sections.

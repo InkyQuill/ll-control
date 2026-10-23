@@ -1,0 +1,18 @@
+{
+  "renderer": "Chromium",
+  "deviceScaleFactor": 1,
+  "sizes": [
+    16,
+    24
+  ],
+  "inheritedStrokes": [
+    "rgb(239, 242, 246)",
+    "rgb(239, 242, 246)",
+    "rgb(239, 242, 246)",
+    "rgb(37, 42, 51)",
+    "rgb(37, 42, 51)",
+    "rgb(37, 42, 51)"
+  ],
+  "dynamicStroke": "rgb(0, 213, 236)",
+  "nativeTrayTested": false
+}

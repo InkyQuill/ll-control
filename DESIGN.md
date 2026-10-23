@@ -1,5 +1,5 @@
 ---
-name: L-Connect Linux — Device Studio
+name: LL-Control — Device Studio
 description: Production device-first graphite studio with lilac actions and capability-specific workspaces.
 colors:
   background: "#101115"
@@ -78,7 +78,7 @@ components:
     padding: "10px 14px"
 ---
 
-# Design System: L-Connect Linux Device Studio
+# Design System: LL-Control Device Studio
 
 ## Overview
 

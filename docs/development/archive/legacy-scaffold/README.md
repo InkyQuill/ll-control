@@ -1,6 +1,6 @@
 # Legacy scaffold (archived 2026-04-25)
 
-Pre-rewrite Rust scaffold for L-Connect Linux. Kept as a reference for Phase 0
+Pre-rewrite Rust scaffold for LL-Control. Kept as a reference for Phase 0
 protocol verification — specifically because the handshake byte offsets in
 `src/device/galahad.rs` are correct (despite the broken architecture around
 them) and the `99-lian-li-galahad2.rules` file documents the device path the

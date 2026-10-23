@@ -5,7 +5,7 @@
 - **Status:** approved (brainstorming complete) — ready for Phase 0e + Phase 1 plans
 - **Date:** 2026-04-26
 - **Author:** brainstorming session with user
-- **Scope:** the first user-facing binary distribution of L-Connect Linux,
+- **Scope:** the first user-facing binary distribution of LL-Control,
   wrapping every codec verified in Phase 0 behind a stable IPC contract
 - **Supersedes:** Phase 1 / 3 / 4 sections of
   [`2026-04-25-lconnect-linux-design.md`](2026-04-25-lconnect-linux-design.md)
@@ -520,7 +520,7 @@ device families come online.
 
 ```ini
 [Unit]
-Description=L-Connect Linux daemon
+Description=LL-Control daemon
 After=graphical-session.target
 
 [Service]

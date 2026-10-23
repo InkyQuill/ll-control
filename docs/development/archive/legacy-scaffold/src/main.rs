@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
         .with_max_level(Level::INFO)
         .init();
 
-    info!("L-Connect Linux starting...");
+    info!("LL-Control starting...");
 
     // Run GUI
     let options = eframe::NativeOptions {
@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     eframe::run_native(
-        "L-Connect Linux",
+        "LL-Control",
         options,
         Box::new(|cc| {
             Box::new(LConnectApp::new(cc))

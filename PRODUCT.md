@@ -1,4 +1,4 @@
-# L-Connect Linux
+# LL-Control
 
 <!-- impeccable:product-schema 1 -->
 
@@ -38,7 +38,7 @@ The desktop talks to a local daemon. The current hardware target is Galahad II L
 
 ## Brand Commitments
 
-Current product name: L-Connect Linux. The user prefers a modern gaming identity, probably dark and potentially neon: a sense of adding light to darkness, appropriate to RGB and the pump LCD. Keep controls convenient and understandable to an average user.
+Approved product name: **LL-Control** (2026-10-18), formerly L-Connect Linux. The name decision is recorded in [the branding decision](docs/development/design/ll-control-branding.md). Visible application branding uses LL-Control; existing package, service and configuration identifiers remain stable for compatibility; the new name has only received a preliminary public-web conflict screen, not trademark clearance. The user prefers a modern gaming identity, probably dark and potentially neon: a sense of adding light to darkness, appropriate to RGB and the pump LCD. Keep controls convenient and understandable to an average user.
 
 User-named positive references: ROG / Armoury Crate / ASUS AI Suite, original L-Connect, JBL Quantum (with less animation), Logitech, SteelSeries and Opera GX. MSI utilities are a negative reference. These are orientation references, not permission to copy their assets or every interaction.
 

@@ -100,7 +100,7 @@
   }
 </script>
 <StudioPopover label={`${t("Импорт и экспорт профиля")}`} bind:open text wide>
-  <StudioPopover label={t("Справка")} icon="help"><p>{t("Архив L-Connect Linux (.lcp) содержит один слот и его изображения, видео и шрифты. Импорт заменит выбранный слот. Применение к устройству остаётся отдельным действием.")}</p></StudioPopover>
+  <StudioPopover label={t("Справка")} icon="help"><p>{t("Архив LL-Control (.lcp) содержит один слот и его изображения, видео и шрифты. Импорт заменит выбранный слот. Применение к устройству остаётся отдельным действием.")}</p></StudioPopover>
   <div class="buttons">
     <button disabled={unavailable||!hasProfile} onclick={()=>start('export')}>{t("Экспортировать слот в архив…")}</button>
     <button disabled={unavailable} onclick={()=>start('import')}>{t("Импортировать архив в слот…")}</button>

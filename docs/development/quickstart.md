@@ -1,4 +1,4 @@
-# Запуск и диагностика базового L-Connect Linux
+# Запуск и диагностика базового LL-Control
 
 Текущая цель — Galahad II LCDV2 (`0416:7395`) и Windows L-Connect3 2.1.28.0.
 Доступны изображения, настраиваемые LCD themes с часами/realtime sensors,

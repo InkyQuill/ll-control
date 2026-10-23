@@ -1,4 +1,4 @@
-# L-Connect Linux
+# LL-Control
 
 Linux-native client for Lian Li hardware. Current target: **Galahad II LCDV2
 (`0416:7395`)**, with **L-Connect 3 2.1.28.0** as the Windows parity baseline.

@@ -203,7 +203,7 @@ impl Store {
         let desired = if preferences.autostart {
             Some(entry(&self.executable)?)
         } else if self.system_entry_present().unwrap_or(true) {
-            Some(b"# Managed by L-Connect Linux desktop v1\n[Desktop Entry]\nType=Application\nName=L-Connect Linux\nHidden=true\nExec=/usr/bin/true\nTerminal=false\n".to_vec())
+            Some(b"# Managed by LL-Control desktop v1\n[Desktop Entry]\nType=Application\nName=LL-Control\nHidden=true\nExec=/usr/bin/true\nTerminal=false\n".to_vec())
         } else {
             None
         };
@@ -353,7 +353,7 @@ fn entry(executable: &Path) -> Result<Vec<u8>> {
     }
     quoted.push('"');
     let encoded = quoted.replace('\\', "\\\\");
-    Ok(format!("# Managed by L-Connect Linux desktop v1\n[Desktop Entry]\nType=Application\nName=L-Connect Linux\nExec=/usr/bin/env -- {encoded} --autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n").into_bytes())
+    Ok(format!("# Managed by LL-Control desktop v1\n[Desktop Entry]\nType=Application\nName=LL-Control\nExec=/usr/bin/env -- {encoded} --autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n").into_bytes())
 }
 
 #[cfg(test)]

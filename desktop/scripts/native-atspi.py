@@ -69,7 +69,7 @@ if page == 'lighting' and any(row['name'].startswith('Верхний порог 
     variant = 'dynamic_invalid'
     requirements['lighting'] = ([('button', 'Применить режим по датчику')], ('spin button', 'Верхний порог ('))
 required, focused = requirements[page]
-required = [('document web', 'L-Connect Linux'), ('link', 'Перейти к содержимому'),
+required = [('document web', 'LL-Control'), ('link', 'Перейти к содержимому'),
             *[('button', name) for name in ['Экран помпы', 'Датчики', 'Охлаждение', 'Подсветка', 'Настройки']], *required]
 for role, name in required:
     assert any(row['role'] == role and row['name'] == name for row in rows), (page, role, name, rows)

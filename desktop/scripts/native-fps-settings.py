@@ -36,7 +36,7 @@ try:
   wait(lambda:(root/'result.json').exists() or gui.poll() is not None,'native FPS workflow',90)
   result=json.loads((root/'result.json').read_text());assert result['ok'],result;results.append(result)
   stats=json.loads((root/'stats.json').read_text());assert stats['devices_known']==0 and stats['hid_write_count']==0,stats
-  window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+  window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
   subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=20);assert gui.returncode==0
   close=(root/('gui-'+phase+'.log')).read_text();assert 'native close: all workers joined' in close
   (root/'stop').touch();fixture.wait(timeout=15);assert fixture.returncode==0

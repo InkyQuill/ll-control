@@ -58,9 +58,9 @@ try:
  publication_root=root/'settings/import-publications';assert publication_root.is_dir() and not list(publication_root.iterdir()),'completed GUI transfer left ownership records or recovery notices'
  exported=root/'exported group.lcg';assert exported.read_bytes().startswith(b'LCGROUP1') and exported.stat().st_size>0
  events=[json.loads(line) for line in (root/'archive-portal-events.jsonl').read_text().splitlines()];assert [e['method'] for e in events]==['SaveFile','OpenFile'],events
- assert [e['title'] for e in events]==(['Export L-Connect Linux settings group', 'Import L-Connect Linux settings group'] if '--english' in sys.argv else ['Экспорт группы настроек L-Connect Linux', 'Импорт группы настроек L-Connect Linux']),events
- assert all(e['filters']==[[('L-Connect Linux settings group' if '--english' in sys.argv else 'Группа настроек L-Connect Linux'),[[0,'*.lcg']]]] for e in events),events
- window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+ assert [e['title'] for e in events]==(['Export LL-Control settings group', 'Import LL-Control settings group'] if '--english' in sys.argv else ['Экспорт группы настроек LL-Control', 'Импорт группы настроек LL-Control']),events
+ assert all(e['filters']==[[('LL-Control settings group' if '--english' in sys.argv else 'Группа настроек LL-Control'),[[0,'*.lcg']]]] for e in events),events
+ window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
  # windowquit sends WM_DELETE_WINDOW (not XDestroyWindow/windowclose). This
  # qualifies the application's normal close path independently of WM key grabs.
  subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=20);assert gui.returncode==0

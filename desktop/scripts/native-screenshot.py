@@ -90,7 +90,7 @@ try:
         result_file=root/'result.json'
         if result_file.exists() and not close_sent:
             result=json.loads(result_file.read_text());assert result['ok'],result
-            window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+            window=subprocess.check_output(['xdotool','search','--onlyvisible','--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
             subprocess.run(['xdotool','windowactivate','--sync',window],env=env,check=True,timeout=5)
             subprocess.run(['xdotool','key','--clearmodifiers','alt+F4'],env=env,check=True,timeout=5);close_sent=True
         time.sleep(.02)

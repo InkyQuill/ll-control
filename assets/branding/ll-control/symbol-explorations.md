@@ -1,0 +1,23 @@
+# Symbol explorations without LL
+
+2026-10-23. User rejected the monogram concepts and requested all three directions without letters, retaining charcoal and cyan. Built-in image_gen generated these concepts on transparent backgrounds. No selection or installation yet.
+
+Visual review: 05 became a literal two-blade fan with mounting holes, more detailed than requested. 06 is an angular channel emblem with bevels. 07 is a rotary dial, the clearest control metaphor. All need small-size and alpha-edge checks before production; none is a validated launcher asset.
+
+## 05-ring-blade
+
+[PNG](icon-concept-05-ring-blade.png)
+
+Prompt: Use case: logo-brand. Create a single original premium Linux desktop application icon for a PC cooling, lighting and hardware controller. NO LETTERS, NO TEXT, NO LL monogram. Freestanding compact symbol with transparent background, no square tile, no presentation board or mockup. Palette exclusively charcoal graphite and vivid electric cyan; charcoal may have subtly lighter graphite edge planes for visibility on dark desktops. Bold disciplined geometry, excellent negative space, readable silhouette at 32px, restrained modern gaming hardware aesthetic. Mostly flat vector-like design with extremely subtle material shading, no glossy 3D render, no bloom, no fine circuitry, no tiny details, no rainbow, no white. Centered front view with generous transparent margin, complete uncut symbol. Direction A: a thick charcoal circular housing surrounding a single broad sweeping cyan turbine blade. The one curved blade and a small charcoal central hub imply airflow and a rotary control. Strong clean silhouette, smoothly tapered broad blade, open negative space, visually balanced. Not a generic three-blade fan pictogram, not a power button, not a recycling symbol. One clear sculptural curved cyan blade inside a graphite ring.
+
+## 06-light-channel
+
+[PNG](icon-concept-06-light-channel.png)
+
+Prompt: Use case: logo-brand. Create a single original premium Linux desktop application icon for a PC cooling, lighting and hardware controller. NO LETTERS, NO TEXT, NO LL monogram. Freestanding compact symbol with transparent background, no square tile, no presentation board or mockup. Palette exclusively charcoal graphite and vivid electric cyan; charcoal may have subtly lighter graphite edge planes for visibility on dark desktops. Bold disciplined geometry, excellent negative space, readable silhouette at 32px, restrained modern gaming hardware aesthetic. Mostly flat vector-like design with extremely subtle material shading, no glossy 3D render, no bloom, no fine circuitry, no tiny details, no rainbow, no white. Centered front view with generous transparent margin, complete uncut symbol. Direction B: a distinctive abstract connection symbol made from two broad angular parallel channels, one charcoal graphite and one electric cyan. The two offset paths bend across a compact hexagonal footprint like light flowing between hardware devices. Two simple solid geometric ribbons, carefully separated by broad transparent space, precise clipped corners and a small number of bends. No letters or readable monogram, no chain-link cliche, no lightning bolt, no circuit-board hairlines. Bold coherent emblem with restrained asymmetric motion.
+
+## 07-control-dial
+
+[PNG](icon-concept-07-control-dial.png)
+
+Prompt: Use case: logo-brand. Create a single original premium Linux desktop application icon for a PC cooling, lighting and hardware controller. NO LETTERS, NO TEXT, NO LL monogram. Freestanding compact symbol with transparent background, no square tile, no presentation board or mockup. Palette exclusively charcoal graphite and vivid electric cyan; charcoal may have subtly lighter graphite edge planes for visibility on dark desktops. Bold disciplined geometry, excellent negative space, readable silhouette at 32px, restrained modern gaming hardware aesthetic. Mostly flat vector-like design with extremely subtle material shading, no glossy 3D render, no bloom, no fine circuitry, no tiny details, no rainbow, no white. Centered front view with generous transparent margin, complete uncut symbol. Direction C: a front-view compact charcoal rotary control dial. A thick outer graphite bezel with one broad electric cyan arc occupying roughly one quarter of the perimeter; a clean charcoal inner knob with a single bold cyan radial indicator aligned with the arc. Clear broad separation between bezel and knob, no numbers, no tick marks, no screws, no texture. Strong graphic silhouette, minimal almost-flat vector icon, subtle graphite planes. Feels like precise hardware control, not a speedometer or loading spinner.

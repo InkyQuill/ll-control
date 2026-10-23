@@ -1,4 +1,4 @@
-# L-Connect Linux
+# LL-Control
 
 Control Lian Li cooling, lighting and LCD content from Linux.
 Current device target: **Galahad II LCDV2 (`0416:7395`), square 480×480 LCD**.

@@ -1,4 +1,4 @@
 interface:
-  display_name: "L-Connect Parity Research"
+  display_name: "LL-Control Parity Research"
   short_description: "Trace LCDV2 parity gaps to versioned evidence"
   default_prompt: "Use $lconnect-parity to investigate the requested LCDV2 scenario and produce an evidence-backed gap analysis without starting implementation."

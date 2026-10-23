@@ -90,7 +90,7 @@ def case(root, language):
                     assert key_step['sequence'] == key_sequence + 1, key_step
                     assert key_step['key'] in {'space', 'Tab', 'Home', 'Return'}, key_step
                     window = run(['xdotool', 'search', '--onlyvisible', '--pid', gui.pid,
-                                  '--name', '^L-Connect Linux$']).splitlines()[0]
+                                  '--name', '^LL-Control$']).splitlines()[0]
                     run(['xdotool', 'windowactivate', '--sync', window])
                     probe = key_step.get('probe')
                     values = {'image_crop_x': '30', 'image_crop_y': '20', 'image_crop_side': '150'}
@@ -159,7 +159,7 @@ print(json.dumps(result))
                 (root / 'applied.jpg').write_bytes(bytes(receipt['jpeg']))
                 (root / 'applied-theme.json').write_text(json.dumps(theme, indent=2) + '\n')
                 window = run(['xdotool', 'search', '--onlyvisible', '--pid', gui.pid,
-                              '--name', '^L-Connect Linux$']).splitlines()[0]
+                              '--name', '^LL-Control$']).splitlines()[0]
                 run(['import', '-window', window, root / 'applied.png'])
                 (root / 'media-ack').write_text('1'); acknowledged = True
             if result.exists() and not closed:
@@ -169,14 +169,14 @@ print(json.dumps(result))
                     continue
                 if not outcome['ok']:
                     window = run(['xdotool', 'search', '--onlyvisible', '--pid', gui.pid,
-                                  '--name', '^L-Connect Linux$']).splitlines()[0]
+                                  '--name', '^LL-Control$']).splitlines()[0]
                     try:
                         run(['import', '-window', window, root / 'failure.png'])
                     except subprocess.CalledProcessError as error:
                         (root / 'failure-capture.log').write_text(error.stderr or str(error))
                 assert outcome['ok'], outcome
                 window = run(['xdotool', 'search', '--onlyvisible', '--pid', gui.pid,
-                              '--name', '^L-Connect Linux$']).splitlines()[0]
+                              '--name', '^LL-Control$']).splitlines()[0]
                 run(['xdotool', 'windowquit', window]); closed = True
             time.sleep(.025)
         assert gui.returncode == 0, (root / 'gui.log').read_text()

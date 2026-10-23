@@ -1,4 +1,4 @@
-# Почему Rust + egui для L-Connect Linux?
+# Почему Rust + egui для LL-Control?
 
 ## Краткий ответ: **Rust + egui** - лучший выбор
 

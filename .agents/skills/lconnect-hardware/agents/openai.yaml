@@ -1,4 +1,4 @@
 interface:
-  display_name: "L-Connect Hardware Acceptance"
+  display_name: "LL-Control Hardware Acceptance"
   short_description: "Prepare and verify scoped LCDV2 hardware scenarios"
   default_prompt: "Use $lconnect-hardware to prepare and, within existing authorization, run the requested LCDV2 acceptance scenario and record observed results."

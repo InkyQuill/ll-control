@@ -32,14 +32,14 @@ impl Dialog {
             );
         }
         match (self.language, self.group, self.save) {
-            (InterfaceLanguage::English, false, true) => "Export L-Connect Linux profile",
-            (InterfaceLanguage::English, false, false) => "Import L-Connect Linux profile",
-            (InterfaceLanguage::English, true, true) => "Export L-Connect Linux settings group",
-            (InterfaceLanguage::English, true, false) => "Import L-Connect Linux settings group",
-            (InterfaceLanguage::Russian, false, true) => "Экспорт профиля L-Connect Linux",
-            (InterfaceLanguage::Russian, false, false) => "Импорт профиля L-Connect Linux",
-            (InterfaceLanguage::Russian, true, true) => "Экспорт группы настроек L-Connect Linux",
-            (InterfaceLanguage::Russian, true, false) => "Импорт группы настроек L-Connect Linux",
+            (InterfaceLanguage::English, false, true) => "Export LL-Control profile",
+            (InterfaceLanguage::English, false, false) => "Import LL-Control profile",
+            (InterfaceLanguage::English, true, true) => "Export LL-Control settings group",
+            (InterfaceLanguage::English, true, false) => "Import LL-Control settings group",
+            (InterfaceLanguage::Russian, false, true) => "Экспорт профиля LL-Control",
+            (InterfaceLanguage::Russian, false, false) => "Импорт профиля LL-Control",
+            (InterfaceLanguage::Russian, true, true) => "Экспорт группы настроек LL-Control",
+            (InterfaceLanguage::Russian, true, false) => "Импорт группы настроек LL-Control",
         }
     }
     fn filter(self) -> &'static str {
@@ -47,10 +47,10 @@ impl Dialog {
             return "Windows L-Connect3 ZIP";
         }
         match (self.language, self.group) {
-            (InterfaceLanguage::English, false) => "L-Connect Linux profile",
-            (InterfaceLanguage::English, true) => "L-Connect Linux settings group",
-            (InterfaceLanguage::Russian, false) => "Профиль L-Connect Linux",
-            (InterfaceLanguage::Russian, true) => "Группа настроек L-Connect Linux",
+            (InterfaceLanguage::English, false) => "LL-Control profile",
+            (InterfaceLanguage::English, true) => "LL-Control settings group",
+            (InterfaceLanguage::Russian, false) => "Профиль LL-Control",
+            (InterfaceLanguage::Russian, true) => "Группа настроек LL-Control",
         }
     }
 }

@@ -47,7 +47,7 @@ def stop_fixture():
 
 def close_gui(gui,name):
  def visible():
-  found=subprocess.run(['xdotool','search','--onlyvisible','--name','^L-Connect Linux$'],env=env,text=True,capture_output=True,timeout=5)
+  found=subprocess.run(['xdotool','search','--onlyvisible','--name','^LL-Control$'],env=env,text=True,capture_output=True,timeout=5)
   return found.stdout.splitlines() if found.returncode==0 else []
  wait(lambda:gui.poll() is not None or bool(visible()),'mapped native window before Close')
  assert gui.poll() is None,'GUI exited before explicit Close'

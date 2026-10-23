@@ -15,7 +15,7 @@ const resources={
  group_export_unconfirmed:'Локальное сохранение файла не подтверждено. Отмените передачу и повторите экспорт.',
  cancel_unconfirmed:'Отмена передачи не подтверждена; прочитайте результат по ID операции.',
  invalid_archive_file:'Выберите обычный файл архива допустимого размера',
- invalid_profile_archive:'Это не архив профиля L-Connect Linux',
+ invalid_profile_archive:'Это не архив профиля LL-Control',
  invalid_manifest_length:'Неверная длина manifest',
  destination_exists:'Файл уже существует: выберите новое имя',
 } as const;

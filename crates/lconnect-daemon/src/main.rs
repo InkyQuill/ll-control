@@ -1,4 +1,4 @@
-//! lconnectd - the L-Connect Linux daemon.
+//! lconnectd - the LL-Control daemon.
 //!
 //! Wires the long-lived process: load config, build the HID backend,
 //! spawn the device manager, and serve the JSON-RPC IPC over a Unix

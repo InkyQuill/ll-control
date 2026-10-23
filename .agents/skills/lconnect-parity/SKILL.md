@@ -1,6 +1,6 @@
 ---
 name: lconnect-parity
-description: Research L-Connect Linux LCDV2 parity against versioned Windows behavior and produce evidence, gap matrices, or milestone plans. Use for protocol investigation and audit requests without implicitly starting implementation.
+description: Research LL-Control LCDV2 parity against versioned Windows behavior and produce evidence, gap matrices, or milestone plans. Use for protocol investigation and audit requests without implicitly starting implementation.
 ---
 
 # LCDV2 parity research

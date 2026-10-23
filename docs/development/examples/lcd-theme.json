@@ -3,7 +3,7 @@
   "name": "CPU clock",
   "background": [12, 18, 30],
   "layers": [
-    {"kind": "text", "text": "L-Connect Linux", "style": {"x": 240, "y": 95, "size": 28, "color": [140, 180, 210], "align": "center"}},
+    {"kind": "text", "text": "LL-Control", "style": {"x": 240, "y": 95, "size": 28, "color": [140, 180, 210], "align": "center"}},
     {"kind": "sensor", "sensor_id": "REPLACE_WITH_SENSOR_ID", "label": "CPU", "unit": "celsius", "temperature_unit": "celsius", "decimals": 1, "style": {"x": 240, "y": 210, "size": 52, "color": [240, 250, 255], "align": "center"}},
     {"kind": "clock", "twenty_four_hour": true, "show_seconds": true, "style": {"x": 240, "y": 320, "size": 32, "color": [70, 210, 180], "align": "center"}}
   ]

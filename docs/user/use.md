@@ -1,4 +1,4 @@
-# Use L-Connect Linux
+# Use LL-Control
 
 Choose your device, then open **Pump screen**, **Cooling** or **Lighting**.
 Unavailable sensor values appear as a dash; they are not zero.

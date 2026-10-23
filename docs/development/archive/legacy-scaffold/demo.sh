@@ -2,7 +2,7 @@
 # Demonstration script - shows live sensor data
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║     L-Connect Linux - Real-time Sensor Demonstration        ║"
+echo "║     LL-Control - Real-time Sensor Demonstration        ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 

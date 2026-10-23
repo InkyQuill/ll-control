@@ -1,9 +1,9 @@
 ---
 name: lconnect-implement
-description: Implement or fix L-Connect Linux features across protocol, HID, daemon, IPC, CLI, and image preparation. Use for code changes or execution of an approved milestone, not research-only audits.
+description: Implement or fix LL-Control features across protocol, HID, daemon, IPC, CLI, and image preparation. Use for code changes or execution of an approved milestone, not research-only audits.
 ---
 
-# L-Connect implementation
+# LL-Control implementation
 
 Read `roadmap.md` from the repository root and the plan relevant to the requested change. The roadmap supersedes the old phase ordering. Inspect current code and dirty files before choosing edit boundaries; plans and historical test counts are not proof of today's implementation.
 

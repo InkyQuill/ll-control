@@ -156,7 +156,7 @@ try:
         assert step['sequence']==sequence+1
         sequence=step['sequence'];action=step['action']
         if window is None:
-            window=xdo('search','--onlyvisible','--name','^L-Connect Linux$').splitlines()[0]
+            window=xdo('search','--onlyvisible','--name','^LL-Control$').splitlines()[0]
             xdo('windowactivate','--sync',window)
         if action.startswith('chooser_'):
             if action=='chooser_slow':
@@ -251,7 +251,7 @@ try:
         elif action=='close_worker':
             closing=encoder()
             ack(sequence)
-            window=xdo('search','--onlyvisible','--name','^L-Connect Linux$').splitlines()[0]
+            window=xdo('search','--onlyvisible','--name','^LL-Control$').splitlines()[0]
             xdo('windowquit',window)
             break
         else: raise AssertionError(action)

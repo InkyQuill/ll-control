@@ -104,7 +104,7 @@ def case_run(root, mode, language):
         return child
 
     def window():
-        return run(["xdotool", "search", "--onlyvisible", "--pid", gui.pid, "--name", "^L-Connect Linux$"],
+        return run(["xdotool", "search", "--onlyvisible", "--pid", gui.pid, "--name", "^LL-Control$"],
                    env=env, capture_output=True, text=True).stdout.splitlines()[0]
 
     try:

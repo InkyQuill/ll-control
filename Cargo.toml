@@ -21,7 +21,7 @@ edition      = "2021"
 rust-version = "1.82"
 license      = "GPL-3.0-or-later"
 repository   = "https://github.com/inky/lconnect-linux"
-authors      = ["L-Connect Linux contributors"]
+authors      = ["LL-Control contributors"]
 
 [workspace.dependencies]
 # Used by `protocol`, `lconnect-hid`

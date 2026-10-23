@@ -159,7 +159,7 @@ try:
                 assert step['sequence'] == sequence + 1
                 assert step['key'] in {'Tab', 'shift+Tab', 'Return', 'space', 'Down', 'Up', 'Left', 'Right', 'End', 'Home'}
                 if window is None:
-                    window = xdo('search', '--onlyvisible', '--name', '^L-Connect Linux$').splitlines()[0]
+                    window = xdo('search', '--onlyvisible', '--name', '^LL-Control$').splitlines()[0]
                     xdo('windowsize', '--sync', window, '1280', '960')
                     xdo('windowactivate', '--sync', window)
                 # The first End is requested with Settings brightness focused.

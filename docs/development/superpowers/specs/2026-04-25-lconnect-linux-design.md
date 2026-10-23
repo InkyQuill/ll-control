@@ -1,6 +1,6 @@
 > Historical design reference. Current scope/order: [roadmap](../../../../roadmap.md); current execution: [plan index](../plans/README.md). Older phase status and architecture must be reconciled with the M1/M2 daemon contracts before implementation.
 
-# L-Connect Linux — Design
+# LL-Control — Design
 
 - **Status:** approved (brainstorming complete) — ready for Phase 0 plan
 - **Date:** 2026-04-25
@@ -11,7 +11,7 @@
 
 ## 1. Project context
 
-L-Connect Linux is a Linux-native rewrite of the Lian Li L-Connect 3 Windows
+LL-Control is a Linux-native rewrite of the Lian Li L-Connect 3 Windows
 application. The Windows source has been decompiled and lives alongside this
 project at:
 
@@ -580,7 +580,7 @@ membership ritual. The existing
 
 ```ini
 [Unit]
-Description=L-Connect Linux daemon
+Description=LL-Control daemon
 After=graphical-session.target
 
 [Service]

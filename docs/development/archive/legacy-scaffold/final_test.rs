@@ -3,7 +3,7 @@ use hidapi::HidApi;
 
 fn main() -> anyhow::Result<()> {
     println!("╔════════════════════════════════════════════════════════════╗");
-    println!("║      L-Connect Linux - GALAHAD II LCD Test                 ║");
+    println!("║      LL-Control - GALAHAD II LCD Test                 ║");
     println!("╚════════════════════════════════════════════════════════════╝");
     println!();
 

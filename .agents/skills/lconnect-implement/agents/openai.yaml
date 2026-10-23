@@ -1,4 +1,4 @@
 interface:
-  display_name: "L-Connect Implementation"
-  short_description: "Implement and verify scoped L-Connect changes"
+  display_name: "LL-Control Implementation"
+  short_description: "Implement and verify scoped LL-Control changes"
   default_prompt: "Use $lconnect-implement to complete the requested change against the current roadmap and verify the affected behavior."

@@ -61,7 +61,7 @@ try:
             request=json.loads(step.read_text())
             if request['sequence']>key_sequence:
                 assert request==dict(sequence=key_sequence+1,key='Home',probe='capture_region_pointer' if key_sequence<3 else 'video_region_pointer'),request
-                window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+                window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
                 subprocess.run(['xdotool','windowactivate','--sync',window],env=env,check=True,timeout=5)
                 query="""
 import gi,json,os,sys
@@ -101,7 +101,7 @@ print(json.dumps(result))
         result_file=root/'result.json'
         if result_file.exists() and not close_sent:
             result=json.loads(result_file.read_text());assert result['ok'],result
-            window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+            window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
             subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);close_sent=True
         time.sleep(.02)
     gui.wait(timeout=5);assert gui.returncode==0

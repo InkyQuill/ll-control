@@ -1,4 +1,4 @@
-//! `lconnectctl` — command-line client for the L-Connect Linux daemon.
+//! `lconnectctl` — command-line client for the LL-Control daemon.
 //!
 //! This binary is a thin wrapper around [`lconnect_ipc::client::IpcClient`].
 //! Each subcommand opens a fresh connection (see [`connection::connect`]),
@@ -17,7 +17,7 @@ mod connection;
 mod format;
 
 #[derive(Parser)]
-#[command(version, about = "L-Connect Linux CLI")]
+#[command(version, about = "LL-Control CLI")]
 struct Cli {
     /// Output JSON instead of human-readable text (NDJSON for `watch`).
     #[arg(long, global = true)]

@@ -217,7 +217,7 @@ print(json.dumps(dict(index=index,x=bounds.x+bounds.width//2,y=bounds.y+bounds.h
             nonlocal window
             assert gui.poll() is None, "Production GUI exited before showing frontend"
             result = subprocess.run(["xdotool", "search", "--onlyvisible", "--pid", str(gui.pid),
-                                     "--name", "^L-Connect Linux$"], env=env, capture_output=True, text=True)
+                                     "--name", "^LL-Control$"], env=env, capture_output=True, text=True)
             if result.returncode == 0:
                 window = result.stdout.splitlines()[0]
             return window is not None

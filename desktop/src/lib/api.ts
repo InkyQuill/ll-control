@@ -48,7 +48,7 @@ export function hex(rgb: number[]): string { return '#' + rgb.map(n => n.toStrin
 export function rgb(value: string): number[] { return [1, 3, 5].map(i => parseInt(value.slice(i, i + 2), 16)); }
 export const style = (y: number): Style => ({ line_box: true, x: 240, y, size: 36, color: [235, 245, 255], align: 'center' });
 export const initialTheme = (name = 'My screen'): Theme => ({ version: 1, name, background: [12, 18, 30], layers: [
-  { kind: 'text', text: 'L-Connect Linux', style: style(110) },
+  { kind: 'text', text: 'LL-Control', style: style(110) },
   { kind: 'clock', twenty_four_hour: true, show_seconds: true, style: style(300) }
 ] });
 export type CoolingPolicy =

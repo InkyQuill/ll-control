@@ -1,4 +1,4 @@
-# Setup Instructions for L-Connect Linux
+# Setup Instructions for LL-Control
 
 ## 1. Install udev rule for device permissions
 

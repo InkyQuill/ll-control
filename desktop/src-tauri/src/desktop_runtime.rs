@@ -1,5 +1,6 @@
 //! Tauri desktop lifecycle around durable preferences. No device/daemon writer.
 use crate::desktop_settings::{Preferences, Readback, Store};
+use crate::tray_appearance::{self, Appearance};
 use anyhow::{Context, Result};
 use lconnect_ipc::InterfaceLanguage;
 use serde::Serialize;
@@ -46,8 +47,8 @@ struct NativeMenu {
 }
 fn menu_labels(language: InterfaceLanguage) -> (&'static str, &'static str) {
     match language {
-        InterfaceLanguage::English => ("Show L-Connect Linux", "Exit application"),
-        InterfaceLanguage::Russian => ("Показать L-Connect Linux", "Выйти из приложения"),
+        InterfaceLanguage::English => ("Show LL-Control", "Exit application"),
+        InterfaceLanguage::Russian => ("Показать LL-Control", "Выйти из приложения"),
     }
 }
 fn apply_menu_language(items: &TrayMenu, language: InterfaceLanguage) -> Result<()> {
@@ -223,10 +224,10 @@ pub fn setup(app: &mut tauri::App, on_exit: fn(&tauri::AppHandle)) -> Result<()>
             None::<&str>,
         )?;
         let menu = Menu::with_items(app, &[&show_item, &exit_item])?;
-        let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/icon.png"))?;
+        let icon = Appearance::DarkPanel.image()?;
         TrayIconBuilder::with_id(TRAY_ID)
             .icon(icon)
-            .tooltip("L-Connect Linux")
+            .tooltip("LL-Control")
             .menu(&menu)
             .on_menu_event(move |app, event| match event.id.as_ref() {
                 "desktop-show" => show(app),
@@ -260,12 +261,49 @@ pub fn setup(app: &mut tauri::App, on_exit: fn(&tauri::AppHandle)) -> Result<()>
     let handle = app.handle().clone();
     tauri::async_runtime::spawn(async move {
         let mut first = true;
+        let mut appearance = None;
         let startup_deadline = tokio::time::Instant::now() + Duration::from_secs(3);
         loop {
+            if desktop.closed.load(Ordering::Acquire) {
+                break;
+            }
+            let detected = tokio::task::spawn_blocking(tray_appearance::detect_plasma)
+                .await
+                .ok()
+                .flatten();
+            if desktop.closed.load(Ordering::Acquire) {
+                break;
+            }
+            let detected = detected.unwrap_or_else(|| {
+                match handle
+                    .get_webview_window("main")
+                    .and_then(|w| w.theme().ok())
+                {
+                    Some(tauri::Theme::Light) => Appearance::LightPanel,
+                    _ => Appearance::DarkPanel,
+                }
+            });
+            if appearance != Some(detected) {
+                if let Some(tray) = handle.tray_by_id(TRAY_ID) {
+                    match detected
+                        .image()
+                        .and_then(|image| tray.set_icon(Some(image)))
+                    {
+                        Ok(()) => {
+                            appearance = Some(detected);
+                            eprintln!("Tray appearance: {detected:?}");
+                        }
+                        Err(error) => eprintln!("Tray appearance update failed: {error}"),
+                    }
+                }
+            }
             let ready = tokio::time::timeout(Duration::from_secs(2), registered_item())
                 .await
                 .unwrap_or(Ok(false))
                 .unwrap_or(false);
+            if desktop.closed.load(Ordering::Acquire) {
+                break;
+            }
             if first && minimize && !ready && tokio::time::Instant::now() < startup_deadline {
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 continue;

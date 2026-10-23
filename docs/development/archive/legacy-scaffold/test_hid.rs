@@ -2,7 +2,7 @@
 use hidapi::HidApi;
 
 fn main() -> anyhow::Result<()> {
-    println!("=== L-Connect Linux HID Test ===\n");
+    println!("=== LL-Control HID Test ===\n");
 
     let api = HidApi::new()?;
 

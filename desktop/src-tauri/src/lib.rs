@@ -38,6 +38,7 @@ pub mod group_jobs;
 pub mod desktop_settings;
 
 pub mod desktop_runtime;
+pub mod tray_appearance;
 
 pub mod desktop_startup;
 

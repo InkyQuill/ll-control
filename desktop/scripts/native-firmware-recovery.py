@@ -52,7 +52,7 @@ for mode,language,sealed in [('none','en-US',True),('guarded','en-US',True),('gu
   result=json.loads((case/'result.json').read_text());assert result['ok'],result
   stats=json.loads((case/'stats.json').read_text());assert stats['devices_known']==0 and stats['hid_write_count']==0 and stats['firmware_queries']==0 and stats['firmware_update_writes']==0 and stats['firmware_activations']==0,stats
   assert snapshot(case/'settings')==before,'saved firmware files changed'
-  window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^L-Connect Linux$'],env=env,text=True,timeout=5).splitlines()[0]
+  window=subprocess.check_output(['xdotool','search','--onlyvisible','--pid',str(gui.pid),'--name','^LL-Control$'],env=env,text=True,timeout=5).splitlines()[0]
   subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=20);assert gui.returncode==0
   assert 'native close: all workers joined' in (case/'gui.log').read_text()
   (case/'stop').touch();fixture.wait(timeout=15);assert fixture.returncode==0

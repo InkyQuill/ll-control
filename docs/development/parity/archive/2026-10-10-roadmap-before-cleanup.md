@@ -1,6 +1,6 @@
 > Снимок перед очисткой 2026-10-10; не активный roadmap.
 
-# Roadmap: L-Connect Linux для Galahad II LCDV2
+# Roadmap: LL-Control для Galahad II LCDV2
 
 Актуализировано: 2026-09-08. Windows baseline: локальная установка
 **L-Connect 3 2.1.28.0**. Доступное железо: **Galahad II LCDV2, 0416:7395**.
