@@ -10,6 +10,8 @@
 //! `[daemon] allow_raw_send` config flag; we surface a clear hint when
 //! the daemon refuses with `NotImplemented`.
 
+use anyhow::Context;
+
 use crate::connection::{connect, resolve_device};
 use crate::{DaemonArgs, DaemonSubcommand};
 use lconnect_ipc::{IpcError, ResetToken};
@@ -67,7 +69,10 @@ pub async fn logs(follow: bool, level: Option<String>) -> anyhow::Result<()> {
     }
     // status() inherits stdio so journalctl's output and any error
     // messages flow straight through to the terminal.
-    let _ = cmd.status();
+    let status = cmd.status().context("failed to run journalctl")?;
+    if !status.success() {
+        anyhow::bail!("journalctl failed with {status}");
+    }
     Ok(())
 }
 
