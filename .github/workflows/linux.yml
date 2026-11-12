@@ -33,10 +33,14 @@ jobs:
       CARGO_BUILD_JOBS: 2
       CARGO_PROFILE_DEV_DEBUG: 0
       CARGO_PROFILE_TEST_DEBUG: 0
+      CARGO_PROFILE_TEST_STRIP: symbols
+      CARGO_INCREMENTAL: 0
     steps:
       - name: Provision Arch build environment
         run: |
           pacman -Syu --noconfirm --needed git rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils kirigami gjs gtk4 libadwaita dconf xorg-server-xvfb xorg-xauth
+          rm -rf /var/cache/pacman/pkg/*
+          df -h /
           rustup toolchain install 1.96.0 --profile minimal --component rustfmt --component clippy
           rustup default 1.96.0
           npm install --global pnpm@12.9.1
@@ -51,21 +55,33 @@ jobs:
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          df -h .
+          cargo clean
           cargo test --locked --workspace --all-features
+          df -h .
+          cargo clean
           RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --all-features --no-deps
+          df -h .
+          cargo clean
           pnpm --dir desktop check
           pnpm --dir desktop test:localization
           pnpm --dir desktop check:locales
           pnpm --dir desktop check:contracts
           python3 -m unittest discover -s tools/tests -p test_distribution.py -v
+      - name: Report disk usage after checks
+        if: always()
+        run: df -h .
       - name: Build production payload with both shell integrations
-        run: python3 tools/build-distribution.py --output target/distribution --gnome-shell-version 51
+        run: |
+          python3 tools/build-distribution.py --output target/distribution --gnome-shell-version 51
+          df -h .
       - name: Build Arch package without installing it
         run: |
           useradd --create-home builder
           chown -R builder:builder target/distribution
           cd target/distribution
           runuser -u builder -- makepkg --nodeps --noconfirm
+          df -h .
       - name: Private install, upgrade and removal
         run: python3 tools/test-distribution.py target/distribution
       - name: Packaged Mini model, Qt and GJS integration
