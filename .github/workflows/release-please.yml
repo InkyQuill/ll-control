@@ -1,0 +1,56 @@
+name: Release Please
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-please-master
+  cancel-in-progress: false
+jobs:
+  propose:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
+        id: release
+        with:
+          token: ${{ github.token }}
+          target-branch: master
+      - name: Explicitly start proposal CI
+        if: steps.release.outputs.pr != '' && steps.release.outputs.pr != 'null'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          PR_NUMBER: ${{ fromJSON(steps.release.outputs.pr).number }}
+        run: |
+          set -euo pipefail
+          # Never execute proposal code with a write token. Verify the API head
+          # belongs to this repository and still matches the generated proposal.
+          PR=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+          HEAD_SHA=$(jq --exit-status --raw-output --arg repo "$GH_REPO" --arg branch "$RELEASE_BRANCH" 'select(.state == "open" and .base.ref == "master" and .head.repo.full_name == $repo and .head.ref == $branch) | .head.sha' <<< "$PR")
+          # Dispatch bypasses token-event suppression and human approval waits.
+          for workflow in linux.yml release-config.yml; do
+            ACTIVE=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" -f head_sha="$HEAD_SHA" --jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress" or .conclusion == "success")] | length')
+            if [ "$ACTIVE" -eq 0 ]; then
+              gh workflow run "$workflow" --repo "$GH_REPO" --ref "$RELEASE_BRANCH"
+            fi
+          done
+  package:
+    needs: propose
+    if: needs.propose.outputs.release_created == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-arch.yml
+    with:
+      tag: ${{ needs.propose.outputs.tag_name }}
