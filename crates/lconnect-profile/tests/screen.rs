@@ -12,7 +12,7 @@ fn rewritten(edit: impl FnOnce(&mut Value), extra: Option<(&str, &[u8])>) -> Vec
         let mut f = input.by_index(i).unwrap();
         let mut bytes = Vec::new();
         f.read_to_end(&mut bytes).unwrap();
-        if f.name() == "backup" {
+        if f.name().unwrap() == "backup" {
             let mut backup: Value = serde_json::from_slice(&bytes).unwrap();
             let mut profile: Value = serde_json::from_slice(
                 &STANDARD
@@ -27,7 +27,7 @@ fn rewritten(edit: impl FnOnce(&mut Value), extra: Option<(&str, &[u8])>) -> Vec
         }
         output
             .start_file(
-                f.name(),
+                f.name().unwrap(),
                 SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored),
             )
             .unwrap();

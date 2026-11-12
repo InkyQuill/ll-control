@@ -163,7 +163,8 @@ fn read_selected<R: Read + Seek>(
     let mut declared_bytes = 0u64;
     for index in 0..archive.len() {
         let file = archive.by_index_raw(index)?;
-        if !valid_name(file.name_raw(), file.name()) || !names.insert(file.name().to_lowercase()) {
+        let name = file.name()?;
+        if !valid_name(file.name_raw(), &name) || !names.insert(name.to_lowercase()) {
             return Err(Error::Invalid("unsafe or duplicate ZIP member name"));
         }
         if file.encrypted()
@@ -185,12 +186,12 @@ fn read_selected<R: Read + Seek>(
             .ok_or(Error::Invalid(
                 "declared ZIP content exceeds inspection budget",
             ))?;
-        if file.name() == "backup" {
+        if name == "backup" {
             if file.is_dir() || file.size() == 0 || file.size() > limits.backup_bytes as u64 {
                 return Err(Error::Invalid("backup entry exceeds inspection budget"));
             }
             backup_index = Some(index);
-        } else if file.name().starts_with("wmsq/") && !file.is_dir() {
+        } else if name.starts_with("wmsq/") && !file.is_dir() {
             wmsq_files += 1;
         }
     }
