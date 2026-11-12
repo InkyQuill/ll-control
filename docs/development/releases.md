@@ -11,7 +11,7 @@ payload archive, manifest and PKGBUILD from that value.
    `fix: repair font selection` and `feat: add an editor capability`.
 2. Release Please opens or refreshes its release PR. Review its changelog,
    version changes and successful **Linux checks** run on
-   the latest proposal commit. Do not merge while the lock refresh or CI is pending.
+   the latest proposal commit. Do not merge while CI is pending.
 3. Merge the release PR. Release Please creates the `vX.Y.Z` tag and GitHub
    release, then calls `release-arch.yml` with that tag to build, test and attach
    the Arch package. It does not depend on a token-generated tag/release event.
@@ -26,19 +26,19 @@ release can use Release Please's `Release-As: 1.0.0` commit footer.
 
 ## Versions and lockfile
 
-The root `simple` release strategy updates `version.txt`, the annotated workspace
-version in `Cargo.toml`, `desktop/package.json`, and the Tauri configuration.
-All workspace crates inherit that root version. `pnpm-lock.yaml` does not contain
-the root package version and needs no release-only rewrite.
+The root `simple` release strategy updates `version.txt`. Explicit TOML extra-file
+updaters update `$.workspace.package.version` in `Cargo.toml` and
+`$.package[?(!@.source)].version` in `Cargo.lock`. The latter selects every local
+workspace package and leaves third-party versions, checksums and other bytes
+unchanged. JSON extra-file updaters synchronize `desktop/package.json` and the
+Tauri configuration. All workspace crates inherit the root version.
+`pnpm-lock.yaml` does not contain the root package version and needs no
+release-only rewrite.
 
 The upstream Rust strategy requires `[package]`, and its workspace plugin expects
 literal member versions. This repository has a virtual workspace and inherited
-versions, so those strategies are not used. After creating/updating the release
-PR, trusted code from `master` refreshes only local workspace `Cargo.lock` version
-lines. Third-party versions, checksums and dependency lists remain byte-for-byte
-unchanged. The refresh uses the checked-out lock blob SHA in the Contents API;
-a concurrent update fails instead of being overwritten. Proposed source code is
-never executed by the release workflow with a write token.
+versions, so a single product release with explicit native updaters is used.
+There is no additional lock mutation or commit after Release Please's proposal.
 
 ## Ordinary GitHub token and CI
 
@@ -49,7 +49,7 @@ and Actions write permissions only to its proposal job.
 
 GitHub-token PR events can require human approval, and token-created pushes do
 not generally start workflows. The proposal workflow explicitly dispatches
-`linux.yml` and the lightweight release configuration checks on the final PR head, after any lock refresh. Before dispatching it
+`linux.yml` and the lightweight release configuration checks on the final PR head, without running proposal code in the write-token job. Before dispatching it
 checks for an already queued/running or successful Linux run on that exact SHA,
 so a previously approved/validated proposal is reused. Use that dispatched run
 instead of separately approving another copy of the same checks. Publication
@@ -64,11 +64,11 @@ publication failed, manually run **release-arch.yml** with its existing tag.
 The package workflow checks existing assets before upload and rejects differing
 bytes rather than overwriting them.
 
-Run `python3 tools/sync-release-lock.py` to check current version agreement.
-Use `--write` only after an intentional version bump. Release configuration CI
+Run `python3 tools/tests/check-release-versions.py` to check current version agreement.
+Release configuration CI
 tests the actual `release-please@17.1.3` implementation bundled by pinned action
 v4.4.0: first `0.1.0`, patch `0.1.1`, feature `0.2.0`, breaking `0.3.0`, together
-with lock refresh fixtures. Update both pins and rerun these checks when updating
+with markerless root TOML and byte-preserving lock fixtures. Update both pins and rerun these checks when updating
 the release action.
 
 References: [Release Please action](https://github.com/googleapis/release-please-action),

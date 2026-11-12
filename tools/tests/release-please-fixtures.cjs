@@ -19,6 +19,10 @@ const files = new Map();
 for (const file of ['Cargo.toml', 'Cargo.lock', 'desktop/package.json', 'desktop/src-tauri/tauri.conf.json', 'version.txt']) {
   files.set(file, fs.readFileSync(path.join(root, file), 'utf8'));
 }
+const initialRoot = files.get('Cargo.toml');
+assert(!initialRoot.includes('x-release-please-version'), 'root updater must work without markers');
+const initialLock = files.get('Cargo.lock');
+const packageBlock = /(?<=^|\n)\[\[package\]\]\n[\s\S]*?(?=\n\[\[package\]\]|$)/g;
 const github = {
   repository: {owner: 'fixture', repo: 'll-control'},
   async getFileContentsOnBranch(file) {
@@ -46,7 +50,11 @@ async function run() {
     for (const update of proposal.updates) {
       files.set(update.path, update.updater.updateContent(files.get(update.path)));
     }
-    assert.match(files.get('Cargo.toml'), new RegExp('version\\s*= "' + expected.replaceAll('.', '\\.') + '" # x-release-please-version'));
+    const expectedRoot = initialRoot.replace(/(\[workspace\.package\][\s\S]*?version\s*=\s*")[^"]+"/, `$1${expected}"`);
+    assert.equal(files.get('Cargo.toml'), expectedRoot, 'only workspace product version changes');
+    const expectedLock = initialLock.replace(packageBlock, block =>
+      /^source = /m.test(block) ? block : block.replace(/^version = "[^"]+"$/m, `version = "${expected}"`));
+    assert.equal(files.get('Cargo.lock'), expectedLock, 'all local entries update; third-party bytes stay identical');
     assert.equal(JSON.parse(files.get('desktop/package.json')).version, expected);
     assert.equal(JSON.parse(files.get('desktop/src-tauri/tauri.conf.json')).version, expected);
     assert.equal(files.get('version.txt').trim(), expected);
@@ -65,7 +73,7 @@ async function run() {
       fs.writeFileSync(path.join(temp, file), content);
     }
     latest = {name: `v${expected}`, tag: new TagName(Version.parse(expected), undefined, '-', true), sha, notes: 'fixture'};
-    console.log(`${message} -> v${expected}: product versions updated; lock refresh fixture written`);
+    console.log(`${message} -> v${expected}: all product/lock versions updated; third-party bytes preserved`);
   }
 }
 run().catch(error => {console.error(error); process.exitCode = 1;});

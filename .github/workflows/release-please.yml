@@ -21,50 +21,25 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Check version and lockfile agreement
-        run: python3 tools/sync-release-lock.py
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         id: release
         with:
           token: ${{ github.token }}
           target-branch: master
-      - name: Check out proposed data only
-        if: steps.release.outputs.pr != '' && steps.release.outputs.pr != 'null'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
-          path: release-proposal
-          persist-credentials: false
-      - name: Refresh proposed lockfile with trusted master code
-        if: steps.release.outputs.pr != '' && steps.release.outputs.pr != 'null'
-        run: python3 tools/sync-release-lock.py --root release-proposal --write
-      - name: Commit lock refresh and explicitly start proposal CI
+      - name: Explicitly start proposal CI
         if: steps.release.outputs.pr != '' && steps.release.outputs.pr != 'null'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          PR_NUMBER: ${{ fromJSON(steps.release.outputs.pr).number }}
         run: |
           set -euo pipefail
-          if ! git -C release-proposal diff --quiet -- Cargo.lock; then
-            LOCK_SHA=$(git -C release-proposal rev-parse HEAD:Cargo.lock)
-            export LOCK_SHA
-            python3 - <<'PY'
-          import base64, json, os
-          from pathlib import Path
-          payload = {"branch": os.environ["RELEASE_BRANCH"], "sha": os.environ["LOCK_SHA"],
-                     "message": "chore: synchronize release workspace lockfile",
-                     "content": base64.b64encode(Path("release-proposal/Cargo.lock").read_bytes()).decode()}
-          Path(os.environ["RUNNER_TEMP"], "release-lock.json").write_text(json.dumps(payload))
-          PY
-            gh api --method PUT "repos/$GH_REPO/contents/Cargo.lock" --input "$RUNNER_TEMP/release-lock.json" > /dev/null
-          fi
-          # workflow_dispatch runs with the ordinary token; token-created pushes
-          # and PR events alone cannot guarantee unattended proposal CI.
-          HEAD_SHA=$(gh api --method GET "repos/$GH_REPO/git/ref/heads/$RELEASE_BRANCH" --jq .object.sha)
+          # Never execute proposal code with a write token. Verify the API head
+          # belongs to this repository and still matches the generated proposal.
+          PR=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+          HEAD_SHA=$(jq --exit-status --raw-output --arg repo "$GH_REPO" --arg branch "$RELEASE_BRANCH" 'select(.state == "open" and .base.ref == "master" and .head.repo.full_name == $repo and .head.ref == $branch) | .head.sha' <<< "$PR")
+          # Dispatch bypasses token-event suppression and human approval waits.
           for workflow in linux.yml release-config.yml; do
             ACTIVE=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" -f head_sha="$HEAD_SHA" --jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress" or .conclusion == "success")] | length')
             if [ "$ACTIVE" -eq 0 ]; then
