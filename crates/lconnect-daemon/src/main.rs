@@ -48,6 +48,33 @@ async fn run_daemon() -> Result<()> {
 
     let socket_path =
         lconnect_ipc::socket::default_socket_path().context("failed to resolve IPC socket path")?;
+    let query_helper = std::env::current_exe()?;
+    // The loser returns here, before persistence, HID, actor spawn, or replay.
+    let ownership = tokio::task::spawn_blocking(move || {
+        lconnect_ipc::socket::DaemonOwnership::acquire(&socket_path)
+    })
+    .await
+    .context("daemon ownership task failed")?
+    .context(
+        "refusing to start a second lconnectd; exited before persistence, HID, or settings replay",
+    )?;
+
+    run_owned(config, query_helper, ownership).await
+}
+
+async fn run_owned(
+    config: Config,
+    query_helper: std::path::PathBuf,
+    ownership: lconnect_ipc::socket::DaemonOwnership,
+) -> Result<()> {
+    let socket_path = ownership.path().to_path_buf();
+    tracing::info!(
+        "exclusive daemon ownership acquired for {}",
+        socket_path.display()
+    );
+    let (listener, guard) = ownership
+        .into_listener()
+        .context("failed to prepare the owned IPC listener")?;
 
     let registry = FamilyRegistry::with_default_lcdv2();
     let backend: Arc<dyn HidBackend> =
@@ -60,7 +87,7 @@ async fn run_daemon() -> Result<()> {
 
     let sensors = lconnect_daemon::sensors::SensorCache::default();
     if let Err(error) = persistence.fps_source().get(sensors.clone()).await {
-        tracing::warn!(%error,"FPS settings unavailable; FPS disabled until qualified settings load");
+        tracing::warn!(%error, "FPS settings unavailable; FPS disabled until qualified settings load");
     }
     let manager = DeviceManager::new(
         Arc::clone(&backend),
@@ -73,7 +100,7 @@ async fn run_daemon() -> Result<()> {
     let (sensor_shutdown, sensor_stop) = tokio::sync::watch::channel(false);
     let sensor_task = lconnect_daemon::sensors::spawn(
         lconnect_daemon::sensors::LinuxSensors::default()
-            .with_intel_query_helper(std::env::current_exe()?)
+            .with_intel_query_helper(query_helper)
             .with_fps_settings(persistence.fps_source().subscribe()),
         sensors.clone(),
         sensor_stop,
@@ -97,7 +124,7 @@ async fn run_daemon() -> Result<()> {
     let server = IpcServer::new(rpc.clone());
 
     let serve_result = tokio::select! {
-        r = server.serve(&socket_path) => {
+        r = server.serve_listener(listener) => {
             tracing::warn!("IPC server exited: {:?}", r);
             r
         }
@@ -115,11 +142,7 @@ async fn run_daemon() -> Result<()> {
         tracing::error!(%error, "firmware shutdown outcome unconfirmed");
     }
     manager_handle.shutdown().await;
-
-    // Clean up the socket file so the next daemon start can bind cleanly.
-    if serve_result.is_ok() {
-        let _ = std::fs::remove_file(&socket_path);
-    }
+    drop(guard);
 
     serve_result.map_err(Into::into)
 }

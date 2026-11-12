@@ -74,7 +74,9 @@ impl<R: DaemonRpc> IpcServer<R> {
 
     /// Bind the socket and accept connections forever.
     ///
-    /// Removes any stale socket file at `socket_path` before binding.
+    /// Takes the exclusive daemon lock in the socket's directory and removes
+    /// a leftover socket only when a connection is refused. A live listener
+    /// is left untouched and this call fails instead of replacing it.
     /// Each accepted connection is handed off to a dedicated
     /// [`tokio::spawn`]ed task, so slow clients cannot stall the accept
     /// loop. The spawned [`tokio::task::JoinHandle`]s are intentionally
@@ -82,17 +84,32 @@ impl<R: DaemonRpc> IpcServer<R> {
     /// not propagate into the daemon's runtime.
     ///
     /// # Errors
-    /// Fails if the socket path is already in use, unwritable, or the
-    /// listener returns a fatal accept error.
+    /// Fails if another daemon owns the runtime, the socket path is
+    /// unwritable, or the listener returns a fatal accept error.
     pub async fn serve(&self, socket_path: &Path) -> std::io::Result<()> {
-        // Remove stale socket file if present. Ignore errors here
-        // (path may simply not exist). `std::fs` is fine for a one-shot
-        // unlink on startup; the crate's tokio dep does not pull in
-        // the `fs` feature so we deliberately avoid `tokio::fs`.
-        let _ = std::fs::remove_file(socket_path);
-        let listener = UnixListener::bind(socket_path)?;
-        info!("IPC server listening at {}", socket_path.display());
+        let path = socket_path.to_path_buf();
+        let ownership =
+            tokio::task::spawn_blocking(move || crate::socket::DaemonOwnership::acquire(&path))
+                .await
+                .map_err(|error| {
+                    std::io::Error::other(format!("daemon ownership task failed: {error}"))
+                })??;
+        let path = ownership.path().to_path_buf();
+        let (listener, guard) = ownership.into_listener()?;
+        info!("IPC server listening at {}", path.display());
+        let result = self.serve_listener(listener).await;
+        drop(guard);
+        result
+    }
 
+    /// Accept connections on a listener already bound by [`crate::socket::DaemonOwnership`].
+    ///
+    /// The caller keeps the ownership guard until hardware actors have stopped.
+    /// This method does not unlink the socket.
+    ///
+    /// # Errors
+    /// Fails when the listener returns a fatal accept error.
+    pub async fn serve_listener(&self, listener: UnixListener) -> std::io::Result<()> {
         loop {
             let (stream, _addr) = listener.accept().await?;
             let rpc = self.rpc.clone();

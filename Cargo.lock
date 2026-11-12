@@ -2309,6 +2309,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures",
+ "rustix",
  "serde",
  "serde_json",
  "tempfile",
