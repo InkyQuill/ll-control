@@ -40,3 +40,6 @@ pub mod desktop_settings;
 pub mod desktop_runtime;
 
 pub mod archive_messages;
+
+// Read-only backend; exposed to the webview only when font selection is integrated.
+pub mod system_fonts;

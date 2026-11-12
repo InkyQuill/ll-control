@@ -61,6 +61,7 @@ enum ClientMsg {
     Subscribe {
         method: String,
         sink: mpsc::Sender<Notification>,
+        reliable: bool,
     },
     ReaderClosed,
 }
@@ -115,7 +116,7 @@ impl IpcClient {
         // Shared dispatch tables.
         let pending: Arc<Mutex<HashMap<u64, oneshot::Sender<Response>>>> =
             Arc::new(Mutex::new(HashMap::new()));
-        let subs: Arc<Mutex<HashMap<String, Vec<mpsc::Sender<Notification>>>>> =
+        let subs: Arc<Mutex<HashMap<String, Vec<(mpsc::Sender<Notification>, bool)>>>> =
             Arc::new(Mutex::new(HashMap::new()));
         let (tx, mut rx) = mpsc::channel::<ClientMsg>(64);
 
@@ -166,14 +167,33 @@ impl IpcClient {
                     // Notification path.
                     match serde_json::from_value::<Notification>(raw) {
                         Ok(notif) => {
-                            let sinks: Vec<mpsc::Sender<Notification>> = subs_r
+                            let sinks = subs_r
                                 .lock()
                                 .await
                                 .get(&notif.method)
                                 .cloned()
                                 .unwrap_or_default();
-                            for s in sinks {
-                                let _ = s.send(notif.clone()).await;
+                            for (sink, reliable) in sinks {
+                                let keep = if reliable {
+                                    sink.send(notif.clone()).await.is_ok()
+                                } else {
+                                    match sink.try_send(notif.clone()) {
+                                        Ok(()) => true,
+                                        Err(mpsc::error::TrySendError::Full(_)) => {
+                                            tracing::warn!(method = %notif.method, "closing slow IPC subscription after queue overflow");
+                                            false
+                                        }
+                                        Err(mpsc::error::TrySendError::Closed(_)) => false,
+                                    }
+                                };
+                                if !keep {
+                                    if let Some(sinks) = subs_r.lock().await.get_mut(&notif.method)
+                                    {
+                                        sinks.retain(|(registered, _)| {
+                                            !registered.same_channel(&sink)
+                                        });
+                                    }
+                                }
                             }
                         }
                         Err(e) => {
@@ -223,8 +243,17 @@ impl IpcClient {
                             break;
                         }
                     }
-                    ClientMsg::Subscribe { method, sink } => {
-                        subs_w.lock().await.entry(method).or_default().push(sink);
+                    ClientMsg::Subscribe {
+                        method,
+                        sink,
+                        reliable,
+                    } => {
+                        subs_w
+                            .lock()
+                            .await
+                            .entry(method)
+                            .or_default()
+                            .push((sink, reliable));
                     }
                     ClientMsg::ReaderClosed => {
                         pending_w.lock().await.clear();
@@ -285,16 +314,36 @@ impl IpcClient {
     /// Subscribe to a notification method (e.g., `"snapshot"`,
     /// `"device_attached"`).
     ///
-    /// The returned receiver yields notifications as long as the
-    /// connection is alive. Multiple subscriptions to the same method
-    /// are independent — each gets its own clone of every notification.
+    /// Multiple subscriptions to the same method are independent. Each
+    /// receives notifications in order until the connection closes or its
+    /// 32-item queue overflows. On overflow, that subscription is closed:
+    /// buffered notifications remain readable, followed by `None`. The
+    /// overflowing notification and all subsequent notifications are lost;
+    /// callers must resubscribe and recover any missed state as appropriate.
     pub async fn subscribe(&self, method: &str) -> mpsc::Receiver<Notification> {
+        self.subscribe_with_policy(method, false).await
+    }
+
+    /// Subscribe with lossless backpressure for a dedicated connection.
+    ///
+    /// A slow consumer blocks all incoming traffic on this client, including
+    /// RPC responses. Use only when the connection is dedicated to this stream.
+    pub async fn subscribe_reliable(&self, method: &str) -> mpsc::Receiver<Notification> {
+        self.subscribe_with_policy(method, true).await
+    }
+
+    async fn subscribe_with_policy(
+        &self,
+        method: &str,
+        reliable: bool,
+    ) -> mpsc::Receiver<Notification> {
         let (tx, rx) = mpsc::channel(32);
         let _ = self
             .tx
             .send(ClientMsg::Subscribe {
                 method: method.to_string(),
                 sink: tx,
+                reliable,
             })
             .await;
         rx
@@ -305,7 +354,7 @@ impl Drop for IpcClient {
     fn drop(&mut self) {
         // Reader retains a sender to notify writer on EOF, so dropping tx alone
         // cannot close the connection. Abort both owners, including a reader
-        // blocked on a full notification queue. Accepted server work is separate.
+        // awaiting input. Accepted server work is separate.
         self.reader_task.abort();
         self.writer_task.abort();
     }
