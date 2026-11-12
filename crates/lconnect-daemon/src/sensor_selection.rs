@@ -93,7 +93,7 @@ fn bounded_index(value: &str, prefix: &str, max: u16) -> bool {
 }
 fn physical(value: &str) -> bool {
     value.starts_with("2f")
-        && value.len() % 2 == 0
+        && value.len().is_multiple_of(2)
         && value
             .bytes()
             .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())

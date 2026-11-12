@@ -177,7 +177,7 @@ fn parse_hex(s: &str) -> anyhow::Result<Vec<u8>> {
     if cleaned.is_empty() {
         anyhow::bail!("empty hex input");
     }
-    if cleaned.len() % 2 != 0 {
+    if !cleaned.len().is_multiple_of(2) {
         anyhow::bail!("hex input has odd length: {}", cleaned.len());
     }
     let mut out = Vec::with_capacity(cleaned.len() / 2);
