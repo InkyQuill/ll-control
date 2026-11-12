@@ -22,6 +22,8 @@ jobs:
       - run: npm install --global pnpm@12.9.1
       - run: pnpm --dir desktop install --frozen-lockfile
       - run: pnpm --dir desktop exec playwright install --with-deps chromium
+      - name: Install browser media fixture dependencies
+        run: sudo apt-get update && sudo apt-get install --yes ffmpeg
       - run: pnpm --dir desktop exec playwright test
   arch:
     runs-on: ubuntu-latest
@@ -43,6 +45,8 @@ jobs:
           persist-credentials: false
       - name: Frozen frontend dependencies
         run: pnpm --dir desktop install --frozen-lockfile
+      - name: Build embedded frontend before all-feature Rust checks
+        run: pnpm --dir desktop build
       - name: Rust and frontend checks
         run: |
           cargo fmt --all -- --check
