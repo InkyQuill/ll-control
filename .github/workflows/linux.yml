@@ -1,15 +1,45 @@
-name: Linux checks and Arch package
+name: Linux checks
 on:
   push:
+    branches: [master]
   pull_request:
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 concurrency:
   group: linux-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  prepare:
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      tree: ${{ steps.dedup.outputs.tree }}
+      skip: ${{ steps.dedup.outputs.skip }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Test deduplication contract
+        run: python3 -m unittest discover -s .github/scripts -p test_ci_dedup.py
+      - id: dedup
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/ci_dedup.py
+  tree-marker:
+    needs: [prepare, browser, arch]
+    if: ${{ github.event_name == 'pull_request' }}
+    name: verified-tree-${{ needs.prepare.outputs.tree }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Recorded tested tree"
   browser:
+    needs: prepare
+    if: ${{ !cancelled() && needs.prepare.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -26,6 +56,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes ffmpeg
       - run: pnpm --dir desktop exec playwright test
   arch:
+    needs: prepare
+    if: ${{ !cancelled() && needs.prepare.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     timeout-minutes: 90
@@ -55,6 +87,7 @@ jobs:
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          cargo build --locked -p lconnect-daemon -p lconnect-cli -p lconnect-gui --bins --no-default-features --features lconnect-gui/custom-protocol
           df -h .
           cargo clean
           cargo test --locked --workspace --all-features
@@ -71,24 +104,3 @@ jobs:
       - name: Report disk usage after checks
         if: always()
         run: df -h .
-      - name: Build production payload with both shell integrations
-        run: |
-          python3 tools/build-distribution.py --output target/distribution --gnome-shell-version 51
-          df -h .
-      - name: Build Arch package without installing it
-        run: |
-          useradd --create-home builder
-          chown -R builder:builder target/distribution
-          cd target/distribution
-          runuser -u builder -- makepkg --nodeps --noconfirm
-          df -h .
-      - name: Private install, upgrade and removal
-        run: python3 tools/test-distribution.py target/distribution
-      - name: Packaged Mini model, Qt and GJS integration
-        run: python3 tools/test-distribution-mini.py target/distribution --gjs /usr/bin/gjs
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: lconnect-linux-arch-x86_64
-          path: target/distribution/
-          if-no-files-found: error
-          compression-level: 0

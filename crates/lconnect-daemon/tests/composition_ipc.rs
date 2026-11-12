@@ -158,6 +158,29 @@ async fn apply_then_close_input(
 
 #[tokio::test]
 async fn composition_apply_restart_sleep_missing_media_recovery_and_clear() {
+    // Reset's reap assertion observes every child of this process. Run this
+    // test alone in a child harness so parallel codec tests cannot contribute
+    // unrelated PIDs to that observation; retain the exact reap assertion.
+    const CHILD_ENV: &str = "LCONNECT_COMPOSITION_LIFECYCLE_CHILD";
+    if std::env::var_os(CHILD_ENV).is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "composition_apply_restart_sleep_missing_media_recovery_and_clear",
+                "--nocapture",
+            ])
+            .env(CHILD_ENV, "1")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "isolated lifecycle test failed ({}):\n{}\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
     let root = tempfile::tempdir().unwrap();
     let store = Arc::new(PersistenceStore::new_with_root(root.path().into()));
     let media = store.media_assets();

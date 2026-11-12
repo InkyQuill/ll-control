@@ -1,0 +1,89 @@
+name: Release Arch package
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Existing release tag, vMAJOR.MINOR.PATCH
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag, vMAJOR.MINOR.PATCH
+        required: true
+        type: string
+permissions:
+  contents: write
+defaults:
+  run:
+    shell: bash
+jobs:
+  arch-package:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: 2
+      CARGO_INCREMENTAL: 0
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate tag syntax
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+      - name: Provision Arch build environment
+        run: |
+          pacman -Syu --noconfirm --needed git github-cli rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils kirigami gjs gtk4 libadwaita dconf xorg-server-xvfb xorg-xauth
+          rm -rf /var/cache/pacman/pkg/*
+          df -h /
+          rustup toolchain install 1.96.0 --profile minimal
+          rustup default 1.96.0
+          npm install --global pnpm@12.9.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+      - name: Verify release and source version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -c 'import os,tomllib; v=tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"]; assert os.environ["RELEASE_TAG"] == "v"+v, "tag does not match workspace version"'
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY"
+      - name: Frozen frontend dependencies
+        run: pnpm --dir desktop install --frozen-lockfile
+      - name: Build production payload with both shell integrations
+        run: |
+          python3 tools/build-distribution.py --output target/distribution --gnome-shell-version 51
+          df -h .
+      - name: Build Arch package without installing it
+        run: |
+          useradd --create-home builder
+          chown -R builder:builder target/distribution
+          cd target/distribution
+          runuser -u builder -- makepkg --nodeps --noconfirm
+          df -h .
+      - name: Private install, upgrade and removal
+        run: python3 tools/test-distribution.py target/distribution
+      - name: Packaged Mini model, Qt and GJS integration
+        run: python3 tools/test-distribution-mini.py target/distribution --gjs /usr/bin/gjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: lconnect-linux-arch-x86_64
+          path: target/distribution/
+          if-no-files-found: error
+          compression-level: 0
+      - name: Publish package to matching release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          packages=(target/distribution/*.pkg.tar.zst)
+          test "${#packages[@]}" -eq 1
+          package="${packages[0]}"
+          name="${package##*/}"
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fxq -- "$name"; then
+            mkdir -p /tmp/existing-release-asset
+            gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$name" --dir /tmp/existing-release-asset
+            cmp -- "$package" "/tmp/existing-release-asset/$name"
+          else
+            gh release upload "$RELEASE_TAG" "$package" --repo "$GITHUB_REPOSITORY"
+          fi
