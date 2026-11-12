@@ -42,10 +42,17 @@ There is no additional lock mutation or commit after Release Please's proposal.
 
 ## Ordinary GitHub token and CI
 
-No personal token or App secret is required. Enable **Allow GitHub Actions to
-create and approve pull requests** in repository Actions settings; organization
-policy must permit it. The workflow explicitly grants contents, pull-request
-and Actions write permissions only to its proposal job.
+No personal token or App secret is required. In **Settings → Actions → General
+→ Workflow permissions**, enable **Allow GitHub Actions to create and approve
+pull requests**, then save. Organization policy must permit this toggle. If the
+setting is unavailable or policy requires a different automation identity, an
+optional repository secret named `RELEASE_PLEASE_TOKEN` can hold a GitHub App
+installation token or fine-grained personal token with repository **Contents:
+read and write** and **Pull requests: read and write** access. Only the Release
+Please action uses that override; CI dispatch continues to use the ordinary
+`GITHUB_TOKEN`. Tokens must be rotated before expiration. The workflow explicitly
+grants contents, pull-request and Actions write permissions only to its proposal
+job.
 
 GitHub-token PR events can require human approval, and token-created pushes do
 not generally start workflows. The proposal workflow explicitly dispatches

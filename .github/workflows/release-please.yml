@@ -24,15 +24,15 @@ jobs:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
         id: release
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           target-branch: master
       - name: Explicitly start proposal CI
         if: steps.release.outputs.pr != '' && steps.release.outputs.pr != 'null'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
-          PR_NUMBER: ${{ fromJSON(steps.release.outputs.pr).number }}
+          RELEASE_BRANCH: ${{ fromJSON(steps.release.outputs.pr || '{}').headBranchName }}
+          PR_NUMBER: ${{ fromJSON(steps.release.outputs.pr || '{}').number }}
         run: |
           set -euo pipefail
           # Never execute proposal code with a write token. Verify the API head
