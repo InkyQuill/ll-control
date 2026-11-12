@@ -258,10 +258,10 @@ pub fn inspect_with_limits<R: Read + Seek>(
     let mut total = 0u64;
     for index in 0..zip.len() {
         let mut file = zip.by_index(index)?;
-        if file.is_dir() || !file.name().starts_with("wmsq/") {
+        let name = file.name()?.into_owned();
+        if file.is_dir() || !name.starts_with("wmsq/") {
             continue;
         }
-        let name = file.name().to_owned();
         let base = name.strip_prefix("wmsq/").unwrap_or_default();
         // Windows imports item.Name into one directory. Nested members can alias an
         // uploaded file; refuse those instead of silently flattening them.
