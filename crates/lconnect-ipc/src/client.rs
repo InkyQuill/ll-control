@@ -51,6 +51,14 @@ pub struct IpcClient {
     pub hello: Notification,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SubscriptionPolicy {
+    CloseOnOverflow,
+    Reliable,
+}
+
+type Subscriptions = HashMap<String, Vec<(mpsc::Sender<Notification>, SubscriptionPolicy)>>;
+
 /// Messages sent from `call`/`subscribe` into the writer task.
 enum ClientMsg {
     Call {
@@ -61,7 +69,7 @@ enum ClientMsg {
     Subscribe {
         method: String,
         sink: mpsc::Sender<Notification>,
-        reliable: bool,
+        policy: SubscriptionPolicy,
     },
     ReaderClosed,
 }
@@ -116,8 +124,7 @@ impl IpcClient {
         // Shared dispatch tables.
         let pending: Arc<Mutex<HashMap<u64, oneshot::Sender<Response>>>> =
             Arc::new(Mutex::new(HashMap::new()));
-        let subs: Arc<Mutex<HashMap<String, Vec<(mpsc::Sender<Notification>, bool)>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
+        let subs: Arc<Mutex<Subscriptions>> = Arc::new(Mutex::new(HashMap::new()));
         let (tx, mut rx) = mpsc::channel::<ClientMsg>(64);
 
         // Reader task: distribute responses (by id) and notifications
@@ -173,8 +180,8 @@ impl IpcClient {
                                 .get(&notif.method)
                                 .cloned()
                                 .unwrap_or_default();
-                            for (sink, reliable) in sinks {
-                                let keep = if reliable {
+                            for (sink, policy) in sinks {
+                                let keep = if policy == SubscriptionPolicy::Reliable {
                                     sink.send(notif.clone()).await.is_ok()
                                 } else {
                                     match sink.try_send(notif.clone()) {
@@ -246,14 +253,14 @@ impl IpcClient {
                     ClientMsg::Subscribe {
                         method,
                         sink,
-                        reliable,
+                        policy,
                     } => {
                         subs_w
                             .lock()
                             .await
                             .entry(method)
                             .or_default()
-                            .push((sink, reliable));
+                            .push((sink, policy));
                     }
                     ClientMsg::ReaderClosed => {
                         pending_w.lock().await.clear();
@@ -321,7 +328,8 @@ impl IpcClient {
     /// overflowing notification and all subsequent notifications are lost;
     /// callers must resubscribe and recover any missed state as appropriate.
     pub async fn subscribe(&self, method: &str) -> mpsc::Receiver<Notification> {
-        self.subscribe_with_policy(method, false).await
+        self.subscribe_with_policy(method, SubscriptionPolicy::CloseOnOverflow)
+            .await
     }
 
     /// Subscribe with lossless backpressure for a dedicated connection.
@@ -329,13 +337,14 @@ impl IpcClient {
     /// A slow consumer blocks all incoming traffic on this client, including
     /// RPC responses. Use only when the connection is dedicated to this stream.
     pub async fn subscribe_reliable(&self, method: &str) -> mpsc::Receiver<Notification> {
-        self.subscribe_with_policy(method, true).await
+        self.subscribe_with_policy(method, SubscriptionPolicy::Reliable)
+            .await
     }
 
     async fn subscribe_with_policy(
         &self,
         method: &str,
-        reliable: bool,
+        policy: SubscriptionPolicy,
     ) -> mpsc::Receiver<Notification> {
         let (tx, rx) = mpsc::channel(32);
         let _ = self
@@ -343,7 +352,7 @@ impl IpcClient {
             .send(ClientMsg::Subscribe {
                 method: method.to_string(),
                 sink: tx,
-                reliable,
+                policy,
             })
             .await;
         rx
