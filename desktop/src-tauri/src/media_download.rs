@@ -43,7 +43,7 @@ pub async fn download_cancellable(
                 .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)),
         "Invalid export stream id"
     );
-    let mut events = client.subscribe("media_export").await;
+    let mut events = client.subscribe_reliable("media_export").await;
     let response = tokio::select! {
         biased;
         _ = cancelled(&mut cancellation) => bail!("Media export cancelled"),

@@ -1265,7 +1265,7 @@ time.sleep(60)
         for frame in 1..720_u32 {
             let due = paced_start + period * frame;
             tokio::time::sleep_until(due).await;
-            if frame % 24 == 0 {
+            if frame.is_multiple_of(24) {
                 update(&cache, if frame < 360 { 40.0 } else { 80.0 });
             }
             max_queue = max_queue.max(worker.frames.len());
@@ -1274,7 +1274,7 @@ time.sleep(60)
             waits.push(receive.elapsed().as_secs_f64() * 1000.0);
             late_frames += usize::from(tokio::time::Instant::now() > due + period);
             output.extend_from_slice(&unit.bytes);
-            if frame % 24 == 0 || frame == 719 {
+            if frame.is_multiple_of(24) || frame == 719 {
                 let current = resources(page_size);
                 for (pid, (ticks, _)) in &current {
                     cpu_ticks += ticks.saturating_sub(last.get(pid).map_or(0, |v| v.0));
@@ -1285,7 +1285,7 @@ time.sleep(60)
                 samples
                     .push(serde_json::json!({"frame":frame,"rss_bytes":rss,"cpu_ticks":cpu_ticks}));
                 last = current;
-                if frame % 120 == 0 {
+                if frame.is_multiple_of(120) {
                     eprintln!("composition acceptance: {frame}/720 frames");
                 }
             }
@@ -1493,11 +1493,11 @@ time.sleep(60)
         // source reader, rather than relying on shared cloned-file seek offsets.
         let mut rollback = MediaReader::spawn_at(backup, 5);
         let mut bytes = Vec::new();
-        for index in 0..8 {
+        for index in 0_usize..8 {
             let (encoded, original) = tokio::join!(worker.next_unit(), rollback.next_unit());
             bytes.extend_from_slice(&encoded.unwrap().bytes);
             let original = original.unwrap();
-            assert_eq!(original.keyframe, (index + 5) % 4 == 0);
+            assert_eq!(original.keyframe, (index + 5).is_multiple_of(4));
             assert_eq!(
                 original.bytes,
                 units[(index + 5) % 8].bytes,
