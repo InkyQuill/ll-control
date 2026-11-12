@@ -2,6 +2,7 @@
 name = "lconnect-gui"
 version.workspace = true
 edition.workspace = true
+rust-version = "1.88"
 license.workspace = true
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -30,7 +31,7 @@ uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
 base64 = "0.22.1"
-zip = { version = "4.6.1", default-features = false, features = ["deflate-flate2"] }
+zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2"] }
 lconnect-media = { path = "../../crates/lconnect-media", features = ["test-support"] }
 lconnect-daemon = { path = "../../crates/lconnect-daemon" }
 lconnect-hid = { path = "../../crates/lconnect-hid" }

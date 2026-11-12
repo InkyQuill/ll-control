@@ -2,7 +2,7 @@
 name = "lconnect-profile"
 version.workspace = true
 edition.workspace = true
-rust-version.workspace = true
+rust-version = "1.88"
 license.workspace = true
 repository.workspace = true
 authors = ["Pavel Obruchnikov <me@inkyquill.net>"]
@@ -18,8 +18,8 @@ serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 sha2 = "0.10"
 thiserror.workspace = true
-# ZIP4 supports the workspace's declared Rust1.82; only the .NET export codec is enabled.
-zip = { version = "4.6.1", default-features = false, features = ["deflate-flate2"] }
+# ZIP9 requires Rust 1.88; only the .NET export codec is enabled.
+zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2"] }
 
 # Select the same miniz Rust backend already used by image/PNG, also standalone.
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
