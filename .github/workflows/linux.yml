@@ -1,13 +1,22 @@
-name: Diagnose the merged Arch checks
-on: push
+name: Verify CI fixture isolation
+on:
+  push:
+    branches: ['verify/zip9-profile-tests']
 permissions:
   contents: read
-  checks: read
 jobs:
-  report:
+  fixtures:
     runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 25
+    env:
+      CARGO_PROFILE_TEST_DEBUG: 0
+      CARGO_INCREMENTAL: 0
     steps:
-      - name: Read annotations on the failed Arch job
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api repos/InkyQuill/lconnect-linux/check-runs/131426472183/annotations --jq '.[] | {title,message,path}'
+      - run: pacman -Syu --noconfirm --needed git rustup python pkgconf hidapi systemd ffmpeg fontconfig
+      - run: rustup default 1.96.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: cargo test --locked -p lconnect-daemon --lib windows_screen_preview_cancel_and_stale_finish_leave_target_catalog_and_settings_unchanged
+      - run: cargo test --locked -p lconnect-daemon --test composition_ipc
