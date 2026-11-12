@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import urllib.request
 
 
@@ -25,31 +26,32 @@ def should_skip(env, tree, api):
         return False
     root = '/repos/' + repo
     prs = api(root + '/commits/' + sha + '/pulls?per_page=100')
-    candidates = {pr['number'] for pr in prs
-                  if pr.get('merged_at') and pr.get('merge_commit_sha') == sha
-                  and (pr.get('base', {}).get('repo') or {}).get('full_name') == repo}
-    if not candidates:
-        return False
-    runs = api(root + '/actions/workflows/linux.yml/runs?event=pull_request&per_page=100')['workflow_runs']
-    for run in runs:
-        if not (run.get('event') == 'pull_request' and run.get('status') == 'completed'
-                and run.get('conclusion') == 'success'
-                and (run.get('repository') or {}).get('full_name') == repo
-                and (run.get('head_repository') or {}).get('full_name') == repo
-                and candidates.intersection(pr.get('number') for pr in run.get('pull_requests', []))):
-            continue
-        jobs = api(root + '/actions/runs/' + str(run['id']) + '/jobs?per_page=100')['jobs']
-        successful = {job.get('name') for job in jobs if job.get('status') == 'completed'
-                      and job.get('conclusion') == 'success'}
-        if {'verified-tree-' + tree, 'browser', 'arch'} <= successful:
-            return True
+    heads = {pr.get('head', {}).get('sha') for pr in prs
+             if pr.get('merged_at') and pr.get('merge_commit_sha') == sha
+             and (pr.get('base', {}).get('repo') or {}).get('full_name') == repo
+             and (pr.get('head', {}).get('repo') or {}).get('full_name') == repo}
+    heads = {head for head in heads if isinstance(head, str) and re.fullmatch(r'[0-9a-f]{40}', head)}
+    for head in heads:
+        runs = api(root + '/actions/workflows/linux.yml/runs?event=pull_request&head_sha=' + head + '&per_page=100')['workflow_runs']
+        for run in runs:
+            if not (run.get('event') == 'pull_request' and run.get('status') == 'completed'
+                    and run.get('conclusion') == 'success' and run.get('head_sha') == head
+                    and (run.get('repository') or {}).get('full_name') == repo
+                    and (run.get('head_repository') or {}).get('full_name') == repo):
+                continue
+            jobs = api(root + '/actions/runs/' + str(run['id']) + '/jobs?per_page=100')['jobs']
+            successful = {job.get('name') for job in jobs if job.get('status') == 'completed'
+                          and job.get('conclusion') == 'success'}
+            if {'verified-tree-' + tree, 'browser', 'arch'} <= successful:
+                return True
     return False
 
 
 def safe_should_skip(env, tree):
     try:
         return should_skip(env, tree, api_get)
-    except Exception:  # Missing, malformed, or unavailable evidence means run CI.
+    except Exception as error:  # Missing, malformed, or unavailable evidence means run CI.
+        print(f'CI dedup lookup failed; running full checks: {error}', file=sys.stderr)
         return False
 
 
