@@ -1301,7 +1301,20 @@ mod tests {
         )
         .await
         .unwrap();
-        let newer = serde_json::to_value(store.read(&key).unwrap()).unwrap();
+        // patch_lcd_config acknowledges runtime state before the debounced
+        // settings writer persists it. Snapshot only after that accepted patch
+        // reaches disk, so its later flush cannot look like a stale Finish write.
+        let newer = tokio::time::timeout(Duration::from_secs(3), async {
+            loop {
+                let saved = store.read(&key).unwrap();
+                if saved.lcd.brightness == 47 {
+                    break serde_json::to_value(saved).unwrap();
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("accepted brightness patch must be persisted before stale Finish");
         upload(&c, &h.dev, G::Screen, U::Finish { id: stale.into() }).await;
         tokio::time::timeout(Duration::from_secs(3), async {
             loop {

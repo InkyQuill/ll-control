@@ -173,8 +173,10 @@ async fn composition_apply_restart_sleep_missing_media_recovery_and_clear() {
             .output()
             .unwrap();
         assert!(
-            output.status.success(),
-            "isolated lifecycle test failed ({}):\n{}\n{}",
+            output.status.success()
+                && String::from_utf8_lossy(&output.stdout)
+                    .contains("test result: ok. 1 passed; 0 failed;"),
+            "isolated lifecycle test failed or did not run exactly one test ({}):\n{}\n{}",
             output.status,
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)

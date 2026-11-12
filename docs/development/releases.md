@@ -13,8 +13,8 @@ payload archive, manifest and PKGBUILD from that value.
    version changes and successful **Linux checks** run on
    the latest proposal commit. Do not merge while CI is pending.
 3. Merge the release PR. Release Please creates the `vX.Y.Z` tag and GitHub
-   release, then calls `release-arch.yml` with that tag to build, test and attach
-   the Arch package. It does not depend on a token-generated tag/release event.
+   release, then calls `release-arch.yml` with that tag to run full quality
+   checks, build, test and attach the Arch package. It does not depend on a token-generated tag/release event.
 
 The initially empty `.release-please-manifest.json` means no release has been
 published. `initial-version: 0.1.0` makes the first release `0.1.0` and preserves
@@ -54,6 +54,13 @@ checks for an already queued/running or successful Linux run on that exact SHA,
 so a previously approved/validated proposal is reused. Use that dispatched run
 instead of separately approving another copy of the same checks. Publication
 uses a direct reusable-workflow call; there is no second release/tag trigger.
+
+Regular Linux CI runs browser checks and verifies that the production-feature
+Arch binaries build; it does not run the full workspace test, Clippy and docs
+suite or produce distribution artifacts. The release workflow runs that full
+suite through `quality.yml` against the release tag before packaging. Run
+**Full quality checks** manually with an optional source ref when those checks
+are needed independently of a release.
 
 ## Recovery and verification
 
