@@ -1,44 +1,13 @@
-name: Focused regression checks
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
+name: Diagnose the merged Arch checks
+on: push
 permissions:
   contents: read
-concurrency:
-  group: linux-${{ github.ref }}
-  cancel-in-progress: true
+  checks: read
 jobs:
-  arch:
+  report:
     runs-on: ubuntu-latest
-    container: archlinux:base-devel
-    timeout-minutes: 90
-    env:
-      CARGO_BUILD_JOBS: 2
-      CARGO_PROFILE_DEV_DEBUG: 0
-      CARGO_PROFILE_TEST_DEBUG: 0
     steps:
-      - name: Provision Arch build environment
-        run: |
-          pacman -Syu --noconfirm --needed git rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils kirigami gjs gtk4 libadwaita dconf xorg-server-xvfb xorg-xauth
-          rustup toolchain install 1.96.0 --profile minimal --component rustfmt --component clippy
-          rustup default 1.96.0
-          npm install --global pnpm@12.9.1
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Frozen frontend dependencies
-        run: pnpm --dir desktop install --frozen-lockfile
-      - name: Build embedded frontend before all-feature Rust checks
-        run: pnpm --dir desktop build
-      - name: Exact merged source focused tests
+      - name: Read annotations on the failed Arch job
         env:
-          CARGO_INCREMENTAL: 0
-        run: |
-          df -h .
-          cargo test --locked -p lconnect-cli --test logs
-          cargo test --locked -p lconnect-ipc --test client_lifetime
-          cargo test --locked -p lconnect-gui --lib system_fonts::tests
-          cargo test --locked -p lconnect-gui --lib media_download::tests
-          cargo test --locked -p lconnect-profile
-          df -h .
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/InkyQuill/lconnect-linux/check-runs/131426472183/annotations --jq '.[] | {title,message,path}'
