@@ -58,6 +58,17 @@ class DistributionTests(unittest.TestCase):
             self.assertEqual(restored.read_bytes(), binary.read_bytes())
             self.assertEqual(restored.stat().st_mode & 0o777, 0o755)
 
+    def test_package_rule_registers_galahad_without_a_missing_group(self):
+        rule = (Path(__file__).parents[2] / "packaging/udev/70-lianli-hid.rules").read_text()
+        dist.require_device_ownership(rule)
+        for broken in (
+            rule.replace('TAG+="uaccess"', ""),
+            rule.replace('ATTRS{idProduct}=="7395"', 'ATTRS{idProduct}=="0000"'),
+            rule + '  GROUP="plugdev"\n',
+        ):
+            with self.subTest(broken=broken), self.assertRaises(ValueError):
+                dist.require_device_ownership(broken)
+
     def test_archive_rejects_symlink(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

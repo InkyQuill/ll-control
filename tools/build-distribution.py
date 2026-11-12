@@ -72,6 +72,27 @@ def production_artifacts(messages):
     return artifacts
 
 
+def require_device_ownership(rule):
+    """The installed rule must grant the active session the Galahad hidraw node.
+
+    udev ignores an entire rule when GROUP names a group the system does not
+    have. The package does not create plugdev, so a grouped rule never
+    registers device ownership on a clean Arch install.
+    """
+    required = (
+        'SUBSYSTEM=="hidraw"',
+        'ATTRS{idVendor}=="0416"',
+        'ATTRS{idProduct}=="7395"',
+        'TAG+="uaccess"',
+        'MODE="0660"',
+    )
+    missing = [token for token in required if token not in rule]
+    if missing or "GROUP=" in rule:
+        raise ValueError(
+            "udev rule does not register Galahad II LCDV2 for the active session"
+        )
+
+
 def copy(source, stage, destination, mode=0o644):
     target = stage / destination
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -147,8 +168,11 @@ def main():
         unit_path = work / "lconnectd.service"
         unit_path.write_text(unit.replace(old, "ExecStart=/usr/bin/lconnectd"))
         copy(unit_path, stage, "usr/lib/systemd/user/lconnectd.service")
-        copy(REPO / "packaging/udev/70-lianli-hid.rules", stage,
-             "usr/lib/udev/rules.d/70-lianli-hid.rules")
+        udev_rule = (REPO / "packaging/udev/70-lianli-hid.rules").read_text()
+        require_device_ownership(udev_rule)
+        udev_path = work / "70-lianli-hid.rules"
+        udev_path.write_text(udev_rule)
+        copy(udev_path, stage, "usr/lib/udev/rules.d/70-lianli-hid.rules")
         copy(REPO / "packaging/net.inkyquill.lconnect.desktop", stage,
              "usr/share/applications/net.inkyquill.lconnect.desktop")
         copy(REPO / "desktop/src-tauri/icons/icon.png", stage,
