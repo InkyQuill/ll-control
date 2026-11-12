@@ -415,7 +415,7 @@ async fn export(
             prefix.extend(bytes.iter().take(8usize.saturating_sub(prefix.len())));
             output.write_all(&bytes)?;
             offset += bytes.len() as u64;
-            if offset % (1024 * 1024) == 0 || eof {
+            if offset.is_multiple_of(1024 * 1024) || eof {
                 eprintln!("Downloaded {offset}/{size} bytes");
             }
             if eof {

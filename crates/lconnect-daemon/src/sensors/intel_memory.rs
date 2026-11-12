@@ -60,7 +60,7 @@ fn parse(bytes: &[u8], now: u64) -> Result<Vec<SensorReading>, SensorStatus> {
         let physical = &device.physical;
         if !physical.starts_with("2f")
             || physical.len() > 900
-            || physical.len() % 2 != 0
+            || !physical.len().is_multiple_of(2)
             || !physical
                 .bytes()
                 .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())

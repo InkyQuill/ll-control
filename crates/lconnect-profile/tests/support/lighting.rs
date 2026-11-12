@@ -51,9 +51,9 @@ pub fn profile() -> Value {
             high["Brightness"] = json!(90 - s);
             let mut low = p.clone();
             low["Brightness"] = json!(20 + s);
-            sensors.insert((*sensor).into(),json!({"High":high,"Low":low,"HighValue":60+s,"LowValue":30+s,"MinValue":0,"MaxValue":3600,"UnitText":if s==4{"R"}else if s%2==0{"%"}else{"°C"}}));
+            sensors.insert((*sensor).into(),json!({"High":high,"Low":low,"HighValue":60+s,"LowValue":30+s,"MinValue":0,"MaxValue":3600,"UnitText":if s==4{"R"}else if s.is_multiple_of(2){"%"}else{"°C"}}));
         }
-        pump.insert((*name).into(),json!({"Mode":i+1,"IsDynamicMode":i%2==0,"Static":p,"DynamicSettings":sensors,"SensorType":i%6+1}));
+        pump.insert((*name).into(),json!({"Mode":i+1,"IsDynamicMode":i.is_multiple_of(2),"Static":p,"DynamicSettings":sensors,"SensorType":i%6+1}));
     }
     json!({"FanLEDMode":4,"ScreenLEDMode":13,"FanLEDProfiles":fan,"ScreenLEDProfiles":pump,"FanLEDSyncToScreenLED":false,"FanLEDSize":0,"FanLEDLoopNumber":37,"ScreenBrightness":51})
 }
