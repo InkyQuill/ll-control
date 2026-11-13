@@ -228,3 +228,24 @@ angles including a return to zero, then check 0%, 25%, 75% and 100% without
 changing orientation. Record wire traffic and physical observations separately.
 End with an explicit handoff and verify the restored owner's device open and
 visible state. No reset or firmware operation is needed for this comparison.
+
+### Normal stop and the flicker retest
+
+In the versioned Windows service, MainService.OnStop and OnShutdown call cleanup
+(MainService.cs:240–259,295–350). Cleanup stops timers and disposes each connected
+controller. ControllerBase.Dispose calls the product's onDispose. For Galahad2Vision,
+onDispose stops availability polling, calls stopScreenStreaming and waits for
+worker teardown (Galahad2VisionController.cs:1286–1304). stopScreenStreaming
+suppresses further H.264 packets before stopping the sensor and screenshot timers
+and disposing the browser and LibAV encoder (:923–932,1056–1086). No final black
+frame, LocalUI command or device reset was identified in this normal product
+shutdown path. The cmd 142 path at :1558–1592 is conditional availability
+recovery. Suspend suppresses transmission; resume restarts streaming (:1307–1316).
+
+The Linux display actor joins its frame producer on shutdown. Explicit clear
+selects LocalUI; ordinary process shutdown is a distinct operation. The earlier
+empty bench HID log cannot establish the final on-wire exchange. On retest,
+record the image while streaming, then after the test daemon exits with the
+installed service still stopped, then after owner restoration. The per-process
+HID trace ends with the test daemon; external writers require independent bus
+capture. A successful service start alone does not establish device access.
