@@ -194,7 +194,12 @@ fn spawn_inner(
         commands.close();
         while let Some(command) = commands.recv().await {
             match command {
-                LcdCommand::SetComposition {
+                LcdCommand::SetImagePrepared {
+                    mut prepared,
+                    reply,
+                    ..
+                }
+                | LcdCommand::SetComposition {
                     mut prepared,
                     reply,
                     ..
@@ -408,7 +413,12 @@ impl Display {
                     );
                     return;
                 }
-                LcdCommand::SetComposition {
+                LcdCommand::SetImagePrepared {
+                    mut prepared,
+                    reply,
+                    ..
+                }
+                | LcdCommand::SetComposition {
                     mut prepared,
                     reply,
                     ..
@@ -741,6 +751,23 @@ impl Display {
                         rotation_degrees: None,
                     })
                     .await;
+                let _ = reply.send(result.map(|()| self.state.clone()));
+            }
+            LcdCommand::SetImagePrepared {
+                preparation,
+                mut prepared,
+                reply,
+            } => {
+                let result = if preparation != self.preparation {
+                    prepared
+                        .worker
+                        .stop()
+                        .await
+                        .map_err(busy)
+                        .and(Err(busy("image preparation superseded")))
+                } else {
+                    self.play_image_composition(prepared).await
+                };
                 let _ = reply.send(result.map(|()| self.state.clone()));
             }
             LcdCommand::SetImage { jpeg, reply } => {

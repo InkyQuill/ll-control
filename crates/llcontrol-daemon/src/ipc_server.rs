@@ -45,7 +45,6 @@ use crate::manager::ManagerHandle;
 use crate::persistence::{LightingState, PersistenceStore, PumpLightingState};
 use crate::stats::Stats;
 use async_trait::async_trait;
-use bytes::Bytes;
 use futures::stream::BoxStream;
 use futures::StreamExt;
 use llcontrol_ipc::{
@@ -2109,17 +2108,66 @@ impl DaemonRpc for IpcServerImpl {
     async fn set_lcd_image(&self, dev: DeviceId, jpeg: Vec<u8>) -> Result<()> {
         let _admission = self.admit()?;
         self.stats.inc_ipc_request();
+        let permit = self
+            .theme_jobs
+            .clone()
+            .try_acquire_owned()
+            .map_err(lcd_closed)?;
         let handles = self.handles(&dev).await?;
         let (reply, rx) = oneshot::channel();
         handles
             .lcd_tx
-            .send(LcdCommand::SetImage {
-                jpeg: Bytes::from(jpeg),
-                reply,
-            })
+            .send(LcdCommand::BeginThemePreparation { reply })
             .await
             .map_err(lcd_closed)?;
-        rx.await.map_err(lcd_closed)?.map(|_| ())
+        let preparation = rx.await.map_err(lcd_closed)?;
+        let (reply, state) = oneshot::channel();
+        handles
+            .lcd_tx
+            .send(LcdCommand::State { reply })
+            .await
+            .map_err(lcd_closed)?;
+        let rotation = llcontrol_image::FrameRotation::try_from(
+            state.await.map_err(lcd_closed)?.requested.rotation_degrees,
+        )
+        .map_err(lcd_closed)?;
+        let (result, _permit) = join_theme_job(permit, async move {
+            let runtime = tokio::task::spawn_blocking(move || {
+                crate::theme_runtime::ThemeRuntime::from_static_jpeg(&jpeg)
+                    .map(|runtime| std::sync::Arc::new(runtime.with_output_rotation(rotation)))
+            })
+            .await
+            .map_err(lcd_closed)??;
+            let mut prepared =
+                crate::media_composition::PreparedComposition::prepare_canvas(runtime)
+                    .await
+                    .map_err(lcd_closed)?;
+            let (reply, rx) = oneshot::channel();
+            if let Err(error) = handles
+                .lcd_tx
+                .send(LcdCommand::SetImagePrepared {
+                    preparation,
+                    prepared,
+                    reply,
+                })
+                .await
+            {
+                if let LcdCommand::SetImagePrepared {
+                    prepared: returned, ..
+                } = error.0
+                {
+                    prepared = returned;
+                } else {
+                    unreachable!()
+                }
+                prepared.worker.stop().await.map_err(lcd_closed)?;
+                return Err(lcd_closed("display actor closed"));
+            }
+            rx.await.map_err(lcd_closed)?
+        })
+        .await?;
+        let _ = result;
+        Ok(())
     }
     async fn clear_lcd(&self, dev: DeviceId) -> Result<()> {
         let _admission = self.admit()?;

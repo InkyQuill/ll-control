@@ -271,6 +271,11 @@ pub enum LcdCommand {
     Theme {
         reply: oneshot::Sender<Option<llcontrol_ipc::LcdTheme>>,
     },
+    SetImagePrepared {
+        preparation: u64,
+        prepared: crate::media_composition::PreparedComposition,
+        reply: oneshot::Sender<llcontrol_ipc::Result<llcontrol_ipc::LcdState>>,
+    },
     SetImage {
         jpeg: bytes::Bytes,
         reply: oneshot::Sender<llcontrol_ipc::Result<llcontrol_ipc::LcdState>>,
