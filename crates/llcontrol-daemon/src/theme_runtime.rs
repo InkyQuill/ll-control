@@ -49,6 +49,13 @@ impl std::fmt::Debug for ThemeRuntime {
 impl ThemeRuntime {
     /// Retain a bounded, decoded still canvas for the H.264 producer.
     pub fn from_static_jpeg(jpeg: &[u8]) -> Result<Self> {
+        if !jpeg.starts_with(&[0xff, 0xd8])
+            || jpeg.len() > llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES
+        {
+            return Err(IpcError::InvalidArgument(
+                "expected a bounded JPEG input".into(),
+            ));
+        }
         let source = llcontrol_image::assets::decode_asset(jpeg)
             .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
         if source.width() != 480 || source.height() != 480 {
@@ -56,10 +63,17 @@ impl ThemeRuntime {
                 "static canvas must be 480x480".into(),
             ));
         }
-        let theme = serde_json::from_value(serde_json::json!({
-            "version": 1, "name": "Static image", "background": [0, 0, 0], "layers": []
-        }))
-        .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        let theme = LcdTheme {
+            version: 1,
+            name: "Static image".into(),
+            background: [0; 3],
+            background_video: None,
+            background_image: None,
+            background_fill: None,
+            layers: vec![],
+            page_cache: vec![],
+            basic_editor: None,
+        };
         let mut runtime = Self::new(theme, ThemeAssets::new(), vec![])?;
         runtime.source_canvas = Some(source.into_rgb8());
         Ok(runtime)

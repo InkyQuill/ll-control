@@ -853,6 +853,11 @@ async fn replay_persisted_settings(handles: &DeviceHandles, settings: &DeviceSet
         tokio::time::sleep(REPLAY_GAP).await;
     }
 
+    // The stream startup applies backlight and zero hardware rotation itself.
+    // Replaying LocalUI here would flash it and can clear the saved stream intent.
+    if settings.theme.is_some() || settings.media_clip.is_some() {
+        return;
+    }
     let lcd = &settings.lcd;
     if lcd.brightness != 0 || !lcd.rotation.is_empty() || !lcd.control_mode.is_empty() {
         let rotation = match lcd.rotation.parse::<u16>() {
