@@ -1,8 +1,8 @@
 {
  "KPackageStructure":"Plasma/Applet",
  "KPlugin":{
-  "Id":"net.inkyquill.lconnect.mini","Name":"L-Connect Mini","Name[ru]":"L-Connect Mini",
-  "Description":"Six cached L-Connect sensor readings","Description[ru]":"Шесть показаний из кеша L-Connect",
+  "Id":"net.inkyquill.lconnect.mini","Name":"LL-Control Mini","Name[ru]":"LL-Control Mini",
+  "Description":"Six cached LL-Control sensor readings","Description[ru]":"Шесть показаний из кеша LL-Control",
   "Version":"0.1.0","License":"GPL-3.0-or-later","Category":"System Information","Icon":"utilities-system-monitor",
   "Authors":[{"Name":"Pavel Obruchnikov","Email":"me@inkyquill.net"}]
  },

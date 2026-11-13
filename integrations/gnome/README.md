@@ -1,4 +1,4 @@
-# L-Connect Mini for GNOME Shell
+# LL-Control Mini for GNOME Shell
 
 Initial GNOME Shell extension: a panel summary and six readings in its menu.
 There is no separate Mini application window. The standard extension preferences

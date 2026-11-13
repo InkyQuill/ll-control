@@ -89,6 +89,8 @@ try:
  gui=launch(['plasmawindowed','net.inkyquill.lconnect.mini'],'widget')
  wait(lambda:len(calls)>=6 or gui.poll() is not None,'real CLI feed');assert gui.poll() is None
  wait(lambda:bool(windows(gui.pid)),'Plasma package window');window=windows(gui.pid)[0]
+ window_title=subprocess.run(['xdotool','getwindowname',window],env=env,text=True,check=True,capture_output=True,timeout=5).stdout.strip()
+ assert 'LL-Control Mini' in window_title and 'L-Connect' not in window_title,window_title
  subprocess.run(['xdotool','windowsize',window,'760','420'],env=env,check=True,timeout=5)
  # Wait for another complete CLI cycle after resize before recording pixels.
  before=len(calls);wait(lambda:len(calls)>=before+3,'English refresh')

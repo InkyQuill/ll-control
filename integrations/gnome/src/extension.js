@@ -13,8 +13,8 @@ import {text} from './strings.js';
 export default class LConnectMini extends Extension {
     enable() {
         this._settings = this.getSettings();
-        this._indicator = new PanelMenu.Button(0.0, 'L-Connect Mini', false);
-        this._summary = new St.Label({text: 'L-Connect', y_align: Clutter.ActorAlign.CENTER});
+        this._indicator = new PanelMenu.Button(0.0, 'LL-Control Mini', false);
+        this._summary = new St.Label({text: 'LL-Control', y_align: Clutter.ActorAlign.CENTER});
         this._indicator.add_child(this._summary);
         this._status = new PopupMenu.PopupMenuItem('', {reactive: false, can_focus: false});
         this._indicator.menu.addMenuItem(this._status);
@@ -48,8 +48,8 @@ export default class LConnectMini extends Extension {
             if (card.available && summary.length < 2)
                 summary.push(`${card.title} ${card.values[0]}`);
         }
-        this._summary.text = summary.join(' · ') || 'L-Connect';
-        this._indicator.accessible_name = view.status || summary.join(' · ') || 'L-Connect Mini';
+        this._summary.text = summary.join(' · ') || 'LL-Control';
+        this._indicator.accessible_name = view.status || summary.join(' · ') || 'LL-Control Mini';
         this._preferences.label.text = text('preferences', view.language);
     }
 

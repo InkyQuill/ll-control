@@ -1,7 +1,7 @@
 {
  "uuid":"lconnect-mini@inkyquill.net",
- "name":"L-Connect Mini",
- "description":"Six cached L-Connect readings with configurable sources",
+ "name":"LL-Control Mini",
+ "description":"Six cached LL-Control readings with configurable sources",
  "settings-schema":"org.gnome.shell.extensions.lconnect-mini",
  "version":1
 }

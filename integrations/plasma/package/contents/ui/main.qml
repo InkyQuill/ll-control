@@ -17,8 +17,8 @@ PlasmoidItem {
  readonly property var view: Mini.render(root.frame, Plasmoid.configuration.slotConfig, feed.elapsedMs, cachedLanguage)
  preferredRepresentation: Plasmoid.formFactor===PlasmaCore.Types.Planar?fullRepresentation:compactRepresentation
  compactRepresentation: Controls.ToolButton {
-  text:root.view.cards.filter(card=>card.available).slice(0,2).map(card=>card.values[0]).join(" · ")||"L-Connect"
-  Accessible.name:root.view.status||root.view.cards.filter(card=>card.available).slice(0,2).map(card=>card.title+" "+card.values[0]).join(" · ")||"L-Connect Mini"
+  text:root.view.cards.filter(card=>card.available).slice(0,2).map(card=>card.values[0]).join(" · ")||"LL-Control"
+  Accessible.name:root.view.status||root.view.cards.filter(card=>card.available).slice(0,2).map(card=>card.title+" "+card.values[0]).join(" · ")||"LL-Control Mini"
   onClicked:root.expanded=!root.expanded
  }
  Feed {

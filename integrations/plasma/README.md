@@ -1,4 +1,4 @@
-# L-Connect Mini for Plasma
+# LL-Control Mini for Plasma
 
 Plasma 6 applet with six configurable cached readings. The widget owns its CLI
 helper and does not need the Tauri GUI. English is the default; confirmed Russian
