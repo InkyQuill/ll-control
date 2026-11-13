@@ -1410,7 +1410,6 @@
   "Проверьте скорость и пороги MeteorShower.": "Check the MeteorShower speed and thresholds.",
   "Проверьте пороги эффекта: 0–100 для °C/% и 0–3600 для RPM; нижний не должен превышать верхний.": "Check the effect thresholds: 0–100 for °C/% and 0–3600 for RPM; the lower threshold must not exceed the upper threshold.",
   "Для нового эффекта нужен свободный слой.": "A free layer is required for the new effect.",
-  "Для {0} выберите {1} датчиков": "Select {1} sensors for {0}",
   "Неподдерживаемый ответ отмены захвата экрана.": "Unsupported screenshot cancellation response.",
   "Invalid recording ID": "Invalid recording ID",
   "Recording editor is closed": "Recording editor is closed",
@@ -1428,5 +1427,8 @@
   "Импорт Windows поддерживает ограниченный набор форматов и не подтверждён для всех экспортов L-Connect 2.1.28. Используйте на свой риск.": "Windows import supports a limited set of formats and is not verified for every L-Connect 2.1.28 export. Use at your own risk.",
   "FPS — среднее значение по кадрам из лога MangoHud, а не проверенный аналог PresentMon. Совместимость с играми не подтверждена; используйте на свой риск.": "FPS is a mean of logged MangoHud frames, not a verified PresentMon equivalent. Game compatibility is unverified; use at your own risk.",
   "Процедурные эффекты реализованы, но их внешний вид, тайминг и отказы на LCDV2 проверены не полностью. Используйте на свой риск.": "Procedural effects are implemented, but their appearance, timing, and failure behavior on LCDV2 are not fully verified. Use at your own risk.",
-  "Поддержка этого устройства не прошла полную аппаратную проверку. Используйте элементы управления на свой риск.": "This device has not completed full hardware verification. Use its controls at your own risk."
+  "Поддержка этого устройства не прошла полную аппаратную проверку. Используйте элементы управления на свой риск.": "This device has not completed full hardware verification. Use its controls at your own risk.",
+  "Не удалось создать варианты для этой темы.": "Could not create variants for this theme.",
+  "Создайте независимые варианты из текущего черновика и настройте каждый отдельно.": "Create independent variants from the current draft and edit each one separately.",
+  "Создать варианты": "Create variants"
 }

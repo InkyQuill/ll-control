@@ -1,7 +1,7 @@
 <script lang="ts">
   import StudioPopover from './StudioPopover.svelte';
   import type { BasicBackground, BasicOverlay, Theme } from './api';
-  import { basicOverlays, selectBasicEditor } from './basic-editor';
+  import { basicOverlays, createBasicEditor, selectBasicEditor } from './basic-editor';
   import { lcdPageKind } from './lcd-pages';
   import { t } from './i18n.svelte';
   import { ValidationError } from './validation-error';
@@ -37,6 +37,22 @@
     time: t('Часы'),
     custom: t('Свой текст'),
   });
+  function create() {
+    if (disabled) return;
+    try {
+      theme = createBasicEditor($state.snapshot(theme));
+      failure = null;
+      onchange();
+    } catch (error) {
+      failure = {
+        owner: theme,
+        error:
+          error instanceof ValidationError
+            ? error
+            : new ValidationError('Не удалось создать варианты для этой темы.'),
+      };
+    }
+  }
   function select(background: BasicBackground, overlay: BasicOverlay) {
     if (disabled) return false;
     try {
@@ -59,7 +75,14 @@
   }
 </script>
 
-{#if editor && selected}
+{#if !editor && lcdPageKind(theme) === 'basic'}
+  <fieldset class="basic-presets" {disabled}>
+    <legend>{t('Варианты фона и текста')}</legend>
+    <p>{t('Создайте независимые варианты из текущего черновика и настройте каждый отдельно.')}</p>
+    <button type="button" onclick={create}>{t('Создать варианты')}</button>
+    {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}
+  </fieldset>
+{:else if editor && selected}
   <fieldset class="basic-presets" {disabled}>
     <legend>{t('Варианты фона и текста')}</legend>
     <label
