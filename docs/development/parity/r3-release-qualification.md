@@ -13,7 +13,7 @@ installed-session or physical observations.
 | Installed Plasma Wayland lifecycle | Current session is KDE Wayland; no installed daemon unit or running L-Connect process found | Install/upgrade/remove with retained data, udev access, tray/single instance/hide/show/exit and actual login autostart |
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
-| Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; LocalUI flicker persists; brightness response observed | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
+| Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
 | Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
@@ -186,4 +186,10 @@ The operator supplied this frame to identify the artifact seen by eye. Short bri
 
 In session `20261113-141252-741589`, the bench captured 535 H.264 frames over 22.9 seconds. After the test daemon exited, the chart lingered for about ten seconds before LocalUI returned and continued flickering. Both daemons were stopped for about 97 seconds. Restarting the installed service produced no visible change. The photograph is supplemental evidence; it has no synchronized HID timestamp.
 
-Cold-start baseline pending: after full power removal, observe the static logo in UEFI before Linux starts. Persistence there would prioritize a panel/controller or power-path fault. A clean baseline followed by recurrence after streaming would motivate isolating the first command or stream transition that triggers it. LIAN LI identifies screen MOSFET damage as one possible explanation for GA II LCD flicker/ghosting; this frame does not diagnose that component. [GA II LCD FAQ](https://lian-li.com/faq/faq_galahad-ii-lcd/)
+### Cross-platform panel fault
+
+Pavel observed a clean logo at power-on and through GRUB on an earlier boot, followed by flicker during Linux startup. He subsequently reproduced the same artifact under Windows. Reflashing the device and attempting a full power discharge did not clear it.
+
+For R3, classify persistent LocalUI flicker as a probable hardware fault on this unit. The Windows reproduction shows the Linux daemon is unnecessary for the symptom. LIAN LI identifies possible LCD MOSFET damage for this symptom and recommends requesting a screen replacement. The failed component has not been independently identified. [GA II LCD FAQ](https://lian-li.com/faq/faq_galahad-ii-lcd/)
+
+The observed four-angle rotation and brightness results stand. Stable-display acceptance remains open for a known-good or replacement screen.
