@@ -2,7 +2,7 @@
 use crate::media_prepare::{self, Fit, Stage, VideoCut};
 use crate::video_adjustments::VideoAdjustments;
 use anyhow::{bail, Context, Result};
-use lconnect_ipc::{MediaUploadPhase, MediaUploadRequest, MediaUploadState};
+use llcontrol_ipc::{MediaUploadPhase, MediaUploadRequest, MediaUploadState};
 use serde::Serialize;
 use std::{
     fs::File,
@@ -1574,7 +1574,7 @@ mod tests {
                                 );
                                 assert!(canceller.cancel(A).is_err());
                                 state.phase = MediaUploadPhase::Published;
-                                state.asset = Some(lconnect_ipc::PreparedClipInfo {
+                                state.asset = Some(llcontrol_ipc::PreparedClipInfo {
                                     is_default: false,
                                     key: A.into(),
                                     name: state.name.clone(),

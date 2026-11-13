@@ -20,7 +20,7 @@ for (const language of ['en-US', 'ru-RU'] as const)
     await page.setViewportSize({ width: 1024, height: 1000 });
     await page.addInitScript(
       ({ theme, language }) => {
-        localStorage.setItem('lconnect.interface-language', language);
+        localStorage.setItem('llcontrol.interface-language', language);
         const state: Window['importedLoad'] = {
           result: theme,
           pending: false,

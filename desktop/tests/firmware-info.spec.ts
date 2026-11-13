@@ -32,7 +32,7 @@ interface Fixture {
 }
 async function setup(page: Page) {
   await page.addInitScript(() => {
-    localStorage.setItem('lconnect.interface-language', 'en-US');
+    localStorage.setItem('llcontrol.interface-language', 'en-US');
     const f = {
       language: 'en-US',
       offline: false,

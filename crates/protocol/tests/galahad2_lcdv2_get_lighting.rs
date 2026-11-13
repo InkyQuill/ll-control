@@ -2,12 +2,12 @@
 //!
 //! Source: Galahad2VisionDevice.cs:73-86, :122-135.
 
-use lconnect_protocol::galahad2_lcdv2::get_lighting::{
+use llcontrol_protocol::galahad2_lcdv2::get_lighting::{
     build_get_fan_lighting_info_request, build_get_pump_lighting_info_request,
     parse_fan_lighting_info_response, parse_pump_lighting_info_response,
 };
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{FanLightingMode, PumpLightingMode};
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{FanLightingMode, PumpLightingMode};
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
 #[test]
 fn build_get_fan_request_emits_cmd_132_no_payload() {
@@ -78,7 +78,7 @@ fn parse_fan_response_with_wrong_command_echo_rejected() {
     let err = parse_fan_lighting_info_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 132,
             got: 0x86
         }
@@ -94,7 +94,7 @@ fn parse_pump_response_with_wrong_command_echo_rejected() {
     let err = parse_pump_lighting_info_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 130,
             got: 0x84
         }
@@ -108,7 +108,7 @@ fn parse_fan_response_too_short_rejected() {
     let err = parse_fan_lighting_info_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 }
 
@@ -118,6 +118,6 @@ fn parse_pump_response_too_short_rejected() {
     let err = parse_pump_lighting_info_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 }

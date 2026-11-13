@@ -1,5 +1,5 @@
 //! Synthetic source-derived envelopes; no vendor bytes or device access.
-use lconnect_protocol::galahad2_lcdv2::{
+use llcontrol_protocol::galahad2_lcdv2::{
     bpacket::{BCommandPacket, INPUT_LEN, PAYLOAD_MAX},
     firmware_update::{decode_activation, ChunkExpectation, DecodeError, ResetRequested},
 };

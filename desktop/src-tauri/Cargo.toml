@@ -1,5 +1,5 @@
 [package]
-name = "lconnect-gui"
+name = "llcontrol-gui"
 version.workspace = true
 edition.workspace = true
 rust-version = "1.88"
@@ -9,10 +9,10 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-single-instance = "=2.4.2"
-lconnect-media = { path = "../../crates/lconnect-media" }
-lconnect-profile = { path = "../../crates/lconnect-profile" }
-lconnect-ipc = { path = "../../crates/lconnect-ipc" }
-lconnect-image = { path = "../../crates/lconnect-image" }
+llcontrol-media = { path = "../../crates/llcontrol-media" }
+llcontrol-profile = { path = "../../crates/llcontrol-profile" }
+llcontrol-ipc = { path = "../../crates/llcontrol-ipc" }
+llcontrol-image = { path = "../../crates/llcontrol-image" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 tokio = { workspace = true, features = ["sync", "time", "macros", "net", "io-util", "rt"] }
@@ -32,9 +32,9 @@ uuid = { version = "1", features = ["v4"] }
 [dev-dependencies]
 base64 = "0.22.1"
 zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2"] }
-lconnect-media = { path = "../../crates/lconnect-media", features = ["test-support"] }
-lconnect-daemon = { path = "../../crates/lconnect-daemon" }
-lconnect-hid = { path = "../../crates/lconnect-hid" }
+llcontrol-media = { path = "../../crates/llcontrol-media", features = ["test-support"] }
+llcontrol-daemon = { path = "../../crates/llcontrol-daemon" }
+llcontrol-hid = { path = "../../crates/llcontrol-hid" }
 tokio = { workspace = true, features = ["macros", "rt"] }
 
 [features]

@@ -10,9 +10,26 @@ Suggested description: Independent Linux controller for supported LIAN LI hardwa
 
 This is an independent project, not an official LIAN LI application. The preliminary public-web search found no obvious exact-name software conflict; direct trademark-register clearance and similar-mark searches remain incomplete. Do not describe the name as legally cleared.
 
-## Migration status
+## Current integration — issue #34
 
-The visible product name is LL-Control: window/document titles, sidebar, tray menu, file dialogs, autostart label and packaged launcher. The approved charcoal/cyan dial is used for the application icon, sidebar and favicon; the tray uses its two panel variants. Binary/package identifiers, service filenames and configuration paths remain compatible with existing installations (`lconnect-gui`, `lconnectd`, `net.inkyquill.lconnect`).
+The pre-release product now uses `llcontrol` (CLI), `llcontrold` (daemon),
+`llcontrol-gui` (desktop), `llcontrol-*` crates, `llcontrold.service`,
+`net.inkyquill.llcontrol` and XDG `llcontrol` configuration/data paths.
+The distributable package is `ll-control`. Mini extension and schema identities
+also use `llcontrol`. This is a direct rename: no compatibility aliases or
+inbuilt migration are provided, as requested in issue #34. Local development
+installations need a one-time manual cutover before using the new service.
+The GitHub repository address is independent and remains unchanged here.
+
+The current artwork is the SVG supplied by InkyQuill in
+[issue #34](https://github.com/InkyQuill/lconnect-linux/issues/34), preserved as
+[`ll-control-mono.svg`](../../../assets/branding/ll-control/ll-control-mono.svg).
+Run `scripts/generate-tray-icons.sh` to regenerate launcher, sidebar/favicon
+and tray assets. The dark-panel tray uses light ink with the same geometry;
+the light-panel tray and launcher preserve the supplied dark ink.
+
+The decisions and acceptance results below are historical and describe the
+preceding dial artwork and old installed identifiers.
 
 ## Icon exploration
 

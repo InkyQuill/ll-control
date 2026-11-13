@@ -37,7 +37,7 @@ The independent reviewer requested four material corrections: place capability l
 - Final browser suite: **378/378 passed**, including RGB draft navigation, capability guards, EN/RU, focus, contrast, compact reflow and existing editing/recovery workflows. Additional studio capture run: **3/3 passed**.
 - Strict translation coverage: **859/859**, zero missing static resources (dynamic daemon data retains its existing qualification scope).
 - Impeccable detector: no findings, `.impeccable/review/production-detector.json`.
-- Initial native Tauri/WebKitGTK + Unix IPC + isolated MockBackend acceptance passed in `/tmp/lconnect-native-vv41_1cf`. The harness now explicitly seeds its Russian fixture language and follows the new overview/panel navigation. Final post-review native acceptance also passed; see `device-studio-verification.json` for the full readback and source hashes.
+- Initial native Tauri/WebKitGTK + Unix IPC + isolated MockBackend acceptance passed in `/tmp/llcontrol-native-vv41_1cf`. The harness now explicitly seeds its Russian fixture language and follows the new overview/panel navigation. Final post-review native acceptance also passed; see `device-studio-verification.json` for the full readback and source hashes.
 - No real HID device, hardware output, OS accessibility tooling, installation or release is claimed by these checks.
 
 
@@ -55,7 +55,7 @@ The independent reviewer requested four material corrections: place capability l
 | Finish review and documentation | `.impeccable/review/production-verdict.md`, production `DESIGN.md` and JSON sidecar |
 | Native software acceptance | Final Tauri/WebKitGTK → Unix IPC → MockBackend smoke passed, including reconnect, faults and restart replay; no hardware acceptance implied |
 
-Final native evidence originated at `/tmp/lconnect-native-tdlry0zg` and is preserved in [device-studio-verification.json](device-studio-verification.json). The native script also preserves already-open sections when returning to the retained lighting editor. All completion requirements above are satisfied within the software-only scope.
+Final native evidence originated at `/tmp/llcontrol-native-tdlry0zg` and is preserved in [device-studio-verification.json](device-studio-verification.json). The native script also preserves already-open sections when returning to the retained lighting editor. All completion requirements above are satisfied within the software-only scope.
 
 ## LCD geometry correction — 2026-10-16
 

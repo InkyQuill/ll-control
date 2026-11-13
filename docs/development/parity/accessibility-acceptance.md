@@ -202,7 +202,7 @@ popups, disabled controls, gradient/image backgrounds или group opacity.
 
 ## Числовой контракт Cooling — 2026-10-11
 
-Редактор согласован с `CoolingPolicy::validate` в `crates/lconnect-ipc/src/cooling.rs`:
+Редактор согласован с `CoolingPolicy::validate` в `crates/llcontrol-ipc/src/cooling.rs`:
 PWM и fallback — целые10…100для fan/20…100для pump; RPM — целые800…3600;
 температуры −50…150°C, дробные для pump PWM curve, целые для fan/RPM curve;
 гистерезис конечный0…10°C, допускает дроби. До этого GUI показывал0…100°C
@@ -245,7 +245,7 @@ screen-reader interaction ещё не проверены; общий accessibili
 ## Фактические AT-SPI live-region events — 2026-10-11
 
 Private AT-SPI listener запускается до GUI, пишет только события приложения
-`lconnect-gui` в fixture directory и завершается вместе с harness. Для
+`llcontrol-gui` в fixture directory и завершается вместе с harness. Для
 children-added исследуется добавленный accessible, cache очищается перед
 чтением attributes; при необходимости проверяется live ancestor. События
 собираются через accessibility bus, не через DOM MutationObserver.
@@ -335,7 +335,7 @@ WM_TRANSIENT_FOR до GUI; закрытие требует исчезновен�
 434trusted steps/12AT-SPI variants/34live events. Native build, fmt,
 strict Clippy, JS/Python syntax и review прошли; общий suite не повторялся.
 Production код не менялся. Опциональный сценарий:
-`LCONNECT_NATIVE_DIALOGS=1 LCONNECT_NATIVE_ATSPI=1 python3 desktop/scripts/native-keyboard.py`.
+`LLCONTROL_NATIVE_DIALOGS=1 LLCONTROL_NATIVE_ATSPI=1 python3 desktop/scripts/native-keyboard.py`.
 Предварительно собрать frontend, desktop-mock и native-smoke binary как
 в [native acceptance](native-keyboard-acceptance.md); запускать последовательно.
 
@@ -451,7 +451,7 @@ AT-SPI подтверждает фактический текст пути, enab
 Запуск требует `xsettingsd` в дополнение к существующим зависимостям стенда:
 
 ```sh
-LCONNECT_NATIVE_ATSPI=1 LCONNECT_NATIVE_DIALOGS=1 LCONNECT_NATIVE_TEXT_SCALE=2 LCONNECT_NATIVE_ZOOM=2 python3 desktop/scripts/native-keyboard.py
+LLCONTROL_NATIVE_ATSPI=1 LLCONTROL_NATIVE_DIALOGS=1 LLCONTROL_NATIVE_TEXT_SCALE=2 LLCONTROL_NATIVE_ZOOM=2 python3 desktop/scripts/native-keyboard.py
 ```
 
 Закрыт этот X11 OS-DPI/GTK scenario. Wayland, fractional scaling, другие

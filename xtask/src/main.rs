@@ -1,4 +1,4 @@
-//! Build helper binary for the lconnect-linux workspace.
+//! Build helper binary for the ll-control workspace.
 //!
 //! Run from the workspace root, e.g. `cargo run -p xtask -- gen-udev`.
 
@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 
 #[derive(Parser)]
-#[command(version, about = "lconnect-linux build helpers")]
+#[command(version, about = "ll-control build helpers")]
 enum Cmd {
     /// Generate `packaging/udev/70-lianli-hid.rules` from the device-family table.
     GenUdev,
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 ///
 /// Phase 1 scope: only Galahad II LCDV2 (VID `0x0416`, PID `0x7395`).
 /// Phase 3+ this should be sourced from the device-family registry in
-/// `lconnect-hid` so that adding a family in one place propagates here
+/// `llcontrol-hid` so that adding a family in one place propagates here
 /// automatically.
 const DEVICES: &[(&str, u16, u16)] = &[("Galahad II LCDV2", 0x0416, 0x7395)];
 

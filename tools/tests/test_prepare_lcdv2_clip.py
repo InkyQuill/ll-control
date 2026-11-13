@@ -19,7 +19,7 @@ def run(*args):
 
 class MediaPreparation(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(prefix="lconnect-media-test-")
+        self.tmp = tempfile.TemporaryDirectory(prefix="llcontrol-media-test-")
         self.addCleanup(self.tmp.cleanup)
         self.directory = Path(self.tmp.name)
 
@@ -94,8 +94,8 @@ class MediaPreparation(unittest.TestCase):
                     errors.append(error)
             thread = threading.Thread(target=serve)
             thread.start()
-            env = dict(os.environ, LCONNECTCTL_SOCKET=str(endpoint))
-            result = subprocess.run([str(ROOT / "target/debug/lconnectctl"), "lcd", "play-clip",
+            env = dict(os.environ, LLCONTROL_SOCKET=str(endpoint))
+            result = subprocess.run([str(ROOT / "target/debug/llcontrol"), "lcd", "play-clip",
                                      str(path), "--loops", "2", "--device", "galahad2-lcdv2:fixture"],
                                     env=env, capture_output=True, timeout=15)
             thread.join(12)

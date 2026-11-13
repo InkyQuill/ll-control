@@ -25,7 +25,7 @@ def wait(predicate, why, seconds=30):
 def rpc(root, method, params=None):
     with socket.socket(socket.AF_UNIX) as connection:
         connection.settimeout(10)
-        connection.connect(str(root / 'lconnectd.sock'))
+        connection.connect(str(root / 'llcontrold.sock'))
         with connection.makefile('rwb') as stream:
             stream.write((json.dumps(dict(jsonrpc='2.0', id=1, method=method, params=params or {})) + '\n').encode())
             stream.flush()
@@ -60,9 +60,9 @@ def case(root, language):
     (root / 'fixture-marker').write_text('MockBackend/native canvas only\n')
     (root / 'cpu-hot').touch()
     (root / 'native-tmp').mkdir()
-    inherited = {k: v for k, v in os.environ.items() if not k.startswith('LCONNECT_NATIVE_')}
-    env = dict(inherited, LCONNECT_SMOKE_ROOT=str(root), LCONNECT_NATIVE_CANVAS='1',
-               LCONNECT_NATIVE_DESKTOP_LANGUAGE=language, LCONNECT_MOCK_EXPORT_FRAMES='1',
+    inherited = {k: v for k, v in os.environ.items() if not k.startswith('LLCONTROL_NATIVE_')}
+    env = dict(inherited, LLCONTROL_SMOKE_ROOT=str(root), LLCONTROL_NATIVE_CANVAS='1',
+               LLCONTROL_NATIVE_DESKTOP_LANGUAGE=language, LLCONTROL_MOCK_EXPORT_FRAMES='1',
                XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root / 'config'),
                XDG_DATA_HOME=str(root / 'data'), XDG_CACHE_HOME=str(root / 'cache'),
                XDG_CONFIG_DIRS=str(root / 'system-config'), TMPDIR=str(root / 'native-tmp'),
@@ -84,10 +84,10 @@ def case(root, language):
                               text=True, check=True, timeout=10).stdout
 
     def start_fixture():
-        for name in ['stop', 'stats.json', 'lconnectd.sock', 'lcd-frame.json']:
+        for name in ['stop', 'stats.json', 'llcontrold.sock', 'lcd-frame.json']:
             (root / name).unlink(missing_ok=True)
         fixture = launch([REPO / 'target/debug/examples/desktop-mock'], 'fixture-' + str(len(processes)))
-        wait(lambda: (root / 'stats.json').exists() and (root / 'lconnectd.sock').exists()
+        wait(lambda: (root / 'stats.json').exists() and (root / 'llcontrold.sock').exists()
              or fixture.poll() is not None, 'private fixture')
         assert fixture.poll() is None
         wait(lambda: len(rpc(root, 'list_devices')) == 1, 'mock device')
@@ -162,7 +162,7 @@ def case(root, language):
         fixture = start_fixture()
         settings = rpc(root, 'get_display_settings'); settings['interface_language'] = language
         rpc(root, 'set_display_settings', dict(settings=settings))
-        gui = launch([REPO / 'target/debug/lconnect-gui'], 'gui')
+        gui = launch([REPO / 'target/debug/llcontrol-gui'], 'gui')
         outcome = workflow(gui)
         dev, theme = outcome['dev'], outcome['theme']
         library = rpc(root, 'list_profiles')
@@ -186,7 +186,7 @@ def case(root, language):
         wait(lambda: frame() == expected, 'restarted daemon reproduces saved geometry')
         (root / 'first-result.json').write_text(json.dumps(outcome, indent=2)+'\n')
         (root / 'result.json').unlink(); (root / 'keyboard-step.json').unlink(missing_ok=True)
-        gui = launch([REPO / 'target/debug/lconnect-gui'], 'gui-recovery')
+        gui = launch([REPO / 'target/debug/llcontrol-gui'], 'gui-recovery')
         recovery = workflow(gui); assert recovery.get('recovery')
         close(gui)
         outcome.update(language=language, pointer_moves=pointer_moves, decoded_output_matches=True,
@@ -210,9 +210,9 @@ def main():
     parser.add_argument('--inside', type=Path)
     args = parser.parse_args()
     if args.inside is None:
-        root = Path(tempfile.mkdtemp(prefix='lconnect-canvas-'))
+        root = Path(tempfile.mkdtemp(prefix='llcontrol-canvas-'))
         runtime = root / 'session'; runtime.mkdir(mode=0o700)
-        env = dict(os.environ, LCONNECT_CANVAS_ISOLATED='1', XDG_RUNTIME_DIR=str(runtime),
+        env = dict(os.environ, LLCONTROL_CANVAS_ISOLATED='1', XDG_RUNTIME_DIR=str(runtime),
                    XDG_CONFIG_HOME=str(root / 'config'), XDG_DATA_HOME=str(root / 'data'),
                    XDG_CACHE_HOME=str(root / 'cache'), DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
         for key in ['DISPLAY', 'WAYLAND_DISPLAY', 'AT_SPI_BUS_ADDRESS', 'DBUS_SESSION_BUS_ADDRESS']:
@@ -226,7 +226,7 @@ def main():
                 subprocess.run(['fusermount3', '-uz', '--', str(target)], check=True, timeout=10)
         print('Native canvas artifacts:', root)
         raise SystemExit(code)
-    assert os.environ.get('LCONNECT_CANVAS_ISOLATED') == '1'
+    assert os.environ.get('LLCONTROL_CANVAS_ISOLATED') == '1'
     outcomes = [case(args.inside / language, language) for language in ['en-US', 'ru-RU']]
     (args.inside / 'acceptance.json').write_text(json.dumps(dict(ok=True, cases=outcomes), indent=2) + '\n')
     print('PASS native canvas EN/RU input, profiles, output and restart', flush=True)

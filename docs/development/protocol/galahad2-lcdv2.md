@@ -581,7 +581,7 @@ from 0.
 | 0..              | 1..=N      | raw JPEG byte stream   |
 
 The 480x480 LCD accepts JPEG-encoded frames; for arbitrary input
-images, the `lconnect-image` workspace crate produces 480x480 JPEG
+images, the `llcontrol-image` workspace crate produces 480x480 JPEG
 bytes ready to feed straight in.
 
 No response expected.
@@ -836,7 +836,7 @@ Coverage in subsequent phases:
     `SendH264Frame512` (cmd 13, CCommandPacket) request codecs are
     implemented and codec-verified against the C# call sites with
     byte-level tests. Neither path is live-verified.
-  - **Image conversion**: the `lconnect-image` workspace crate provides
+  - **Image conversion**: the `llcontrol-image` workspace crate provides
     arbitrary-input → 480×480 JPEG conversion (PNG/JPEG/WebP/BMP/GIF in,
     JPEG out). The verify-galahad `upload-jpeg` subcommand demonstrates
     the end-to-end pipeline: any image → 480×480 JPEG → BCommandPacket

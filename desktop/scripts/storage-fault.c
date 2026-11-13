@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 static int fault(const char *path, const char *operation) {
-    const char *root = getenv("LCONNECT_SMOKE_ROOT");
+    const char *root = getenv("LLCONTROL_SMOKE_ROOT");
     char marker[4096], rule[128], expected[4096];
     if (!root || root[0] != '/' || !path) return 0;
     snprintf(marker, sizeof marker, "%s/fixture-marker", root);
@@ -35,7 +35,7 @@ static int fault(const char *path, const char *operation) {
     } else if (!strcmp(selector, "settings-write") && !strcmp(operation, "write")) {
         suffix = "/settings/devices/"; prefix = 1;
     } else if (!strcmp(selector, "media-file-sync") && !strcmp(operation, "fsync")) {
-        suffix = "/settings/prepared-clips/.lconnect-media-publish-"; prefix = 1;
+        suffix = "/settings/prepared-clips/.llcontrol-media-publish-"; prefix = 1;
     } else if (!strcmp(selector, "media-directory-sync") && !strcmp(operation, "fsync")) {
         suffix = "/settings/prepared-clips";
     }

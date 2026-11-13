@@ -9,9 +9,9 @@ EdgeHub-specific tiles не являются требованием доступ
 пошагового плана.
 
 Поставка Mini входит в пакет приложения: Plasma applet устанавливается в
-`/usr/share/plasma/plasmoids/net.inkyquill.lconnect.mini` вместе с native module
-в `/usr/lib/qt6/qml/net/inkyquill/lconnect`; GNOME extension — в
-`/usr/share/gnome-shell/extensions/lconnect-mini@inkyquill.net` вместе с локальной
+`/usr/share/plasma/plasmoids/net.inkyquill.llcontrol.mini` вместе с native module
+в `/usr/lib/qt6/qml/net/inkyquill/llcontrol`; GNOME extension — в
+`/usr/share/gnome-shell/extensions/llcontrol-mini@inkyquill.net` вместе с локальной
 compiled GSettings schema. Файлы обоих adapters устанавливаются автоматически,
 без определения текущей сессии установщиком; каждый shell использует своё
 хранилище. Включение расширения и размещение виджета остаются явными действиями
@@ -79,8 +79,8 @@ commands, capability, UI-кнопок или привязки к shutdown осн
 прежние window tests не доказывают готовность shell-интеграций и не закрывают
 Mini parity. Разработка возобновлена в направлении виджетов.
 
-Для будущих shell adapters подключён `lconnectctl mini snapshot` и
-`lconnectctl mini watch`. Это клиент существующего Unix IPC, не второй daemon:
+Для будущих shell adapters подключён `llcontrol mini snapshot` и
+`llcontrol mini watch`. Это клиент существующего Unix IPC, не второй daemon:
 ровно list_sensors/get_sensor_defaults/get_display_settings, без device discovery,
 control writes, GUI или hardware polling. Snapshot — JSON, Watch — NDJSON с
 периодом1s после завершения запроса; общий deadline одного чтения3s. Watch
@@ -94,7 +94,7 @@ values) и `display`. При ошибке данные null, старый сни
 транзакция показаний; consumer обязан сверять identity/role/unit и freshness,
 не смешивая чужие источники. Consumers также должны ограничить возраст последнего
 полученного frame при зависании helper. Максимальная строка вывода1MiB.
-Путь сокета общий с CLI: LCONNECTCTL_SOCKET либо XDG_RUNTIME_DIR/lconnectd.sock.
+Путь сокета общий с CLI: LLCONTROL_SOCKET либо XDG_RUNTIME_DIR/llcontrold.sock.
 
 Private Unix tests проверяют snapshot, точный набор read-only методов, raw labels,
 offline → connection → loss → reconnect с новым sample. Начальный адаптер
@@ -110,7 +110,7 @@ EN/RU resources, exact role/ID/unit и freshness checks, C/F, RAM/network pairs.
 FPS читает явно выбранный MangoHud source из daemon cache; без source unavailable. Дублирующийся ID или отсутствующая выбранная GPU не
 заменяются другим источником. Provider labels проходят как данные, не перевод.
 
-Небольшой Qt QML module запускает фиксированный `lconnectctl mini watch` без shell
+Небольшой Qt QML module запускает фиксированный `llcontrol mini watch` без shell
 или пользовательского command/path. Один helper принадлежит каждому applet или
 открытому settings view. Выход/отключение reaps helper; повреждённая/слишком
 большая строка, crash, missing CLI и silent/stale feed сбрасывают usable values.

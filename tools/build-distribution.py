@@ -18,7 +18,7 @@ import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-BINARIES = {"lconnectd", "lconnectctl", "lconnect-gui"}
+BINARIES = {"llcontrold", "llcontrol", "llcontrol-gui"}
 SKIP = {"node_modules", ".svelte-kit", "build", "gen", "__pycache__",
         "test-results", "playwright-report"}
 
@@ -62,7 +62,7 @@ def production_artifacts(messages):
         features = message["features"]
         if "native-smoke" in features:
             raise ValueError("Refusing native-smoke artifact")
-        if name == "lconnect-gui" and "custom-protocol" not in features:
+        if name == "llcontrol-gui" and "custom-protocol" not in features:
             raise ValueError("GUI must embed the production frontend")
         if not message["profile"]["opt_level"] == "3" or message["profile"]["test"]:
             raise ValueError("Expected release binary")
@@ -148,14 +148,14 @@ def main():
     before = source_inputs()
     destination.parent.mkdir(parents=True, exist_ok=True)
     # Work beside output for atomic publication, never in a system install root.
-    with tempfile.TemporaryDirectory(prefix=".lconnect-dist-", dir=destination.parent) as temporary:
+    with tempfile.TemporaryDirectory(prefix=".llcontrol-dist-", dir=destination.parent) as temporary:
         work = Path(temporary)
         stage = work / "payload"
         stage.mkdir()
         run(["pnpm", "--dir", "desktop", "build"])
-        command = ["cargo", "build", "--locked", "--release", "-p", "lconnect-daemon",
-                   "-p", "lconnect-cli", "-p", "lconnect-gui", "--bins", "--no-default-features",
-                   "--features", "lconnect-gui/custom-protocol", "--message-format=json-render-diagnostics"]
+        command = ["cargo", "build", "--locked", "--release", "-p", "llcontrol-daemon",
+                   "-p", "llcontrol-cli", "-p", "llcontrol-gui", "--bins", "--no-default-features",
+                   "--features", "llcontrol-gui/custom-protocol", "--message-format=json-render-diagnostics"]
         # Cargo diagnostics go to stderr; JSON artifacts go to a bounded disk log.
         cargo_log = work / "cargo-artifacts.jsonl"
         with cargo_log.open("w") as log:
@@ -166,31 +166,31 @@ def main():
             if source.read_bytes()[:4] != b"\x7fELF":
                 raise ValueError(f"Expected ELF: {name}")
             copy(source, stage, f"usr/bin/{name}", 0o755)
-        unit = (REPO / "packaging/systemd/lconnectd.service").read_text()
-        old = "ExecStart=%h/.local/bin/lconnectd"
+        unit = (REPO / "packaging/systemd/llcontrold.service").read_text()
+        old = "ExecStart=%h/.local/bin/llcontrold"
         if unit.count(old) != 1:
             raise ValueError("Unexpected manual service ExecStart")
-        unit_path = work / "lconnectd.service"
-        unit_path.write_text(unit.replace(old, "ExecStart=/usr/bin/lconnectd"))
-        copy(unit_path, stage, "usr/lib/systemd/user/lconnectd.service")
+        unit_path = work / "llcontrold.service"
+        unit_path.write_text(unit.replace(old, "ExecStart=/usr/bin/llcontrold"))
+        copy(unit_path, stage, "usr/lib/systemd/user/llcontrold.service")
         udev_rule = (REPO / "packaging/udev/70-lianli-hid.rules").read_text()
         require_device_ownership(udev_rule)
         udev_path = work / "70-lianli-hid.rules"
         udev_path.write_text(udev_rule)
         copy(udev_path, stage, "usr/lib/udev/rules.d/70-lianli-hid.rules")
-        copy(REPO / "packaging/net.inkyquill.lconnect.desktop", stage,
-             "usr/share/applications/net.inkyquill.lconnect.desktop")
+        copy(REPO / "packaging/net.inkyquill.llcontrol.desktop", stage,
+             "usr/share/applications/net.inkyquill.llcontrol.desktop")
         copy(REPO / "desktop/src-tauri/icons/icon.png", stage,
              "usr/share/icons/hicolor/256x256/apps/ll-control.png")
         copy(REPO / "desktop/src-tauri/icons/32x32.png", stage,
              "usr/share/icons/hicolor/32x32/apps/ll-control.png")
         copy(REPO / "desktop/static/ll-control.svg", stage,
              "usr/share/icons/hicolor/scalable/apps/ll-control.svg")
-        copy(REPO / "LICENSE", stage, "usr/share/licenses/lconnect-linux/LICENSE")
+        copy(REPO / "LICENSE", stage, "usr/share/licenses/ll-control/LICENSE")
         copy(REPO / "desktop/static/fonts/OFL.txt", stage,
-             "usr/share/licenses/lconnect-linux/fonts/Exo2-OFL.txt")
-        for source in sorted((REPO / "crates/lconnect-image/assets").glob("*.txt")):
-            copy(source, stage, f"usr/share/licenses/lconnect-linux/fonts/{source.name}")
+             "usr/share/licenses/ll-control/fonts/Exo2-OFL.txt")
+        for source in sorted((REPO / "crates/llcontrol-image/assets").glob("*.txt")):
+            copy(source, stage, f"usr/share/licenses/ll-control/fonts/{source.name}")
         # Both integrations are installed system-wide. Each shell discovers only
         # its own assets; no active-desktop detection or user-session modification.
         plasma = work / "plasma"
@@ -202,9 +202,9 @@ def main():
         gnome = work / "gnome"
         run(["python3", "integrations/gnome/build.py", "--output", gnome,
              *[arg for value in args.gnome_shell_version for arg in ["--shell-version", value]]])
-        extension = gnome / "lconnect-mini@inkyquill.net"
-        (extension / ".lconnect-mini-build").unlink()
-        shutil.copytree(extension, stage / "usr/share/gnome-shell/extensions/lconnect-mini@inkyquill.net")
+        extension = gnome / "llcontrol-mini@inkyquill.net"
+        (extension / ".llcontrol-mini-build").unlink()
+        shutil.copytree(extension, stage / "usr/share/gnome-shell/extensions/llcontrol-mini@inkyquill.net")
         if source_inputs() != before:
             raise ValueError("Source inputs changed during build; output not published")
         for path in stage.rglob("*"):
@@ -227,8 +227,8 @@ def main():
                     "gnome_candidate_versions": args.gnome_shell_version, "files": files}
         manifest_file = work / "manifest.json"
         manifest_file.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-        copy(manifest_file, stage, "usr/share/doc/lconnect-linux/manifest.json")
-        archive = work / f"lconnect-linux-{version}-x86_64.tar.gz"
+        copy(manifest_file, stage, "usr/share/doc/ll-control/manifest.json")
+        archive = work / f"ll-control-{version}-x86_64.tar.gz"
         archive_payload(stage, archive, epoch)
         recipe = (REPO / "packaging/arch/PKGBUILD.in").read_text()
         for key, value in {"VERSION": version, "ARCHIVE": archive.name, "SHA256": digest(archive)}.items():

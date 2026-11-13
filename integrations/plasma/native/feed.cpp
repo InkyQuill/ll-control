@@ -36,7 +36,7 @@ void Feed::stop() {
 void Feed::start() {
     if(!m_active||m_process.state()!=QProcess::NotRunning)return;
     m_buffer.clear();
-    const QString executable=QStandardPaths::findExecutable(QStringLiteral("lconnectctl"));
+    const QString executable=QStandardPaths::findExecutable(QStringLiteral("llcontrol"));
     if(executable.isEmpty()){failed();return;}
     // Fixed executable/arguments; no QML-provided commands, shell or paths.
     m_process.start(executable,{QStringLiteral("mini"),QStringLiteral("watch")});

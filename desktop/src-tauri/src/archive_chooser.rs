@@ -2,7 +2,7 @@
 //! the webview. Dedicated portal connection and Request::Close own cancellation.
 use anyhow::{ensure, Context, Result};
 use futures_util::StreamExt;
-use lconnect_ipc::InterfaceLanguage;
+use llcontrol_ipc::InterfaceLanguage;
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 use tokio::sync::watch;
 use zbus::{
@@ -123,7 +123,7 @@ async fn choose_filtered(
     dialog: Dialog,
 ) -> Result<Option<PathBuf>> {
     let Dialog { save, group, .. } = dialog;
-    let token = format!("lconnect_archive_{}", uuid::Uuid::new_v4().simple());
+    let token = format!("llcontrol_archive_{}", uuid::Uuid::new_v4().simple());
     let sender = connection
         .unique_name()
         .context(dialog.text(

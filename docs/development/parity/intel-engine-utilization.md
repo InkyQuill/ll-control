@@ -26,7 +26,7 @@ SHA-256 `64c02c2acf2d5e6bdc6ac91bfd6521ed4239fb8821289e354277e31dc5ca785a`.
 Точная версия установленных driver/GuC и наличие событий проверяются runtime;
 номер kernel не считается доказательством поддержки.
 
-`lconnectd --query-intel-engines` выбирается до runtime/config/HID. Helper
+`llcontrold --query-intel-engines` выбирается до runtime/config/HID. Helper
 использует [DRM_XE_DEVICE_QUERY_ENGINES](https://github.com/torvalds/linux/blob/v6.17/include/uapi/drm/xe_drm.h)
 на проверенном xe render FD: read-only VERSION/ENGINES, bounded two-pass allocation,
 character-device/rdev/driver check и повторная проверка physical binding.

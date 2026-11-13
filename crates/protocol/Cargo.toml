@@ -1,5 +1,5 @@
 [package]
-name         = "lconnect-protocol"
+name         = "llcontrol-protocol"
 version.workspace      = true
 edition.workspace      = true
 rust-version.workspace = true
@@ -8,7 +8,7 @@ authors.workspace      = true
 description = "Pure protocol types and codecs for Lian Li L-Connect devices."
 
 [lib]
-name = "lconnect_protocol"
+name = "llcontrol_protocol"
 
 [dependencies]
 thiserror = { workspace = true }

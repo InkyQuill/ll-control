@@ -11,9 +11,9 @@
 | Thermal RGB | Потеря данных не отменяет активную тревогу; degraded явно виден; свежий cool sample снимает тревогу и возвращает base | `tests/thermal.rs`: `newest_trigger_wins_stale_retains_and_valid_cool_sample_removes`, `partial_failure_retry_stale_recovery_and_direct_restore_failure` |
 | Dynamic RGB | Невалидный источник не становится zero; возвращается base, retained binding восстанавливается при появлении того же ID | `tests/dynamic_rgb.rs`: `unavailable_wrong_unit_stale_nonfinite_and_missing_binding_never_become_zero`; `tests/thermal.rs`: `sensor_rgb_thermal_priority_restore_manual_cancel_and_stale_fallback`, `sensor_rgb_replay_retains_binding_and_recovers_when_source_returns` |
 | LCD sensor | Missing/stale/invalid/wrong unit/wrong ID рисуются как unavailable; настоящий zero отличается; восстановление без пересоздания theme | `tests/theme_runtime.rs`: `live_sensor_frames_revoke_missing_stale_invalid_and_wrong_binding_without_fake_zero` проверяет cache→готовый JPEG |
-| LCD Cycle | Смена label/value/unit на границе interval; missing slot не пропускается, loop сохраняется | `lconnect-image/tests/theme.rs`: `sensor_cycle_switches_on_boundaries_keeps_missing_slot_and_wraps` |
+| LCD Cycle | Смена label/value/unit на границе interval; missing slot не пропускается, loop сохраняется | `llcontrol-image/tests/theme.rs`: `sensor_cycle_switches_on_boundaries_keeps_missing_slot_and_wraps` |
 
-Все пути указаны относительно `crates/lconnect-daemon`, кроме явно указанного
+Все пути указаны относительно `crates/llcontrol-daemon`, кроме явно указанного
 image crate. [Native pump missing/recovery](evidence/2026-10-10-native-active-sensor.json)
 покрывает GUI и configured fallback на MockBackend. LCD runtime дополнительно
 проверяет обновление от cache без GUI и остановку producer при ручной замене

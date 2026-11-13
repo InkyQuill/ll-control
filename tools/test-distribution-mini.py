@@ -30,20 +30,20 @@ def main():
     packages = list(distribution.glob('*.pkg.tar.zst'))
     if len(packages) != 1:
         parser.error('Expected exactly one built Arch package')
-    root = Path(tempfile.mkdtemp(prefix='lconnect-mini-distribution-'))
+    root = Path(tempfile.mkdtemp(prefix='llcontrol-mini-distribution-'))
     prefix = root / 'installed'
     prefix.mkdir()
     subprocess.run(['bsdtar', '-xf', str(packages[0]), '-C', str(prefix)], check=True)
-    manifest = json.loads((prefix / 'usr/share/doc/lconnect-linux/manifest.json').read_text())
+    manifest = json.loads((prefix / 'usr/share/doc/ll-control/manifest.json').read_text())
     if manifest != json.loads((distribution / 'manifest.json').read_text()):
         raise ValueError('Embedded package manifest differs')
     for name, info in manifest['files'].items():
         path = prefix / name
         if digest(path) != info['sha256'] or oct(path.stat().st_mode & 0o777) != info['mode']:
             raise ValueError('Package input mismatch: ' + name)
-    gnome = prefix / 'usr/share/gnome-shell/extensions/lconnect-mini@inkyquill.net'
-    plasma = prefix / 'usr/share/plasma/plasmoids/net.inkyquill.lconnect.mini'
-    cli = prefix / 'usr/bin/lconnectctl'
+    gnome = prefix / 'usr/share/gnome-shell/extensions/llcontrol-mini@inkyquill.net'
+    plasma = prefix / 'usr/share/plasma/plasmoids/net.inkyquill.llcontrol.mini'
+    cli = prefix / 'usr/bin/llcontrol'
     assert (gnome / 'mini.mjs').read_bytes() == (plasma / 'contents/code/mini.mjs').read_bytes()
     build = root / 'plasma-build'
     stages = [
@@ -62,7 +62,7 @@ def main():
     for name, command in stages:
         env = dict(os.environ)
         if name == 'packaged-model':
-            env['LCONNECT_MINI_MODEL'] = str(gnome / 'mini.mjs')
+            env['LLCONTROL_MINI_MODEL'] = str(gnome / 'mini.mjs')
         log = root / (name + '.log')
         with log.open('w') as stream:
             result = subprocess.run(command, cwd=REPO, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=180)

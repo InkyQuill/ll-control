@@ -1,4 +1,4 @@
-use lconnect_protocol::galahad2_lcdv2::cpacket::{
+use llcontrol_protocol::galahad2_lcdv2::cpacket::{
     CCommandPacket, HEADER_LEN, INPUT_LEN, OUTPUT_LEN, PAYLOAD_MAX, REPORT_ID,
 };
 

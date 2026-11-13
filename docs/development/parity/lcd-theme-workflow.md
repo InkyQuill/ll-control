@@ -37,13 +37,13 @@ accessible remove labels EN/RU квалифицированы, имена фай
 
 ## CLI
 
-1. `lconnectctl sensors`: выбрать точный ID и unit нужного датчика.
+1. `llcontrol sensors`: выбрать точный ID и unit нужного датчика.
 2. Скопировать [пример](../examples/lcd-theme.json), заменить `REPLACE_WITH_SENSOR_ID`.
-3. `lconnectctl theme preview theme.json preview.jpg`: получить JPEG без применения к устройству. Без `--device` доступны host sensors; с ним добавляются датчики устройства.
-4. `lconnectctl theme apply theme.json --device DEVICE`: применить. Daemon обновляет картинку, датчики и local clock раз в секунду, GUI/CLI не должен оставаться открытым.
-5. `lconnectctl theme state --device DEVICE`: текущая активная композиция. Для transport error и source использовать также LCD state.
+3. `llcontrol theme preview theme.json preview.jpg`: получить JPEG без применения к устройству. Без `--device` доступны host sensors; с ним добавляются датчики устройства.
+4. `llcontrol theme apply theme.json --device DEVICE`: применить. Daemon обновляет картинку, датчики и local clock раз в секунду, GUI/CLI не должен оставаться открытым.
+5. `llcontrol theme state --device DEVICE`: текущая активная композиция. Для transport error и source использовать также LCD state.
 
-Изображения: `lconnectctl theme import photo.png` возвращает managed key.
+Изображения: `llcontrol theme import photo.png` возвращает managed key.
 Добавьте слой первым для фона, последним для watermark:
 
 ```json
@@ -92,11 +92,11 @@ actor, операция завершается там; потеря ответа
 
 ```sh
 # Только отчёт, ничего не удаляет:
-lconnectctl theme cleanup
+llcontrol theme cleanup
 # Повторная проверка ссылок и удаление найденных orphan assets:
-lconnectctl theme cleanup --delete
+llcontrol theme cleanup --delete
 # Сохранить asset, используемый во внешнем JSON-черновике:
-lconnectctl theme cleanup --delete --keep ASSET_KEY
+llcontrol theme cleanup --delete --keep ASSET_KEY
 ```
 
 В GUI Display есть «Очистка неиспользуемых изображений»: сначала проверка,

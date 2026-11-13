@@ -27,7 +27,7 @@ test('catalog resources interpolate filenames as literal values', () => {
   assert.equal(translate('First frame: {0}', 'ru-RU', name), 'Первый кадр: ' + name);
 });
 test('strict catalog audit requires own dictionary entries and reports original TypeScript lines', () => {
-  const root = mkdtempSync(join(tmpdir(), 'lconnect-locale-contract-'));
+  const root = mkdtempSync(join(tmpdir(), 'llcontrol-locale-contract-'));
   try {
     const scripts = join(root, 'desktop/scripts'),
       lib = join(root, 'desktop/src/lib'),

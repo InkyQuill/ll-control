@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-use lconnect_ipc::client::IpcClient;
+use llcontrol_ipc::client::IpcClient;
 use serde::Serialize;
 use serde_json::Value;
 use std::{sync::Arc, time::Duration};
@@ -13,7 +13,7 @@ struct BridgeError {
     #[serde(skip_serializing_if = "Option::is_none")]
     code: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    message_code: Option<lconnect_gui::archive_messages::ArchiveNotice>,
+    message_code: Option<llcontrol_gui::archive_messages::ArchiveNotice>,
 }
 fn error(e: impl std::fmt::Display) -> BridgeError {
     BridgeError {
@@ -24,38 +24,39 @@ fn error(e: impl std::fmt::Display) -> BridgeError {
 }
 fn archive_error(e: anyhow::Error) -> BridgeError {
     BridgeError {
-        message_code: lconnect_gui::archive_messages::ArchiveNotice::from_error(&e),
+        message_code: llcontrol_gui::archive_messages::ArchiveNotice::from_error(&e),
         message: e.to_string(),
         code: None,
     }
 }
 #[tauri::command]
-async fn system_fonts() -> Result<Vec<lconnect_gui::system_fonts::SystemFont>, BridgeError> {
-    tauri::async_runtime::spawn_blocking(lconnect_gui::system_fonts::list)
+async fn system_fonts() -> Result<Vec<llcontrol_gui::system_fonts::SystemFont>, BridgeError> {
+    tauri::async_runtime::spawn_blocking(llcontrol_gui::system_fonts::list)
         .await
         .map_err(error)?
         .map_err(error)
 }
 #[tauri::command]
 async fn system_font_read(id: String) -> Result<tauri::ipc::Response, BridgeError> {
-    let bytes = tauri::async_runtime::spawn_blocking(move || lconnect_gui::system_fonts::read(&id))
-        .await
-        .map_err(error)?
-        .map_err(error)?;
+    let bytes =
+        tauri::async_runtime::spawn_blocking(move || llcontrol_gui::system_fonts::read(&id))
+            .await
+            .map_err(error)?
+            .map_err(error)?;
     Ok(tauri::ipc::Response::new(bytes))
 }
 fn allowed(method: &str) -> bool {
     matches!(
         method,
-        lconnect_ipc::methods::LIST_DEVICES_NAME
+        llcontrol_ipc::methods::LIST_DEVICES_NAME
             | "get_firmware"
             | "get_firmware_recovery"
-            | lconnect_ipc::methods::LIST_SENSORS_NAME
+            | llcontrol_ipc::methods::LIST_SENSORS_NAME
             | "get_system_spec"
             | "get_fps_source"
             | "set_fps_source"
-            | lconnect_ipc::methods::GET_DISPLAY_SETTINGS_NAME
-            | lconnect_ipc::methods::SET_DISPLAY_SETTINGS_NAME
+            | llcontrol_ipc::methods::GET_DISPLAY_SETTINGS_NAME
+            | llcontrol_ipc::methods::SET_DISPLAY_SETTINGS_NAME
             | "get_sensor_defaults"
             | "set_sensor_defaults"
             | "reset_screen"
@@ -106,12 +107,12 @@ fn allowed(method: &str) -> bool {
 }
 #[tauri::command]
 async fn group_archive_start(
-    jobs: tauri::State<'_, lconnect_gui::group_jobs::Groups>,
-    request: lconnect_gui::group_jobs::Start,
-    language: Option<lconnect_ipc::InterfaceLanguage>,
-) -> Result<lconnect_gui::group_jobs::Status, BridgeError> {
+    jobs: tauri::State<'_, llcontrol_gui::group_jobs::Groups>,
+    request: llcontrol_gui::group_jobs::Start,
+    language: Option<llcontrol_ipc::InterfaceLanguage>,
+) -> Result<llcontrol_gui::group_jobs::Status, BridgeError> {
     jobs.start(
-        lconnect_ipc::socket::default_socket_path().map_err(error)?,
+        llcontrol_ipc::socket::default_socket_path().map_err(error)?,
         request,
         language.unwrap_or_default(),
     )
@@ -119,12 +120,12 @@ async fn group_archive_start(
 }
 #[tauri::command]
 async fn group_windows_prepare(
-    jobs: tauri::State<'_, lconnect_gui::group_jobs::Groups>,
-    request: lconnect_gui::group_jobs::Start,
-    options: lconnect_gui::group_jobs::WindowsPreparation,
-) -> Result<lconnect_gui::group_jobs::Status, BridgeError> {
+    jobs: tauri::State<'_, llcontrol_gui::group_jobs::Groups>,
+    request: llcontrol_gui::group_jobs::Start,
+    options: llcontrol_gui::group_jobs::WindowsPreparation,
+) -> Result<llcontrol_gui::group_jobs::Status, BridgeError> {
     jobs.prepare_windows_request(
-        lconnect_ipc::socket::default_socket_path().map_err(error)?,
+        llcontrol_ipc::socket::default_socket_path().map_err(error)?,
         request,
         options,
     )
@@ -132,19 +133,19 @@ async fn group_windows_prepare(
 }
 #[tauri::command]
 fn group_archive_status(
-    jobs: tauri::State<'_, lconnect_gui::group_jobs::Groups>,
-) -> Result<Option<lconnect_gui::group_jobs::Status>, BridgeError> {
+    jobs: tauri::State<'_, llcontrol_gui::group_jobs::Groups>,
+) -> Result<Option<llcontrol_gui::group_jobs::Status>, BridgeError> {
     jobs.status().map_err(archive_error)
 }
 #[tauri::command]
 async fn group_archive_action(
-    jobs: tauri::State<'_, lconnect_gui::group_jobs::Groups>,
-    request: lconnect_gui::group_jobs::Start,
-    action: lconnect_gui::group_jobs::Action,
+    jobs: tauri::State<'_, llcontrol_gui::group_jobs::Groups>,
+    request: llcontrol_gui::group_jobs::Start,
+    action: llcontrol_gui::group_jobs::Action,
     expected: Option<String>,
-) -> Result<Option<lconnect_gui::group_jobs::Status>, BridgeError> {
+) -> Result<Option<llcontrol_gui::group_jobs::Status>, BridgeError> {
     jobs.action(
-        lconnect_ipc::socket::default_socket_path().map_err(error)?,
+        llcontrol_ipc::socket::default_socket_path().map_err(error)?,
         request,
         action,
         expected,
@@ -153,12 +154,12 @@ async fn group_archive_action(
 }
 #[tauri::command]
 async fn profile_archive_start(
-    jobs: tauri::State<'_, lconnect_gui::archive_jobs::Archives>,
-    request: lconnect_gui::archive_jobs::Start,
-    language: Option<lconnect_ipc::InterfaceLanguage>,
-) -> Result<lconnect_gui::archive_jobs::Status, BridgeError> {
+    jobs: tauri::State<'_, llcontrol_gui::archive_jobs::Archives>,
+    request: llcontrol_gui::archive_jobs::Start,
+    language: Option<llcontrol_ipc::InterfaceLanguage>,
+) -> Result<llcontrol_gui::archive_jobs::Status, BridgeError> {
     jobs.start(
-        lconnect_ipc::socket::default_socket_path().map_err(error)?,
+        llcontrol_ipc::socket::default_socket_path().map_err(error)?,
         request,
         language.unwrap_or_default(),
     )
@@ -166,27 +167,27 @@ async fn profile_archive_start(
 }
 #[tauri::command]
 fn profile_archive_status(
-    jobs: tauri::State<'_, lconnect_gui::archive_jobs::Archives>,
-) -> Result<Option<lconnect_gui::archive_jobs::Status>, BridgeError> {
+    jobs: tauri::State<'_, llcontrol_gui::archive_jobs::Archives>,
+) -> Result<Option<llcontrol_gui::archive_jobs::Status>, BridgeError> {
     jobs.status().map_err(archive_error)
 }
 #[tauri::command]
 fn profile_archive_cancel(
-    jobs: tauri::State<'_, lconnect_gui::archive_jobs::Archives>,
+    jobs: tauri::State<'_, llcontrol_gui::archive_jobs::Archives>,
     id: String,
-) -> Result<lconnect_gui::archive_jobs::Status, BridgeError> {
+) -> Result<llcontrol_gui::archive_jobs::Status, BridgeError> {
     jobs.cancel(&id).map_err(archive_error)
 }
 #[tauri::command]
 async fn profile_archive_recover(
-    jobs: tauri::State<'_, lconnect_gui::archive_jobs::Archives>,
+    jobs: tauri::State<'_, llcontrol_gui::archive_jobs::Archives>,
     id: String,
-    action: lconnect_gui::archive_jobs::Recovery,
-    group: lconnect_ipc::ProfileGroup,
+    action: llcontrol_gui::archive_jobs::Recovery,
+    group: llcontrol_ipc::ProfileGroup,
     slot: u8,
-) -> Result<lconnect_gui::archive_jobs::Status, BridgeError> {
+) -> Result<llcontrol_gui::archive_jobs::Status, BridgeError> {
     jobs.recover(
-        lconnect_ipc::socket::default_socket_path().map_err(error)?,
+        llcontrol_ipc::socket::default_socket_path().map_err(error)?,
         id,
         action,
         group,
@@ -196,7 +197,7 @@ async fn profile_archive_recover(
 }
 #[tauri::command]
 fn profile_archive_dismiss(
-    jobs: tauri::State<'_, lconnect_gui::archive_jobs::Archives>,
+    jobs: tauri::State<'_, llcontrol_gui::archive_jobs::Archives>,
     id: String,
 ) -> Result<(), BridgeError> {
     jobs.dismiss(&id).map_err(archive_error)
@@ -220,7 +221,7 @@ async fn bridge_call(bridge: &Bridge, method: String, params: Value) -> Result<V
     let client = {
         let mut current = bridge.0.lock().await;
         if current.is_none() {
-            let path = lconnect_ipc::socket::default_socket_path().map_err(error)?;
+            let path = llcontrol_ipc::socket::default_socket_path().map_err(error)?;
             let connected = tokio::time::timeout(Duration::from_secs(3), IpcClient::connect(&path))
                 .await
                 .map_err(error)?
@@ -235,7 +236,7 @@ async fn bridge_call(bridge: &Bridge, method: String, params: Value) -> Result<V
     let result = tokio::time::timeout(Duration::from_secs(10), client.call(&method, params)).await;
     match result {
         Ok(Ok(value)) => Ok(value),
-        Ok(Err(e @ lconnect_ipc::IpcError::InvalidArgument(_))) => Err(BridgeError {
+        Ok(Err(e @ llcontrol_ipc::IpcError::InvalidArgument(_))) => Err(BridgeError {
             message: e.to_string(),
             code: Some(e.jsonrpc_code()),
             message_code: None,
@@ -254,18 +255,18 @@ async fn bridge_call(bridge: &Bridge, method: String, params: Value) -> Result<V
         }
     }
 }
-use lconnect_gui::media_import::{MediaImports, Status as MediaStatus};
-use lconnect_gui::media_prepare::Fit;
-use lconnect_gui::media_source::{MediaSources, Status as SourceStatus};
+use llcontrol_gui::media_import::{MediaImports, Status as MediaStatus};
+use llcontrol_gui::media_prepare::Fit;
+use llcontrol_gui::media_source::{MediaSources, Status as SourceStatus};
 
-use lconnect_gui::media_thumbnail::Thumbnails;
+use llcontrol_gui::media_thumbnail::Thumbnails;
 #[tauri::command]
 async fn media_source_start(
     sources: tauri::State<'_, MediaSources>,
     id: String,
     key: String,
 ) -> Result<SourceStatus, BridgeError> {
-    let socket = lconnect_ipc::socket::default_socket_path().map_err(error)?;
+    let socket = llcontrol_ipc::socket::default_socket_path().map_err(error)?;
     sources.start(socket, id, key).map_err(error)
 }
 #[tauri::command]
@@ -298,9 +299,9 @@ async fn media_source_prepare(
     id: String,
     name: String,
     fit: Fit,
-    cut: Option<lconnect_gui::media_prepare::VideoCut>,
-    adjustments: Option<lconnect_gui::video_adjustments::VideoAdjustments>,
-    range: Option<lconnect_gui::video_range::VideoEditRange>,
+    cut: Option<llcontrol_gui::media_prepare::VideoCut>,
+    adjustments: Option<llcontrol_gui::video_adjustments::VideoAdjustments>,
+    range: Option<llcontrol_gui::video_range::VideoEditRange>,
 ) -> Result<(), BridgeError> {
     let sources = sources.inner().clone();
     let imports = imports.inner().clone();
@@ -313,7 +314,7 @@ async fn media_source_prepare(
                 &source_id,
                 job,
                 name,
-                lconnect_gui::media_import::EditOptions {
+                llcontrol_gui::media_import::EditOptions {
                     range,
                     fit,
                     cut,
@@ -344,7 +345,7 @@ async fn media_thumbnail(
         serde_json::json!({"key":key}),
     )
     .await?;
-    let clip = lconnect_ipc::H264Clip {
+    let clip = llcontrol_ipc::H264Clip {
         fps: 24,
         units: vec![serde_json::from_value(value).map_err(error)?],
     };
@@ -365,8 +366,8 @@ async fn media_begin(
     name: String,
     total: u64,
     fit: Fit,
-    cut: Option<lconnect_gui::media_prepare::VideoCut>,
-    adjustments: Option<lconnect_gui::video_adjustments::VideoAdjustments>,
+    cut: Option<llcontrol_gui::media_prepare::VideoCut>,
+    adjustments: Option<llcontrol_gui::video_adjustments::VideoAdjustments>,
 ) -> Result<MediaStatus, BridgeError> {
     let imports = imports.inner().clone();
     tokio::task::spawn_blocking(move || {
@@ -374,7 +375,7 @@ async fn media_begin(
             id,
             name,
             total,
-            lconnect_gui::media_import::EditOptions {
+            llcontrol_gui::media_import::EditOptions {
                 range: None,
                 fit,
                 cut,
@@ -402,16 +403,16 @@ async fn media_prepare_inspected(
     imports: tauri::State<'_, MediaImports>,
     id: String,
     fit: Fit,
-    cut: Option<lconnect_gui::media_prepare::VideoCut>,
-    adjustments: Option<lconnect_gui::video_adjustments::VideoAdjustments>,
-    range: Option<lconnect_gui::video_range::VideoEditRange>,
+    cut: Option<llcontrol_gui::media_prepare::VideoCut>,
+    adjustments: Option<llcontrol_gui::video_adjustments::VideoAdjustments>,
+    range: Option<llcontrol_gui::video_range::VideoEditRange>,
 ) -> Result<(), BridgeError> {
     let imports = imports.inner().clone();
     tauri::async_runtime::spawn(async move {
         imports
             .prepare_review_edited(
                 &id,
-                lconnect_gui::media_import::EditOptions {
+                llcontrol_gui::media_import::EditOptions {
                     range,
                     fit,
                     cut,
@@ -473,7 +474,7 @@ async fn media_start(
         .map_err(error)?
         .ok_or_else(|| error("No media import"))?;
     if status.id != id
-        || status.phase != lconnect_gui::media_import::Phase::Uploading
+        || status.phase != llcontrol_gui::media_import::Phase::Uploading
         || status.received != status.total
     {
         return Err(error("Upload is incomplete or already started"));
@@ -545,10 +546,10 @@ async fn media_confirm(
 
 #[tauri::command]
 async fn media_playback_url(
-    server: tauri::State<'_, lconnect_gui::media_http::MediaHttp>,
+    server: tauri::State<'_, llcontrol_gui::media_http::MediaHttp>,
     imports: tauri::State<'_, MediaImports>,
     sources: tauri::State<'_, MediaSources>,
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     kind: String,
     id: String,
 ) -> Result<String, BridgeError> {
@@ -572,7 +573,7 @@ fn with_media_preview(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tau
             let sources = context.app_handle().state::<MediaSources>().inner().clone();
             let window = context.webview_label().to_owned();
             tauri::async_runtime::spawn_blocking(move || {
-                responder.respond(lconnect_gui::media_preview::serve(
+                responder.respond(llcontrol_gui::media_preview::serve(
                     &sources, &window, request,
                 ));
             });
@@ -584,7 +585,7 @@ fn with_media_preview(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tau
             let imports = context.app_handle().state::<MediaImports>().inner().clone();
             let window = context.webview_label().to_owned();
             tauri::async_runtime::spawn_blocking(move || {
-                responder.respond(lconnect_gui::media_preview::serve(
+                responder.respond(llcontrol_gui::media_preview::serve(
                     &imports, &window, request,
                 ));
             });
@@ -594,31 +595,31 @@ fn with_media_preview(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tau
 
 #[tauri::command]
 async fn screen_record_begin(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     id: String,
-) -> Result<lconnect_gui::screen_record_jobs::Status, BridgeError> {
+) -> Result<llcontrol_gui::screen_record_jobs::Status, BridgeError> {
     recordings.begin(id).map_err(error)
 }
 #[tauri::command]
 async fn screen_record_start(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     id: String,
 ) -> Result<(), BridgeError> {
     #[cfg(feature = "native-smoke")]
-    if std::env::var("LCONNECT_NATIVE_RECORDING").as_deref() == Ok("1") {
+    if std::env::var("LLCONTROL_NATIVE_RECORDING").as_deref() == Ok("1") {
         return recordings.start_synthetic(&id).map_err(error);
     }
     recordings.start(&id).map_err(error)
 }
 #[tauri::command]
 fn screen_record_status(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
-) -> Result<Option<lconnect_gui::screen_record_jobs::Status>, BridgeError> {
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
+) -> Result<Option<llcontrol_gui::screen_record_jobs::Status>, BridgeError> {
     recordings.status().map_err(error)
 }
 #[tauri::command]
 async fn screen_record_snapshot(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     id: String,
 ) -> Result<tauri::ipc::Response, BridgeError> {
     recordings
@@ -629,21 +630,21 @@ async fn screen_record_snapshot(
 }
 #[tauri::command]
 async fn screen_record_control(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     id: String,
-    action: lconnect_gui::screen_record_jobs::Action,
+    action: llcontrol_gui::screen_record_jobs::Action,
 ) -> Result<(), BridgeError> {
     recordings.command(&id, action).await.map_err(error)
 }
 #[tauri::command]
 fn screen_record_admit(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     imports: tauri::State<'_, MediaImports>,
     recording_id: String,
     id: String,
     name: String,
     fit: Fit,
-    cut: Option<lconnect_gui::media_prepare::VideoCut>,
+    cut: Option<llcontrol_gui::media_prepare::VideoCut>,
 ) -> Result<MediaStatus, BridgeError> {
     imports
         .begin_recording(
@@ -651,11 +652,11 @@ fn screen_record_admit(
             &recording_id,
             id,
             name,
-            lconnect_gui::media_import::EditOptions {
+            llcontrol_gui::media_import::EditOptions {
                 range: None,
                 fit,
                 cut,
-                adjustments: lconnect_gui::video_adjustments::VideoAdjustments::default(),
+                adjustments: llcontrol_gui::video_adjustments::VideoAdjustments::default(),
             },
         )
         .map_err(error)
@@ -673,7 +674,7 @@ async fn screen_record_prepare(
 
 #[tauri::command]
 async fn screen_record_cancel(
-    recordings: tauri::State<'_, lconnect_gui::screen_record_jobs::Recordings>,
+    recordings: tauri::State<'_, llcontrol_gui::screen_record_jobs::Recordings>,
     id: String,
 ) -> Result<(), BridgeError> {
     recordings.cancel(&id).await.map_err(error)
@@ -681,21 +682,21 @@ async fn screen_record_cancel(
 
 #[tauri::command]
 async fn begin_screenshot(
-    capture: tauri::State<'_, lconnect_gui::screenshot::Screenshots>,
+    capture: tauri::State<'_, llcontrol_gui::screenshot::Screenshots>,
 ) -> Result<String, BridgeError> {
     capture.begin().await.map_err(error)
 }
 #[tauri::command]
 async fn cancel_screenshot(
     id: String,
-    capture: tauri::State<'_, lconnect_gui::screenshot::Screenshots>,
-) -> Result<lconnect_gui::screenshot::CancelOutcome, BridgeError> {
+    capture: tauri::State<'_, llcontrol_gui::screenshot::Screenshots>,
+) -> Result<llcontrol_gui::screenshot::CancelOutcome, BridgeError> {
     capture.cancel(&id).await.map_err(error)
 }
 
 #[tauri::command]
 async fn pending_screenshot_cleanup(
-    capture: tauri::State<'_, lconnect_gui::screenshot::Screenshots>,
+    capture: tauri::State<'_, llcontrol_gui::screenshot::Screenshots>,
 ) -> Result<Option<String>, BridgeError> {
     Ok(capture.pending_cleanup().await)
 }
@@ -703,7 +704,7 @@ async fn pending_screenshot_cleanup(
 #[tauri::command]
 async fn capture_screenshot(
     id: String,
-    capture: tauri::State<'_, lconnect_gui::screenshot::Screenshots>,
+    capture: tauri::State<'_, llcontrol_gui::screenshot::Screenshots>,
 ) -> Result<tauri::ipc::Response, BridgeError> {
     capture
         .capture(&id)
@@ -714,10 +715,10 @@ async fn capture_screenshot(
 
 #[tauri::command]
 async fn image_editor(
-    editor: tauri::State<'_, lconnect_gui::image_editor::Editor>,
+    editor: tauri::State<'_, llcontrol_gui::image_editor::Editor>,
     bytes: Vec<u8>,
-    edit: Option<lconnect_gui::image_editor::Edit>,
-) -> Result<lconnect_gui::image_editor::Prepared, BridgeError> {
+    edit: Option<llcontrol_gui::image_editor::Edit>,
+) -> Result<llcontrol_gui::image_editor::Prepared, BridgeError> {
     editor.prepare(bytes, edit).await.map_err(error)
 }
 
@@ -727,11 +728,11 @@ async fn import_image(
     bytes: Vec<u8>,
     name: Option<String>,
 ) -> Result<String, BridgeError> {
-    if bytes.len() > lconnect_image::assets::MAX_ASSET_BYTES {
+    if bytes.len() > llcontrol_image::assets::MAX_ASSET_BYTES {
         return Err(error("Image exceeds 16 MiB"));
     }
     let normalized =
-        tokio::task::spawn_blocking(move || lconnect_image::assets::normalize_asset(&bytes))
+        tokio::task::spawn_blocking(move || llcontrol_image::assets::normalize_asset(&bytes))
             .await
             .map_err(error)?
             .map_err(error)?;
@@ -751,17 +752,19 @@ async fn import_image(
 
 #[tauri::command]
 fn cooling_preset(
-    target: lconnect_ipc::CoolingTarget,
+    target: llcontrol_ipc::CoolingTarget,
     preset: String,
     sensor_id: String,
-) -> Result<lconnect_ipc::CoolingPolicy, BridgeError> {
+) -> Result<llcontrol_ipc::CoolingPolicy, BridgeError> {
     let name = Value::String(preset);
     let policy = match target {
-        lconnect_ipc::CoolingTarget::Fan => serde_json::from_value::<lconnect_ipc::FanPreset>(name)
-            .map_err(error)?
-            .policy(sensor_id, 2.0, 100),
-        lconnect_ipc::CoolingTarget::Pump => {
-            serde_json::from_value::<lconnect_ipc::PumpPreset>(name)
+        llcontrol_ipc::CoolingTarget::Fan => {
+            serde_json::from_value::<llcontrol_ipc::FanPreset>(name)
+                .map_err(error)?
+                .policy(sensor_id, 2.0, 100)
+        }
+        llcontrol_ipc::CoolingTarget::Pump => {
+            serde_json::from_value::<llcontrol_ipc::PumpPreset>(name)
                 .map_err(error)?
                 .policy(sensor_id, 2.0, 100)
         }
@@ -771,11 +774,11 @@ fn cooling_preset(
 }
 #[tauri::command]
 fn cooling_mode_default(
-    target: lconnect_ipc::CoolingTarget,
+    target: llcontrol_ipc::CoolingTarget,
     id: String,
     sensor_id: String,
-) -> Result<lconnect_ipc::CoolingModeProfile, BridgeError> {
-    lconnect_ipc::lcdv2_default_cooling_mode(target, &id, &sensor_id).map_err(error)
+) -> Result<llcontrol_ipc::CoolingModeProfile, BridgeError> {
+    llcontrol_ipc::lcdv2_default_cooling_mode(target, &id, &sensor_id).map_err(error)
 }
 #[derive(Default)]
 struct Closing {
@@ -794,7 +797,7 @@ fn close_after_media(window: &tauri::Window, event: &tauri::WindowEvent) {
             return;
         }
         if window
-            .state::<Arc<lconnect_gui::desktop_runtime::Desktop>>()
+            .state::<Arc<llcontrol_gui::desktop_runtime::Desktop>>()
             .hide_on_close()
             && window.hide().is_ok()
         {
@@ -818,28 +821,28 @@ fn request_exit(app: &tauri::AppHandle) {
     let thumbnails = app.state::<Thumbnails>().inner().clone();
     let sources = app.state::<MediaSources>().inner().clone();
     let http = app
-        .state::<lconnect_gui::media_http::MediaHttp>()
+        .state::<llcontrol_gui::media_http::MediaHttp>()
         .inner()
         .clone();
     let capture = app
-        .state::<lconnect_gui::screenshot::Screenshots>()
+        .state::<llcontrol_gui::screenshot::Screenshots>()
         .inner()
         .clone();
     let groups = app
-        .state::<lconnect_gui::group_jobs::Groups>()
+        .state::<llcontrol_gui::group_jobs::Groups>()
         .inner()
         .clone();
     let archives = app
-        .state::<lconnect_gui::archive_jobs::Archives>()
+        .state::<llcontrol_gui::archive_jobs::Archives>()
         .inner()
         .clone();
     let recordings = app
-        .state::<lconnect_gui::screen_record_jobs::Recordings>()
+        .state::<llcontrol_gui::screen_record_jobs::Recordings>()
         .inner()
         .clone();
     let app = app.clone();
     let desktop = app
-        .state::<Arc<lconnect_gui::desktop_runtime::Desktop>>()
+        .state::<Arc<llcontrol_gui::desktop_runtime::Desktop>>()
         .inner()
         .clone();
     tauri::async_runtime::spawn(async move {
@@ -910,16 +913,16 @@ fn desktop_event(app: &tauri::AppHandle, event: tauri::RunEvent) {
 }
 #[tauri::command]
 async fn desktop_settings_get(
-    state: tauri::State<'_, Arc<lconnect_gui::desktop_runtime::Desktop>>,
-) -> Result<lconnect_gui::desktop_runtime::Snapshot, BridgeError> {
+    state: tauri::State<'_, Arc<llcontrol_gui::desktop_runtime::Desktop>>,
+) -> Result<llcontrol_gui::desktop_runtime::Snapshot, BridgeError> {
     state.inner().clone().read().await.map_err(error)
 }
 #[tauri::command]
 async fn desktop_settings_save(
-    state: tauri::State<'_, Arc<lconnect_gui::desktop_runtime::Desktop>>,
+    state: tauri::State<'_, Arc<llcontrol_gui::desktop_runtime::Desktop>>,
     expected_revision: u64,
-    preferences: lconnect_gui::desktop_settings::Preferences,
-) -> Result<lconnect_gui::desktop_runtime::Snapshot, BridgeError> {
+    preferences: llcontrol_gui::desktop_settings::Preferences,
+) -> Result<llcontrol_gui::desktop_runtime::Snapshot, BridgeError> {
     state
         .inner()
         .clone()
@@ -929,8 +932,8 @@ async fn desktop_settings_save(
 }
 #[tauri::command]
 fn desktop_set_language(
-    state: tauri::State<'_, Arc<lconnect_gui::desktop_runtime::Desktop>>,
-    language: lconnect_ipc::InterfaceLanguage,
+    state: tauri::State<'_, Arc<llcontrol_gui::desktop_runtime::Desktop>>,
+    language: llcontrol_ipc::InterfaceLanguage,
 ) -> Result<(), BridgeError> {
     state.set_language(language).map_err(error)
 }
@@ -950,7 +953,7 @@ fn desktop_builder() -> tauri::Builder<tauri::Wry> {
     {
         builder.plugin(tauri_plugin_single_instance::init(|app, args, _| {
             if !args.iter().any(|arg| arg == "--autostart") {
-                lconnect_gui::desktop_runtime::show(app);
+                llcontrol_gui::desktop_runtime::show(app);
             }
         }))
     } else {
@@ -960,28 +963,28 @@ fn desktop_builder() -> tauri::Builder<tauri::Wry> {
 
 #[cfg(not(feature = "native-smoke"))]
 fn main() {
-    if lconnect_gui::screen_record_process::dispatch_worker() {
+    if llcontrol_gui::screen_record_process::dispatch_worker() {
         return;
     }
-    if let Err(error) = lconnect_gui::desktop_startup::configure_graphics() {
+    if let Err(error) = llcontrol_gui::desktop_startup::configure_graphics() {
         eprintln!("Cannot initialize graphics compatibility: {error}");
         std::process::exit(1);
     }
     with_media_preview(desktop_builder())
-        .manage(lconnect_gui::group_jobs::Groups::default())
-        .manage(lconnect_gui::archive_jobs::Archives::default())
+        .manage(llcontrol_gui::group_jobs::Groups::default())
+        .manage(llcontrol_gui::archive_jobs::Archives::default())
         .manage(Bridge::default())
-        .manage(lconnect_gui::screenshot::Screenshots::default())
-        .manage(lconnect_gui::screen_record_jobs::Recordings::default())
-        .manage(lconnect_gui::image_editor::Editor::default())
+        .manage(llcontrol_gui::screenshot::Screenshots::default())
+        .manage(llcontrol_gui::screen_record_jobs::Recordings::default())
+        .manage(llcontrol_gui::image_editor::Editor::default())
         .manage(MediaImports::default())
         .manage(MediaSources::default())
-        .manage(lconnect_gui::media_http::MediaHttp::default())
+        .manage(llcontrol_gui::media_http::MediaHttp::default())
         .manage(Thumbnails::default())
         .manage(Closing::default())
         .on_window_event(close_after_media)
         .setup(|app| {
-            lconnect_gui::desktop_runtime::setup(app, request_exit)?;
+            llcontrol_gui::desktop_runtime::setup(app, request_exit)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1041,7 +1044,7 @@ fn main() {
 mod tests {
     #[test]
     fn archive_bridge_keeps_typed_notice_separate_from_raw_diagnostic_and_rpc_code() {
-        use lconnect_gui::archive_messages::ArchiveNotice;
+        use llcontrol_gui::archive_messages::ArchiveNotice;
         let error =
             anyhow::Error::from(ArchiveNotice::DestinationExists).context("Настройки {1}.lcp");
         let value = serde_json::to_value(super::archive_error(error)).unwrap();
@@ -1054,7 +1057,7 @@ mod tests {
     }
     #[test]
     fn preset_bridge_uses_typed_reference_and_rejects_wrong_target() {
-        use lconnect_ipc::{CoolingPolicy, CoolingTarget};
+        use llcontrol_ipc::{CoolingPolicy, CoolingTarget};
         let policy =
             super::cooling_preset(CoolingTarget::Pump, "quiet".into(), "cpu:test".into()).unwrap();
         assert!(matches!(policy, CoolingPolicy::CurveRpm { .. }));
@@ -1123,7 +1126,7 @@ fn native_smoke_result(
     keep_open: Option<bool>,
 ) -> Result<(), String> {
     let root =
-        std::path::PathBuf::from(std::env::var("LCONNECT_SMOKE_ROOT").map_err(|e| e.to_string())?);
+        std::path::PathBuf::from(std::env::var("LLCONTROL_SMOKE_ROOT").map_err(|e| e.to_string())?);
     if !root.is_absolute() || !root.join("fixture-marker").is_file() {
         return Err("fixture root required".into());
     }
@@ -1175,11 +1178,11 @@ async fn native_media_step(sequence: u32, action: String) -> Result<(), String> 
     }
     tokio::task::spawn_blocking(move || {
         let root = std::path::PathBuf::from(
-            std::env::var("LCONNECT_SMOKE_ROOT").map_err(|e| e.to_string())?,
+            std::env::var("LLCONTROL_SMOKE_ROOT").map_err(|e| e.to_string())?,
         );
         if !root.is_absolute()
             || !root.join("fixture-marker").is_file()
-            || std::env::var("LCONNECT_NATIVE_MEDIA").as_deref() != Ok("1")
+            || std::env::var("LLCONTROL_NATIVE_MEDIA").as_deref() != Ok("1")
         {
             return Err("Isolated media fixture required".into());
         }
@@ -1263,7 +1266,7 @@ fn native_keyboard_step(sequence: u32, key: String, probe: Option<String>) -> Re
         return Err("unsupported fixture key".into());
     }
     let root =
-        std::path::PathBuf::from(std::env::var("LCONNECT_SMOKE_ROOT").map_err(|e| e.to_string())?);
+        std::path::PathBuf::from(std::env::var("LLCONTROL_SMOKE_ROOT").map_err(|e| e.to_string())?);
     if !root.is_absolute() || !root.join("fixture-marker").is_file() {
         return Err("fixture root required".into());
     }
@@ -1283,12 +1286,12 @@ fn native_keyboard_step(sequence: u32, key: String, probe: Option<String>) -> Re
 async fn native_desktop_step(sequence: u32) -> Result<(), String> {
     tokio::task::spawn_blocking(move || {
         let root = std::path::PathBuf::from(
-            std::env::var("LCONNECT_SMOKE_ROOT").map_err(|e| e.to_string())?,
+            std::env::var("LLCONTROL_SMOKE_ROOT").map_err(|e| e.to_string())?,
         );
         if sequence == 0
             || !root.is_absolute()
             || !root.join("fixture-marker").is_file()
-            || std::env::var("LCONNECT_NATIVE_DESKTOP").as_deref() != Ok("1")
+            || std::env::var("LLCONTROL_NATIVE_DESKTOP").as_deref() != Ok("1")
         {
             return Err("Isolated desktop fixture required".into());
         }
@@ -1313,28 +1316,28 @@ async fn native_desktop_step(sequence: u32) -> Result<(), String> {
 
 #[cfg(feature = "native-smoke")]
 fn main() {
-    if lconnect_gui::screen_record_process::dispatch_worker() {
+    if llcontrol_gui::screen_record_process::dispatch_worker() {
         return;
     }
     use tauri::Manager;
     let root = std::path::PathBuf::from(
-        std::env::var("LCONNECT_SMOKE_ROOT").expect("fixture root required"),
+        std::env::var("LLCONTROL_SMOKE_ROOT").expect("fixture root required"),
     );
     assert!(root.is_absolute() && root.join("fixture-marker").is_file());
     assert_eq!(
         std::env::var_os("XDG_RUNTIME_DIR").as_deref(),
         Some(root.as_os_str())
     );
-    with_media_preview(desktop_builder()).manage(lconnect_gui::group_jobs::Groups::default()).manage(lconnect_gui::archive_jobs::Archives::default()).manage(Bridge::default()).manage(lconnect_gui::screenshot::Screenshots::default()).manage(lconnect_gui::screen_record_jobs::Recordings::default()).manage(lconnect_gui::image_editor::Editor::default()).manage(MediaImports::default()).manage(MediaSources::default()).manage(lconnect_gui::media_http::MediaHttp::default()).manage(Thumbnails::default()).manage(Closing::default()).on_window_event(close_after_media)
+    with_media_preview(desktop_builder()).manage(llcontrol_gui::group_jobs::Groups::default()).manage(llcontrol_gui::archive_jobs::Archives::default()).manage(Bridge::default()).manage(llcontrol_gui::screenshot::Screenshots::default()).manage(llcontrol_gui::screen_record_jobs::Recordings::default()).manage(llcontrol_gui::image_editor::Editor::default()).manage(MediaImports::default()).manage(MediaSources::default()).manage(llcontrol_gui::media_http::MediaHttp::default()).manage(Thumbnails::default()).manage(Closing::default()).on_window_event(close_after_media)
         .invoke_handler(tauri::generate_handler![system_fonts,system_font_read,desktop_set_language,desktop_settings_get,desktop_settings_save,desktop_exit,group_archive_start,group_windows_prepare,group_archive_status,group_archive_action,daemon_call,profile_archive_start,profile_archive_status,profile_archive_cancel,profile_archive_recover,profile_archive_dismiss,cooling_preset,cooling_mode_default,import_image,image_editor,capture_screenshot,begin_screenshot,cancel_screenshot,pending_screenshot_cleanup,screen_record_begin,screen_record_start,screen_record_status,screen_record_snapshot,screen_record_control,screen_record_cancel,screen_record_prepare,screen_record_admit,media_playback_url,media_begin,media_append,media_inspect,media_prepare_inspected,media_start,media_source_prepare,media_source_start,media_source_status,media_source_cancel,media_confirm,media_status,media_cancel,media_thumbnail,media_thumbnail_cancel,native_smoke_result,native_keyboard_step,native_media_step,native_desktop_step])
         .setup(|app| {
-            lconnect_gui::desktop_runtime::setup(app, request_exit)?;
+            llcontrol_gui::desktop_runtime::setup(app, request_exit)?;
             app.add_capability(r#"{"identifier":"smoke","windows":["main"],"permissions":["allow-native-smoke-result","allow-native-keyboard-step","allow-native-media-step","allow-native-desktop-step"]}"#)?;
             Ok(())
         })
         .on_page_load(|webview,payload| {
             if matches!(payload.event(),tauri::webview::PageLoadEvent::Finished) {
-                if let Ok(size) = std::env::var("LCONNECT_NATIVE_EDITOR_SIZE") {
+                if let Ok(size) = std::env::var("LLCONTROL_NATIVE_EDITOR_SIZE") {
                     let (width, height) = match size.as_str() {
                         "1280x800" => (1280.0, 800.0),
                         "1024x768" => (1024.0, 768.0),
@@ -1342,10 +1345,10 @@ fn main() {
                     };
                     webview.window().set_size(tauri::LogicalSize::new(width, height)).expect("editor fixture size");
                 }
-                let dialogs = std::env::var("LCONNECT_NATIVE_DIALOGS").as_deref() == Ok("1");
+                let dialogs = std::env::var("LLCONTROL_NATIVE_DIALOGS").as_deref() == Ok("1");
                 webview.eval(format!("window.__nativeDialogs={dialogs};"))
                     .expect("expose fixture dialog mode");
-                let zoom = match std::env::var("LCONNECT_NATIVE_ZOOM").as_deref() {
+                let zoom = match std::env::var("LLCONTROL_NATIVE_ZOOM").as_deref() {
                     Ok("2") => 2.0,
                     Ok("4") => 4.0,
                     Ok("1") | Err(_) => 1.0,
@@ -1355,76 +1358,76 @@ fn main() {
                 webview.eval(format!("window.__nativeZoom={zoom};"))
                     .expect("expose fixture zoom");
                 // Fixture bytes are embedded only in the isolated native-smoke build.
-                let bytes = include_bytes!("../../../crates/lconnect-image/assets/DejaVuSans.ttf");
+                let bytes = include_bytes!("../../../crates/llcontrol-image/assets/DejaVuSans.ttf");
                 if let Ok(json) = serde_json::to_string(bytes.as_slice()) {
                     let _ = webview.eval(format!("window.__nativeFontBytes={json};"));
                 }
-                let group_kind = if std::env::var("LCONNECT_NATIVE_GROUP_KIND").as_deref()==Ok("fan_and_lighting") {"fan_and_lighting"} else {"screen"};
+                let group_kind = if std::env::var("LLCONTROL_NATIVE_GROUP_KIND").as_deref()==Ok("fan_and_lighting") {"fan_and_lighting"} else {"screen"};
                 webview.eval(format!("window.__nativeGroupKind={group_kind:?};")).expect("expose fixture group");
-                let recover_windows=std::env::var("LCONNECT_NATIVE_WINDOWS_RECOVER").as_deref()==Ok("1");
+                let recover_windows=std::env::var("LLCONTROL_NATIVE_WINDOWS_RECOVER").as_deref()==Ok("1");
                 webview.eval(format!("window.__nativeWindowsRecover={recover_windows};")).expect("Windows fixture phase");
-                let recover_reset = std::env::var("LCONNECT_NATIVE_CONTROL_RESET_RECOVER").as_deref()==Ok("1");
+                let recover_reset = std::env::var("LLCONTROL_NATIVE_CONTROL_RESET_RECOVER").as_deref()==Ok("1");
                 webview.eval(format!("window.__nativeResetRecover={recover_reset};")).expect("expose reset fixture phase");
-                let desktop_phase=std::env::var("LCONNECT_NATIVE_DESKTOP_PHASE").unwrap_or_else(|_| "1".into());
+                let desktop_phase=std::env::var("LLCONTROL_NATIVE_DESKTOP_PHASE").unwrap_or_else(|_| "1".into());
                 webview.eval(format!("window.__nativeDesktopPhase={desktop_phase:?};")).expect("desktop fixture phase");
-                let desktop_language=if std::env::var("LCONNECT_NATIVE_DESKTOP_LANGUAGE").as_deref()==Ok("en-US") {"en-US"} else {"ru-RU"};
+                let desktop_language=if std::env::var("LLCONTROL_NATIVE_DESKTOP_LANGUAGE").as_deref()==Ok("en-US") {"en-US"} else {"ru-RU"};
                 webview.eval(format!("window.__nativeDesktopLanguage={desktop_language:?};")).expect("desktop fixture language");
-                let fps_log=std::env::var("LCONNECT_NATIVE_FPS_LOG").unwrap_or_default();
+                let fps_log=std::env::var("LLCONTROL_NATIVE_FPS_LOG").unwrap_or_default();
                 webview.eval(format!("window.__nativeFpsLog={};",serde_json::to_string(&fps_log).expect("encode private FPS log"))).expect("expose private FPS log");
-                let script = if std::env::var("LCONNECT_NATIVE_EDITOR_VIEW").as_deref()==Ok("1") {
+                let script = if std::env::var("LLCONTROL_NATIVE_EDITOR_VIEW").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-editor-view.js")
-                } else if std::env::var("LCONNECT_NATIVE_RECOVERY").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_RECOVERY").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-firmware-recovery.js")
-                } else if std::env::var("LCONNECT_NATIVE_FPS").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_FPS").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-fps-settings.js")
-                } else if std::env::var("LCONNECT_NATIVE_FIRMWARE").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_FIRMWARE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-firmware-preflight.js")
-                } else if std::env::var("LCONNECT_NATIVE_CANVAS").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_CANVAS").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-canvas.js")
-                } else if std::env::var("LCONNECT_NATIVE_IMAGE_EDITOR").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_IMAGE_EDITOR").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-image-editor.js")
-                } else if std::env::var("LCONNECT_NATIVE_LANGUAGE").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_LANGUAGE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-interface-language.js")
-                } else if std::env::var("LCONNECT_NATIVE_UNITS").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_UNITS").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-display-settings.js")
-                } else if std::env::var("LCONNECT_NATIVE_SPEC").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_SPEC").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-system-spec.js")
-                } else if std::env::var("LCONNECT_NATIVE_DESKTOP").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_DESKTOP").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-desktop.js")
-                } else if std::env::var("LCONNECT_NATIVE_BASIC_EDITORS").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_BASIC_EDITORS").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-basic-editors.js")
-                } else if std::env::var("LCONNECT_NATIVE_WINDOWS_SCREEN").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_WINDOWS_SCREEN").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-windows-screen.js")
-                } else if std::env::var("LCONNECT_NATIVE_WINDOWS_CONTROL").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_WINDOWS_CONTROL").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-windows-control.js")
-                } else if std::env::var("LCONNECT_NATIVE_CONTROL_RESET").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_CONTROL_RESET").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-control-reset.js")
-                } else if std::env::var("LCONNECT_NATIVE_GROUP_ARCHIVE").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_GROUP_ARCHIVE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-group-archive.js")
-                } else if std::env::var("LCONNECT_NATIVE_ARCHIVE").as_deref()==Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_ARCHIVE").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-archive.js")
-                } else if std::env::var("LCONNECT_NATIVE_LIGHTING_PALETTE").as_deref() == Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_LIGHTING_PALETTE").as_deref() == Ok("1") {
                     include_str!("../../scripts/native-lighting-palette.js")
-                } else if std::env::var("LCONNECT_NATIVE_WEATHER").as_deref() == Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_WEATHER").as_deref() == Ok("1") {
                     include_str!("../../scripts/native-weather.js")
-                } else if std::env::var("LCONNECT_NATIVE_RECORDING").as_deref() == Ok("1") {
-                    if std::env::var("LCONNECT_NATIVE_RECORDING_FAULTS").as_deref() == Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_RECORDING").as_deref() == Ok("1") {
+                    if std::env::var("LLCONTROL_NATIVE_RECORDING_FAULTS").as_deref() == Ok("1") {
                         include_str!("../../scripts/native-recording-faults.js")
-                    } else if std::env::var("LCONNECT_NATIVE_RECORDING_LIMIT").as_deref() == Ok("1") {
+                    } else if std::env::var("LLCONTROL_NATIVE_RECORDING_LIMIT").as_deref() == Ok("1") {
                         include_str!("../../scripts/native-recording-limit.js")
                     } else {
                         include_str!("../../scripts/native-recording.js")
                     }
-                } else if std::env::var("LCONNECT_NATIVE_SCREENSHOT").as_deref() == Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_SCREENSHOT").as_deref() == Ok("1") {
                     include_str!("../../scripts/native-screenshot.js")
-                } else if std::env::var("LCONNECT_NATIVE_MEDIA").as_deref() == Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_MEDIA").as_deref() == Ok("1") {
                     include_str!("../../scripts/native-media.js")
-                } else if std::env::var("LCONNECT_NATIVE_KEYBOARD").as_deref() == Ok("1") {
+                } else if std::env::var("LLCONTROL_NATIVE_KEYBOARD").as_deref() == Ok("1") {
                     include_str!("../../scripts/native-keyboard.js")
                 } else {
                     include_str!("../../scripts/native-smoke.js")
                 };
-                let cooling_defaults=std::env::var("LCONNECT_NATIVE_COOLING_DEFAULTS").as_deref()==Ok("1");
+                let cooling_defaults=std::env::var("LLCONTROL_NATIVE_COOLING_DEFAULTS").as_deref()==Ok("1");
                 let _=webview.eval(format!("window.__nativeCoolingDefaults={cooling_defaults};"));
                 let _=webview.eval(script);
             }

@@ -103,7 +103,7 @@ export const groupPhases: Record<GroupPhase, string> = {
 };
 export const groupIdle = (phase: GroupPhase) =>
   ['bindings', 'prepared', 'cancelled', 'complete', 'failed', 'uncertain'].includes(phase);
-export const groupPendingKey = 'lconnect.group.pending';
+export const groupPendingKey = 'llcontrol.group.pending';
 export function readGroupPending(): GroupTarget | null {
   try {
     const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(groupPendingKey);

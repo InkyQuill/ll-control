@@ -1,13 +1,13 @@
 use super::*;
-use lconnect_daemon::{
+use llcontrol_daemon::{
     config::Config,
     ipc_server::IpcServerImpl,
     manager::{DeviceManager, ManagerHandle},
     persistence::PersistenceStore,
     stats::Stats,
 };
-use lconnect_hid::{DeviceFamilyId, DeviceInfo, MockBackend};
-use lconnect_ipc::server::IpcServer;
+use llcontrol_hid::{DeviceFamilyId, DeviceInfo, MockBackend};
+use llcontrol_ipc::server::IpcServer;
 struct Harness {
     manager: ManagerHandle,
     server: tokio::task::JoinHandle<std::io::Result<()>>,
@@ -29,11 +29,11 @@ impl Harness {
         let font = store
             .theme_fonts()
             .import(include_bytes!(
-                "../../../crates/lconnect-image/assets/NotoSansTC-Regular.otf"
+                "../../../crates/llcontrol-image/assets/NotoSansTC-Regular.otf"
             ))
             .unwrap();
-        let theme:lconnect_ipc::LcdTheme=serde_json::from_value(json!({"version":1,"name":"Native full-group source","background":[12,31,60],"layers":[{"kind":"text","text":"温度","style":{"font_asset":font,"x":20,"y":20,"size":36,"color":[255,255,255],"align":"left"}}]})).unwrap();
-        let mut desired = lconnect_daemon::persistence::DeviceSettings::default();
+        let theme:llcontrol_ipc::LcdTheme=serde_json::from_value(json!({"version":1,"name":"Native full-group source","background":[12,31,60],"layers":[{"kind":"text","text":"温度","style":{"font_asset":font,"x":20,"y":20,"size":36,"color":[255,255,255],"align":"left"}}]})).unwrap();
+        let mut desired = llcontrol_daemon::persistence::DeviceSettings::default();
         desired.lcd.brightness = 41;
         desired.theme = Some(theme.clone());
         desired.lcd.control_mode = "Application".into();
@@ -41,17 +41,20 @@ impl Harness {
         desired.pump.pwm_percent = 55;
         desired.pump.source = "mcu".into();
         store
-            .write(&lconnect_daemon::persistence::settings_key(&info), &desired)
+            .write(
+                &llcontrol_daemon::persistence::settings_key(&info),
+                &desired,
+            )
             .unwrap();
         store
             .profiles()
             .edit(
                 0,
-                lconnect_ipc::ProfileEdit::Save {
-                    profile: lconnect_ipc::NamedProfile {
+                llcontrol_ipc::ProfileEdit::Save {
+                    profile: llcontrol_ipc::NamedProfile {
                         slot: 7,
                         name: "Native slot".into(),
-                        content: lconnect_ipc::ProfileContent::Screen(theme),
+                        content: llcontrol_ipc::ProfileContent::Screen(theme),
                     },
                 },
             )
@@ -180,7 +183,7 @@ async fn full_groups_native_export_inspect_explicit_apply_recover_reapply_and_no
             .start(
                 h.socket.clone(),
                 h.request(99, Mode::Import, group),
-                lconnect_ipc::InterfaceLanguage::English
+                llcontrol_ipc::InterfaceLanguage::English
             )
             .is_err());
         jobs.action(h.socket.clone(), r.clone(), Action::Finish, None)
@@ -315,7 +318,7 @@ async fn stale_inspected_group_is_not_applied_over_a_newer_lcd_intent() {
     let result = idle(&jobs).await;
     assert_eq!(result.phase, Phase::Failed, "{result:?}");
     assert!(result.readback.is_none());
-    let current: lconnect_ipc::LcdState = call(&client, "get_lcd_state", json!({"dev":h.dev}))
+    let current: llcontrol_ipc::LcdState = call(&client, "get_lcd_state", json!({"dev":h.dev}))
         .await
         .unwrap();
     assert_eq!(current.requested.brightness_percent, 73);
@@ -431,7 +434,7 @@ async fn reset_preview_cancel_finish_shutdown_and_receipt_recovery_are_owned_wit
     jobs.start(
         h.socket.clone(),
         request.clone(),
-        lconnect_ipc::InterfaceLanguage::English,
+        llcontrol_ipc::InterfaceLanguage::English,
     )
     .unwrap();
     assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
@@ -452,7 +455,7 @@ async fn reset_preview_cancel_finish_shutdown_and_receipt_recovery_are_owned_wit
         .unwrap()
         .profiles
         .iter()
-        .any(|p| p.content.group() == lconnect_ipc::ProfileGroup::Screen && p.slot == 7));
+        .any(|p| p.content.group() == llcontrol_ipc::ProfileGroup::Screen && p.slot == 7));
     let recovered = Groups::default();
     let mut identity = request.clone();
     identity.sensor_id = None;
@@ -486,7 +489,7 @@ async fn prepared_reset_close_and_stale_target_never_claim_an_unconfirmed_reset_
     jobs.start(
         h.socket.clone(),
         request.clone(),
-        lconnect_ipc::InterfaceLanguage::English,
+        llcontrol_ipc::InterfaceLanguage::English,
     )
     .unwrap();
     assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
@@ -497,7 +500,7 @@ async fn prepared_reset_close_and_stale_target_never_claim_an_unconfirmed_reset_
     jobs.start(
         h.socket.clone(),
         request.clone(),
-        lconnect_ipc::InterfaceLanguage::English,
+        llcontrol_ipc::InterfaceLanguage::English,
     )
     .unwrap();
     assert_eq!(idle(&jobs).await.phase, Phase::Prepared);
@@ -505,8 +508,8 @@ async fn prepared_reset_close_and_stale_target_never_claim_an_unconfirmed_reset_
         .profiles()
         .edit(
             before.revision,
-            lconnect_ipc::ProfileEdit::Rename {
-                group: lconnect_ipc::ProfileGroup::Screen,
+            llcontrol_ipc::ProfileEdit::Rename {
+                group: llcontrol_ipc::ProfileGroup::Screen,
                 slot: 7,
                 name: "New screen name".into(),
             },
@@ -591,7 +594,7 @@ async fn control_reply_loss_cases(modes: &[Mode], withhold: bool) {
             jobs.start(
                 proxy_path.clone(),
                 request.clone(),
-                lconnect_ipc::InterfaceLanguage::English,
+                llcontrol_ipc::InterfaceLanguage::English,
             )
             .unwrap();
         } else {
@@ -658,7 +661,7 @@ fn windows_file(root: &Path) -> PathBuf {
     let file = root.join("windows.zip");
     std::fs::write(
         &file,
-        include_bytes!("../../../crates/lconnect-profile/tests/fixtures/Control.zip"),
+        include_bytes!("../../../crates/llcontrol-profile/tests/fixtures/Control.zip"),
     )
     .unwrap();
     file
@@ -834,10 +837,10 @@ async fn windows_prepared_close_and_offline_cancel_release_grant_without_daemon_
     }
 }
 
-#[path = "../../../crates/lconnect-profile/tests/support/screen_plan.rs"]
+#[path = "../../../crates/llcontrol-profile/tests/support/screen_plan.rs"]
 mod screen_fixture;
-fn screen_options() -> lconnect_ipc::WindowsScreenSource {
-    lconnect_ipc::WindowsScreenSource {
+fn screen_options() -> llcontrol_ipc::WindowsScreenSource {
+    llcontrol_ipc::WindowsScreenSource {
         record: 0,
         bindings_json: screen_fixture::bindings().to_string(),
         resources_json: screen_fixture::mapping().to_string(),

@@ -5,7 +5,7 @@ import { videoChannelLut } from '../src/lib/video-adjustments';
 test('preview channel table matches all installed SDK oracle vectors', () => {
   const oracle = readFileSync(
     new URL(
-      '../../crates/lconnect-media/tests/fixtures/video-effect-channels.bin',
+      '../../crates/llcontrol-media/tests/fixtures/video-effect-channels.bin',
       import.meta.url,
     ),
   );

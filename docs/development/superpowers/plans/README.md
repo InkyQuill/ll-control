@@ -2,7 +2,7 @@
 
 > **Scheduling superseded 2026-10-17:** [R0–R10 milestone plans](../../parity/release-milestones.md) and the [release audit](../../parity/release-audit-2026-10-17.md) now define priorities and cutover. The three plans listed below remain historical acceptance inventories, with every open requirement mapped in the new plan. Their old stage order is not the active roadmap.
 
-Сверено **2026-10-17** в `lconnect-linux`, ветка `master`. Baseline: Windows L-Connect3
+Сверено **2026-10-17** в `ll-control`, ветка `master`. Baseline: Windows L-Connect3
 **2.1.28.0**, Galahad II LCDV2 **0416:7395**.
 
 | План | Открытых пунктов | Оставшийся объём |

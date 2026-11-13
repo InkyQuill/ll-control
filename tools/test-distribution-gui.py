@@ -42,7 +42,7 @@ def main():
     args.with_device = args.with_device or args.sensor_theme or args.cooling
     distribution = args.distribution.resolve()
     if args.inside is None:
-        root = Path(tempfile.mkdtemp(prefix="lconnect-production-gui-"))
+        root = Path(tempfile.mkdtemp(prefix="llcontrol-production-gui-"))
         session = root / "session"
         session.mkdir(mode=0o700)
         env = dict(os.environ, XDG_RUNTIME_DIR=str(session), XDG_CONFIG_HOME=str(root / "config"),
@@ -51,7 +51,7 @@ def main():
         for name in ["DISPLAY", "WAYLAND_DISPLAY", "AT_SPI_BUS_ADDRESS", "DBUS_SESSION_BUS_ADDRESS"]:
             env.pop(name, None)
         for name in list(env):
-            if name.startswith("LCONNECT_NATIVE_"):
+            if name.startswith("LLCONTROL_NATIVE_"):
                 env.pop(name)
         try:
             run(["xvfb-run", "-a", "-s", "-screen 0 1600x1200x24", "dbus-run-session", "--",
@@ -76,15 +76,15 @@ def main():
     packages = list(distribution.glob("*.pkg.tar.zst"))
     assert len(packages) == 1
     run(["bsdtar", "-xf", packages[0], "-C", prefix])
-    binary = prefix / "usr/bin/lconnect-gui"
-    env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root / "session"), LCONNECT_NATIVE_SPEC="0" if args.with_device else "1",
-               LCONNECT_NATIVE_RECOVERY_STATE="none", GDK_BACKEND="x11", GIO_USE_VFS="local",
+    binary = prefix / "usr/bin/llcontrol-gui"
+    env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root / "session"), LLCONTROL_NATIVE_SPEC="0" if args.with_device else "1",
+               LLCONTROL_NATIVE_RECOVERY_STATE="none", GDK_BACKEND="x11", GIO_USE_VFS="local",
                WEBKIT_DISABLE_DMABUF_RENDERER="1", LC_ALL="C.UTF-8",
                AT_SPI_BUS_ADDRESS=f"unix:path={root}/session/a11y.sock")
     env.pop("NO_AT_BRIDGE", None)
     # The production GUI is unchanged; only the separately built mock fixture
     # exports its completed output packets for independent frame comparisons.
-    env["LCONNECT_MOCK_EXPORT_FRAMES"] = "1" if args.sensor_theme else "0"
+    env["LLCONTROL_MOCK_EXPORT_FRAMES"] = "1" if args.sensor_theme else "0"
     (root / "session/fixture-marker").write_text(f"MockBackend; devices={int(args.with_device)}; production GUI\n")
     # Actual packaged self-exec entry rejects missing private channel before GTK.
     worker = subprocess.run([binary, "--internal-screen-record-worker"], env=env,
@@ -103,7 +103,7 @@ def main():
     def rpc(method, params=None):
         with socket.socket(socket.AF_UNIX) as connection:
             connection.settimeout(5)
-            connection.connect(str(root / "session/lconnectd.sock"))
+            connection.connect(str(root / "session/llcontrold.sock"))
             with connection.makefile("rwb") as stream:
                 stream.write((json.dumps(dict(jsonrpc="2.0", id=1, method=method, params=params or {})) + "\n").encode())
                 stream.flush()
@@ -208,7 +208,7 @@ print(json.dumps(dict(index=index,x=bounds.x+bounds.width//2,y=bounds.y+bounds.h
                 f'--address={env["AT_SPI_BUS_ADDRESS"]}', "--nofork"], "accessibility-bus")
         wait(lambda: (root / "session/a11y.sock").exists(), "private accessibility bus")
         fixture = launch([REPO / "target/debug/examples/desktop-mock"], "fixture")
-        wait(lambda: (root / "session/lconnectd.sock").exists() or fixture.poll() is not None, "fixture")
+        wait(lambda: (root / "session/llcontrold.sock").exists() or fixture.poll() is not None, "fixture")
         assert fixture.poll() is None
         gui = launch([binary], "gui")
         window = None
@@ -330,13 +330,13 @@ print("\\n".join(rows))
                 (root / "session/stop").touch()
                 fixture.wait(timeout=15)
                 assert fixture.returncode == 0
-                for name in ["stop", "stats.json", "lcd-frame.json", "lconnectd.sock"]:
+                for name in ["stop", "stats.json", "lcd-frame.json", "llcontrold.sock"]:
                     (root / "session" / name).unlink(missing_ok=True)
                 # Initial language seeding is a fresh-fixture action. Replay
                 # must consume the saved settings, not re-save revision zero.
-                env.pop("LCONNECT_NATIVE_RECOVERY_STATE", None)
+                env.pop("LLCONTROL_NATIVE_RECOVERY_STATE", None)
                 fixture = launch([REPO / "target/debug/examples/desktop-mock"], "fixture-restarted")
-                wait(lambda: (root / "session/lconnectd.sock").exists() or fixture.poll() is not None,
+                wait(lambda: (root / "session/llcontrold.sock").exists() or fixture.poll() is not None,
                      "restarted fixture socket")
                 assert fixture.poll() is None, (root / "fixture-restarted.log").read_text()
                 wait(lambda: rpc("get_lcd_state", params)["source"] == "Theme", "saved theme replay")
@@ -426,11 +426,11 @@ print("\\n".join(rows))
                 (root / "session/stop").touch()
                 fixture.wait(timeout=15)
                 assert fixture.returncode == 0
-                for name in ["stop", "stats.json", "lcd-frame.json", "lconnectd.sock"]:
+                for name in ["stop", "stats.json", "lcd-frame.json", "llcontrold.sock"]:
                     (root / "session" / name).unlink(missing_ok=True)
-                env.pop("LCONNECT_NATIVE_RECOVERY_STATE", None)
+                env.pop("LLCONTROL_NATIVE_RECOVERY_STATE", None)
                 fixture = launch([REPO / "target/debug/examples/desktop-mock"], "fixture-cooling-restarted")
-                wait(lambda: (root / "session/lconnectd.sock").exists() or fixture.poll() is not None,
+                wait(lambda: (root / "session/llcontrold.sock").exists() or fixture.poll() is not None,
                      "cooling replay fixture socket")
                 assert fixture.poll() is None, (root / "fixture-cooling-restarted.log").read_text()
                 wait(lambda: any(d["id"] == device["id"] for d in rpc("list_devices")), "replayed device discovery")

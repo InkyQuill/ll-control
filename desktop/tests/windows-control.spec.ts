@@ -154,7 +154,7 @@ for (const language of ['en-US', 'ru-RU'] as const) {
       ),
     ).toBe(1);
     const pending = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('lconnect.group.pending')!),
+      JSON.parse(localStorage.getItem('llcontrol.group.pending')!),
     );
     await page.reload();
     await page.getByRole('button', { name: c.settings, exact: true }).click();

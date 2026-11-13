@@ -6,6 +6,6 @@ import {PreferencesController} from './preferences-ui.js';
 export default class LConnectMiniPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         window.set_default_size(720, 780);
-        window._lconnectMini = new PreferencesController(window, this.getSettings());
+        window._llcontrolMini = new PreferencesController(window, this.getSettings());
     }
 }

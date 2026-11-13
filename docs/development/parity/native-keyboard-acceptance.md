@@ -8,8 +8,8 @@
 
 ```sh
 pnpm --dir desktop build
-cargo build -p lconnect-daemon --example desktop-mock --locked
-cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked
+cargo build -p llcontrol-daemon --example desktop-mock --locked
+cargo build -p llcontrol-gui --features native-smoke,custom-protocol --locked
 python3 desktop/scripts/native-keyboard.py
 ```
 
@@ -47,7 +47,7 @@ DBus-сессии не является успешной screen-reader пров�
 
 132 trusted key steps прошли: skip-link, Settings99/90, fan PWM79, manual grace,
 CPU source ID и Display text Apply подтверждены реальным Unix IPC к MockBackend.
-Fixture directory: `/tmp/lconnect-native-keyboard-5idtdzbp`.
+Fixture directory: `/tmp/llcontrol-native-keyboard-5idtdzbp`.
 [Evidence](evidence/2026-10-11-native-keyboard.json).
 
 ## Alt+Tab с возвратом фокуса — 2026-10-11
@@ -76,7 +76,7 @@ Wayland/другие window managers, AT, zoom и прочие expanded focus st
 Optional fixture mode:
 
 ```sh
-LCONNECT_NATIVE_ATSPI=1 python3 desktop/scripts/native-keyboard.py
+LLCONTROL_NATIVE_ATSPI=1 python3 desktop/scripts/native-keyboard.py
 ```
 
 Требует PyGObject с Atspi2.0 typelib, dbus-daemon и установленный
@@ -87,7 +87,7 @@ Fixture запускает отдельную accessibility bus на unix socket
 `native-atspi.py` до чтения дерева проверяет isolation marker/root/bus address.
 Это не обращение к accessibility bus пользовательского desktop.
 
-Проверены subtree `lconnect-gui`, role `document web`, skip-link, названия и
+Проверены subtree `llcontrol-gui`, role `document web`, skip-link, названия и
 button roles пяти разделов, combobox «Ориентация», Apply buttons и slider
 «Яркость LCD» со states enabled/focused после Alt+Tab. Python probe read-only;
 управление по-прежнему настоящими клавишами. После probe прошли132 steps
@@ -263,7 +263,7 @@ OS/GTK font scaling, speech, другие editors/error/limit states и hardware
 
 ## OS text DPI вместе с WebKit zoom — 2026-10-11
 
-Стенд поддерживает `LCONNECT_NATIVE_TEXT_SCALE=1|2`: private XSettings manager,
+Стенд поддерживает `LLCONTROL_NATIVE_TEXT_SCALE=1|2`: private XSettings manager,
 проверка GtkSettings и измерение фактических GTK controls через AT-SPI.
 DPR и viewport учитывают произведение OS scale и WebKit zoom.
 При DPI96/zoom1, DPI192/zoom1 и DPI192/zoom2 прошли543trusted steps,

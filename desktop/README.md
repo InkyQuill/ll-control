@@ -109,7 +109,7 @@ this is MockBackend evidence, with no physical hardware or real capture-portal q
 ### Stored cooling-mode native acceptance
 
 After the ordinary frontend build and native-smoke GUI/example builds, run
-`LCONNECT_NATIVE_COOLING_MODES=1 python3 desktop/scripts/native-smoke.py` from the
+`LLCONTROL_NATIVE_COOLING_MODES=1 python3 desktop/scripts/native-smoke.py` from the
 repository root. This opt-in owned fixture seeds8 fan/3 pump modes once; it never
 constructs a real HID backend. The native RU workflow reads modes, loads FixRPM2300
 without applying, edits the stored snapshot to2400 RPM, loses the actual Save
@@ -122,7 +122,7 @@ Missing banks are never reseeded after the marker is created, so loss fails the
 acceptance. Browser EN/RU, actual keyboard/speech/session and hardware scopes
 remain separate. See the [contract](../docs/development/parity/profile-groups.md#device-modes-read-only-rpc-и-редактор--2026-10-17).
 
-For a fresh-store initialization run, add `LCONNECT_NATIVE_COOLING_DEFAULTS=1`
+For a fresh-store initialization run, add `LLCONTROL_NATIVE_COOLING_DEFAULTS=1`
 to that command. The fixture then never seeds modes. The actual UI chooses
 `fixture:cpu` and calls production Initialize; the proxy loses its post-commit
 reply and asserts exactly one request. The bank contains8/3 factory modes, all
@@ -133,7 +133,7 @@ See [cooling modes](../docs/development/parity/cooling-modes.md).
 
 ### Windows FanAndLighting native acceptance
 
-After `pnpm build` in desktop, build `lconnect-gui` with features
+After `pnpm build` in desktop, build `llcontrol-gui` with features
 `native-smoke,custom-protocol` and the daemon `desktop-mock` example. Run from the
 repository root, sequentially:
 
@@ -154,7 +154,7 @@ edit frontend sources while a native harness is live.
 ### Shared media engine
 
 GIF/MP4 preparation, video adjustments and range validation now live in
-[lconnect-media](../crates/lconnect-media/README.md). Desktop module paths remain
+[llcontrol-media](../crates/llcontrol-media/README.md). Desktop module paths remain
 API facades. Media/preview/source/import owners keep their existing admission,
 cancellation/reaping and private-file lifetime semantics. The same engine is used
 for offline Windows ZIP media preparation; its result does not publish assets.
@@ -167,7 +167,7 @@ and source watermark edits are shared by the seven text presets of that bank.
 Selection and Profile Load only change the draft; Save and device Apply remain
 separate actions. Themes without banks keep the existing composition editor.
 
-After the ordinary frontend build, build lconnect-gui with
+After the ordinary frontend build, build llcontrol-gui with
 `native-smoke,custom-protocol` and the daemon desktop-mock example. Run
 `python3 desktop/scripts/native-basic-editors.py --english` and then
 `python3 desktop/scripts/native-basic-editors.py` from the repository root.
@@ -178,8 +178,8 @@ not edit/build/check frontend while one is live. Physical output is separate.
 
 ### Windows Screen import and editor acceptance
 
-Build the frontend, `lconnect-gui` with `native-smoke,custom-protocol`, and the
-`lconnect-daemon` `desktop-mock` example. Run sequentially from the repository root:
+Build the frontend, `llcontrol-gui` with `native-smoke,custom-protocol`, and the
+`llcontrol-daemon` `desktop-mock` example. Run sequentially from the repository root:
 
 ```sh
 python3 desktop/scripts/native-windows-screen.py --english
@@ -209,7 +209,7 @@ For native Windows Screen video + sensor throughput acceptance, build the
 optimized isolated daemon fixture and use it explicitly:
 
 ```sh
-cargo build --release -p lconnect-daemon --example desktop-mock
+cargo build --release -p llcontrol-daemon --example desktop-mock
 python3 desktop/scripts/native-windows-screen.py --video --english --release-daemon
 python3 desktop/scripts/native-windows-screen.py --video --release-daemon
 python3 desktop/scripts/native-windows-screen.py --gif --english --release-daemon
@@ -242,7 +242,7 @@ To observe the original frozen Windows Vue components/CSS with owned sensor data
 in isolated Chromium, without copying proprietary assets into the project:
 
 ```sh
-node tools/inspect-windows-grid.mjs /path/to/2.1.28/Assets/ga2v /tmp/lconnect-grid-observation
+node tools/inspect-windows-grid.mjs /path/to/2.1.28/Assets/ga2v /tmp/llcontrol-grid-observation
 ```
 
 The helper checks the frozen bundle/stylesheet hashes and mounts the original
@@ -252,8 +252,8 @@ hardware equivalence.
 
 ### Native canvas editing
 
-Build the frontend, `lconnect-gui` with `native-smoke,custom-protocol`, and the
-`lconnect-daemon` `desktop-mock` example. Then run:
+Build the frontend, `llcontrol-gui` with `native-smoke,custom-protocol`, and the
+`llcontrol-daemon` `desktop-mock` example. Then run:
 
 ```sh
 /usr/bin/python3 desktop/scripts/native-canvas.py

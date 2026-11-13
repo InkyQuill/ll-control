@@ -3,8 +3,8 @@
 //! Source: Products/Galahad2Vision/FanLightingSetting.cs:117-150
 //! (`ToBytes` returns 20 bytes).
 
-use lconnect_protocol::galahad2_lcdv2::lighting::{FanLightingSetting, Rgb};
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
+use llcontrol_protocol::galahad2_lcdv2::lighting::{FanLightingSetting, Rgb};
+use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{
     ArgbSignalSource, FanLightingMode, LightingDirection,
 };
 

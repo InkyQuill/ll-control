@@ -33,7 +33,7 @@ Manager replay передаёт None вместо токена: это уже п
 токен. Brightness/rotation patch без mode не отменяет подготовку темы.
 
 Детерминированная actor-регрессия находится в
-`crates/lconnect-daemon/tests/theme_runtime.rs`,
+`crates/llcontrol-daemon/tests/theme_runtime.rs`,
 `superseded_preparation_cannot_restore_a_cleared_or_newer_theme`.
 Она управляет очередью командами/oneshot replies, без timing-dependent sleeps.
 Реальная загрузка assets с удерживаемым I/O проверена ниже; transport failures
@@ -72,14 +72,14 @@ production путём; FIFO или подмена результата prepare �
 Запуск без GUI, реального HID и host sensors:
 
 ```sh
-cargo build -p lconnect-daemon --example desktop-mock --locked
+cargo build -p llcontrol-daemon --example desktop-mock --locked
 python3 desktop/scripts/theme-preparation-smoke.py
 ```
 
 Нужны Linux, cc и Python3.11+. Скрипт компилирует shim с strict warnings,
 создаёт private root, запускает только desktop-mock и останавливает его в finally.
 Gate имеет10s deadline; обычный процесс/GUI не получает LD_PRELOAD. Итог и logs
-сохраняются в `/tmp/lconnect-preparation-*/`. Набор не меняет пользовательские assets.
+сохраняются в `/tmp/llcontrol-preparation-*/`. Набор не меняет пользовательские assets.
 
 ## Закрытие software ordering gate
 

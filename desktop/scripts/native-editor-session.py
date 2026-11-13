@@ -21,7 +21,7 @@ REPO = Path(__file__).resolve().parents[2]
 def rpc(root, method, params):
     with socket.socket(socket.AF_UNIX) as connection:
         connection.settimeout(30)
-        connection.connect(str(root / 'lconnectd.sock'))
+        connection.connect(str(root / 'llcontrold.sock'))
         with connection.makefile('rwb') as stream:
             stream.write((json.dumps(dict(jsonrpc='2.0', id=1, method=method, params=params))+'\n').encode())
             stream.flush()
@@ -42,25 +42,25 @@ def main():
     parser.add_argument('--size', choices=['1280x800','1024x768'], default='1280x800')
     args = parser.parse_args()
     assert os.environ.get('WAYLAND_DISPLAY'), 'Run in the target Wayland desktop session'
-    root = Path(tempfile.mkdtemp(prefix='lconnect-editor-wayland-'))
+    root = Path(tempfile.mkdtemp(prefix='llcontrol-editor-wayland-'))
     (root / 'fixture-marker').touch()
     wayland = Path(os.environ['WAYLAND_DISPLAY'])
     if not wayland.is_absolute():
         wayland = Path(os.environ['XDG_RUNTIME_DIR']) / wayland
-    env = {k:v for k,v in os.environ.items() if not k.startswith('LCONNECT_NATIVE_')}
-    env.update(LCONNECT_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
+    env = {k:v for k,v in os.environ.items() if not k.startswith('LLCONTROL_NATIVE_')}
+    env.update(LLCONTROL_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
                XDG_CONFIG_HOME=str(root/'config'), XDG_DATA_HOME=str(root/'data'),
                XDG_CACHE_HOME=str(root/'cache'), WAYLAND_DISPLAY=str(wayland),
                GDK_BACKEND='wayland', WEBKIT_DISABLE_DMABUF_RENDERER='1',
-               LCONNECT_NATIVE_EDITOR_VIEW='1', LCONNECT_NATIVE_EDITOR_SIZE=args.size,
-               LCONNECT_NATIVE_DESKTOP_LANGUAGE=args.language)
+               LLCONTROL_NATIVE_EDITOR_VIEW='1', LLCONTROL_NATIVE_EDITOR_SIZE=args.size,
+               LLCONTROL_NATIVE_DESKTOP_LANGUAGE=args.language)
     binaries=REPO/'target'/('release' if args.release else 'debug')
     children = []
     with (root/'session.log').open('w') as log:
         try:
             children.append(subprocess.Popen([binaries/'examples/desktop-mock'],env=env,stdout=log,stderr=log,start_new_session=True))
             deadline=time.monotonic()+20
-            while not (root/'lconnectd.sock').exists():
+            while not (root/'llcontrold.sock').exists():
                 assert time.monotonic()<deadline,'fixture startup timeout'
                 time.sleep(.05)
             theme=json.loads(args.theme.read_text());theme=theme.get('theme',theme)
@@ -86,7 +86,7 @@ def main():
                 for layer in theme['layers']:
                     if layer['kind']=='sensor':layer['sensor_id']=temperatures[0]['id']
             rpc(root,'set_lcd_theme',dict(dev=device,theme=theme))
-            children.append(subprocess.Popen(['dbus-run-session','--',str(binaries/'lconnect-gui')],env=env,stdout=log,stderr=log,start_new_session=True))
+            children.append(subprocess.Popen(['dbus-run-session','--',str(binaries/'llcontrol-gui')],env=env,stdout=log,stderr=log,start_new_session=True))
             deadline=time.monotonic()+90
             while not (root/'result.json').exists():
                 assert time.monotonic()<deadline,'native view timeout'

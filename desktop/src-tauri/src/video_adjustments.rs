@@ -1,2 +1,2 @@
 //! Shared GA2LCD video effect arithmetic.
-pub use lconnect_media::video_adjustments::*;
+pub use llcontrol_media::video_adjustments::*;

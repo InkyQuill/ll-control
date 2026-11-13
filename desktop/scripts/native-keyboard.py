@@ -12,8 +12,8 @@ import time
 
 repo = Path(__file__).resolve().parents[2]
 if '--inside-xvfb' not in sys.argv:
-    root = Path(tempfile.mkdtemp(prefix='lconnect-native-keyboard-'))
-    env = dict(os.environ, LCONNECT_KEYBOARD_ISOLATED='1', LCONNECT_KEYBOARD_ROOT=str(root),
+    root = Path(tempfile.mkdtemp(prefix='llcontrol-native-keyboard-'))
+    env = dict(os.environ, LLCONTROL_KEYBOARD_ISOLATED='1', LLCONTROL_KEYBOARD_ROOT=str(root),
         XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root/'config'),
         XDG_CACHE_HOME=str(root/'cache'), XDG_DATA_HOME=str(root/'data'),
         DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
@@ -30,19 +30,19 @@ if '--inside-xvfb' not in sys.argv:
             assert not mounted(), f'Private document mount remains: {target}'
     raise SystemExit(code)
 
-assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1', 'Use the outer Xvfb launcher'
-root = Path(os.environ['LCONNECT_KEYBOARD_ROOT'])
+assert os.environ.get('LLCONTROL_KEYBOARD_ISOLATED') == '1', 'Use the outer Xvfb launcher'
+root = Path(os.environ['LLCONTROL_KEYBOARD_ROOT'])
 assert os.environ['XDG_RUNTIME_DIR'] == str(root)
 (root / 'fixture-marker').write_text('MockBackend only\n')
 (root / 'fixture-image.png').write_bytes((repo / 'desktop/src-tauri/icons/icon.png').read_bytes())
-(root / 'fixture-font.ttf').write_bytes((repo / 'crates/lconnect-image/assets/DejaVuSansMono.ttf').read_bytes())
+(root / 'fixture-font.ttf').write_bytes((repo / 'crates/llcontrol-image/assets/DejaVuSansMono.ttf').read_bytes())
 (root / 'fixture-invalid.ttf').write_bytes(b'not a font')
 with (root / 'fixture-large.ttf').open('wb') as oversized:
     oversized.truncate(16 * 1024 * 1024 + 1)
-env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), LCONNECT_NATIVE_KEYBOARD='1', XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root / 'config'), XDG_CACHE_HOME=str(root / 'cache'), XDG_DATA_HOME=str(root / 'data'), GDK_BACKEND='x11', WEBKIT_DISABLE_DMABUF_RENDERER='1', LC_ALL='C.UTF-8')
+env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root), LLCONTROL_NATIVE_KEYBOARD='1', XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root / 'config'), XDG_CACHE_HOME=str(root / 'cache'), XDG_DATA_HOME=str(root / 'data'), GDK_BACKEND='x11', WEBKIT_DISABLE_DMABUF_RENDERER='1', LC_ALL='C.UTF-8')
 env.pop('WAYLAND_DISPLAY', None)
 # Opt-in OS font scaling in this private session, independent of WebKit zoom.
-text_scale = os.environ.get('LCONNECT_NATIVE_TEXT_SCALE')
+text_scale = os.environ.get('LLCONTROL_NATIVE_TEXT_SCALE')
 if text_scale is not None:
     assert text_scale in {'1', '2'}, 'Fixture text scale must be 1 or 2'
     env.pop('GDK_SCALE', None)
@@ -91,9 +91,9 @@ def active_window():
     result.check_returncode()
 
 try:
-    atspi_enabled = os.environ.get('LCONNECT_NATIVE_ATSPI') == '1'
-    dialogs_enabled = os.environ.get('LCONNECT_NATIVE_DIALOGS') == '1'
-    assert not dialogs_enabled or atspi_enabled, 'Native dialog acceptance requires LCONNECT_NATIVE_ATSPI=1'
+    atspi_enabled = os.environ.get('LLCONTROL_NATIVE_ATSPI') == '1'
+    dialogs_enabled = os.environ.get('LLCONTROL_NATIVE_DIALOGS') == '1'
+    assert not dialogs_enabled or atspi_enabled, 'Native dialog acceptance requires LLCONTROL_NATIVE_ATSPI=1'
     if atspi_enabled:
         env['AT_SPI_BUS_ADDRESS'] = f'unix:path={root}/a11y.sock'
         env['NO_AT_BRIDGE'] = '0'
@@ -126,13 +126,13 @@ try:
     wm = launch(['openbox'], 'wm')
     fixture = launch([repo / 'target/debug/examples/desktop-mock'], 'fixture')
     deadline = time.monotonic() + 10
-    while not (root / 'lconnectd.sock').exists():
+    while not (root / 'llcontrold.sock').exists():
         assert fixture.poll() is None, 'Mock fixture exited'
         if time.monotonic() > deadline: raise TimeoutError('Mock socket')
         time.sleep(.05)
     def rpc(method, params=None):
         with socket.socket(socket.AF_UNIX) as conn:
-            conn.settimeout(15); conn.connect(str(root/'lconnectd.sock'))
+            conn.settimeout(15); conn.connect(str(root/'llcontrold.sock'))
             stream = conn.makefile('rwb')
             stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode()); stream.flush()
             while True:
@@ -143,7 +143,7 @@ try:
     display = rpc('get_display_settings')
     display['interface_language'] = 'ru-RU'
     rpc('set_display_settings', {'settings':display})
-    gui = launch([repo / 'target/debug/lconnect-gui'], 'gui')
+    gui = launch([repo / 'target/debug/llcontrol-gui'], 'gui')
     deadline = time.monotonic() + 180
     sequence = 0
     window = None
@@ -257,7 +257,7 @@ try:
     print(json.dumps(result, ensure_ascii=False))
     assert gui.returncode == 0 and result['ok'], result
     assert result['trusted_key_steps'] == sequence
-    zoom = int(os.environ.get('LCONNECT_NATIVE_ZOOM', '1'))
+    zoom = int(os.environ.get('LLCONTROL_NATIVE_ZOOM', '1'))
     assert result['native_zoom'] == zoom, 'Wrong webview zoom'
     expected_reflow = {'settings', 'cooling', 'lighting', 'sensors', 'display'}
     if dialogs_enabled:

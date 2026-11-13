@@ -49,7 +49,7 @@ export interface PendingArchive {
   group: ProfileGroup;
   slot: number;
 }
-export const pendingArchiveKey = 'lconnect.archive.pending';
+export const pendingArchiveKey = 'llcontrol.archive.pending';
 export function pendingArchive(value: string | null): PendingArchive | null {
   if (!value) return null;
   try {

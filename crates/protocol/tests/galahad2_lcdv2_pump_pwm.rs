@@ -3,9 +3,9 @@
 //! Source: Galahad2VisionDevice.cs:316-322
 //! (`writeACommand(138, new byte[] { source, pwm })`).
 
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
-use lconnect_protocol::galahad2_lcdv2::pump_pwm::{build_request, PumpPwmSource};
-use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::pump_pwm::{build_request, PumpPwmSource};
+use llcontrol_protocol::galahad2_lcdv2::pwm::Pwm;
 
 #[test]
 fn pump_pwm_source_discriminants_match_decompiled_enum() {

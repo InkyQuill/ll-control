@@ -7,12 +7,12 @@
 //! so all `bytes[6 + N]` references below name the offset within the
 //! struct's `to_bytes()` payload.
 
-use lconnect_protocol::galahad2_lcdv2::lighting::{FanLightingSetting, PumpLightingSetting, Rgb};
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
+use llcontrol_protocol::galahad2_lcdv2::lighting::{FanLightingSetting, PumpLightingSetting, Rgb};
+use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{
     ArgbSignalSource, FanLightingMode, PumpLightingMode, PumpLightingScope,
 };
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
-use lconnect_protocol::galahad2_lcdv2::set_lighting::{
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::set_lighting::{
     build_set_fan_lighting_request, build_set_pump_lighting_request,
 };
 

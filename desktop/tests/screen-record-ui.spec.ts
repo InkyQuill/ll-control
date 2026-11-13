@@ -6,7 +6,7 @@ import { join } from 'node:path';
 async function setup(page: Page, videoUrl = 'data:video/mp4;base64,', language = 'ru-RU') {
   await page.addInitScript(
     ({ videoUrl, language }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const f = {
         language,
         failResume: false,

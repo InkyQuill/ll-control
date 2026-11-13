@@ -14,7 +14,7 @@ class FeedTest:public QObject {
  Q_OBJECT
  QByteArray m_path;
  void script(const QString &directory,const QByteArray &body) {
-  QFile file(directory+"/lconnectctl");QVERIFY(file.open(QIODevice::WriteOnly));
+  QFile file(directory+"/llcontrol");QVERIFY(file.open(QIODevice::WriteOnly));
   file.write("#!/usr/bin/python3\nimport sys,time,os,json\nassert sys.argv[1:]==['mini','watch']\n"+body);file.close();QVERIFY(file.setPermissions(QFileDevice::ReadOwner|QFileDevice::WriteOwner|QFileDevice::ExeOwner));qputenv("PATH",directory.toUtf8());
  }
 private Q_SLOTS:

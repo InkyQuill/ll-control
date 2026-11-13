@@ -4,7 +4,7 @@
 27 tests повторно прошли, 0 failed/ignored. [Лог и hashes](evidence/2026-10-11-rgb-acceptance-map.json).
 Код не менялся; полный workspace и native GUI в этой сверке не запускались.
 
-Пути в таблице относительно `crates/lconnect-daemon/tests/`. Это контракт
+Пути в таблице относительно `crates/llcontrol-daemon/tests/`. Это контракт
 существующего runtime, не утверждение о полноте Windows mode catalog.
 
 | Требование | Проверка и наблюдаемый результат |

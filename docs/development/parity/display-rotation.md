@@ -17,7 +17,7 @@ Direct managed media0° также переходит к software rotation с с
 (`:1178-1184`). Поворот применяется и к фону, и к overlay. Это source-derived
 контракт; одного hardware rotation для H.264 недостаточно для доказательства parity.
 
-`lconnect_image::FrameRotation` принимает только0/90/180/270 и поворачивает RGB
+`llcontrol_image::FrameRotation` принимает только0/90/180/270 и поворачивает RGB
 по часовой стрелке без resampling. `ThemeRuntime.output_rotation` — transient
 параметр presentation, отдельно от portable LcdTheme. Он применяется после
 рендеринга всех layers/weather/sensor values, непосредственно перед encoder input.

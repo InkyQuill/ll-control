@@ -5,7 +5,7 @@ from pathlib import Path
 import struct
 import zlib
 
-ROOT = Path(__file__).resolve().parents[1] / 'crates/lconnect-image/assets/defaults'
+ROOT = Path(__file__).resolve().parents[1] / 'crates/llcontrol-image/assets/defaults'
 SIZE = 480
 
 

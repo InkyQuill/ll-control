@@ -254,9 +254,9 @@ checkbox/load/profile/restart прошли. Top/bottom/center и negative leadin
 
 Regular400 и Bold700 добавлены из официального Google Fonts, commit
 `3be1884c48c3e45b52ecc725676a08f87776373e`. Это полный repertoire (20,745 cmap
-entries в каждой static instance), без subsetting. [Provenance](../../../crates/lconnect-image/assets/NotoSansTC-provenance.json),
-[OFL](../../../crates/lconnect-image/assets/NotoSansTC-OFL.txt) и
-[подготовка](../../../crates/lconnect-image/assets/NotoSansTC-README.md) находятся
+entries в каждой static instance), без subsetting. [Provenance](../../../crates/llcontrol-image/assets/NotoSansTC-provenance.json),
+[OFL](../../../crates/llcontrol-image/assets/NotoSansTC-OFL.txt) и
+[подготовка](../../../crates/llcontrol-image/assets/NotoSansTC-README.md) находятся
 рядом с файлами. Full OFL также встроена в font metadata бинарных assets.
 
 Выбор доступен для основных text/clock/sensor styles и label/unit parts;

@@ -108,7 +108,7 @@ test('stored ID/device/group survives reload and readback never repeats Finish',
   await setup(page);
   await choose(page).click();
   const pending = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem('lconnect.group.pending')!),
+    JSON.parse(localStorage.getItem('llcontrol.group.pending')!),
   );
   await page.reload();
   await page.getByRole('button', { name: 'Настройки', exact: true }).click();
@@ -173,7 +173,7 @@ test('another persisted operation cannot be replaced by a new Start', async ({ p
   await setup(page);
   await page.evaluate(() =>
     localStorage.setItem(
-      'lconnect.group.pending',
+      'llcontrol.group.pending',
       JSON.stringify({ id: 'b'.repeat(32), dev: 'other-device', group: 'screen', mode: 'import' }),
     ),
   );
@@ -257,7 +257,7 @@ test('full reset readback survives reload without repeating reset; newer content
     .click();
   await expect(panel(page).getByText(/Сохранение группы подтверждено/)).toBeVisible();
   const pending = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem('lconnect.group.pending')!),
+    JSON.parse(localStorage.getItem('llcontrol.group.pending')!),
   );
   expect(pending.mode).toBe('reset');
   await page.reload();

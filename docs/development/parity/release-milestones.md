@@ -197,7 +197,7 @@ reopen the relevant gate; absent optional effects/updater/Mini do not.
 ## R4 — Faithful Windows import and base editor compatibility
 
 **Expected to have; post-release. Type:** reference research + implementation + qualification.
-**Depends on:** stable R2. **Owner areas:** `lconnect-profile`, image/text renderer,
+**Depends on:** stable R2. **Owner areas:** `llcontrol-profile`, image/text renderer,
 Windows import UI, stored editor and archive owner.
 
 - [ ] Use genuine Windows exports and reference renders, with exact baseline,
@@ -230,7 +230,7 @@ on Linux-authored templates. [Windows contract](windows-profiles.md),
 
 **Expected to have; explicitly requested. Type:** new research/implementation.
 **Depends on:** R4 schema/resource identities; extends again in R8.
-**Owner areas:** `lconnect-profile`, archive/export storage, CLI/Tauri/desktop.
+**Owner areas:** `llcontrol-profile`, archive/export storage, CLI/Tauri/desktop.
 
 - [ ] Trace Windows import reader as well as exporter: ZIP layout, metadata/version,
   serializers, current/editor banks, resource URI rules and required defaults.

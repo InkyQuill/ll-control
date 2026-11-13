@@ -1,7 +1,7 @@
 //! Dedicated-connection gallery source download; no media publication or HID.
 use crate::media_prepare::{ExportWriter, PreparedFile};
 use anyhow::{bail, ensure, Context, Result};
-use lconnect_ipc::{client::IpcClient, MediaExportEvent, MediaExportInfo};
+use llcontrol_ipc::{client::IpcClient, MediaExportEvent, MediaExportInfo};
 use serde::Deserialize;
 use serde_json::json;
 use std::time::Duration;
@@ -98,7 +98,7 @@ pub async fn download_cancellable(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lconnect_ipc::{jsonrpc::Notification, H264AccessUnit};
+    use llcontrol_ipc::{jsonrpc::Notification, H264AccessUnit};
     use std::sync::atomic::AtomicBool;
     use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 

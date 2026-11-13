@@ -79,7 +79,7 @@ Windows runtime test. Linux реализация должна сохранить
 
 Linux registration следует [XDG Autostart](https://specifications.freedesktop.org/autostart/latest/)
 и [Desktop Entry Exec](https://specifications.freedesktop.org/desktop-entry/latest/exec-variables.html).
-Файл пользователя: `XDG_CONFIG_HOME/autostart/net.inkyquill.lconnect.desktop`.
+Файл пользователя: `XDG_CONFIG_HOME/autostart/net.inkyquill.llcontrol.desktop`.
 Runtime обязан передать Store фактические XDG_CONFIG_DIRS (по умолчанию `/etc/xdg`);
 чистые тесты передают private directories. Настройка относится к GUI; daemon
 остаётся отдельным сервисом, его включение относится к installation acceptance.

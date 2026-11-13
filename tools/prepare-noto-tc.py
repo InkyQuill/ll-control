@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('input', type=Path, help='Directory containing the two official pinned OTF files')
 parser.add_argument('--output', type=Path, help='Output directory (defaults to bundled assets)')
 args = parser.parse_args()
-root = Path(__file__).resolve().parents[1] / 'crates/lconnect-image/assets'
+root = Path(__file__).resolve().parents[1] / 'crates/llcontrol-image/assets'
 manifest = json.loads((root / 'NotoSansTC-provenance.json').read_text())
 if fontTools.__version__ != manifest['fonttools']:
     raise SystemExit('Use fonttools==' + manifest['fonttools'])

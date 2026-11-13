@@ -87,7 +87,7 @@ pub async fn open(
     let version: u32 = portal.get_property("version").await?;
     let types = available & 3;
     ensure!(types != 0, "Portal offers no monitor or window source");
-    let session_token = format!("lconnect_{}", uuid::Uuid::new_v4().simple());
+    let session_token = format!("llcontrol_{}", uuid::Uuid::new_v4().simple());
     let sender = sender(&connection)?;
     let path = OwnedObjectPath::try_from(format!("{ROOT}/session/{sender}/{session_token}"))?;
     let proxy = Proxy::new_owned(
@@ -245,7 +245,7 @@ where
     if *cancel.borrow() {
         return Ok(None);
     }
-    let token = format!("lconnect_{}", uuid::Uuid::new_v4().simple());
+    let token = format!("llcontrol_{}", uuid::Uuid::new_v4().simple());
     let path = format!("{ROOT}/request/{}/{token}", sender(connection)?);
     let proxy = Proxy::new(
         connection,

@@ -2158,184 +2158,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
-name = "lconnect-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "clap",
- "lconnect-daemon",
- "lconnect-hid",
- "lconnect-image",
- "lconnect-ipc",
- "lconnect-media",
- "lconnect-profile",
- "lconnect-protocol",
- "rand",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "xdg",
- "zip",
-]
-
-[[package]]
-name = "lconnect-daemon"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "bytes",
- "chrono",
- "futures",
- "lconnect-hid",
- "lconnect-image",
- "lconnect-intel-memory",
- "lconnect-ipc",
- "lconnect-profile",
- "lconnect-protocol",
- "perf-event",
- "rand",
- "rustix",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tokio-stream",
- "toml 0.8.23",
- "tracing",
- "tracing-journald",
- "tracing-subscriber",
- "xdg",
- "zbus 4.4.0",
- "zip",
-]
-
-[[package]]
-name = "lconnect-gui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "futures-util",
- "gstreamer",
- "httparse",
- "lconnect-daemon",
- "lconnect-hid",
- "lconnect-image",
- "lconnect-ipc",
- "lconnect-media",
- "lconnect-profile",
- "libc",
- "rustix",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-single-instance",
- "tempfile",
- "tokio",
- "url",
- "uuid",
- "zbus 4.4.0",
- "zip",
-]
-
-[[package]]
-name = "lconnect-hid"
-version = "0.1.0"
-dependencies = [
- "hidapi",
- "thiserror 1.0.69",
- "tracing",
-]
-
-[[package]]
-name = "lconnect-image"
-version = "0.1.0"
-dependencies = [
- "ab_glyph",
- "image",
- "lconnect-ipc",
- "rustybuzz",
- "serde_json",
- "thiserror 1.0.69",
- "unicode-bidi",
- "unicode-linebreak",
- "unicode-script",
- "unicode-segmentation",
-]
-
-[[package]]
-name = "lconnect-intel-memory"
-version = "0.1.0"
-dependencies = [
- "libc",
- "serde",
- "tempfile",
-]
-
-[[package]]
-name = "lconnect-ipc"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bytes",
- "futures",
- "rustix",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "lconnect-media"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "lconnect-image",
- "lconnect-ipc",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "lconnect-profile"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "flate2",
- "lconnect-image",
- "lconnect-ipc",
- "lconnect-media",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror 1.0.69",
- "zip",
-]
-
-[[package]]
-name = "lconnect-protocol"
-version = "0.1.0"
-dependencies = [
- "thiserror 1.0.69",
-]
-
-[[package]]
 name = "libappindicator"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2410,6 +2232,184 @@ name = "litemap"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
+
+[[package]]
+name = "llcontrol-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "clap",
+ "llcontrol-daemon",
+ "llcontrol-hid",
+ "llcontrol-image",
+ "llcontrol-ipc",
+ "llcontrol-media",
+ "llcontrol-profile",
+ "llcontrol-protocol",
+ "rand",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "xdg",
+ "zip",
+]
+
+[[package]]
+name = "llcontrol-daemon"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "futures",
+ "llcontrol-hid",
+ "llcontrol-image",
+ "llcontrol-intel-memory",
+ "llcontrol-ipc",
+ "llcontrol-profile",
+ "llcontrol-protocol",
+ "perf-event",
+ "rand",
+ "rustix",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-stream",
+ "toml 0.8.23",
+ "tracing",
+ "tracing-journald",
+ "tracing-subscriber",
+ "xdg",
+ "zbus 4.4.0",
+ "zip",
+]
+
+[[package]]
+name = "llcontrol-gui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "futures-util",
+ "gstreamer",
+ "httparse",
+ "libc",
+ "llcontrol-daemon",
+ "llcontrol-hid",
+ "llcontrol-image",
+ "llcontrol-ipc",
+ "llcontrol-media",
+ "llcontrol-profile",
+ "rustix",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-single-instance",
+ "tempfile",
+ "tokio",
+ "url",
+ "uuid",
+ "zbus 4.4.0",
+ "zip",
+]
+
+[[package]]
+name = "llcontrol-hid"
+version = "0.1.0"
+dependencies = [
+ "hidapi",
+ "thiserror 1.0.69",
+ "tracing",
+]
+
+[[package]]
+name = "llcontrol-image"
+version = "0.1.0"
+dependencies = [
+ "ab_glyph",
+ "image",
+ "llcontrol-ipc",
+ "rustybuzz",
+ "serde_json",
+ "thiserror 1.0.69",
+ "unicode-bidi",
+ "unicode-linebreak",
+ "unicode-script",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "llcontrol-intel-memory"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "serde",
+ "tempfile",
+]
+
+[[package]]
+name = "llcontrol-ipc"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures",
+ "rustix",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "llcontrol-media"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "llcontrol-image",
+ "llcontrol-ipc",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "llcontrol-profile"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "flate2",
+ "llcontrol-image",
+ "llcontrol-ipc",
+ "llcontrol-media",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 1.0.69",
+ "zip",
+]
+
+[[package]]
+name = "llcontrol-protocol"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.69",
+]
 
 [[package]]
 name = "lock_api"
@@ -4827,8 +4827,8 @@ dependencies = [
  "anyhow",
  "clap",
  "hidapi",
- "lconnect-image",
- "lconnect-protocol",
+ "llcontrol-image",
+ "llcontrol-protocol",
 ]
 
 [[package]]

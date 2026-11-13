@@ -1,7 +1,7 @@
 //! Native full-group transfers. Only summaries and progress cross the webview boundary.
 use crate::archive_messages::ArchiveNotice;
 use anyhow::{ensure, Context, Result};
-use lconnect_ipc::{
+use llcontrol_ipc::{
     client::IpcClient, DeviceId, FullGroupReadback, FullProfileGroup as Group,
     GroupArchivePhase as EP, GroupArchiveReply as ER, GroupArchiveRequest as E,
     GroupArchiveSnapshot, GroupArchiveSummary, GroupUploadPhase as UP, GroupUploadRequest as U,
@@ -82,12 +82,12 @@ pub struct Status {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub windows_options: Option<WindowsOptions>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub windows_lighting: Option<lconnect_ipc::WindowsControlLightingReview>,
+    pub windows_lighting: Option<llcontrol_ipc::WindowsControlLightingReview>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub windows_screen_options: Option<lconnect_ipc::WindowsScreenSource>,
+    pub windows_screen_options: Option<llcontrol_ipc::WindowsScreenSource>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub windows_screen_requirements:
-        Option<lconnect_profile::screen_requirements::ScreenRequirements>,
+        Option<llcontrol_profile::screen_requirements::ScreenRequirements>,
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -123,7 +123,7 @@ pub struct WindowsSource {
 #[serde(deny_unknown_fields)]
 pub struct WindowsOptions {
     pub record: usize,
-    pub bindings: lconnect_profile::linux_lighting::SensorBindings,
+    pub bindings: llcontrol_profile::linux_lighting::SensorBindings,
 }
 struct WindowsInput {
     id: String,
@@ -266,7 +266,7 @@ impl Groups {
         &self,
         socket: PathBuf,
         request: Start,
-        language: lconnect_ipc::InterfaceLanguage,
+        language: llcontrol_ipc::InterfaceLanguage,
     ) -> Result<Status> {
         let choice = request.clone();
         self.start_with(socket, request, move |cancel| async move {
@@ -343,7 +343,7 @@ impl Groups {
             move |owner, mut cancel| async move {
                 let client = connect(&socket).await?;
                 if request.mode == Mode::Reset {
-                    let preview: lconnect_ipc::ControlResetPreview = call(
+                    let preview: llcontrol_ipc::ControlResetPreview = call(
                         &client,
                         "preview_fan_and_lighting_reset",
                         json!({"dev":request.dev,"sensor_id":request.sensor_id}),
@@ -421,13 +421,13 @@ impl Groups {
                             private.seek(SeekFrom::Start(0))?;
                             file = private;
                         }
-                        let source = lconnect_profile::inspect_windows(&mut file)?;
+                        let source = llcontrol_profile::inspect_windows(&mut file)?;
                         ensure!(
                             source.group
                                 == if request.mode == Mode::WindowsScreen {
-                                    lconnect_profile::Group::Screen
+                                    llcontrol_profile::Group::Screen
                                 } else {
-                                    lconnect_profile::Group::FanAndLighting
+                                    llcontrol_profile::Group::FanAndLighting
                                 },
                             "Windows archive does not match selected group"
                         );
@@ -555,7 +555,7 @@ impl Groups {
                         .lock()
                         .map_err(|_| anyhow::anyhow!("Windows file grant unavailable"))?;
                     file.seek(SeekFrom::Start(0))?;
-                    let draft = lconnect_profile::control::prepare(
+                    let draft = llcontrol_profile::control::prepare(
                         &mut *file,
                         selected.record,
                         &selected.bindings,
@@ -567,7 +567,7 @@ impl Groups {
                         "Windows archive changed; select it again"
                     );
                     let bytes = serde_json::to_vec(&draft)?;
-                    lconnect_profile::control::parse(&bytes)?;
+                    llcontrol_profile::control::parse(&bytes)?;
                     Ok(String::from_utf8(bytes)?)
                 })
                 .await?;
@@ -577,7 +577,7 @@ impl Groups {
                 }
                 let draft = prepared?;
                 let client = connect(&socket).await?;
-                let preview: lconnect_ipc::WindowsControlPreview = call(
+                let preview: llcontrol_ipc::WindowsControlPreview = call(
                     &client,
                     "preview_windows_control_import",
                     json!({"dev":request.dev,"draft_json":draft}),
@@ -799,12 +799,12 @@ impl Groups {
             match action {
                 Action::Finish if request.mode==Mode::Windows => {
                     let (expected,draft_json)=windows_parameters.context("Windows preparation missing")?;
-                    let result:lconnect_ipc::FullGroupCommit=call(&client,"import_windows_control",json!({"dev":request.dev,"operation_id":request.id,"expected":expected,"draft_json":draft_json})).await?;
+                    let result:llcontrol_ipc::FullGroupCommit=call(&client,"import_windows_control",json!({"dev":request.dev,"operation_id":request.id,"expected":expected,"draft_json":draft_json})).await?;
                     owner.accept_readback(&request,result.readback)?;
                 }
                 Action::Finish if request.mode == Mode::Reset => {
                     let (expected, sensor) = reset_parameters.context("Reset preparation missing")?;
-                    let result: lconnect_ipc::FullGroupCommit = call(&client,"reset_fan_and_lighting",json!({"dev":request.dev,"operation_id":request.id,"expected":expected,"sensor_id":sensor})).await?;
+                    let result: llcontrol_ipc::FullGroupCommit = call(&client,"reset_fan_and_lighting",json!({"dev":request.dev,"operation_id":request.id,"expected":expected,"sensor_id":sensor})).await?;
                     owner.accept_readback(&request,result.readback)?;
                 }
                 Action::Finish => {

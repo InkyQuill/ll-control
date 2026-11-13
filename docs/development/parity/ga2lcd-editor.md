@@ -34,7 +34,7 @@ Linux сохраняет последнюю строку/колонку вали
 
 ## Реализованная подготовка geometry
 
-`crates/lconnect-image/src/editor.rs` предоставляет чистую
+`crates/llcontrol-image/src/editor.rs` предоставляет чистую
 `prepare_geometry(source, crop, transforms)`:
 
 - bounded decode с применением EXIF orientation до координат;
@@ -244,7 +244,7 @@ A dedicated release example accepts an encoded source and writes the480×480
 result. Source generation/build must stay outside process-RSS measurement:
 
 ```sh
-cargo build --locked --release -p lconnect-image --example profile-editor
+cargo build --locked --release -p llcontrol-image --example profile-editor
 # OUTPUT is a separate test file; SOURCE remains the encoded input.
 target/release/examples/profile-editor SOURCE OUTPUT 64 all
 ```
@@ -300,8 +300,8 @@ close normally with joined workers/empty staging and no PWM/RGB/firmware changes
 
 ```sh
 pnpm --dir desktop build
-cargo build --locked -p lconnect-daemon --example desktop-mock
-cargo build --locked -p lconnect-gui --features native-smoke,custom-protocol
+cargo build --locked -p llcontrol-daemon --example desktop-mock
+cargo build --locked -p llcontrol-gui --features native-smoke,custom-protocol
 python3 desktop/scripts/native-image-editor.py
 ```
 

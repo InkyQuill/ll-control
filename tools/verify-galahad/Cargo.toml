@@ -13,8 +13,8 @@ name = "verify-galahad"
 path = "src/main.rs"
 
 [dependencies]
-lconnect-protocol = { path = "../../crates/protocol" }
-lconnect-image    = { path = "../../crates/lconnect-image" }
+llcontrol-protocol = { path = "../../crates/protocol" }
+llcontrol-image    = { path = "../../crates/llcontrol-image" }
 hidapi            = { workspace = true }
 anyhow            = { workspace = true }
 clap              = { workspace = true }

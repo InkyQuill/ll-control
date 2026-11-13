@@ -11,7 +11,7 @@ offline RPM policy preparation, без full-group import/Apply; [mapping и гр
 
 ## Реализованный контракт
 
-`lconnect_daemon::profile_archive::ProfileArchives` экспортирует один
+`llcontrol_daemon::profile_archive::ProfileArchives` экспортирует один
 `NamedProfile`: Screen theme, ScreenMedia, Fan или Pump. Активные настройки
 устройства не меняются. Для Screen включаются все изображения, пользовательские
 шрифты и background videos активной страницы и всех сохранённых неактивных
@@ -130,11 +130,11 @@ upload Chunk. HID writes0. [Evidence](evidence/2026-10-14-profile-archive-transf
 ## CLI
 
 ```sh
-lconnectctl profiles export screen 0 night.lcp
-lconnectctl profiles import screen 7 night.lcp
-lconnectctl profiles archive-state OPERATION_ID
-lconnectctl profiles archive-finish OPERATION_ID
-lconnectctl profiles archive-cancel OPERATION_ID
+llcontrol profiles export screen 0 night.lcp
+llcontrol profiles import screen 7 night.lcp
+llcontrol profiles archive-state OPERATION_ID
+llcontrol profiles archive-finish OPERATION_ID
+llcontrol profiles archive-cancel OPERATION_ID
 ```
 
 Слоты zero-based: screen0…7, fan/pump0…3. Export никогда не перезаписывает

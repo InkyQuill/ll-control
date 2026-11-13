@@ -4,8 +4,8 @@ import json
 import os
 from pathlib import Path
 
-assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1'
-root = Path(os.environ['LCONNECT_SMOKE_ROOT'])
+assert os.environ.get('LLCONTROL_KEYBOARD_ISOLATED') == '1'
+root = Path(os.environ['LLCONTROL_SMOKE_ROOT'])
 assert root.is_absolute() and (root / 'fixture-marker').is_file()
 assert os.environ['XDG_CONFIG_HOME'] == str(root / 'config')
 assert os.environ['XDG_RUNTIME_DIR'] == str(root)

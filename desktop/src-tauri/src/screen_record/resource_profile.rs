@@ -4,7 +4,7 @@ use std::io::Write;
 
 fn emit(phase: &str, start: Instant, status: Option<&Status>) {
     println!(
-        "LCONNECT_RECORD_PROFILE {}",
+        "LLCONTROL_RECORD_PROFILE {}",
         serde_json::json!({
             "phase": phase, "seconds": start.elapsed().as_secs_f64(),
             "frames": status.map(|s| s.frames),
@@ -78,14 +78,14 @@ fn profile_recording_engine_resources() -> Result<()> {
         !cfg!(debug_assertions),
         "Profile an optimized release build"
     );
-    let dimensions = std::env::var("LCONNECT_RECORD_PROFILE_DIMENSIONS").unwrap();
+    let dimensions = std::env::var("LLCONTROL_RECORD_PROFILE_DIMENSIONS").unwrap();
     let (width, height) = match dimensions.as_str() {
         "320x240" => (320, 240),
         "1920x1080" => (1920, 1080),
         "3840x2160" => (3840, 2160),
         _ => panic!("Unknown profile dimensions"),
     };
-    let seconds: u64 = std::env::var("LCONNECT_RECORD_PROFILE_SECONDS")
+    let seconds: u64 = std::env::var("LLCONTROL_RECORD_PROFILE_SECONDS")
         .unwrap()
         .parse()
         .unwrap();
@@ -158,7 +158,7 @@ fn profile_recording_engine_resources() -> Result<()> {
     assert!(!path.exists(), "Finalized recording survived its owner");
     emit("released", start, None);
     println!(
-        "LCONNECT_RECORD_PROFILE_RESULT {}",
+        "LLCONTROL_RECORD_PROFILE_RESULT {}",
         serde_json::json!({
             "dimensions": [width, height], "frames": frames, "bytes": length,
             "pause_ms": pause_ms, "finish_ms": finish_ms, "cleanup": true,

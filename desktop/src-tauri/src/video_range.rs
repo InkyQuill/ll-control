@@ -1,2 +1,2 @@
 //! Shared immutable-source video selection validation.
-pub use lconnect_media::video_range::*;
+pub use llcontrol_media::video_range::*;

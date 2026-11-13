@@ -3,16 +3,16 @@
 import json, os, socket, subprocess, tempfile, time
 from pathlib import Path
 repo = Path(__file__).resolve().parents[2]
-root = Path(tempfile.mkdtemp(prefix='lconnect-media-resources-'))
+root = Path(tempfile.mkdtemp(prefix='llcontrol-media-resources-'))
 (root/'fixture-marker').write_text('MockBackend only\n')
 budgets = dict(seconds=60, minimum_fps=20, average_cpu_cores=2, peak_rss_bytes=512*1024*1024, sensor_age_ms=2000)
-env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), LCONNECT_MOCK_EXPORT_VIDEO='1',
+env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root), LLCONTROL_MOCK_EXPORT_VIDEO='1',
     XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root/'config'),
     XDG_CACHE_HOME=str(root/'cache'), XDG_DATA_HOME=str(root/'data'))
 env.pop('LD_PRELOAD', None)
 def rpc(method, params=None):
     with socket.socket(socket.AF_UNIX) as conn:
-        conn.settimeout(30); conn.connect(str(root/'lconnectd.sock'))
+        conn.settimeout(30); conn.connect(str(root/'llcontrold.sock'))
         stream=conn.makefile('rwb');stream.write((json.dumps(dict(jsonrpc='2.0',id=1,method=method,params=params or {}))+'\n').encode());stream.flush()
         while True:
             reply=json.loads(stream.readline())
@@ -46,7 +46,7 @@ result={'budgets':budgets,'actual_hardware_access':False,'theme':'r2-video-four-
 with (root/'daemon.log').open('w') as log:
     process=subprocess.Popen([repo/'target/release/examples/desktop-mock'],env=env,stdout=log,stderr=subprocess.STDOUT)
     try:
-        wait(lambda:(root/'lconnectd.sock').exists(),'socket')
+        wait(lambda:(root/'llcontrold.sock').exists(),'socket')
         wait(lambda:len(rpc('list_devices'))==1,'device')
         dev=rpc('list_devices')[0]['id']
         theme=json.loads((repo/'desktop/scripts/fixtures/r2-video-four-sensors.json').read_text())

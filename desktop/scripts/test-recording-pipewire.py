@@ -17,7 +17,7 @@ import time
 
 REPO = Path(__file__).resolve().parents[2]
 TEST = "screen_record_process::pipewire_tests::selected_pipewire_fd_records_real_plugin_frames"
-SERVER = """context.properties = { core.daemon = true core.name = lconnect-private support.dbus = false }
+SERVER = """context.properties = { core.daemon = true core.name = llcontrol-private support.dbus = false }
 context.spa-libs = { support.* = support/libspa-support }
 context.modules = [
  { name = libpipewire-module-protocol-native }
@@ -62,11 +62,11 @@ def main():
     parser.add_argument("--disconnect-phase", choices=["setup", "recording", "paused"], default="recording")
     args = parser.parse_args()
     if args.test_executable is None:
-        built = subprocess.run(["cargo", "test", "--locked", "-p", "lconnect-gui", "--lib", "--no-run",
+        built = subprocess.run(["cargo", "test", "--locked", "-p", "llcontrol-gui", "--lib", "--no-run",
                                 "--message-format=json"], cwd=REPO, check=True, stdout=subprocess.PIPE, text=True)
         artifacts = [json.loads(line) for line in built.stdout.splitlines() if line.startswith("{")]
         matches = [Path(a["executable"]) for a in artifacts if a.get("reason") == "compiler-artifact"
-                   and a.get("executable") and a["target"]["name"] == "lconnect_gui"
+                   and a.get("executable") and a["target"]["name"] == "llcontrol_gui"
                    and a.get("profile", {}).get("test")]
         assert len(matches) == 1
         args.test_executable = matches[0]
@@ -74,7 +74,7 @@ def main():
     assert executable.is_file() and executable.is_relative_to(REPO / "target")
     listed = subprocess.run([str(executable), "--list"], check=True, capture_output=True, text=True).stdout
     assert f"{TEST}: test" in listed, "test executable does not contain this qualification"
-    root = Path(tempfile.mkdtemp(prefix="lconnect-private-pipewire-"))
+    root = Path(tempfile.mkdtemp(prefix="llcontrol-private-pipewire-"))
     root.chmod(0o700)
     print(f"PipeWire artifacts: {root}", flush=True)
     (root / "pipewire.conf").write_text(SERVER)
@@ -82,10 +82,10 @@ def main():
     (root / "fixture-marker").write_text("synthetic-only\n")
     staging = root / "staging"
     staging.mkdir()
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("LCONNECT_", "PIPEWIRE_"))
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("LLCONTROL_", "PIPEWIRE_"))
            and k not in {"DISPLAY", "WAYLAND_DISPLAY", "DBUS_SESSION_BUS_ADDRESS", "AT_SPI_BUS_ADDRESS"}}
     env.update(XDG_RUNTIME_DIR=str(root), PIPEWIRE_RUNTIME_DIR=str(root), PIPEWIRE_CONFIG_DIR=str(root),
-               PIPEWIRE_REMOTE="lconnect-private", XDG_CONFIG_HOME=str(root / "config"),
+               PIPEWIRE_REMOTE="llcontrol-private", XDG_CONFIG_HOME=str(root / "config"),
                XDG_DATA_HOME=str(root / "data"), XDG_CACHE_HOME=str(root / "cache"), TMPDIR=str(staging),
                DBUS_SYSTEM_BUS_ADDRESS=f"unix:path={root}/no-system-bus")
 
@@ -104,26 +104,26 @@ def main():
         links = []
         try:
             deadline = time.monotonic() + 5
-            while not (root / "lconnect-private").exists():
+            while not (root / "llcontrol-private").exists():
                 assert server.poll() is None and time.monotonic() < deadline
                 time.sleep(.05)
             producer_log = (root / "producer.log").open("w")
             producer = subprocess.Popen(["gst-launch-1.0", "-q", "videotestsrc", "is-live=true", "pattern=smpte", "!",
                 "video/x-raw,format=RGB,width=320,height=240,framerate=24/1", "!", "pipewiresink", "mode=provide",
-                "stream-properties=properties,node.name=lconnect-pattern,media.class=Video/Source"], env=env,
+                "stream-properties=properties,node.name=llcontrol-pattern,media.class=Video/Source"], env=env,
                 stdout=producer_log, stderr=subprocess.STDOUT, start_new_session=True)
             deadline = time.monotonic() + 5
             while True:
                 initial = graph()
-                if any(o.get("info", {}).get("props", {}).get("node.name") == "lconnect-pattern" for o in initial):
+                if any(o.get("info", {}).get("props", {}).get("node.name") == "llcontrol-pattern" for o in initial):
                     break
                 assert producer.poll() is None and time.monotonic() < deadline, "source unavailable"
                 time.sleep(.05)
             (root / "initial-graph.json").write_text(json.dumps(initial, indent=2))
-            source = next(o for o in initial if o.get("info", {}).get("props", {}).get("node.name") == "lconnect-pattern")
+            source = next(o for o in initial if o.get("info", {}).get("props", {}).get("node.name") == "llcontrol-pattern")
             serial = source["info"]["props"]["object.serial"]
-            test_env = env | dict(LCONNECT_PRIVATE_PIPEWIRE=str(root), LCONNECT_PRIVATE_NODE=str(2**32 - 2),
-                                  LCONNECT_PRIVATE_SERIAL=str(serial), LCONNECT_PRIVATE_LOSS_PHASE=args.disconnect_phase, PIPEWIRE_REMOTE="nonexistent-recorder-remote")
+            test_env = env | dict(LLCONTROL_PRIVATE_PIPEWIRE=str(root), LLCONTROL_PRIVATE_NODE=str(2**32 - 2),
+                                  LLCONTROL_PRIVATE_SERIAL=str(serial), LLCONTROL_PRIVATE_LOSS_PHASE=args.disconnect_phase, PIPEWIRE_REMOTE="nonexistent-recorder-remote")
             recorder = subprocess.Popen([str(executable), TEST, "--exact", "--ignored", "--nocapture", "--test-threads=1"],
                                         env=test_env, cwd=REPO, stdout=test_log, stderr=subprocess.STDOUT, start_new_session=True)
             deadline = time.monotonic() + 30

@@ -1,7 +1,7 @@
 # Именованные профили LCDV2
 
 Daemon хранит общую пользовательскую библиотеку в
-`$XDG_CONFIG_HOME/lconnectd/profiles.json` (либо `~/.config/lconnectd/`).
+`$XDG_CONFIG_HOME/llcontrold/profiles.json` (либо `~/.config/llcontrold/`).
 В версии 1 есть 8 screen slots и по 4 fan/pump slots. Четыре pump slots —
 собственное расширение; Windows parity требует четыре user fan curves и
 восемь screen slots. Индексы CLI/IPC начинаются с нуля.
@@ -12,14 +12,14 @@ Daemon хранит общую пользовательскую библиоте
 слота не изменяет уже работающий экран или охлаждение.
 
 ```sh
-lconnectctl profiles list
-lconnectctl profiles save screen-profile.json
-lconnectctl profiles rename screen 0 'Ночной экран'
-lconnectctl profiles apply screen 0 --device DEVICE_ID
-lconnectctl profiles reset screen 0
-lconnectctl profiles reset fan 0 --sensor 'hwmon:EXPLICIT_SENSOR_ID'
-lconnectctl profiles delete screen 0
-lconnectctl --json profiles list
+llcontrol profiles list
+llcontrol profiles save screen-profile.json
+llcontrol profiles rename screen 0 'Ночной экран'
+llcontrol profiles apply screen 0 --device DEVICE_ID
+llcontrol profiles reset screen 0
+llcontrol profiles reset fan 0 --sensor 'hwmon:EXPLICIT_SENSOR_ID'
+llcontrol profiles delete screen 0
+llcontrol --json profiles list
 ```
 
 Минимальный `screen-profile.json`:

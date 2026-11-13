@@ -1,16 +1,16 @@
 //! Tests for SendJpeg (cmd 14) codec. Wire shape is PRESUMED — see the
 //! module-level rustdoc on `crate::galahad2_lcdv2::jpeg`.
 
-use lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
+use llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
 
 #[test]
 fn build_send_jpeg_rejects_empty() {
     let err = build_send_jpeg_request(&[]).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidJpegSize {
+        llcontrol_protocol::Error::InvalidJpegSize {
             size: 0,
-            max: lconnect_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES
+            max: llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES
         }
     ));
 }
@@ -80,18 +80,18 @@ fn build_send_jpeg_above_payload_max_chunks_correctly() {
 
 #[test]
 fn build_send_jpeg_rejects_over_max() {
-    let too_big = vec![0xFF_u8; lconnect_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES + 1];
+    let too_big = vec![0xFF_u8; llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES + 1];
     let err = build_send_jpeg_request(&too_big).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidJpegSize { .. }
+        llcontrol_protocol::Error::InvalidJpegSize { .. }
     ));
 }
 
 #[test]
 fn build_send_jpeg_accepts_at_max() {
     // MAX_JPEG_BYTES (256 KiB = 262144 bytes) → ceil(262144 / 1013) = 259 packets.
-    let at_max = vec![0xAA_u8; lconnect_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES];
+    let at_max = vec![0xAA_u8; llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES];
     let pkts = build_send_jpeg_request(&at_max).expect("at-max is valid");
     assert_eq!(
         pkts.len(),
@@ -103,13 +103,13 @@ fn build_send_jpeg_accepts_at_max() {
     assert_eq!(first[1], 14, "Command = SendJpeg");
     assert_eq!(
         u32::from_be_bytes([first[2], first[3], first[4], first[5]]) as usize,
-        lconnect_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES,
+        llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES,
         "DataSize = MAX_JPEG_BYTES on every packet"
     );
     let last = pkts[258];
     assert_eq!(
         u32::from_be_bytes([last[2], last[3], last[4], last[5]]) as usize,
-        lconnect_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES,
+        llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES,
         "DataSize replicated on the last packet"
     );
     assert_eq!(&last[6..9], &[0, 1, 2], "PN=258 = 0x010002 (24-bit BE)");

@@ -54,8 +54,8 @@ and-swap с произвольным внешним редактором: вне
 копирования; автоматического удаления или понижения версии нет. Assets не
 удалять: conservative cleanup также отказывается от несовместимых корней.
 
-Проверки: `crates/lconnect-daemon/tests/persistence.rs`, `tests/profiles.rs`,
-`crates/lconnect-ipc/tests/theme.rs`; theme IPC и persistence writer regressions
+Проверки: `crates/llcontrol-daemon/tests/persistence.rs`, `tests/profiles.rs`,
+`crates/llcontrol-ipc/tests/theme.rs`; theme IPC и persistence writer regressions
 проверяют сохранение рабочего состояния и обработку ошибок. Общая итоговая
 software приёмка ведётся в [checklist](basic-parity-checklist.md).
 
@@ -171,12 +171,12 @@ False сохраняет прежнюю высоту font_height+(N−1)×line_h
 sans/serif/mono и absent→sans не меняются. Как и для других новых enum values,
 старый binary отклоняет незнакомый font без перезаписи темы. Полные static
 fonts включены в renderer; пользовательские пути и внешняя font installation
-не нужны. Provenance/OFL — в `crates/lconnect-image/assets/NotoSansTC-*`.
+не нужны. Provenance/OFL — в `crates/llcontrol-image/assets/NotoSansTC-*`.
 
 
 ## User font assets, chunked RPC и theme references
 
-`lconnect_image::fonts::validate_font` принимает одиночные TTF/OTF до16MiB,
+`llcontrol_image::fonts::validate_font` принимает одиночные TTF/OTF до16MiB,
 используя parser renderer. TTC/WOFF/WOFF2 не принимаются; corrupt/invalid
 metrics отклоняются. Variable font пока означает default instance, без выбора
 осей. Bytes не нормализуются и не subset: copyright/license и glyph data
@@ -250,7 +250,7 @@ keys/connection. Image cleanup по-прежнему не затрагивает
 
 ## Отклонение IPC-запросов при активной теме — 2026-10-11
 
-`crates/lconnect-daemon/tests/theme_ipc.rs` проверяет настоящий JSON-RPC
+`crates/llcontrol-daemon/tests/theme_ipc.rs` проверяет настоящий JSON-RPC
 server/dispatcher с MockBackend и активной sensor-cycle темой:
 
 - future version, unknown theme field, RGB component256, negative font size;

@@ -8,7 +8,7 @@ installed-session or physical observations.
 | Gate | Current state | Required completion |
 |---|---|---|
 | Exact production package | Production payload and Arch package built; four package unit tests, private install/upgrade/remove and packaged sensor/cooling GUI passed | Verify manifest/source/payload hashes, production features/notices; build package and run transaction and packaged-GUI checks |
-| Remote CI | Private InkyQuill/lconnect-linux created; first CI run 39060891301 is active | Publish authorized source to the selected repository and inspect actual CI result |
+| Remote CI | Private InkyQuill/ll-control created; first CI run 39060891301 is active | Publish authorized source to the selected repository and inspect actual CI result |
 | Clean-host comparison | Local Docker endpoint unavailable | Provision an isolated build environment, record toolchain/dependencies and compare outputs; explain binary differences separately from deterministic repacking |
 | Installed Plasma Wayland lifecycle | Current session is KDE Wayland; no installed daemon unit or running L-Connect process found | Install/upgrade/remove with retained data, udev access, tray/single instance/hide/show/exit and actual login autostart |
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
