@@ -14,7 +14,7 @@ path = "src/main.rs"
 [dependencies]
 sha2 = "0.10.9"
 tempfile = "3"
-rustix = { version = "=1.1.4", features = ["fs"] }
+rustix = { version = "=1.1.6", features = ["fs"] }
 lconnect-protocol = { path = "../protocol" }
 lconnect-intel-memory = { path = "../lconnect-intel-memory" }
 lconnect-image    = { path = "../lconnect-image" }

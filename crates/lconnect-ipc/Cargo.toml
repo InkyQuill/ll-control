@@ -16,7 +16,7 @@ async-trait = "0.1"
 futures = "0.3"
 tokio = { workspace = true, features = ["sync", "io-util", "net", "rt"] }
 tracing.workspace = true
-rustix = { version = "=1.1.4", features = ["fs", "net"] }
+rustix = { version = "=1.1.6", features = ["fs", "net"] }
 bytes = "1"
 
 [dev-dependencies]
