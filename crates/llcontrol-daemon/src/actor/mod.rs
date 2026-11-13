@@ -219,7 +219,7 @@ pub enum LcdCommand {
         operation_id: String,
         expected_generation: u64,
         preparation: u64,
-        prepared: crate::theme_runtime::PreparedTheme,
+        prepared: crate::media_composition::PreparedComposition,
         reply: oneshot::Sender<llcontrol_ipc::Result<llcontrol_ipc::LcdState>>,
     },
     ReadScreenReset {
@@ -234,7 +234,7 @@ pub enum LcdCommand {
         operation_id: String,
         expected_profile_revision: u64,
         expected_collection_revision: u64,
-        prepared: crate::theme_runtime::PreparedTheme,
+        prepared: crate::media_composition::PreparedComposition,
         reply: oneshot::Sender<llcontrol_ipc::Result<ScreenResetState>>,
     },
     SetComposition {

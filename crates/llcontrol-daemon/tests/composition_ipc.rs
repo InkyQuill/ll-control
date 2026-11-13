@@ -490,7 +490,7 @@ async fn composition_apply_restart_sleep_missing_media_recovery_and_clear() {
                         operation_id: "a".repeat(32),
                         expected_profile_revision: store.profiles().list().unwrap().revision,
                         expected_collection_revision: 0,
-                        prepared: runtime.prepare().await.unwrap(),
+                        prepared: llcontrol_daemon::media_composition::PreparedComposition::prepare_canvas(runtime).await.unwrap(),
                         reply,
                     })
                     .await

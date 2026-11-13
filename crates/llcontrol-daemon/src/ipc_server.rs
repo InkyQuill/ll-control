@@ -451,7 +451,7 @@ impl DaemonRpc for IpcServerImpl {
         let _admission = self.admit()?;
         self.stats.inc_ipc_request();
         let handles = self.handles(&dev).await?;
-        let _permit = self
+        let permit = self
             .theme_jobs
             .clone()
             .try_acquire_owned()
@@ -467,9 +467,15 @@ impl DaemonRpc for IpcServerImpl {
             .await
             .map_err(lcd_closed)?;
         let (runtime, preparation) = response.await.map_err(lcd_closed)??;
-        let prepared = runtime.prepare().await?;
+        let prepared = crate::media_composition::PreparedComposition::prepare_with_permit(
+            self.persistence.media_assets(),
+            runtime,
+            Some(permit),
+        )
+        .await
+        .map_err(lcd_closed)?;
         let (reply, response) = oneshot::channel();
-        handles
+        if let Err(error) = handles
             .lcd_tx
             .send(LcdCommand::ReapplyScreenReset {
                 operation_id,
@@ -479,7 +485,12 @@ impl DaemonRpc for IpcServerImpl {
                 reply,
             })
             .await
-            .map_err(lcd_closed)?;
+        {
+            if let LcdCommand::ReapplyScreenReset { mut prepared, .. } = error.0 {
+                prepared.worker.stop().await.map_err(lcd_closed)?;
+            }
+            return Err(lcd_closed("display actor closed"));
+        }
         response.await.map_err(lcd_closed)?
     }
 
@@ -547,9 +558,15 @@ impl DaemonRpc for IpcServerImpl {
             self.persistence.display_settings().live_unit(),
         )
         .await?;
-        let prepared = runtime.prepare().await?;
+        let prepared = crate::media_composition::PreparedComposition::prepare_with_permit(
+            self.persistence.media_assets(),
+            runtime,
+            Some(permit),
+        )
+        .await
+        .map_err(lcd_closed)?;
         let (reply, response) = oneshot::channel();
-        handles
+        if let Err(error) = handles
             .lcd_tx
             .send(LcdCommand::ResetScreen {
                 preparation: Some(preparation),
@@ -560,10 +577,13 @@ impl DaemonRpc for IpcServerImpl {
                 reply,
             })
             .await
-            .map_err(lcd_closed)?;
-        let result = response.await.map_err(lcd_closed)?;
-        drop(permit);
-        result
+        {
+            if let LcdCommand::ResetScreen { mut prepared, .. } = error.0 {
+                prepared.worker.stop().await.map_err(lcd_closed)?;
+            }
+            return Err(lcd_closed("display actor closed"));
+        }
+        response.await.map_err(lcd_closed)?
     }
 
     async fn migrate_screen_collections(
@@ -2131,43 +2151,44 @@ impl DaemonRpc for IpcServerImpl {
             state.await.map_err(lcd_closed)?.requested.rotation_degrees,
         )
         .map_err(lcd_closed)?;
-        let (result, _permit) = join_theme_job(permit, async move {
-            let runtime = tokio::task::spawn_blocking(move || {
+        let (runtime, permit) = join_theme_job(permit, async move {
+            tokio::task::spawn_blocking(move || {
                 crate::theme_runtime::ThemeRuntime::from_static_jpeg(&jpeg)
                     .map(|runtime| std::sync::Arc::new(runtime.with_output_rotation(rotation)))
             })
             .await
-            .map_err(lcd_closed)??;
-            let mut prepared =
-                crate::media_composition::PreparedComposition::prepare_canvas(runtime)
-                    .await
-                    .map_err(lcd_closed)?;
-            let (reply, rx) = oneshot::channel();
-            if let Err(error) = handles
-                .lcd_tx
-                .send(LcdCommand::SetImagePrepared {
-                    preparation,
-                    prepared,
-                    reply,
-                })
-                .await
-            {
-                if let LcdCommand::SetImagePrepared {
-                    prepared: returned, ..
-                } = error.0
-                {
-                    prepared = returned;
-                } else {
-                    unreachable!()
-                }
-                prepared.worker.stop().await.map_err(lcd_closed)?;
-                return Err(lcd_closed("display actor closed"));
-            }
-            rx.await.map_err(lcd_closed)?
+            .map_err(lcd_closed)?
         })
         .await?;
-        let _ = result;
-        Ok(())
+        let mut prepared = crate::media_composition::PreparedComposition::prepare_with_permit(
+            self.persistence.media_assets(),
+            runtime,
+            Some(permit),
+        )
+        .await
+        .map_err(lcd_closed)?;
+        let (reply, rx) = oneshot::channel();
+        if let Err(error) = handles
+            .lcd_tx
+            .send(LcdCommand::SetImagePrepared {
+                preparation,
+                prepared,
+                reply,
+            })
+            .await
+        {
+            if let LcdCommand::SetImagePrepared {
+                prepared: returned, ..
+            } = error.0
+            {
+                prepared = returned;
+            } else {
+                unreachable!()
+            }
+            prepared.worker.stop().await.map_err(lcd_closed)?;
+            return Err(lcd_closed("display actor closed"));
+        }
+        rx.await.map_err(lcd_closed)?.map(|_| ())
     }
     async fn clear_lcd(&self, dev: DeviceId) -> Result<()> {
         let _admission = self.admit()?;

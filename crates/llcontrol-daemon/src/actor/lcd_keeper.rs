@@ -215,6 +215,22 @@ fn spawn_inner(
                     }
                     let _ = reply.send(Err(busy("LCD actor shutting down")));
                 }
+                LcdCommand::ResetScreen {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(cleanup.and(Err(busy("LCD actor shutting down"))));
+                }
+                LcdCommand::ReapplyScreenReset {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(cleanup.and(Err(busy("LCD actor shutting down"))));
+                }
                 LcdCommand::CommitScreenGroup {
                     mut prepared,
                     reply,
@@ -377,12 +393,29 @@ impl Display {
                     let _ = reply.send(Err(busy("screen reset recovery requires daemon restart")));
                     return;
                 }
-                LcdCommand::ResetScreen { reply, .. } => {
-                    let _ = reply.send(Err(busy("screen reset recovery requires daemon restart")));
+                LcdCommand::ResetScreen {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(
+                        cleanup.and(Err(busy("screen reset recovery requires daemon restart"))),
+                    );
                     return;
                 }
-                LcdCommand::ReapplyScreenReset { reply, .. }
-                | LcdCommand::SetTheme { reply, .. }
+                LcdCommand::ReapplyScreenReset {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(
+                        cleanup.and(Err(busy("screen reset recovery requires daemon restart"))),
+                    );
+                    return;
+                }
+                LcdCommand::SetTheme { reply, .. }
                 | LcdCommand::SetMediaClip { reply, .. }
                 | LcdCommand::SetImage { reply, .. }
                 | LcdCommand::Patch { reply, .. }
@@ -541,26 +574,28 @@ impl Display {
                 operation_id,
                 expected_generation,
                 preparation,
-                prepared,
+                mut prepared,
                 reply,
             } => {
-                let result = async {
-                    let runtime = self.reset_retry_runtime(&operation_id, expected_generation)?;
-                    if preparation != self.preparation
-                        || !std::sync::Arc::ptr_eq(&runtime, &prepared.runtime)
-                    {
-                        return Err(busy("screen reset reapply superseded"));
-                    }
-                    self.check_playback_firmware().await?;
-                    let composition =
-                        crate::media_composition::PreparedComposition::prepare_canvas(runtime)
-                            .await
-                            .map_err(invalid)?;
-                    self.apply_screen_reset(operation_id, prepared, composition)
-                        .await;
+                let valid = self
+                    .reset_retry_runtime(&operation_id, expected_generation)
+                    .is_ok_and(|runtime| {
+                        preparation == self.preparation
+                            && std::sync::Arc::ptr_eq(&runtime, &prepared.runtime)
+                    });
+                let result = if !valid {
+                    prepared
+                        .worker
+                        .stop()
+                        .await
+                        .map_err(busy)
+                        .and(Err(busy("screen reset reapply superseded")))
+                } else if let Err(error) = self.check_playback_firmware().await {
+                    prepared.worker.stop().await.map_err(busy).and(Err(error))
+                } else {
+                    self.apply_screen_reset(operation_id, prepared).await;
                     Ok(self.state.clone())
-                }
-                .await;
+                };
                 let _ = reply.send(result);
             }
             LcdCommand::BeginScreenReset {
@@ -617,13 +652,14 @@ impl Display {
                 operation_id,
                 expected_profile_revision,
                 expected_collection_revision,
-                prepared,
+                mut prepared,
                 reply,
             } => {
                 if preparation.is_some_and(|ticket| ticket != self.preparation) {
-                    let _ = reply.send(Err(busy(
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(cleanup.and(Err(busy(
                         "screen reset preparation superseded by a newer display request",
-                    )));
+                    ))));
                     return;
                 }
                 let result = self
@@ -801,21 +837,21 @@ impl Display {
         operation_id: String,
         expected_profile_revision: u64,
         expected_collection_revision: u64,
-        prepared: crate::theme_runtime::PreparedTheme,
+        mut composition: crate::media_composition::PreparedComposition,
     ) -> Result<super::ScreenResetState> {
         use super::command_dispatch::ScreenResetError;
         let default =
             llcontrol_ipc::NamedProfile::defaults(llcontrol_ipc::ProfileGroup::Screen, 0, None)?;
-        if llcontrol_ipc::ProfileContent::Screen(prepared.runtime.theme().clone())
+        if llcontrol_ipc::ProfileContent::Screen(composition.runtime.theme().clone())
             != default.content
         {
+            composition.worker.stop().await.map_err(busy)?;
             return Err(invalid("screen reset requires the prepared default theme"));
         }
-        self.check_playback_firmware().await?;
-        let mut composition =
-            crate::media_composition::PreparedComposition::prepare_canvas(prepared.runtime.clone())
-                .await
-                .map_err(invalid)?;
+        if let Err(error) = self.check_playback_firmware().await {
+            composition.worker.stop().await.map_err(busy)?;
+            return Err(error);
+        }
         let (reply, response) = oneshot::channel();
         if self
             .settings
@@ -857,7 +893,7 @@ impl Display {
             return Err(busy("screen reset committed without receipt"));
         };
         if !committed.repeated {
-            self.apply_screen_reset(receipt.operation_id.clone(), prepared, composition)
+            self.apply_screen_reset(receipt.operation_id.clone(), composition)
                 .await;
         } else {
             composition.worker.stop().await.map_err(busy)?;
@@ -884,10 +920,9 @@ impl Display {
     async fn apply_screen_reset(
         &mut self,
         operation_id: String,
-        prepared: crate::theme_runtime::PreparedTheme,
         mut composition: crate::media_composition::PreparedComposition,
     ) {
-        let retry_runtime = prepared.runtime.clone();
+        let retry_runtime = composition.runtime.clone();
         self.source_saved = true;
         self.media_key = None;
         self.media_pin = None;
