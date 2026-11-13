@@ -78,7 +78,7 @@ impl Default for FamilyRegistry {
     }
 }
 
-/// Galahad II Vision (LCDV2) — the Phase 1 device.
+/// Galahad II LCDV2 — the Phase 1 device.
 pub struct Galahad2LcdV2Family;
 
 impl DeviceFamily for Galahad2LcdV2Family {
@@ -89,6 +89,6 @@ impl DeviceFamily for Galahad2LcdV2Family {
         &[(0x0416, 0x7395)]
     }
     fn display_name(&self) -> &'static str {
-        "Galahad II Vision (LCDV2)"
+        "Galahad II LCDV2"
     }
 }

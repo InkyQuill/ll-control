@@ -1400,5 +1400,7 @@
   "Системный шрифт копируется в библиотеку темы. Поддерживаются TTF и OTF до 16 MiB; коллекции TTC недоступны.": "A system font is copied into the theme library. TTF and OTF up to 16 MiB are supported; TTC collections are unavailable.",
   "Видео воспроизводится на холсте. Для замены откройте библиотеку роликов. Изменения LCD требуют применения.": "Video plays on the canvas. Open the video library to replace it. Apply to update the LCD.",
   "Закрыть": "Close",
-  "Переименовать слой": "Rename layer"
+  "Переименовать слой": "Rename layer",
+  "Управление помпой, её экраном и подключёнными к LCDV2 вентиляторами. Отдельные контроллеры UNI FAN TL пока не поддерживаются.": "Controls the pump, its display, and fans connected to the LCDV2. Separate UNI FAN TL controllers are not supported yet.",
+  "Серийный номер": "Serial number"
 }

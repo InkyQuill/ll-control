@@ -4,7 +4,7 @@ import { inspect } from './accessibility-helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    const fixture = { devices: [{ id: 'lcd:studio', family: 'galahad2-lcdv2', display_name: 'Galahad II LCDV2' }, { id: 'future:studio', family: 'future-controller', display_name: 'Future controller' }], calls: [] as { method: string; params?: Record<string, unknown> }[] };
+    const fixture = { devices: [{ id: 'lcd:studio', family: 'galahad2-lcdv2', display_name: 'Galahad II LCDV2', vid: 0x0416, pid: 0x7395, serial: 'LCD-IDENTITY-TEST' }, { id: 'future:studio', family: 'future-controller', display_name: 'Future controller' }], calls: [] as { method: string; params?: Record<string, unknown> }[] };
     Object.assign(window, { studioFixture: fixture, __TAURI_INTERNALS__: { invoke: async (_: string, request: { method: string; params?: Record<string, unknown> }) => {
         if (_ === 'desktop_set_language') return null;
       fixture.calls.push(request);
@@ -26,6 +26,9 @@ test('overview reflects discovered devices, unknown families never inherit LCD c
   await expect(page.getByRole('heading', { name: 'Ваши устройства', exact: true })).toBeVisible();
   const cards = page.locator('.device-card');
   await expect(cards).toHaveCount(2);
+  await expect(cards.first()).toContainText('0416:7395');
+  await expect(cards.first()).toContainText('LCD-IDENTITY-TEST');
+  await expect(cards.first()).toContainText('Отдельные контроллеры UNI FAN TL пока не поддерживаются.');
   await expect(cards.filter({ hasText: 'Galahad II' }).locator('[data-device-screen="square"]')).toHaveCount(1);
   await page.screenshot({path:'../.impeccable/review/production-overview.png',fullPage:true});
   await expect(cards.filter({ hasText: 'Future controller' }).getByRole('button')).toHaveCount(0);

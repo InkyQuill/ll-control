@@ -10,7 +10,7 @@ use crate::actor::{spawn_device_actor_tree_with_sensors, DeviceHandles, LcdComma
 use crate::config::Config;
 use crate::persistence::{settings_key, DeviceSettings, PersistenceStore};
 use crate::stats::Stats;
-use lconnect_hid::{DeviceFamilyId, DeviceInfo, HidBackend};
+use lconnect_hid::{DeviceFamily, DeviceFamilyId, DeviceInfo, Galahad2LcdV2Family, HidBackend};
 use lconnect_ipc::{CoolingTarget, DeviceDescriptor, DeviceId, LcdConfigPatch};
 use serde_json::json;
 use std::collections::HashMap;
@@ -33,7 +33,7 @@ const SUPPORTED_FAMILIES: &[&str] = &["galahad2-lcdv2"];
 /// Marketed display name lookup keyed by family slug.
 fn display_name_for(family: &str) -> &'static str {
     match family {
-        "galahad2-lcdv2" => "Galahad II Vision (LCDV2)",
+        "galahad2-lcdv2" => Galahad2LcdV2Family.display_name(),
         _ => "Unknown Lian Li device",
     }
 }
@@ -958,6 +958,20 @@ async fn teardown(device: ManagedDevice) {
 mod tests {
     use crate::codec_str::parse_lcd_mode;
     use lconnect_protocol::galahad2_lcdv2::lcd::LCDControlMode;
+
+    #[test]
+    fn lcdv2_product_label_matches_hid_family() {
+        use lconnect_hid::DeviceFamily;
+        let family = lconnect_hid::Galahad2LcdV2Family;
+        assert_eq!(
+            super::display_name_for(family.id().as_str()),
+            "Galahad II LCDV2"
+        );
+        assert_eq!(
+            super::display_name_for(family.id().as_str()),
+            family.display_name()
+        );
+    }
 
     #[tokio::test]
     async fn completed_manager_rejects_queued_and_new_power_requests() {

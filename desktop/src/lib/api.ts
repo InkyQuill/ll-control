@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 export type Unit = 'celsius' | 'percent' | 'bytes' | 'rpm' | 'watts' | 'volts' | 'hertz' | 'bytes_per_second' | 'frames_per_second';
 export interface Sensor { id: string; label: string; unit: Unit; value: number | null; status: string; age_ms: number | null }
-export interface Device { id: string; display_name: string; family: string }
+export interface Device { id: string; display_name: string; family: string; vid?: number; pid?: number; serial?: string | null }
 export interface Style { font_asset?:string|null; line_box?:boolean; max_width?:number|null; line_height?:number|null; vertical_align?:'top'|'center'|'bottom'; font?: 'sans' | 'serif' | 'mono' | 'noto_sans_tc_regular' | 'noto_sans_tc_bold' | 'abril_fatface' | 'caprasimo' | 'cubic11'; opacity?:number; shadow?: {x:number;y:number;blur:number;color:number[];opacity:number}|null; x: number; y: number; size: number; color: number[]; align: 'left' | 'center' | 'right' }
 export interface ThemeSensor { sensor_id:string; label:string; unit:Unit; temperature_unit:'system' | 'celsius' | 'fahrenheit'; decimals:number }
 export interface EffectSensor {sensor_id:string;unit:Unit;low:number;high:number}
