@@ -1,5 +1,8 @@
 import type { BackgroundMode } from '../src/lib/api.ts';
-import { presets, presetTheme } from '../src/lib/theme-presets.ts';
+import { createServer } from 'vite';
+const server = await createServer({ configFile: false, root: new URL('..', import.meta.url).pathname, server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+try {
+const { presets, presetTheme } = await server.ssrLoadModule('/src/lib/theme-presets.ts');
 const themes = presets.map(preset => presetTheme(preset.id, Array.from({ length: preset.sensors }, (_, i) => ({ id: `cpu:${i}`, label: `Датчик ${i}`, unit: 'celsius' as const, value: 42, status: 'valid', age_ms: 10 }))));
 for (const unit of ['volts', 'hertz', 'bytes_per_second', 'bytes', 'percent'] as const) {
   const sensor = { id: `gpu:${unit}`, label: unit, unit, value: 1, status: 'valid', age_ms: 10 };
@@ -43,3 +46,6 @@ for (const kind of ['rain','snow'] as const) {
   }
 }
 process.stdout.write(JSON.stringify(themes));
+} finally {
+  await server.close();
+}
