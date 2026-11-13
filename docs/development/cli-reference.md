@@ -284,9 +284,8 @@ changing physical LEDs or saved settings. With thermal alerts enabled, clear is 
 inputs, remaining manual grace and per-zone applied layer/error. Applied means
 the HID write succeeded; visual acceptance on the physical LCDV2 is pending.
 
-First configure both fan and pump lighting modes through the existing lighting
-commands; these form the restorable base. Then create a JSON config using IDs
-from `llcontrol sensors`:
+Create a JSON config using a Celsius source ID from `llcontrol sensors`.
+You can enable a rule before either lighting effect has been saved.
 
 ```json
 {
@@ -312,7 +311,11 @@ llcontrol thermal disable
 At or above the threshold, static warning color overrides both zones. The most
 recently triggered source wins; GPU wins simultaneous new triggers. Cooling
 below threshold removes that source and exposes the previous warning or the
-base. Missing/stale/invalid readings retain an already active warning and report
+saved effect for each zone. With no saved effect, the daemon resends the last
+runtime lighting for that zone, so the alert color can remain visible after the
+active source clears. On a fresh device configuration the pump alert targets
+the inner LEDs, matching the Windows service default scope.
+Missing/stale/invalid readings retain an already active warning and report
 its source as degraded; an initially missing reading does not create a warning.
 The loop evaluates at least once a second when I/O is responsive, while retaining
 normal RGB refresh cadence. HID failures retry on later ticks and report each

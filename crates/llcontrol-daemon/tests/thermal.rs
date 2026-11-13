@@ -893,6 +893,7 @@ async fn thermal_without_saved_effects_triggers_and_replays_only_available_bases
 
             // Cooling below the threshold runs ApplyAll: replay saved effects,
             // retaining the last alert color for any zone with no saved effect.
+            h.writes.lock().unwrap().clear();
             h.cache
                 .publish(Instant::now(), vec![row("cpu", 10.0), row("gpu", 10.0)]);
             h.tick(Duration::from_secs(1)).await;
@@ -908,10 +909,14 @@ async fn thermal_without_saved_effects_triggers_and_replays_only_available_bases
                 assert_eq!(last_packet(131), alert_pump);
             }
             // Disabling a currently active rule follows the same ApplyAll path.
+            h.writes.lock().unwrap().clear();
             h.cache
                 .publish(Instant::now(), vec![row("cpu", 80.0), row("gpu", 10.0)]);
             h.tick(Duration::from_secs(1)).await;
             assert_eq!(h.state().await.active_source, Some(ThermalSource::Cpu));
+            assert_eq!(last_packet(133), alert_fan);
+            assert_eq!(last_packet(131), alert_pump);
+            h.writes.lock().unwrap().clear();
             h.set(ThermalConfig::default()).await.unwrap();
             assert_eq!(h.state().await.active_source, None);
             if saved_fan {
