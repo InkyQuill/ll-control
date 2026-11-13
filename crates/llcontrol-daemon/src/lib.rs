@@ -82,3 +82,7 @@ pub(crate) mod windows_screen_fixture;
 mod editor_cache;
 
 mod editor_video;
+
+#[cfg(test)]
+#[path = "../tests/support/display_firmware.rs"]
+mod display_firmware;

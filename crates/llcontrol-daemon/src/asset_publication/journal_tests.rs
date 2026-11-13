@@ -857,7 +857,7 @@ async fn accepted_journal_is_reconciled_before_normal_manager_theme_replay_and_r
     let mock = MockBackend::new();
     mock.add_device(info);
     let manager = crate::manager::DeviceManager::new(
-        Arc::new(mock),
+        Arc::new(crate::display_firmware::FirmwareMock(mock)),
         store.clone(),
         cfg.clone(),
         stats.clone(),

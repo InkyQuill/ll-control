@@ -936,8 +936,8 @@ async fn rotated_media_and_theme_start_and_manager_replay_preserve_identity_and_
             .unwrap();
             assert_eq!(
                 last.data()[2],
-                3,
-                "JPEG after rotated H264 must restore hardware270 orientation"
+                0,
+                "switching to a still scene keeps rotation on the host"
             );
             client
                 .call(
