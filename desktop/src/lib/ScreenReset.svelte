@@ -73,8 +73,8 @@
         failure = null;
         onchange(target);
         notice = read.lcd.last_error
-          ? 'Сброс сохранён. Передача на LCD завершилась ошибкой.'
-          : 'Сброс сохранён, базовая тема отправлена на LCD.';
+          ? 'Reset saved. Transfer to the LCD failed.'
+          : 'Reset saved and the base theme sent to the LCD.';
       }
     } catch (e) {
       if (epoch === generation && seq === request) error = message(e);
@@ -146,65 +146,65 @@
   }
 </script>
 
-<StudioPopover label={t('Сброс экрана LCD')} bind:open icon="rotate" text>
+<StudioPopover label={t('LCD screen reset')} bind:open icon="rotate" text>
   <p>
     {t(
-      'Восстановить базовую тему, яркость 50%, поворот 0°, встроенный состав коллекций этого устройства и все восемь общих Screen-слотов. Общие слоты изменятся для всех устройств.',
+      'Restore the basic theme, 50% brightness, 0° rotation, built-in collections for this device and all eight shared Screen slots. Shared slots change for all devices.',
     )}
   </p>
   <p>
     {t(
-      'Файлы изображений, видео и шрифтов, охлаждение и подсветка сохранятся. Локальный черновик темы не изменится; базовую тему можно загрузить кнопкой «Загрузить активную тему».',
+      'Image, video and font files, cooling and lighting are preserved. The local theme draft is unchanged; load the basic theme using Load active theme.',
     )}
   </p>
   <button
     bind:this={refreshButton}
     disabled={!connected || busy || loading}
-    onclick={() => refresh()}>{t('Проверить результат сброса')}</button
+    onclick={() => refresh()}>{t('Check reset result')}</button
   >
-  {#if loading}<p role="status">{t('Чтение состояния сброса…')}</p>{/if}
-  {#if error}<p role="alert">{t('Не удалось проверить сброс:')} <span>{error}</span></p>{/if}
+  {#if loading}<p role="status">{t('Reading reset state…')}</p>{/if}
+  {#if error}<p role="alert">{t('Could not check the reset:')} <span>{error}</span></p>{/if}
   {#if notice}<p role="status">{t(notice)}</p>{/if}
   {#if failure}<p role="status">
-      {failure.kind === 'rejected' ? t('Сброс отклонён:') : t('Ответ не подтверждён:')}
+      {failure.kind === 'rejected' ? t('Reset rejected:') : t('Response unconfirmed:')}
       <span>{failure.diagnostic}</span>. {failure.kind === 'rejected'
-        ? t('Проверьте состояние перед новым подтверждением.')
-        : t('Проверьте результат.')}
+        ? t('Check the state before confirming again.')
+        : t('Check the result.')}
     </p>{/if}
   {#if readback?.persistence.pending}<p role="status">
-      {t('Настройки ожидают записи. Обновите состояние.')}
+      {t('Settings are waiting to be written. Refresh their state.')}
     </p>{/if}
   {#if readback?.lcd.last_error}<p role="alert">
-      {t('Ошибка LCD:')} <span>{readback.lcd.last_error}</span>
+      {t('LCD error:')} <span>{readback.lcd.last_error}</span>
     </p>{/if}
   {#if unresolved}
     <p role="status">
       {t(
-        'Результат запроса ещё не подтверждён. Повтор использует ту же операцию и не сбросит настройки второй раз.',
+        'The request result is not confirmed yet. Retry uses the same operation and will not reset the settings a second time.',
       )}
     </p>
-    <button disabled={locked} onclick={() => mutate()}>{t('Повторить запрос сброса')}</button>
+    <button disabled={locked} onclick={() => mutate()}>{t('Retry reset request')}</button>
   {:else if pending}
     <p role="status">
-      {t('Есть неподтверждённый сброс другого устройства. Вернитесь к нему для проверки.')}
+      {t('There is an unconfirmed reset for another device. Return to that device to check it.')}
     </p>
   {:else if confirm}
-    <p>{t('Сбросить экран и восемь общих слотов?')}</p>
-    <button disabled={locked} onclick={() => mutate()}>{t('Подтвердить сброс экрана')}</button>
+    <p>{t('Reset the screen and eight shared slots?')}</p>
+    <button disabled={locked} onclick={() => mutate()}>{t('Confirm screen reset')}</button>
     <button
       disabled={busy}
       onclick={() => {
         confirm = false;
         refreshButton?.focus();
-      }}>{t('Отмена сброса')}</button
+      }}>{t('Cancel reset')}</button
     >
   {:else}
-    <button disabled={locked} onclick={() => (confirm = true)}>{t('Сбросить экран…')}</button>
+    <button disabled={locked} onclick={() => (confirm = true)}>{t('Reset screen…')}</button>
   {/if}
   {#if readback?.reapply_available}
-    <p>{t('Сброс сохранён. Можно повторить только отправку базовой темы на LCD.')}</p>
+    <p>{t('Reset saved. Only sending the basic theme to the LCD can be retried.')}</p>
     <button disabled={locked || !!pending} onclick={() => mutate(true)}
-      >{t('Повторно применить к LCD')}</button
+      >{t('Reapply to LCD')}</button
     >
   {/if}
 </StudioPopover>

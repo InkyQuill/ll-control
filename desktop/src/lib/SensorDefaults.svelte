@@ -13,16 +13,16 @@
   import { formatSensor } from './theme-presets';
   let { connected, active }: { connected: boolean; active: boolean } = $props();
   const fields: { key: CpuSourceField; label: string }[] = [
-    { key: 'temperature', label: 'Температура' },
-    { key: 'clock', label: 'Частота' },
-    { key: 'load', label: 'Загрузка' },
-    { key: 'power', label: 'Мощность' },
-    { key: 'fan', label: 'Вентилятор' },
-    { key: 'voltage', label: 'Напряжение' },
+    { key: 'temperature', label: 'Temperature' },
+    { key: 'clock', label: 'Frequency' },
+    { key: 'load', label: 'Load' },
+    { key: 'power', label: 'Power' },
+    { key: 'fan', label: 'Fan' },
+    { key: 'voltage', label: 'Voltage' },
   ];
   const gpuFields: { key: GpuSourceField; label: string }[] = [
     ...fields,
-    { key: 'memory_used', label: 'Использование VRAM' },
+    { key: 'memory_used', label: 'VRAM usage' },
   ];
   let snapshot = $state<SensorDefaultsState | null>(null),
     draft = $state<SensorDefaults | null>(null);
@@ -73,7 +73,7 @@
       voltage: null,
     };
     draft.gpu = null;
-    notice = 'Выбор очищен в черновике. Для сохранения нажмите «Применить источники».';
+    notice = 'Draft selection cleared. Select Apply sources to save it.';
   }
   $effect(() => {
     const online = connected,
@@ -126,7 +126,7 @@
       if (epoch !== generation) return;
       draft = copy(saved);
       if (snapshot) snapshot.config = copy(saved);
-      notice = 'Источники сохранены. Явные привязки LCD, охлаждения и RGB не изменены.';
+      notice = 'Sources saved. Explicit LCD, cooling and RGB bindings were preserved.';
     } catch (e) {
       if (epoch === generation) {
         error = message(e);
@@ -138,37 +138,37 @@
   }
 </script>
 
-<section aria-label={t('Источники системных датчиков')}>
-  <h2>{t('Источники системных датчиков')}</h2>
+<section aria-label={t('System sensor sources')}>
+  <h2>{t('System sensor sources')}</h2>
   <p>
     {t(
-      'Выберите источники CPU и видеокарту для общесистемных показателей. Неподдерживаемые показатели останутся без значения.',
+      'Select CPU sources and a graphics card for system readings. Unsupported readings remain unavailable.',
     )}
   </p>
   {#if readError}<p role="alert">
-      {t('Не удалось прочитать настройки:')} <span>{readError}</span>
+      {t('Could not read settings:')} <span>{readError}</span>
     </p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
   {#if mustReload}<p role="alert">
-      {t('Проверьте сохранённый выбор перед повторной попыткой.')}
+      {t('Check the saved selection before trying again.')}
     </p>{/if}
   {#if notice}<p role="status">{t(notice)}</p>{/if}
   {#if conflict}<p role="alert">
       {t(
-        'Настройки изменились извне. Ваш черновик сохранён; загрузите актуальный выбор перед применением.',
+        'Settings changed elsewhere. Your draft was preserved; reload the current selection before applying.',
       )}
     </p>{/if}
   {#if draft}
     <p>
       {dirty
-        ? '' + t('Есть несохранённые изменения.') + ''
-        : '' + t('Показан сохранённый выбор.') + ''}
+        ? '' + t('There are unsaved changes.') + ''
+        : '' + t('Showing the saved selection.') + ''}
     </p>
     <fieldset disabled={busy}>
       <legend>CPU</legend>
       <p id="cpu-fan-help">
         {t(
-          'Вентилятор CPU назначается вручную: выберите канал, к которому он подключён. Название датчика не подтверждает подключение; рекомендуемый выбор оставляет это поле пустым.',
+          'Assign the CPU fan manually to the channel it is connected to. A sensor label does not confirm wiring; the recommended selection leaves this field empty.',
         )}
       </p>
       {#each fields as field (field.key)}
@@ -182,9 +182,9 @@
               if (draft) draft.cpu[field.key] = e.currentTarget.value || null;
             }}
           >
-            <option value="">{t('Не выбран')}</option>
+            <option value="">{t('Not selected')}</option>
             {#if draft.cpu[field.key] && !available.some((c) => c.reading.id === draft?.cpu[field.key])}<option
-                value={draft.cpu[field.key]}>{t('Недоступен:')} {draft.cpu[field.key]}</option
+                value={draft.cpu[field.key]}>{t('Unavailable:')} {draft.cpu[field.key]}</option
               >{/if}
             {#each available as candidate (candidate.reading.id)}<option
                 value={candidate.reading.id}
@@ -197,13 +197,14 @@
     <fieldset disabled={busy}>
       <legend>GPU</legend>
       <label
-        >{t('Системная видеокарта')}<select
+        >{t('System graphics card')}<select
           value={draft.gpu?.device_id ?? ''}
           onchange={(e) => chooseGpu(e.currentTarget.value)}
         >
-          <option value="">{t('Не выбрана')}</option>
+          <option value="">{t('No selection')}</option>
           {#if draft.gpu && !gpuIds.includes(draft.gpu.device_id)}<option
-              value={draft.gpu.device_id}>{t('Недоступна:')} {draft.gpu.device_id}</option
+              value={draft.gpu.device_id}
+              >{t('Currently unavailable:')} {draft.gpu.device_id}</option
             >{/if}
           {#each gpuIds as id (id)}<option value={id}>{id}</option>{/each}
         </select></label
@@ -218,9 +219,9 @@
                 if (draft?.gpu) draft.gpu[field.key] = e.currentTarget.value || null;
               }}
             >
-              <option value="">{t('Не выбран')}</option>
+              <option value="">{t('Not selected')}</option>
               {#if draft.gpu[field.key] && !available.some((c) => c.reading.id === draft?.gpu?.[field.key])}<option
-                  value={draft.gpu[field.key]}>{t('Недоступен:')} {draft.gpu[field.key]}</option
+                  value={draft.gpu[field.key]}>{t('Unavailable:')} {draft.gpu[field.key]}</option
                 >{/if}
               {#each available as candidate (candidate.reading.id)}<option
                   value={candidate.reading.id}
@@ -233,7 +234,7 @@
     <div class="actions">
       <button
         disabled={busy || !connected || !fresh || !!readError || conflict || mustReload}
-        onclick={() => void apply()}>{t('Применить источники')}</button
+        onclick={() => void apply()}>{t('Apply sources')}</button
       >
       <button
         disabled={busy || !snapshot || !connected || !fresh || !!readError}
@@ -244,7 +245,7 @@
             notice = '';
             mustReload = false;
           }
-        }}>{t('Загрузить сохранённый выбор')}</button
+        }}>{t('Reload saved selection')}</button
       >
       <button
         disabled={busy || !connected || !fresh || !snapshot?.recommended}
@@ -253,14 +254,14 @@
             draft = copy(snapshot.recommended);
             error = '';
             notice =
-              'Рекомендуемые источники загружены в черновик. Проверьте выбор и нажмите Apply для сохранения.';
+              'Recommended sources loaded into the draft. Review the selection and select Apply to save.';
           }
-        }}>{t('Восстановить рекомендуемый выбор')}</button
+        }}>{t('Restore recommended selection')}</button
       >
-      <button disabled={busy} onclick={clearDraft}>{t('Очистить выбор в черновике')}</button>
+      <button disabled={busy} onclick={clearDraft}>{t('Clear draft selection')}</button>
     </div>
-  {:else}<p>{t('Загрузка настроек источников…')}</p>{/if}
-  {#if snapshot}<h3>{t('Сохранённые системные показатели')}</h3>
+  {:else}<p>{t('Loading source settings…')}</p>{/if}
+  {#if snapshot}<h3>{t('Saved system readings')}</h3>
     <dl>
       {#each snapshot.values as value (value.role)}<div>
           <dt>{value.role}</dt>

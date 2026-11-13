@@ -251,7 +251,7 @@
     draftMode = current.base_mode;
     loaded = true;
     error = null;
-    notice = 'Настройки загружены в редактор.';
+    notice = 'Settings loaded into the editor.';
     useDraft(defaults(saved?.sensor_id ?? '', saved?.unit ?? 'celsius', saved));
     if (saved || !current.profiles) return;
     choosing = true;
@@ -292,7 +292,7 @@
       let config: Config | null = null;
       if (!off) {
         if (!sensorId || !loaded || modeChanged || current?.color_count !== colors.length)
-          throw new ValidationError('Загрузите текущий режим и выберите датчик');
+          throw new ValidationError('Load the current mode and select a sensor');
         const max = unit === 'rpm' ? 3600 : 100;
         if (
           low === undefined ||
@@ -305,12 +305,12 @@
         )
           throw new ValidationError(
             unit === 'celsius'
-              ? 'Пороги температуры должны соответствовать целым °C от 0 до {0}; нижний не выше верхнего.'
-              : 'Пороги должны быть целыми числами от 0 до {0}, нижний не выше верхнего',
+              ? 'Temperature thresholds must correspond to whole degrees Celsius from 0 to {0}, with the lower value no higher than the upper value.'
+              : 'Thresholds must be integers from 0 to {0}, with the lower value no higher than the upper value',
             [max],
           );
         if (current.speed_supported && [lowSpeed, highSpeed].some(invalidSpeed))
-          throw new ValidationError('Скорость должна быть целым числом от 0 до 100');
+          throw new ValidationError('Speed must be an integer from 0 to 100');
         config = {
           sensor_id: sensorId,
           unit,
@@ -324,7 +324,7 @@
         if (current.profiles) {
           if (!inheritBrightness) {
             if (invalidSpeed(fixedBrightness))
-              throw new ValidationError('Яркость должна быть целым числом от0 до100');
+              throw new ValidationError('Brightness must be an integer from 0 to 100');
             config.brightness_percent = fixedBrightness!;
           }
           if (fixedDirection !== 'inherit')
@@ -339,8 +339,8 @@
       if (result.base_mode) onpolicychange?.(dev, result.base_mode, !!result.requested);
       if (result.last_error) throw new Error(result.last_error);
       notice = off
-        ? 'Режим по датчику отключён.'
-        : 'Режим по датчику сохранён. Фактическое состояние показано выше.';
+        ? 'Sensor mode disabled.'
+        : 'Sensor mode saved. The actual state is shown above.';
     } catch (e) {
       if (started === generation) error = e instanceof ValidationError ? e : message(e);
     } finally {
@@ -351,61 +351,63 @@
 </script>
 
 <details ontoggle={(event) => (open = event.currentTarget.open)}>
-  <summary>{t('Подсветка помпы по датчику')}</summary>
+  <summary>{t('Sensor-driven pump lighting')}</summary>
   <p>
     {t(
-      'Выберите и примените обычный режим помпы выше. Здесь настраиваются цвета, скорость и фиксированные параметры выбранного источника. Настройки других источников и режимов сохраняются. Ручная настройка помпы отменяет этот режим.',
+      'Select and apply a regular pump mode above. Configure colors, speed and fixed settings for the selected source here. Settings for other sources and modes are retained. Manual pump lighting changes disable this sensor-driven mode.',
     )}
   </p>
   {#if current}
     <p>
-      {t('Режим помпы:')}
-      {current.base_mode ?? t('не задан')}
-      {t('· По датчику:')}
-      {current.requested ? '' + t('включён') + '' : '' + t('выключен') + ''}
+      {t('Pump mode:')}
+      {current.base_mode ?? t('not set')}
+      {t('· Sensor control:')}
+      {current.requested ? '' + t('on') + '' : '' + t('disabled') + ''}
     </p>
     {#if current.applied}<p>
-        {t('Применённое значение:')}
+        {t('Applied value:')}
         {current.requested?.unit === 'celsius'
           ? `${temperatureFromCelsius(current.applied.value, displayUnit).toFixed(1)} ${displaySuffix}`
           : current.applied.value}
       </p>{/if}
     {#if current.degraded}<p role="status">
         {current.suppressed_by_thermal
-          ? '' + t('Датчик недоступен; режим по датчику ожидает восстановления.') + ''
-          : '' + t('Датчик недоступен — используется обычная подсветка.') + ''}
+          ? '' +
+            t('The sensor is unavailable; sensor-driven lighting is waiting for recovery.') +
+            ''
+          : '' + t('The sensor is unavailable — regular lighting is used.') + ''}
       </p>{/if}
     {#if current.suppressed_by_thermal}<p role="status">
-        {t('Подсветка временно перекрыта температурным оповещением.')}
+        {t('A temperature alert is temporarily overriding the lighting.')}
       </p>{/if}
     {#if current.last_error}<p role="alert"><span>{current.last_error}</span></p>{/if}
   {/if}
   <button
     disabled={unavailable || !current?.base_mode || current.color_count === null}
-    onclick={load}>{t('Загрузить настройки режима по датчику')}</button
+    onclick={load}>{t('Load sensor-driven mode settings')}</button
   >
   {#if loaded}
     {#if modeChanged}<p role="alert">
-        {t('Устройство или режим помпы изменились. Загрузите настройки заново перед применением.')}
+        {t('The device or pump mode changed. Reload the settings before applying.')}
       </p>{/if}
     <div oninput={markEdit} onchange={markEdit}>
-      {#if choosing}<p role="status">{t('Чтение источника CPU Load…')}</p>{/if}
+      {#if choosing}<p role="status">{t('Reading the CPU Load source…')}</p>{/if}
       <label
-        >{t('Датчик подсветки')}<select
+        >{t('Lighting sensor')}<select
           bind:value={sensorId}
           disabled={unavailable || modeChanged}
           onchange={chooseSensor}
-          ><option value="">{t('Выберите источник')}</option
+          ><option value="">{t('Select a source')}</option
           >{#each eligible as sensor (sensor.id)}<option value={sensor.id}
               >{sensor.label} · {sensor.unit} · {sensor.status}</option
             >{/each}{#if sensorId && !eligible.some((s) => s.id === sensorId)}<option
-              value={sensorId}>{t('Недоступен:')} {sensorId}</option
+              value={sensorId}>{t('Unavailable:')} {sensorId}</option
             >{/if}</select
         ></label
       >
       <div class="row">
         <label
-          >{t('Нижний порог (')}{unit === 'celsius' ? displaySuffix : unit})
+          >{t('Lower threshold (')}{unit === 'celsius' ? displaySuffix : unit})
           {#if unit === 'celsius'}<TemperatureInput
               describedby={displayUnit === 'fahrenheit'
                 ? 'dynamic-rgb-temperature-grid'
@@ -432,7 +434,7 @@
               bind:value={low}
             />{/if}</label
         ><label
-          >{t('Верхний порог (')}{unit === 'celsius' ? displaySuffix : unit})
+          >{t('Upper threshold (')}{unit === 'celsius' ? displaySuffix : unit})
           {#if unit === 'celsius'}<TemperatureInput
               describedby={displayUnit === 'fahrenheit'
                 ? 'dynamic-rgb-temperature-grid'
@@ -462,16 +464,16 @@
       </div>
       {#if unit === 'celsius' && displayUnit === 'fahrenheit'}<p id="dynamic-rgb-temperature-grid">
           {t(
-            'Пороги этого режима хранятся целыми °C. В °F используйте шаг 1,8° (например, 86 → 87,8°F).',
+            'This mode stores whole degrees Celsius. In Fahrenheit, use steps of 1.8° (for example, 86 → 87.8°F).',
           )}
         </p>{/if}
       {#each colors as pair, i (i)}<div class="row">
-          <label>{t('Нижний цвет')} {i + 1}<input type="color" bind:value={pair.low} /></label
-          ><label>{t('Верхний цвет')} {i + 1}<input type="color" bind:value={pair.high} /></label>
+          <label>{t('Lower color')} {i + 1}<input type="color" bind:value={pair.low} /></label
+          ><label>{t('Upper color')} {i + 1}<input type="color" bind:value={pair.high} /></label>
         </div>{/each}
       {#if current?.speed_supported}<div class="row">
           <label
-            >{t('Нижняя скорость, %')}
+            >{t('Lower speed, %')}
             <!-- svelte-ignore a11y_no_redundant_roles (WebKitGTK requires explicit spinbutton for the native Value interface.) -->
             <input
               type="number"
@@ -485,7 +487,7 @@
               bind:value={lowSpeed}
             /></label
           ><label
-            >{t('Верхняя скорость, %')}
+            >{t('Upper speed, %')}
             <!-- svelte-ignore a11y_no_redundant_roles (WebKitGTK requires explicit spinbutton for the native Value interface.) -->
             <input
               type="number"
@@ -503,11 +505,11 @@
       {#if current?.profiles}
         <label
           ><input type="checkbox" bind:checked={inheritBrightness} />{t(
-            'Яркость обычного режима',
+            'Use regular mode brightness',
           )}</label
         >
         {#if !inheritBrightness}<label
-            >{t('Яркость по датчику, %')}
+            >{t('Sensor-driven brightness, %')}
             <!-- svelte-ignore a11y_no_redundant_roles (WebKitGTK needs explicit spinbutton for native Value.) -->
             <input
               type="number"
@@ -522,27 +524,27 @@
             /></label
           >{/if}
         {#if current.direction_supported}<label
-            >{t('Направление по датчику')}<select bind:value={fixedDirection}
-              ><option value="inherit">{t('Как в обычном режиме')}</option><option value="forward"
-                >{t('Вперёд')}</option
-              ><option value="reverse">{t('Назад')}</option></select
+            >{t('Sensor-driven direction')}<select bind:value={fixedDirection}
+              ><option value="inherit">{t('Use regular mode setting')}</option><option
+                value="forward">{t('Forward')}</option
+              ><option value="reverse">{t('Reverse')}</option></select
             ></label
           >{/if}
       {/if}
     </div>
     <button disabled={unavailable || modeChanged || !sensorId || !current} onclick={() => apply()}
-      >{t('Применить режим по датчику')}</button
+      >{t('Apply sensor-driven mode')}</button
     >
   {/if}
   <button disabled={unavailable || !current?.requested} onclick={() => apply(true)}
-    >{t('Отключить режим по датчику')}</button
+    >{t('Disable sensor-driven mode')}</button
   >
   {#if pollError}<p role="alert">
-      {t('Не удалось прочитать режим подсветки по датчику:')} <span>{pollError}</span>
+      {t('Could not read sensor-driven lighting:')} <span>{pollError}</span>
     </p>{/if}
   {#if error}<p role="alert">
       {#if error instanceof ValidationError}{t(error.resource, ...error.values)}{:else}{t(
-          'Ошибка подсветки по датчику:',
+          'Sensor-driven lighting error:',
         )} <span>{error}</span>{/if}
     </p>{/if}{#if notice}<p role="status">{t(notice)}</p>{/if}
 </details>

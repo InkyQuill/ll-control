@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'svelte/compiler';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const dictionary = JSON.parse(
-  fs.readFileSync(path.join(root, 'desktop/src/lib/locales/en-US.json'), 'utf8'),
+  fs.readFileSync(path.join(root, 'desktop/src/lib/locales/ru-RU.json'), 'utf8'),
 );
 const files = fs
   .readdirSync(path.join(root, 'desktop/src/lib'))
@@ -54,6 +54,7 @@ for (const file of files) {
 }
 const holes = (text) => [...text.matchAll(/\{(\d+)\}/g)].map((m) => m[1]).sort();
 for (const [key, value] of Object.entries(dictionary)) {
+  if (/[А-Яа-яЁё]/.test(key)) throw new Error('Source resource must be English: ' + key);
   if (typeof value !== 'string' || !value.trim()) throw new Error('Empty resource: ' + key);
   if (JSON.stringify(holes(key)) !== JSON.stringify(holes(value)))
     throw new Error('Parameter mismatch: ' + key);
@@ -63,11 +64,11 @@ const missing = [...keys]
   .map(([key, locations]) => ({ key, locations }));
 const result = {
   supported: ['ru-RU', 'en-US'],
-  englishStatus: missing.length ? 'partial' : 'static-catalog-complete',
+  russianStatus: missing.length ? 'partial' : 'static-catalog-complete',
   staticKeys: keys.size,
   translatedStaticKeys: keys.size - missing.length,
   missingStaticKeys: missing.length,
-  englishEntries: Object.keys(dictionary).length,
+  russianEntries: Object.keys(dictionary).length,
   missing,
   dynamicCalls: dynamic,
   remainingWindowsLocales: ['de-DE', 'es-ES', 'fr-FR', 'ko-KR', 'zh-CN', 'zh-TW'],
@@ -84,6 +85,6 @@ if (index >= 0) {
   fs.writeFileSync(output, JSON.stringify(result, null, 2) + '\n');
 }
 console.log(
-  `English static resources: ${result.translatedStaticKeys}/${result.staticKeys}; ${result.missingStaticKeys} missing; ${dynamic.length} dynamic outputs to qualify`,
+  `Russian static resources: ${result.translatedStaticKeys}/${result.staticKeys}; ${result.missingStaticKeys} missing; ${dynamic.length} dynamic outputs to qualify`,
 );
 if (process.argv.includes('--strict') && missing.length) process.exitCode = 1;

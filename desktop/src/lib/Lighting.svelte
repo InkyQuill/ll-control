@@ -36,7 +36,7 @@
       manualLedCount <= 50,
   );
   function currentTopology(): FanTopology {
-    if (!topologyValid) throw new ValidationError('Число LED должно быть целым от 8 до 50');
+    if (!topologyValid) throw new ValidationError('LED count must be an integer from 8 to 50');
     return { sync_to_pump: fanSync, size: fanSize, manual_led_count: manualLedCount! };
   }
   function setTopology(value: TopologyDraft) {
@@ -302,7 +302,7 @@
     if (!controls || controlsBusy || loadingBase) return;
     setDraft(device, kind, controls.defaults);
     draftRevision++;
-    notice = 'Значения по умолчанию загружены в черновик.';
+    notice = 'Default values loaded into the draft.';
   }
   async function loadBase() {
     if (controlsBusy || loadingBase || !device || !connected) return;
@@ -318,12 +318,12 @@
       const info = await rpc<LightingInfo>('get_lighting_info', { dev, kind: target });
       if (started !== generation) return;
       if (draft !== draftRevision) {
-        notice = 'Черновик изменён; загрузка не применена.';
+        notice = 'The draft changed; the loaded settings were not applied.';
         return;
       }
       const base = info.base;
       if (!base) {
-        notice = 'Настройка режима для загрузки отсутствует. Черновик сохранён.';
+        notice = 'No mode settings are available to load. Your draft is preserved.';
         return;
       }
       const selected = info.modes.includes(base.mode)
@@ -333,7 +333,7 @@
           : null;
       if (!selected)
         throw new ValidationError(
-          'Сохранённый режим не поддерживается редактором. Черновик сохранён.',
+          'The saved mode is not supported by this editor. The draft was kept.',
         );
       cacheMode();
       modes = info.modes;
@@ -347,8 +347,7 @@
         cacheMode();
       }
       draftRevision++;
-      notice =
-        'Настройки зоны загружены. Цвет могут временно менять оповещения и привязки к датчикам.';
+      notice = 'Zone settings loaded. Alerts and sensor bindings may temporarily change the color.';
     } catch (e) {
       if (started === generation) error = e instanceof ValidationError ? e : message(e);
     } finally {
@@ -398,16 +397,15 @@
     rulesDevice = device;
   }
   async function applyRules() {
-    if (!rulesCurrent)
-      throw new ValidationError('Загрузите оповещения выбранного устройства перед применением');
+    if (!rulesCurrent) throw new ValidationError('Load the selected device alerts before applying');
     const dev = device,
       started = generation;
     const config: Config = { cpu: null, gpu: null };
     for (const r of rules) {
       if (r.enabled) {
-        if (!r.sensor) throw new ValidationError('Для каждого включённого оповещения нужен датчик');
+        if (!r.sensor) throw new ValidationError('Each enabled alert needs a sensor');
         if (!Number.isFinite(r.threshold) || r.threshold < 0 || r.threshold > 150)
-          throw new ValidationError('Порог оповещения должен быть числом от 0 до 150 °C');
+          throw new ValidationError('The alert threshold must be a number from 0 to 150 °C');
         config[r.source] = { sensor_id: r.sensor, threshold_c: r.threshold, color: toRgb(r.color) };
       }
     }
@@ -417,17 +415,17 @@
     thermal = result;
     const failure = result.blocked_reason ?? result.fan.last_error ?? result.pump.last_error;
     if (failure) throw new Error(failure);
-    notice = 'Температурные оповещения сохранены.';
+    notice = 'Temperature alerts saved.';
   }
 </script>
 
-<section aria-label={t('Подсветка')}>
+<section aria-label={t('Lighting')}>
   <div class="lighting-workspace">
     <LightingPreview {kind} {color} {brightness} {disabled} {colorCount} />
     <div class="lighting-controls">
-      <h2>{t('Черновик настройки RGB')}</h2>
+      <h2>{t('RGB settings draft')}</h2>
       <button disabled={controlsBusy || loadingBase || !connected || !device} onclick={loadBase}
-        >{t('Загрузить настройки подсветки')}</button
+        >{t('Load lighting settings')}</button
       >
       <fieldset
         class="manual"
@@ -435,16 +433,16 @@
         oninput={markDraftChange}
         onchange={markDraftChange}
       >
-        <legend>{t('Настройки выбранной зоны')}</legend>
+        <legend>{t('Selected zone settings')}</legend>
         <div class="row">
           <label
-            >{t('Зона')}<select bind:value={kind} disabled={controlsBusy}
-              ><option value="pump">{t('Кольцо помпы')}</option><option value="fan"
-                >{t('Вентиляторы LCDV2')}</option
+            >{t('Zone')}<select bind:value={kind} disabled={controlsBusy}
+              ><option value="pump">{t('Pump ring')}</option><option value="fan"
+                >{t('LCDV2 fans')}</option
               ></select
             ></label
           ><label
-            >{t('Эффект')}<select bind:value={mode} onchange={changeMode} disabled={!modes.length}
+            >{t('Effect')}<select bind:value={mode} onchange={changeMode} disabled={!modes.length}
               >{#each modes as effect (effect)}<option value={effect}>{effect}</option
                 >{/each}</select
             ></label
@@ -452,24 +450,24 @@
         </div>
         {#if kind === 'pump' && dynamicSupported}
           <label
-            >{t('Управление подсветкой')}<select bind:value={useDynamic} disabled={controlsBusy}>
-              <option value={false}>{t('Обычная настройка')}</option><option value={true}
-                >{t('По сохранённому датчику')}</option
+            >{t('Lighting control')}<select bind:value={useDynamic} disabled={controlsBusy}>
+              <option value={false}>{t('Regular settings')}</option><option value={true}
+                >{t('Use saved sensor')}</option
               >
             </select></label
           >
           {#if useDynamic}<p>
               {t(
-                'При применении восстановятся последний датчик и его параметры для выбранного эффекта. Сначала настройте привязку в разделе «Подсветка помпы по датчику».',
+                'Applying restores the last sensor and its settings for this effect. Configure a binding in Sensor-driven pump lighting first.',
               )}
             </p>{/if}
         {/if}
         <div class="row">
           {#if colorCount !== 0}<label
-              >{t('Цвет RGB')}<input type="color" bind:value={color} /></label
+              >{t('RGB color')}<input type="color" bind:value={color} /></label
             >{/if}
           {#each additionalColors.slice(0, Math.max(0, (colorCount ?? 1) - 1)) as color, index (index)}<label
-              >{t('Цвет RGB')}
+              >{t('RGB color')}
               {index + 2}<input
                 type="color"
                 value={color}
@@ -477,49 +475,47 @@
                 oninput={(event) => (additionalColors[index] = event.currentTarget.value)}
               /></label
             >{/each}{#if controls?.brightness !== false}<label
-              >{t('Яркость RGB:')}
+              >{t('RGB brightness:')}
               {brightness}%<input type="range" min="0" max="100" bind:value={brightness} /></label
             >{/if}{#if controls?.speed !== false}<label
-              >{t('Скорость:')}
+              >{t('Speed:')}
               {speed}%<input type="range" min="0" max="100" bind:value={speed} /></label
             >{/if}
         </div>
         <div class="row">
           {#if controls?.direction !== false}<label
-              >{t('Направление')}<select bind:value={direction}
-                ><option value="forward">{t('Вперёд')}</option><option value="reverse"
-                  >{t('Назад')}</option
+              >{t('Direction')}<select bind:value={direction}
+                ><option value="forward">{t('Forward')}</option><option value="reverse"
+                  >{t('Reverse')}</option
                 ></select
               ></label
             >{/if}{#if kind === 'pump'}<label
-              >{t('Контур')}<select bind:value={scope}
-                ><option value="outer">{t('Внешний')}</option><option value="inner"
-                  >{t('Внутренний')}</option
-                ><option value="all">{t('Все')}</option></select
+              >{t('Ring scope')}<select bind:value={scope}
+                ><option value="outer">{t('Outer')}</option><option value="inner"
+                  >{t('Inner')}</option
+                ><option value="all">{t('All')}</option></select
               ></label
             >{/if}<label
-            ><input type="checkbox" bind:checked={disabled} />{t('Выключить подсветку')}</label
+            ><input type="checkbox" bind:checked={disabled} />{t('Turn lighting off')}</label
           >
         </div>
         {#if kind === 'fan' && topologySupported}
           <fieldset>
-            <legend>{t('Синхронизация и число LED')}</legend>
+            <legend>{t('Sync and LED count')}</legend>
             <label
               ><input type="checkbox" bind:checked={fanSync} disabled={controlsBusy} />{t(
-                'Синхронизировать вентиляторы с помпой',
+                'Sync fans with pump',
               )}</label
             >
             {#if fanSync}<label
-                >{t('Размер комплекта вентиляторов')}<select
-                  bind:value={fanSize}
-                  disabled={controlsBusy}
-                  ><option value="280">{t('280 мм')}</option><option value="360"
-                    >{t('360 мм')}</option
+                >{t('Fan kit size')}<select bind:value={fanSize} disabled={controlsBusy}
+                  ><option value="280">{t('280 mm')}</option><option value="360"
+                    >{t('360 mm')}</option
                   ></select
                 ></label
               >{/if}
             <label
-              >{t('Число LED в ручном режиме')}
+              >{t('Manual LED count')}
               <!-- svelte-ignore a11y_no_redundant_roles (WebKitGTK needs explicit spinbutton for native Value.) -->
               <input
                 type="number"
@@ -536,17 +532,17 @@
               /></label
             >
             {#if fanSync}<p>
-                {t('При синхронизации используются')}
+                {t('When synced, the controller uses')}
                 {fanSize === '280' ? 16 : 24}
-                {t('LED. Ручное значение сохранится для отключения синхронизации.')}
+                {t('LEDs. The manual value is retained for when sync is disabled.')}
               </p>{/if}
             {#if !topologyValid}<p role="status">
-                {t('Введите целое число LED от 8 до 50 перед применением.')}
+                {t('Enter an integer LED count from 8 to 50 before applying.')}
               </p>{/if}
           </fieldset>
         {/if}
         {#if controls}<button disabled={controlsBusy || loadingBase} onclick={resetMode}
-            >{t('Значения режима по умолчанию')}</button
+            >{t('Mode defaults')}</button
           >{/if}
         <button
           class="primary"
@@ -581,54 +577,53 @@
               if (started !== generation) return;
               notice =
                 dynamicSupported && useDynamic && kind === 'pump'
-                  ? 'Режим по сохранённому датчику восстановлен. Фактическое состояние показано в разделе ниже.'
-                  : 'Команда подсветки выполнена. Thermal grace после ручного изменения — 10 секунд.';
-            })}>{t('Применить подсветку')}</button
+                  ? 'Saved sensor mode restored. The actual state is shown below.'
+                  : 'Lighting command completed. Thermal grace after a manual change is 10 seconds.';
+            })}>{t('Apply lighting')}</button
         >
       </fieldset>
     </div>
   </div>
-  <h2>{t('Температурные оповещения')}</h2>
+  <h2>{t('Temperature alerts')}</h2>
   <p>
     {t(
-      'Перед включением примените обычную подсветку в обеих зонах — помпы и вентиляторов LCDV2. Daemon восстановит эти настройки после оповещения.',
+      'Apply regular lighting to both LCDV2 zones — pump and fans — before enabling alerts. The daemon restores these settings after an alert.',
     )}
   </p>
   <p>
-    {t('Активный источник:')}
+    {t('Active source:')}
     {thermal?.active_source ?? '—'} · Grace: {thermal
       ? Math.ceil(thermal.grace_remaining_ms / 1000)
       : '—'}
-    {t('s. Недоступные источники:')}
+    {t('s. Unavailable sources:')}
     {thermal?.degraded_sources.join(', ') || '—'}.
   </p>
   {#if thermal?.blocked_reason}<p role="alert">{thermal.blocked_reason}</p>{/if}
-  <button disabled={controlsBusy || !thermal} onclick={loadRules}
-    >{t('Загрузить текущие оповещения')}</button
+  <button disabled={controlsBusy || !thermal} onclick={loadRules}>{t('Load current alerts')}</button
   >
   {#if loaded && !rulesCurrent}<p role="alert">
       {t(
-        'Черновик оповещений относится к другому устройству. Загрузите настройки выбранного устройства перед применением.',
+        'The alert draft belongs to another device. Load the selected device settings before applying.',
       )}
     </p>{/if}
   {#if loaded}{#each rules as rule (rule.source)}<fieldset>
         <legend>{rule.source.toUpperCase()}</legend><label
-          ><input type="checkbox" bind:checked={rule.enabled} />{t('Включить')}
+          ><input type="checkbox" bind:checked={rule.enabled} />{t('Enable')}
           {rule.source.toUpperCase()}</label
         >
         <div class="row">
           <label
-            >{t('Датчик')}
+            >{t('Sensor')}
             {rule.source.toUpperCase()}<select bind:value={rule.sensor} disabled={!rule.enabled}
-              ><option value="">{t('Выберите источник')}</option
+              ><option value="">{t('Select a source')}</option
               >{#each temperatures as sensor (sensor.id)}<option value={sensor.id}
                   >{sensor.label} · {sensor.status}</option
                 >{/each}{#if rule.sensor && !temperatures.some((s) => s.id === rule.sensor)}<option
-                  value={rule.sensor}>{t('Недоступен:')} {rule.sensor}</option
+                  value={rule.sensor}>{t('Unavailable:')} {rule.sensor}</option
                 >{/if}</select
             ></label
           ><label
-            >{t('Порог')}
+            >{t('Threshold')}
             {rule.source.toUpperCase()}, {displaySuffix}
             <TemperatureInput
               bind:value={rule.threshold}
@@ -637,7 +632,7 @@
               disabled={!rule.enabled}
             /></label
           ><label
-            >{t('Цвет оповещения')}
+            >{t('Alert color')}
             {rule.source.toUpperCase()}<input
               type="color"
               bind:value={rule.color}
@@ -647,22 +642,22 @@
         </div>
       </fieldset>{/each}{:else}<p>
       {t(
-        'Загрузите текущие правила перед редактированием. Оповещения временно перекрывают обе RGB-зоны и затем восстанавливают сохранённую подсветку.',
+        'Load the current rules before editing. Alerts temporarily override both RGB zones, then restore the saved lighting.',
       )}
     </p>{/if}
   <button
     disabled={!rulesCurrent || controlsBusy || !device || !connected}
-    onclick={() => action(applyRules, true)}>{t('Применить оповещения')}</button
+    onclick={() => action(applyRules, true)}>{t('Apply alerts')}</button
   >
   {#if pollError}<p role="alert">
-      {t('Не удалось прочитать состояние оповещений:')} <span>{pollError}</span>
+      {t('Could not read thermal alert state:')} <span>{pollError}</span>
     </p>{/if}
   {#if error}<p class="error" role="alert">
       {#if error instanceof ValidationError}{t(error.resource, ...error.values)}{:else}{t(
-          'Ошибка подсветки:',
+          'Lighting error:',
         )} <span>{error}</span>{#if thermalBaseMissing}
           {t(
-            'Сначала примените обычную подсветку в обеих зонах: кольцо помпы и вентиляторы LCDV2. Эти настройки нужны для восстановления после оповещения.',
+            'First apply normal lighting to both zones: the pump ring and the LCDV2 fans. These settings are needed to restore lighting after an alert.',
           )}{/if}{/if}
     </p>{/if}{#if notice}<p role="status">{t(notice)}</p>{/if}
   <DynamicRgb

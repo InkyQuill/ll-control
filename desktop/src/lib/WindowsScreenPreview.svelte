@@ -58,13 +58,13 @@
         bytes[1] !== 216 ||
         bytes.some((v) => !Number.isInteger(v) || v < 0 || v > 255)
       )
-        throw new ValidationError('Некорректный кадр preview.');
+        throw new ValidationError('Invalid preview frame.');
       candidate = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'image/jpeg' }));
       const image = new Image();
       image.src = candidate;
       await image.decode();
       if (image.naturalWidth !== 480 || image.naturalHeight !== 480)
-        throw new ValidationError('Некорректный размер preview.');
+        throw new ValidationError('Invalid preview dimensions.');
       if (alive && current === epoch) {
         url = candidate;
         candidate = '';
@@ -81,29 +81,29 @@
   }
 </script>
 
-<section class="group-preview" aria-label={t('Preview подготовленного экрана')}>
-  <h3>{t('Подготовленный кадр')}</h3>
+<section class="group-preview" aria-label={t('Prepared screen preview')}>
+  <h3>{t('Prepared frame')}</h3>
   <label
-    >{t('Сцена для preview')}<select
-      aria-label={t('Сцена для preview')}
+    >{t('Preview scene')}<select
+      aria-label={t('Preview scene')}
       bind:value={source}
       disabled={!enabled || busy}
-      ><option value="scene">{t('Текущая сцена Windows')}</option><option value="editor"
-        >{t('Импортированный редактор')}</option
+      ><option value="scene">{t('Current Windows scene')}</option><option value="editor"
+        >{t('Imported editor')}</option
       ></select
     ></label
   >
-  <button disabled={!enabled || busy} onclick={preview}>{t('Показать подготовленный кадр')}</button>
-  {#if busy}<p role="status">{t('Создаётся кадр из приватной подготовки…')}</p>{/if}
+  <button disabled={!enabled || busy} onclick={preview}>{t('Show prepared frame')}</button>
+  {#if busy}<p role="status">{t('Rendering a frame from private preparation…')}</p>{/if}
   {#if url}<LcdPreview {geometry}
-      ><img src={url} alt={t('Кадр до Apply; физический вывод не подтверждён')} /></LcdPreview
+      ><img src={url} alt={t('Frame before Apply; physical output is unverified')} /></LcdPreview
     >{/if}
   <p>
     {t(
-      'Первый кадр видео и текущие показания датчиков. Учтён поворот LCD. Preview не публикует файлы и не меняет экран.',
+      'First video frame and current sensor readings, with LCD rotation. Preview does not publish files or change the screen.',
     )}
   </p>
-  {#if error}<p role="alert">{t('Не удалось создать подготовленный кадр: {0}', error)}</p>{/if}
+  {#if error}<p role="alert">{t('Could not render the prepared frame: {0}', error)}</p>{/if}
 </section>
 
 <style>

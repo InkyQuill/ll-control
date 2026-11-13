@@ -4,13 +4,13 @@
   let {
     feature,
     message,
-    label = 'Экспериментально',
+    label = 'Experimental',
   }: { feature: string; message: string; label?: string } = $props();
 </script>
 
 <span class="experimental-notice" data-status="experimental" data-feature={feature}>
   <span class="experimental-badge">{t(label)}</span>
-  <StudioPopover label={t('Ограничения экспериментальной функции')} icon="help"
+  <StudioPopover label={t('Experimental feature limitations')} icon="help"
     ><p>{t(message)}</p></StudioPopover
   >
 </span>

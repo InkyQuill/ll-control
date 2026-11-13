@@ -14,9 +14,8 @@
 <div class="row placement">
   <label>X<input type="number" min="0" max="479" bind:value={style.x} /></label><label
     >Y<input type="number" min="0" max="479" bind:value={style.y} /></label
-  ><label>{t('Размер')}<input type="number" min="8" max="160" bind:value={style.size} /></label
-  ><label
-    >{t('Цвет')}<input
+  ><label>{t('Size')}<input type="number" min="8" max="160" bind:value={style.size} /></label><label
+    >{t('Color')}<input
       type="color"
       value={hex(style.color)}
       oninput={(e) => {
@@ -34,7 +33,7 @@
   }}
 />
 <label
-  >{t('Непрозрачность текста, %')}<input
+  >{t('Text opacity, %')}<input
     type="number"
     min="0"
     max="100"
@@ -43,21 +42,22 @@
   /></label
 >
 <label
-  >{t('Выравнивание')}<select bind:value={style.align}
-    ><option value="left">{t('Слева')}</option><option value="center">{t('По центру')}</option
-    ><option value="right">{t('Справа')}</option></select
+  >{t('Alignment')}<select bind:value={style.align}
+    ><option value="left">{t('Left')}</option><option value="center">{t('Centered')}</option><option
+      value="right">{t('Right')}</option
+    ></select
   ></label
 >
 
-<StudioPopover label={`${t('Дополнительные настройки текста')}`}>
+<StudioPopover label={`${t('Advanced text settings')}`}>
   <label
-    >{t('Вертикальный якорь')}<select
-      aria-label={t('Вертикальный якорь')}
+    >{t('Vertical anchor')}<select
+      aria-label={t('Vertical anchor')}
       value={style.vertical_align ?? 'top'}
       onchange={(e) =>
         (style.vertical_align = e.currentTarget.value as typeof style.vertical_align)}
-      ><option value="top">{t('Верх')}</option><option value="center">{t('Центр')}</option><option
-        value="bottom">{t('Низ')}</option
+      ><option value="top">{t('Top')}</option><option value="center">{t('Center')}</option><option
+        value="bottom">{t('Bottom')}</option
       ></select
     ></label
   >
@@ -66,10 +66,10 @@
       type="checkbox"
       checked={style.max_width != null}
       onchange={(e) => (style.max_width = e.currentTarget.checked ? 358 : null)}
-    />{t('Переносить текст по ширине')}</label
+    />{t('Wrap text to width')}</label
   >
   {#if style.max_width != null}<label
-      >{t('Ширина текста, px')}<input
+      >{t('Text width, px')}<input
         type="number"
         min="1"
         max="480"
@@ -81,17 +81,17 @@
       type="checkbox"
       checked={style.line_box ?? false}
       onchange={(e) => (style.line_box = e.currentTarget.checked)}
-    />{t('Высота блока по строкам (CSS)')}</label
+    />{t('Line box height (CSS)')}</label
   >
   <label
     ><input
       type="checkbox"
       checked={style.line_height != null}
       onchange={(e) => (style.line_height = e.currentTarget.checked ? 58 : null)}
-    />{t('Задать межстрочный интервал')}</label
+    />{t('Set line spacing')}</label
   >
   {#if style.line_height != null}<label
-      >{t('Межстрочный интервал, px')}<input
+      >{t('Line spacing, px')}<input
         type="number"
         min="8"
         max="320"
@@ -106,12 +106,12 @@
         (style.shadow = e.currentTarget.checked
           ? { x: 2, y: 2, blur: 2, color: [0, 0, 0], opacity: 60 }
           : null)}
-    />{t('Тень текста')}</label
+    />{t('Text shadow')}</label
   >
   {#if style.shadow}
     <div class="row">
       <label
-        >{t('Смещение тени X')}<input
+        >{t('Shadow offset X')}<input
           type="number"
           min="-32"
           max="32"
@@ -119,7 +119,7 @@
         /></label
       >
       <label
-        >{t('Смещение тени Y')}<input
+        >{t('Shadow offset Y')}<input
           type="number"
           min="-32"
           max="32"
@@ -127,7 +127,7 @@
         /></label
       >
       <label
-        >{t('Размытие тени')}<input
+        >{t('Shadow blur')}<input
           type="number"
           min="0"
           max="16"
@@ -135,7 +135,7 @@
         /></label
       >
       <label
-        >{t('Непрозрачность тени, %')}<input
+        >{t('Shadow opacity, %')}<input
           type="number"
           min="0"
           max="100"
@@ -143,7 +143,7 @@
         /></label
       >
       <label
-        >{t('Цвет тени')}<input
+        >{t('Shadow color')}<input
           type="color"
           value={hex(style.shadow.color)}
           oninput={(e) => {

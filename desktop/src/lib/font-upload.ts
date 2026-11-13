@@ -18,7 +18,7 @@ export async function uploadFont(
   progress: (received: number) => void,
 ): Promise<string> {
   if (!file.size || file.size > 16 * 1024 * 1024)
-    throw new ValidationError('Шрифт должен быть размером от 1 байта до 16 MiB');
+    throw new ValidationError('The font must contain between 1 byte and 16 MiB');
   let id: string | undefined;
   const call = (request: object) => rpc<UploadState>('font_upload', { request });
   try {
@@ -34,7 +34,7 @@ export async function uploadFont(
       signal.throwIfAborted();
       const state = await call({ action: 'chunk', id, offset, bytes });
       if (state.received !== offset + bytes.length)
-        throw new ValidationError('Неверное смещение загрузки шрифта');
+        throw new ValidationError('Unexpected font upload offset');
       progress(state.received);
     }
     signal.throwIfAborted();
@@ -49,7 +49,7 @@ export async function uploadFont(
     }
     signal.throwIfAborted();
     if (!finished.asset || !/^[0-9a-f]{32}$/.test(finished.asset))
-      throw new ValidationError('Шрифт не сохранён');
+      throw new ValidationError('The font was not saved');
     return finished.asset;
   } finally {
     // Cancel releases the session, including completed uploads, without deleting the asset.

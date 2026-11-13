@@ -10,7 +10,7 @@ import {
 import { translate } from '../src/lib/localization';
 import type { CoolingPolicy } from '../src/lib/api';
 
-test('archive phase/name resources have English translations and preserve their Russian resources', () => {
+test('archive phase/name resources use English source text and have Russian translations', () => {
   for (const source of [
     ...Object.values(groupPhases),
     ...Object.values(archivePhase),
@@ -18,7 +18,8 @@ test('archive phase/name resources have English translations and preserve their 
     ...Object.values(profileGroupNames),
   ]) {
     expect(translate(source, 'en-US')).not.toMatch(/[А-Яа-яЁё]/);
-    expect(translate(source, 'ru-RU')).toBe(source);
+    expect(translate(source, 'en-US')).toBe(source);
+    expect(translate(source, 'ru-RU')).toMatch(/[А-Яа-яЁё]/);
   }
 });
 

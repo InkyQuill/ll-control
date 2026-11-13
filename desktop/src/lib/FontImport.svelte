@@ -69,19 +69,19 @@
   }
 </script>
 
-<StudioPopover label={`${t('Пользовательские шрифты')}`} text>
-  <StudioPopover label={t('Справка')} icon="help"
+<StudioPopover label={`${t('Custom fonts')}`} text>
+  <StudioPopover label={t('Help')} icon="help"
     ><p>
       {t(
-        'TTF/OTF, до 16 MiB. Загрузка не меняет тему и экран. Коллекции TTC и веб-шрифты не поддерживаются.',
+        'TTF/OTF, up to 16 MiB. Uploading does not change the theme or screen. TTC collections and web fonts are unsupported.',
       )}
     </p></StudioPopover
   >
-  <StudioPopover label={`${t('Лицензии встроенных шрифтов')}`} text
+  <StudioPopover label={`${t('Bundled font licenses')}`} text
     ><pre>{fontLicenses}</pre></StudioPopover
   >
   <label
-    >{t('Загрузить шрифт')}<input
+    >{t('Upload font')}<input
       bind:this={fileInput}
       type="file"
       accept=".ttf,.otf"
@@ -89,18 +89,18 @@
       onchange={choose}
     /></label
   >
-  {#if uploading}<progress max={size} value={received} aria-label={t('Загрузка шрифта')}
+  {#if uploading}<progress max={size} value={received} aria-label={t('Font upload')}
     ></progress><button bind:this={cancelButton} onclick={() => controller?.abort()}
-      >{t('Отменить загрузку шрифта')}</button
+      >{t('Cancel font upload')}</button
     >{/if}
   {#if status}<p role="status">
       {status === 'uploaded'
-        ? t('Шрифт загружен. Выберите его в настройках слоя, затем примените тему.')
-        : t('Загрузка отменена. Тема не изменена.')}
+        ? t('Font uploaded. Select it in the layer settings, then apply the theme.')
+        : t('Upload cancelled. The theme was not changed.')}
     </p>{/if}
   {#if error}<p role="alert">
       {#if error instanceof ValidationError}{t(error.resource, ...error.values)}{:else}{t(
-          'Не удалось загрузить шрифт:',
+          'Could not upload the font:',
         )} <span>{error}</span>{/if}
     </p>{/if}
 </StudioPopover>

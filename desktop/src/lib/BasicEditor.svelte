@@ -25,17 +25,17 @@
   let failure = $state.raw<{ owner: Theme; error: ValidationError } | null>(null);
   const error = $derived(failure?.owner === theme ? failure.error : null);
   const backgrounds = $derived({
-    image_video: t('Изображение или видео'),
-    background_color: t('Цвет и градиенты'),
+    image_video: t('Image or video'),
+    background_color: t('Color and gradients'),
   });
   const overlays = $derived({
-    none: t('Без текста'),
-    slider_sensor: t('Один датчик'),
-    duo_sensor: t('Два датчика'),
-    three_sensor: t('Три датчика'),
-    four_sensor: t('Четыре датчика'),
-    time: t('Часы'),
-    custom: t('Свой текст'),
+    none: t('No text'),
+    slider_sensor: t('Single sensor'),
+    duo_sensor: t('Two sensors'),
+    three_sensor: t('Three sensors'),
+    four_sensor: t('Four sensors'),
+    time: t('Clock'),
+    custom: t('Custom text'),
   });
   function select(background: BasicBackground, overlay: BasicOverlay) {
     if (disabled) return false;
@@ -51,7 +51,7 @@
           error instanceof ValidationError
             ? error
             : new ValidationError(
-                'Не удалось переключить вариант. Черновик сохранён; загрузите тему заново.',
+                'Could not switch presets. Your draft is preserved; reload the theme.',
               ),
       };
       return false;
@@ -61,9 +61,9 @@
 
 {#if editor && selected}
   <fieldset class="basic-presets" {disabled}>
-    <legend>{t('Варианты фона и текста')}</legend>
+    <legend>{t('Background and text presets')}</legend>
     <label
-      >{t('Вариант фона')}
+      >{t('Background preset')}
       <select
         value={editor.selected_background}
         onchange={(event) => {
@@ -78,7 +78,7 @@
       </select>
     </label>
     <label
-      >{t('Вариант текста')}
+      >{t('Text preset')}
       <select
         value={selected.selected_overlay}
         onchange={(event) => {
@@ -92,9 +92,9 @@
           >{/each}
       </select>
     </label>
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
-        {t('Каждый вариант сохраняет свои правки. Изменения остаются в черновике до применения.')}
+        {t('Each preset keeps its edits. Changes stay in the draft until you apply them.')}
       </p></StudioPopover
     >
     {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}

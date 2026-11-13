@@ -7,23 +7,22 @@ export interface ArchiveMessage {
 }
 const resources = {
   windows_preparation_failed:
-    'Windows-архив не подготовлен. Проверьте файл, record и привязки датчиков; повторите подготовку.',
+    'Windows archive is not prepared. Check the file, controller record and sensor bindings, then prepare again.',
   windows_import_unconfirmed:
-    'Результат Windows импорта не подтверждён. Прочитайте результат по ID; новый импорт автоматически не запускался.',
-  cancelled: 'Операция отменена.',
+    'The Windows import result is unconfirmed. Read the operation ID; no new import was started automatically.',
+  cancelled: 'Operation cancelled.',
   pending_profile_operation:
-    'Сначала прочитайте результат сохранённой операции или закройте её сведения после обновления списка.',
-  pending_group_operation:
-    'Сначала прочитайте результат сохранённой операции и закройте её сведения.',
+    'Read the saved operation result or refresh the list and close its details first.',
+  pending_group_operation: 'Read the saved operation result and close its details first.',
   profile_export_unconfirmed:
-    'Архив подготовлен в daemon; локальный файл не подтверждён. Отмените передачу и повторите экспорт.',
-  group_export_unconfirmed:
-    'Локальное сохранение файла не подтверждено. Отмените передачу и повторите экспорт.',
-  cancel_unconfirmed: 'Отмена передачи не подтверждена; прочитайте результат по ID операции.',
-  invalid_archive_file: 'Выберите обычный файл архива допустимого размера',
-  invalid_profile_archive: 'Это не архив профиля LL-Control',
-  invalid_manifest_length: 'Неверная длина manifest',
-  destination_exists: 'Файл уже существует: выберите новое имя',
+    'The daemon prepared the archive, but the local file is unconfirmed. Cancel the transfer and export again.',
+  group_export_unconfirmed: 'The local file is unconfirmed. Cancel the transfer and export again.',
+  cancel_unconfirmed:
+    'Transfer cancellation is unconfirmed. Read the result using the operation ID.',
+  invalid_archive_file: 'Choose a regular archive file within the size limit.',
+  invalid_profile_archive: 'This is not an LL-Control profile archive.',
+  invalid_manifest_length: 'Invalid archive manifest length.',
+  destination_exists: 'The file already exists. Choose a new name.',
 } as const;
 /** Only explicit application call sites can assign a translatable notice code. */
 export class ArchiveUiError extends Error {

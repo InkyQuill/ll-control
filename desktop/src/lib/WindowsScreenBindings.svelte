@@ -102,14 +102,14 @@
   }
 </script>
 
-<section class="screen-bindings" aria-label={t('Привязки Windows Screen')}>
-  <h3>{t('Исходный экран Windows')}</h3>
+<section class="screen-bindings" aria-label={t('Windows Screen bindings')}>
+  <h3>{t('Windows source screen')}</h3>
   <label
-    >{t('Исходный контроллер Windows')}<select
-      aria-label={t('Исходный контроллер Windows')}
+    >{t('Windows source controller')}<select
+      aria-label={t('Windows source controller')}
       bind:value={record}
       disabled={!canEdit}
-      ><option value="">{t('Выберите record контроллера')}</option
+      ><option value="">{t('Choose a controller record')}</option
       >{#each job.windows_source?.controllers ?? [] as source (source.record_index)}<option
           value={String(source.record_index)}
           >{t('Record {0} · {1}', source.record_index, source.profile_sha256.slice(0, 12))}</option
@@ -117,21 +117,21 @@
     ></label
   >
   <button disabled={!canEdit || record === ''} onclick={() => oninspect(Number(record))}
-    >{t('Прочитать требования экрана')}</button
+    >{t('Read screen requirements')}</button
   >
   {#if requirements && record === String(requirements.record_index)}
     {#if requirements.deferred.length}<p role="alert">
         {t(
-          'Этот экран пока нельзя импортировать: текущая сцена, эффект или файлы требуют дополнительной поддержки.',
+          'This screen cannot be imported yet: its current scene, effect or files require additional support.',
         )}
       </p>{/if}
     <p>
       {t(
-        'Назначьте источники явно. Неизвестные ID датчиков сохраняются без подмены; до Apply экран не меняется.',
+        'Choose sources explicitly. Unknown sensor IDs are preserved without substitution; the screen does not change until Apply.',
       )}
     </p>
     <label
-      >{t('Название импортированной темы')}<input
+      >{t('Imported theme name')}<input
         bind:value={name}
         maxlength="128"
         disabled={!canEdit}
@@ -147,7 +147,7 @@
               disabled={!canEdit}
               maxlength="1024"
               aria-invalid={windowsBindingInvalid(role, ids, sensors)}
-              placeholder={t('Выберите или введите ID датчика')}
+              placeholder={t('Choose or enter a sensor ID')}
             /></label
           >
           <datalist id={`screen-${job.id}-${role}`}
@@ -156,20 +156,20 @@
               >{/each}</datalist
           >
           {#if windowsBindingInvalid(role, ids, sensors)}<p role="alert">
-              {t('ID повторяется, имеет неподходящие единицы или недопустимый формат.')}
+              {t('The ID is duplicated, has incompatible units or uses an invalid format.')}
             </p>{:else if windowsSourceUnverified(role, ids, sensors)}<p>
-              {t('Источник недоступен или не подтверждён. ID сохранён без подмены.')}
+              {t('Source unavailable or unverified. The ID is retained without substitution.')}
             </p>{/if}
         </div>
       {/each}
     </div>
     {#each requirements.bindings.fonts as family (family)}<label
-        >{t('Шрифт для {0}', family)}<select
-          aria-label={t('Шрифт для {0}', family)}
+        >{t('Font for {0}', family)}<select
+          aria-label={t('Font for {0}', family)}
           value={fontMap[family] ?? ''}
           disabled={!canEdit}
           onchange={(e) => (fontMap = { ...fontMap, [family]: e.currentTarget.value })}
-          ><option value="">{t('Выберите шрифт')}</option
+          ><option value="">{t('Select a font')}</option
           >{#each screenFonts as [value, label] (value)}<option {value}>{label}</option
             >{/each}{#each fonts as font (font.key)}<option value={`asset:${font.key}`}
               >{font.name}</option
@@ -178,29 +178,33 @@
             >{/if}</select
         ></label
       >{/each}
-    <p>{t('Шрифты выбираются явно; совпадение с Windows по метрикам ещё требует проверки.')}</p>
+    <p>
+      {t(
+        'Fonts are selected explicitly; matching Windows font metrics still requires verification.',
+      )}
+    </p>
     {#if Object.keys(requirements.bindings.resources).length}<button
         disabled={!canEdit || loading}
-        onclick={refresh}>{t('Обновить доступные изображения и видео')}</button
+        onclick={refresh}>{t('Refresh available images and videos')}</button
       >{/if}
     {#each Object.entries(requirements.bindings.resources) as [reference, imageOnly] (reference)}
       <label
         ><span class="reference">{reference}</span><span
-          >{imageOnly ? t('Требуется изображение') : t('Изображение или видео')}</span
+          >{imageOnly ? t('Image required') : t('Image or video')}</span
         ><select
           aria-label={reference}
           value={resourceValue(reference) ?? ''}
           disabled={!canEdit}
           onchange={(e) => (resources = { ...resources, [reference]: e.currentTarget.value })}
-          ><option value="">{t('Выберите ресурс')}</option>
+          ><option value="">{t('Select a resource')}</option>
           {#each requirements.payloads.filter((p) => p.kind === 'image' || (!imageOnly && p.kind === 'video')) as payload (payload.entry)}<option
-              value={`archive:${payload.entry}`}>{t('Из архива: {0}', payload.entry)}</option
+              value={`archive:${payload.entry}`}>{t('From archive: {0}', payload.entry)}</option
             >{/each}
           {#each images as image (image.key)}<option value={`image:${image.key}`}
-              >{t('Изображение: {0}', image.name ?? image.key)}</option
+              >{t('Image: {0}', image.name ?? image.key)}</option
             >{/each}
           {#if !imageOnly}{#each videos as video (video.key)}<option value={`video:${video.key}`}
-                >{t('Видео: {0}', video.name)}</option
+                >{t('Video: {0}', video.name)}</option
               >{/each}{/if}
           {#if resourceValue(reference) && !resourceValue(reference).startsWith('archive:') && !images.some((i) => `image:${i.key}` === resourceValue(reference)) && !videos.some((v) => `video:${v.key}` === resourceValue(reference))}<option
               value={resourceValue(reference)}>{resourceValue(reference)}</option
@@ -208,17 +212,15 @@
         </select></label
       >
     {/each}
-    {#if error}<p role="alert">{t('Не удалось прочитать ресурсы: {0}', error)}</p>{/if}
+    {#if error}<p role="alert">{t('Could not read resources: {0}', error)}</p>{/if}
     <p>
-      {t(
-        'При подготовке все файлы будут проверены и декодированы. Сохранённые Linux-профили останутся без изменений.',
-      )}
+      {t('Preparation checks and decodes every file. Saved Linux profiles remain unchanged.')}
     </p>
     {#if job.phase === 'bindings'}<button
         disabled={!canEdit || !draft}
         onclick={() => {
           if (draft) onprepare(draft);
-        }}>{t('Подготовить импорт экрана')}</button
+        }}>{t('Prepare screen import')}</button
       >{/if}
   {/if}
 </section>

@@ -182,7 +182,7 @@
   class="canvas"
   bind:this={surface}
   role="group"
-  aria-label={t('Холст LCD')}
+  aria-label={t('LCD canvas')}
   onpointermove={motion}
   onpointerup={finish}
   onpointercancel={cancel}
@@ -190,7 +190,7 @@
 >
   <div class="rotated" style:transform={`rotate(${rotation}deg)`}>
     {#if gesture && background && images.length === layers.length}
-      <img src={background} alt={t('Черновик LCD')} draggable="false" />
+      <img src={background} alt={t('LCD draft')} draggable="false" />
       {#each layers as layer, index (keys[index])}
         {#if images[index] && !layer.editor?.hidden}
           <img
@@ -203,7 +203,7 @@
           />
         {/if}
       {/each}
-    {:else if image}<img src={image} alt={t('Черновик LCD')} draggable="false" />{/if}
+    {:else if image}<img src={image} alt={t('LCD draft')} draggable="false" />{/if}
     {#each layers as layer, index (keys[index])}
       {@const box = bounds[index]}
       {#if box && !layer.editor?.hidden && editableLayer(layer)}
@@ -211,7 +211,7 @@
           class="region"
           class:selected={selected === index}
           style={rectangle(index, box)}
-          aria-label={t('Выбрать слой {0}: {1}', index + 1, labels[layer.kind])}
+          aria-label={t('Select layer {0}: {1}', index + 1, labels[layer.kind])}
           aria-pressed={selected === index}
           aria-disabled={!ready}
           onfocus={() => onselect(index)}
@@ -230,14 +230,14 @@
         class="resize"
         style:left={`${Math.max(6, Math.min(474, box.x + box.width)) / 4.8}%`}
         style:top={`${Math.max(6, Math.min(474, box.y + box.height)) / 4.8}%`}
-        aria-label={t('Изменить размер выбранного слоя')}
+        aria-label={t('Resize selected layer')}
         aria-disabled={!ready}
         onpointerdown={(event) => start(event, selected, 'resize')}
         onkeydown={(event) => keyboard(event, selected)}
       ></button>
     {/if}
   </div>
-  {#if !ready}<span class="pending">{t('Обновление холста…')}</span>{/if}
+  {#if !ready}<span class="pending">{t('Updating canvas…')}</span>{/if}
 </div>
 
 <style>

@@ -37,21 +37,21 @@
     if (typeof value === 'string') return t(value);
     switch (value.context) {
       case 'source':
-        return t('Не удалось открыть изображение: {0}', diagnosticText(value.detail));
+        return t('Could not open the image: {0}', diagnosticText(value.detail));
       case 'capture':
-        return t('Не удалось получить снимок экрана: {0}', diagnosticText(value.detail));
+        return t('Could not capture the screen: {0}', diagnosticText(value.detail));
       case 'cancel-capture':
-        return t('Отмена снимка экрана не подтверждена: {0}', diagnosticText(value.detail));
+        return t('Screenshot cancellation was not confirmed: {0}', diagnosticText(value.detail));
       case 'preview':
-        return t('Не удалось подготовить preview изображения: {0}', diagnosticText(value.detail));
+        return t('Could not prepare the image preview: {0}', diagnosticText(value.detail));
       case 'save':
         return t(
-          'Сохранение изображения не подтверждено: {0}. Проверьте библиотеку и коллекции: автоматического повтора сохранения не будет.',
+          'Image saving was not confirmed: {0}. Check the library and collections; saving will not be retried automatically.',
           diagnosticText(value.detail),
         );
       case 'membership':
         return t(
-          'Файл сохранён в каталоге, но добавление в коллекцию не подтверждено: {0}. Проверьте библиотеку и коллекции: автоматического повтора сохранения не будет.',
+          'The file was saved to the catalog, but adding it to the collection was not confirmed: {0}. Check the library and collections; saving will not be retried automatically.',
           diagnosticText(value.detail),
         );
     }
@@ -67,12 +67,12 @@
     transforms = $state<Transform[]>([]);
   type ColorKey = 'hue' | 'saturation' | 'brightness' | 'contrast' | 'sharpen' | 'blur';
   const colorControls: { key: ColorKey; label: string; min: number; max: number }[] = [
-    { key: 'hue', label: 'Сдвиг тона', min: 0, max: 360 },
-    { key: 'saturation', label: 'Насыщенность', min: -25, max: 75 },
-    { key: 'brightness', label: 'Яркость изображения', min: -100, max: 100 },
-    { key: 'contrast', label: 'Контраст изображения', min: -100, max: 100 },
-    { key: 'sharpen', label: 'Резкость', min: 0, max: 10 },
-    { key: 'blur', label: 'Размытие', min: 0, max: 10 },
+    { key: 'hue', label: 'Hue shift', min: 0, max: 360 },
+    { key: 'saturation', label: 'Saturation', min: -25, max: 75 },
+    { key: 'brightness', label: 'Image brightness', min: -100, max: 100 },
+    { key: 'contrast', label: 'Image contrast', min: -100, max: 100 },
+    { key: 'sharpen', label: 'Sharpen', min: 0, max: 10 },
+    { key: 'blur', label: 'Blur', min: 0, max: 10 },
   ];
   let filters = $state<Record<ColorKey, number | undefined>>({
     hue: 0,
@@ -159,7 +159,7 @@
             ? await invoke<unknown>('cancel_screenshot', { id: owned })
             : 'closed';
           if (outcome !== 'closed' && outcome !== 'owner_gone')
-            throw new ValidationError('Неподдерживаемый ответ отмены захвата экрана.');
+            throw new ValidationError('Unsupported screenshot cancellation response.');
           captureOwnerGone = outcome === 'owner_gone';
           if (!owned || captureId === owned) {
             captureId = null;
@@ -192,8 +192,8 @@
     const released = await releaseCapture(captureId);
     if (released)
       notice = captureOwnerGone
-        ? 'Портал отключился. Предыдущий запрос снимка завершён.'
-        : 'Снимок экрана отменён.';
+        ? 'The portal disconnected. The previous screenshot request has ended.'
+        : 'Screenshot cancelled.';
     return released;
   }
   async function close() {
@@ -270,7 +270,7 @@
       const result = await invoke<ArrayBuffer>('capture_screenshot', { id });
       if (started !== generation) return;
       if (!result.byteLength) {
-        notice = 'Снимок экрана отменён.';
+        notice = 'Screenshot cancelled.';
         return;
       }
       const bytes = Array.from(new Uint8Array(result));
@@ -282,7 +282,7 @@
       attempted = false;
       width = info.width;
       height = info.height;
-      name = t('Снимок экрана.png');
+      name = t('Screenshot.png');
       reset();
       sourceUrl = URL.createObjectURL(new Blob([new Uint8Array(info.png)], { type: 'image/png' }));
     } catch (e) {
@@ -327,7 +327,7 @@
     loading = true;
     try {
       if (!file.size || file.size > 16 * 1024 * 1024) {
-        error = 'Выберите изображение до 16 MiB.';
+        error = 'Select an image up to 16 MiB.';
         return;
       }
       const bytes = Array.from(new Uint8Array(await file.arrayBuffer()));
@@ -428,37 +428,35 @@
 </script>
 
 <button bind:this={trigger} disabled={disabled || saving} onclick={start}
-  >{existing
-    ? t('Редактировать {0}…', existing.name)
-    : '' + t('Импорт с редактированием…') + ''}</button
+  >{existing ? t('Edit {0}…', existing.name) : '' + t('Import and edit…') + ''}</button
 >
 {#if open}
-  <section bind:this={panel} popover="auto" aria-label={t('Редактор изображения')}>
+  <section bind:this={panel} popover="auto" aria-label={t('Image editor')}>
     <header>
-      <h3>{t('Редактор изображения')}</h3>
+      <h3>{t('Image editor')}</h3>
       <button
         class="icon-action"
-        aria-label={t('Закрыть редактор изображения')}
-        title={t('Закрыть редактор изображения')}
+        aria-label={t('Close image editor')}
+        title={t('Close image editor')}
         disabled={saving || cancelling}
         onclick={close}><StudioIcon name="close" /></button
       >
     </header>
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'Выберите квадратную область и преобразования. Исходный файл сохранится. На LCD ничего не отправляется до применения темы.',
+          'Select a square region and transformations. The original file is preserved. Nothing is sent to the LCD until you apply the theme.',
         )}
       </p></StudioPopover
     >
-    {#if existing}<StudioPopover label={t('Справка')} icon="help"
+    {#if existing}<StudioPopover label={t('Help')} icon="help"
         ><p>
           {t(
-            'Результат заменит запись выбранной коллекции. Прежний файл останется доступен сохранённым темам.',
+            'The result replaces the selected collection entry. The previous file remains available to saved themes.',
           )}
         </p></StudioPopover
       >{:else}<label
-        >{t('Файл для редактирования')}<input
+        >{t('File to edit')}<input
           type="file"
           accept=".png,.jpg,.jpeg,.webp,.bmp"
           disabled={loading || saving || disabled}
@@ -467,20 +465,22 @@
       >{/if}
     {#if !existing}
       <button disabled={loading || saving || disabled} onclick={screenshot}
-        >{t('Снять экран…')}</button
+        >{t('Take screenshot…')}</button
       >
       {#if capturing}<p role="status">
           {cancelRequested
-            ? t('Отмена снимка не подтверждена. Повторите отмену перед новым снимком.')
-            : t('Выберите область или экран в системном окне.')}
+            ? t(
+                'Screenshot cancellation is not confirmed. Retry cancellation before taking another screenshot.',
+              )
+            : t('Select a region or screen in the system dialog.')}
         </p>
-        <button disabled={cancelling} onclick={cancelCapture}>{t('Отменить снимок')}</button>{/if}
+        <button disabled={cancelling} onclick={cancelCapture}>{t('Cancel screenshot')}</button>{/if}
     {/if}
     {#if source.length}
       <p>{name} · {width} × {height} px</p>
       <fieldset disabled={loading || saving || attempted}>
-        <legend>{t('Область и преобразования')}</legend>
-        <label><input type="checkbox" bind:checked={crop} />{t('Обрезать квадрат')}</label>
+        <legend>{t('Region and transformations')}</legend>
+        <label><input type="checkbox" bind:checked={crop} />{t('Crop square')}</label>
         {#if crop}
           <label
             >Crop X<input type="number" min="0" max={width - 1} step="1" bind:value={x} /></label
@@ -489,7 +489,7 @@
             >Crop Y<input type="number" min="0" max={height - 1} step="1" bind:value={y} /></label
           >
           <label
-            >{t('Сторона crop')}<input
+            >{t('Crop side length')}<input
               type="number"
               min="1"
               max={Math.min(width, height)}
@@ -497,13 +497,13 @@
               bind:value={side}
             /></label
           >
-        {:else}<StudioPopover label={t('Справка')} icon="help"
-            ><p>{t('Всё изображение будет растянуто до 480 × 480.')}</p></StudioPopover
+        {:else}<StudioPopover label={t('Help')} icon="help"
+            ><p>{t('The entire image will be stretched to 480 × 480.')}</p></StudioPopover
           >{/if}
         <button
           class="source"
           aria-label={t(
-            'Переместить область crop указателем; точные координаты доступны в полях выше',
+            'Drag the crop region; exact coordinates are available in the fields above',
           )}
           onpointerdown={(e) => {
             if (e.button !== 0) return;
@@ -516,7 +516,7 @@
           onpointercancel={() => (dragging = false)}
           onlostpointercapture={() => (dragging = false)}
         >
-          <img src={sourceUrl} draggable={false} alt={t('Исходное изображение для crop')} />
+          <img src={sourceUrl} draggable={false} alt={t('Original image for cropping')} />
           {#if crop && valid}<span
               class="selection"
               style:left={`${(x! / width) * 100}%`}
@@ -527,27 +527,27 @@
         </button>
         <div class="actions">
           <button disabled={transforms.length >= 64} onclick={() => transform('rotate_left')}
-            >{t('Повернуть влево')}</button
+            >{t('Rotate left')}</button
           >
           <button disabled={transforms.length >= 64} onclick={() => transform('rotate_right')}
-            >{t('Повернуть вправо')}</button
+            >{t('Rotate right')}</button
           >
           <button disabled={transforms.length >= 64} onclick={() => transform('flip_horizontal')}
-            >{t('Отразить по горизонтали')}</button
+            >{t('Flip horizontally')}</button
           >
           <button disabled={transforms.length >= 64} onclick={() => transform('flip_vertical')}
-            >{t('Отразить по вертикали')}</button
+            >{t('Flip vertically')}</button
           >
           <button
             disabled={!transforms.length}
             onclick={() => (transforms = transforms.slice(0, -1))}
-            >{t('Отменить преобразование')}</button
+            >{t('Undo transformation')}</button
           >
-          <button onclick={reset}>{t('Сбросить правки')}</button>
+          <button onclick={reset}>{t('Reset edits')}</button>
         </div>
-        <p>{t('Преобразований:')} {transforms.length}</p>
+        <p>{t('Transformations:')} {transforms.length}</p>
         <fieldset>
-          <legend>{t('Фильтры изображения')}</legend>
+          <legend>{t('Image filters')}</legend>
           {#each colorControls as control (control.key)}
             <label
               >{t(control.label)}<input
@@ -559,7 +559,7 @@
               /></label
             >
             <label
-              >{t('Ползунок:')}
+              >{t('Slider:')}
               {t(control.label)}<input
                 type="range"
                 min={control.min}
@@ -572,28 +572,28 @@
         </fieldset>
       </fieldset>
       {#if !valid}<p role="alert">
-          {t('Область должна быть целой, непустой и находиться внутри изображения.')}
+          {t('The region must have integer coordinates, be nonempty and stay within the image.')}
         </p>{/if}
       {#if !filtersValid}<p role="alert">
-          {t('Заполните параметры фильтров в указанных диапазонах.')}
+          {t('Enter filter values within the indicated ranges.')}
         </p>{/if}
       <button disabled={!valid || !filtersValid || loading || saving || attempted} onclick={preview}
-        >{t('Подготовить preview изображения')}</button
+        >{t('Prepare image preview')}</button
       >
       {#if current}<img
           class="preview"
           src={previewUrl}
-          alt={t('Результат редактирования 480 на 480')}
+          alt={t('Edited result, 480 by 480')}
           width="240"
           height="240"
         />{/if}
       <button
         disabled={!current || !filtersValid || disabled || loading || saving || attempted}
-        onclick={save}>{t('Сохранить изображение в галерею')}</button
+        onclick={save}>{t('Save image to gallery')}</button
       >
     {/if}
-    {#if loading}<p role="status">{t('Подготовка изображения…')}</p>{/if}
-    {#if saving}<p role="status">{t('Сохранение изображения…')}</p>{/if}
+    {#if loading}<p role="status">{t('Preparing image…')}</p>{/if}
+    {#if saving}<p role="status">{t('Saving image…')}</p>{/if}
     {#if notice}<p role="status">{t(notice)}</p>{/if}
     {#if error}<p role="alert">{errorText(error)}</p>{/if}
   </section>

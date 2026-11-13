@@ -28,7 +28,7 @@
     try {
       await rpc('patch_lcd_config', { dev, patch });
       if (started !== generation) return;
-      notice = 'Настройка отправлена. Остальные параметры LCD сохранены.';
+      notice = 'Setting sent. Other LCD settings were preserved.';
     } catch (e) {
       if (started === generation) error = message(e);
     } finally {
@@ -37,12 +37,12 @@
   }
 </script>
 
-<section aria-label={t('Настройки LCD')}>
-  <h2>{t('Яркость и ориентация')}</h2>
+<section aria-label={t('LCD settings')}>
+  <h2>{t('Brightness and orientation')}</h2>
   <p>
-    {t('Текущее requested:')}
+    {t('Requested settings:')}
     {lcd?.requested.brightness_percent ?? '—'}% · {lcd?.requested.rotation_degrees ?? '—'}{t(
-      '°. Источник:',
+      '°. Source:',
     )}
     {lcd?.source ?? '—'}.
   </p>
@@ -53,34 +53,34 @@
         brightness = lcd.requested.brightness_percent;
         rotation = lcd.requested.rotation_degrees;
       }
-    }}>{t('Загрузить текущие значения')}</button
+    }}>{t('Load current values')}</button
   >
   <label
-    >{t('Яркость LCD:')}
+    >{t('LCD brightness:')}
     {brightness}%<input type="range" min="0" max="100" bind:value={brightness} /></label
   >
   <button
     disabled={busy || !connected || !device}
-    onclick={() => apply({ brightness_percent: brightness })}>{t('Применить яркость')}</button
+    onclick={() => apply({ brightness_percent: brightness })}>{t('Apply brightness')}</button
   >
   <label
-    >{t('Ориентация')}<select bind:value={rotation}
+    >{t('Orientation')}<select bind:value={rotation}
       >{#each [0, 90, 180, 270] as angle (angle)}<option value={angle}>{angle}°</option
         >{/each}</select
     ></label
   >
   <button
     disabled={busy || !connected || !device}
-    onclick={() => apply({ rotation_degrees: rotation })}>{t('Применить поворот')}</button
+    onclick={() => apply({ rotation_degrees: rotation })}>{t('Apply rotation')}</button
   >
   {#if lcd?.last_error}<p role="alert">{lcd.last_error}</p>{/if}
   {#if error}<p role="alert">
-      {t('Не удалось отправить настройку LCD:')} <span>{error}</span>
+      {t('Could not send the LCD setting:')} <span>{error}</span>
     </p>{/if}{#if notice}<p role="status">{t(notice)}</p>{/if}
-  <h2>{t('Работа в фоне')}</h2>
+  <h2>{t('Background operation')}</h2>
   <p>
     {t(
-      'Настройки и тема хранятся в daemon. Закрытие окна их не останавливает. Подключение: локальный Unix socket из XDG_RUNTIME_DIR.',
+      'Settings and the theme are stored by the daemon and keep running when this window closes. Connection: the local Unix socket in XDG_RUNTIME_DIR.',
     )}
   </p>
 </section>

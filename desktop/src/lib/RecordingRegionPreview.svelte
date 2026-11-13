@@ -57,8 +57,7 @@
       picture = image;
     } catch {
       if (active && attempt === revision)
-        error =
-          'Не удалось загрузить кадр источника. Повторите запрос или задайте область числами.';
+        error = 'Could not load the source frame. Retry or enter the region coordinates.';
     } finally {
       if (url && url !== ownedUrl) URL.revokeObjectURL(url);
       if (active && attempt === revision) loading = false;
@@ -177,19 +176,19 @@
   });
 </script>
 
-<section aria-label={t('Кадр для выбора области захвата')}>
+<section aria-label={t('Frame for capture region selection')}>
   <p>
     {t(
-      'Последний доступный полный кадр источника. Потяните от угла к углу; стрелки перемещают область на 1%, Shift — на 10%. Размеры можно уточнить в полях ниже.',
+      'The latest available full source frame. Drag from corner to corner; arrow keys move the region by 1%, or 10% with Shift. Adjust dimensions in the fields below.',
     )}
   </p>
-  {#if loading}<p role="status">{t('Загрузка кадра источника…')}</p>{/if}
+  {#if loading}<p role="status">{t('Loading source frame…')}</p>{/if}
   {#if error}<p role="status">{t(error)}</p>{/if}
   {#if picture}
     <button
       class="source"
       disabled={disabled || loading}
-      aria-label={t('Выбор области захвата на кадре')}
+      aria-label={t('Capture region selection on frame')}
       onpointerdown={start}
       onpointermove={select}
       onpointerup={finish}
@@ -199,11 +198,10 @@
     >
       <canvas bind:this={source} {width} {height} aria-hidden="true"></canvas>
     </button>
-    <p>{t('Выбранная область, растянутая до размера записи:')}</p>
-    <canvas bind:this={result} {width} {height} aria-label={t('Предпросмотр области захвата')}
-    ></canvas>
+    <p>{t('Selected region stretched to the recording size:')}</p>
+    <canvas bind:this={result} {width} {height} aria-label={t('Capture region preview')}></canvas>
   {/if}
-  <button disabled={disabled || loading} onclick={load}>{t('Обновить кадр источника')}</button>
+  <button disabled={disabled || loading} onclick={load}>{t('Refresh source frame')}</button>
 </section>
 
 <style>

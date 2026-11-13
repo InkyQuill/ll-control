@@ -14,7 +14,7 @@ export const basicOverlays: readonly BasicOverlay[] = [
 function editorState(theme: Theme): BasicEditorState {
   const editor = theme.basic_editor;
   if (!editor || lcdPageKind(theme) !== 'basic')
-    throw new ValidationError('В этой теме нет сохранённых вариантов фона и текста.');
+    throw new ValidationError('This theme has no saved background and text presets.');
   const backgrounds = editor.banks.map((bank) => bank.background);
   if (
     !backgrounds.length ||
@@ -22,7 +22,7 @@ function editorState(theme: Theme): BasicEditorState {
     new Set(backgrounds).size !== backgrounds.length ||
     !backgrounds.includes(editor.selected_background)
   )
-    throw new ValidationError('Сохранённые варианты фона повреждены. Загрузите тему заново.');
+    throw new ValidationError('Saved background presets are invalid. Reload the theme.');
   for (const bank of editor.banks) {
     const overlays = bank.overlays.map((item) => item.overlay);
     if (
@@ -38,7 +38,7 @@ function editorState(theme: Theme): BasicEditorState {
           lcdPageKind(item.theme) !== 'basic',
       )
     )
-      throw new ValidationError('Сохранённые варианты текста повреждены. Загрузите тему заново.');
+      throw new ValidationError('Saved text presets are invalid. Reload the theme.');
   }
   return editor;
 }
@@ -70,14 +70,14 @@ export function selectBasicEditor(
     ];
     if (item.theme.layers.length > 32)
       throw new ValidationError(
-        'Слишком много слоёв для переключения. Удалите лишние водяные знаки и повторите.',
+        'Too many layers to switch presets. Remove extra watermarks and try again.',
       );
   }
   active.overlays.find((item) => item.overlay === active.selected_overlay)!.theme = current;
   const target = editor.banks.find((bank) => bank.background === background);
   const selected = target?.overlays.find((item) => item.overlay === overlay);
   if (!target || !selected)
-    throw new ValidationError('Этот вариант не сохранён в теме. Выберите доступный вариант.');
+    throw new ValidationError('This preset is not saved in the theme. Choose an available preset.');
   target.selected_overlay = overlay;
   editor.selected_background = background;
   const next = structuredClone(selected.theme);

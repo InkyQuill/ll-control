@@ -46,19 +46,19 @@
   }
   const terminal = (phase: Phase) => ['complete', 'cancelled', 'failed'].includes(phase);
   const labels: Record<Phase, string> = {
-    uploading: 'Загрузка файла',
-    inspecting: 'Проверка файла',
-    source_ready: 'Исходник проверен',
-    encoding: 'Конвертация для LCD',
-    validating: 'Проверка результата',
-    remuxing: 'Подготовка просмотра',
-    review_ready: 'Ролик готов к просмотру',
-    cancelling: 'Отмена импорта',
-    transferring: 'Передача ролика в библиотеку',
-    publishing: 'Сохранение в библиотеке',
-    complete: 'Ролик сохранён в библиотеке',
-    cancelled: 'Импорт отменён',
-    failed: 'Импорт не завершён',
+    uploading: 'File upload',
+    inspecting: 'Inspecting file',
+    source_ready: 'Source inspected',
+    encoding: 'Encoding for LCD',
+    validating: 'Checking result',
+    remuxing: 'Preparing preview',
+    review_ready: 'Video ready for review',
+    cancelling: 'Cancelling import',
+    transferring: 'Transferring video to library',
+    publishing: 'Saving to library',
+    complete: 'Video saved to library',
+    cancelled: 'Import cancelled',
+    failed: 'Import incomplete',
   };
   type ImportFailure = {
     detail: string;
@@ -71,16 +71,12 @@
     error = { detail: message(cause), context };
   }
   function errorText(): string {
-    if (error?.context === 'validation')
-      return t('Выберите непустой GIF или MP4 размером до 256 MiB.');
+    if (error?.context === 'validation') return t('Select a nonempty GIF or MP4 up to 256 MiB.');
     if (error?.context === 'confirm')
-      return t('{0} Проверьте состояние импорта перед повторным подтверждением.', error.detail);
+      return t('{0} Check the import status before confirming again.', error.detail);
     if (error?.context === 'upload')
-      return t(
-        '{0} Проверьте состояние импорта и библиотеку перед повторной загрузкой.',
-        error.detail,
-      );
-    if (error?.context === 'prepare') return t('{0} Проверьте состояние подготовки.', error.detail);
+      return t('{0} Check the import status and library before uploading again.', error.detail);
+    if (error?.context === 'prepare') return t('{0} Check the preparation status.', error.detail);
     // Unknown diagnostics are data, including exact resource-key collisions.
     return error?.detail || pollError;
   }
@@ -535,28 +531,30 @@
   });
 </script>
 
-<section aria-label={t('Импорт ролика')} class="media-import">
+<section aria-label={t('Video import')} class="media-import">
   {#if existing}<p>
-      {t('Редактирование «')}{existing.name}{t(
-        '». Исходный файл останется доступен другим темам и профилям.',
+      {t('Editing «')}{existing.name}{t(
+        '». The original file remains available to other themes and profiles.',
       )}
-    </p>{:else}<StudioPopover label={t('Справка')} icon="help"
+    </p>{:else}<StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'GIF или MP4 до 1 часа и 256 MiB. Подготовленный ролик также должен укладываться в 256 MiB. Импорт сохраняет ролик; запуск на LCD выбирается отдельно.',
+          'GIF or MP4, up to 1 hour and 256 MiB. The prepared video must also fit within 256 MiB. Import saves the video; playback on the LCD is selected separately.',
         )}
       </p></StudioPopover
     >{/if}
   <label
-    >{t('Размещение видео')}
+    >{t('Video placement')}
     <select bind:value={fit} disabled={active || recording || !ready}>
-      <option value="contain">{t('Целиком, с чёрными полями')}</option>
-      <option value="cover">{t('Заполнить экран, обрезать края')}</option>
-      <option value="stretch">{t('AutoFill — растянуть весь кадр')}</option>
+      <option value="contain">{t('Fit entire frame with black borders')}</option>
+      <option value="cover">{t('Fill screen and crop edges')}</option>
+      <option value="stretch">{t('AutoFill — stretch the entire frame')}</option>
     </select>
   </label>
   {#if fit === 'stretch'}<p>
-      {t('AutoFill заполняет экран всем кадром без обрезки; пропорции могут измениться.')}
+      {t(
+        'AutoFill fills the screen with the entire frame without cropping; aspect ratio may change.',
+      )}
     </p>{/if}
   <label
     ><input
@@ -566,13 +564,13 @@
       onchange={() => {
         if (!cutEnabled && !effectsEnabled && !rangeEnabled) clearSource();
       }}
-    />{t('Цветокоррекция видео')}</label
+    />{t('Video color correction')}</label
   >
   {#if effectsEnabled}
     <fieldset disabled={active || recording || !ready}>
-      <legend>{t('Цветокоррекция всего ролика')}</legend>
+      <legend>{t('Color correction for the entire video')}</legend>
       <label
-        >{t('Контраст видео')}<input
+        >{t('Video contrast')}<input
           type="range"
           min="0"
           max="255"
@@ -581,7 +579,7 @@
         /></label
       >
       <label
-        >{t('Контраст видео — значение')}<input
+        >{t('Video contrast value')}<input
           type="number"
           min="0"
           max="255"
@@ -590,7 +588,7 @@
         /></label
       >
       <label
-        >{t('Яркость видео')}<input
+        >{t('Video brightness')}<input
           type="range"
           min="0"
           max="255"
@@ -599,7 +597,7 @@
         /></label
       >
       <label
-        >{t('Яркость видео — значение')}<input
+        >{t('Video brightness value')}<input
           type="number"
           min="0"
           max="255"
@@ -611,15 +609,15 @@
         onclick={() => {
           contrast = 0;
           brightness = 0;
-        }}>{t('Сбросить цветокоррекцию')}</button
+        }}>{t('Reset color correction')}</button
       >
       <p>
         {t(
-          '0 — без изменения. Яркость осветляет изображение до белого. Настройки применяются ко всем выбранным фрагментам.',
+          '0 leaves the image unchanged. Brightness lightens it towards white. Settings apply to all selected segments.',
         )}
       </p>
       {#if !effectsValid}<p role="alert">
-          {t('Укажите целые значения яркости и контраста от 0 до 255.')}
+          {t('Enter integer brightness and contrast values from 0 to 255.')}
         </p>{/if}
     </fieldset>
   {/if}
@@ -632,7 +630,7 @@
         else if (!effectsEnabled && !rangeEnabled) clearSource();
       }}
       disabled={active || sourceReady || recording || !ready}
-    />{t('Выбрать фрагменты видео')}</label
+    />{t('Select video segments')}</label
   >
   <label
     ><input
@@ -640,30 +638,30 @@
       bind:checked={rangeEnabled}
       onchange={toggleRange}
       disabled={active || sourceReady || recording || !ready}
-    />{t('Один диапазон VideoEdit')}</label
+    />{t('Single VideoEdit range')}</label
   >
   {#if rangeEnabled}
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'Начало и конец одного диапазона. Новый файл сначала загружается для проверки длительности и частоты кадров; кодирование начнётся по отдельной кнопке.',
+          'Start and end of a single range. A new file is uploaded first to inspect duration and frame rate; encoding starts separately.',
         )}
       </p></StudioPopover
     >
     {#if rangeBounds}
       <fieldset disabled={active || recording || !ready}>
-        <legend>{t('Диапазон VideoEdit')}</legend>
+        <legend>{t('VideoEdit range')}</legend>
         <p>
-          {t('Частота:')}
+          {t('Frame rate:')}
           {rangeBounds.fps.toFixed(3)}
-          {t('FPS. Конец — до')}
+          {t('FPS. End must not exceed')}
           {rangeBounds.maximumSeconds.toFixed(6)}
-          {t('с; минимальная длина —')}
+          {t('s; minimum length is')}
           {rangeBounds.minimumSpanSeconds.toFixed(6)}
-          {t('с.')}
+          {t('s.')}
         </p>
         <label
-          >{t('Начало VideoEdit')}<input
+          >{t('VideoEdit start')}<input
             type="range"
             min="0"
             max={rangeBounds.maximumSeconds}
@@ -672,7 +670,7 @@
           /></label
         >
         <label
-          >{t('Начало VideoEdit, с')}<input
+          >{t('VideoEdit start, s')}<input
             type="number"
             min="0"
             max={rangeBounds.maximumSeconds}
@@ -681,7 +679,7 @@
           /></label
         >
         <label
-          >{t('Конец VideoEdit')}<input
+          >{t('VideoEdit end')}<input
             type="range"
             min="0"
             max={rangeBounds.maximumSeconds}
@@ -690,7 +688,7 @@
           /></label
         >
         <label
-          >{t('Конец VideoEdit, с')}<input
+          >{t('VideoEdit end, s')}<input
             type="number"
             min="0"
             max={rangeBounds.maximumSeconds}
@@ -699,49 +697,47 @@
           /></label
         >
         <button disabled={sourcePosition === null} onclick={() => markRange('start')}
-          >{t('Начало диапазона по текущему кадру')}</button
+          >{t('Set range start to current frame')}</button
         >
         <button disabled={sourcePosition === null} onclick={() => markRange('end')}
-          >{t('Конец диапазона по текущему кадру')}</button
+          >{t('Set range end to current frame')}</button
         >
-        <button onclick={() => resetRange()}>{t('Весь доступный диапазон VideoEdit')}</button>
+        <button onclick={() => resetRange()}>{t('Entire available VideoEdit range')}</button>
         {#if !rangeValid}<p role="alert">
-            {t(
-              'Диапазон должен быть не короче двух исходных кадров и не выходить за указанный конец.',
-            )}
+            {t('The range must span at least two source frames and stay within the indicated end.')}
           </p>{/if}
       </fieldset>
     {:else if sourceReady || existing}<p role="alert">
         {t(
-          'Нет допустимой длительности или частоты кадров для VideoEdit, либо ролик слишком короткий. Для нового файла отмените импорт перед выбором другого режима.',
+          'VideoEdit has no valid duration or frame rate, or the video is too short. Cancel import before choosing another mode for a new file.',
         )}
       </p>
-    {:else}<p>{t('Выберите GIF/MP4 для проверки исходника.')}</p>{/if}
+    {:else}<p>{t('Select a GIF/MP4 to inspect the source.')}</p>{/if}
   {/if}
   {#if cutEnabled}
     <p>
       {t(
-        'Выбор файла открывает просмотр. После подготовки можно посмотреть готовый ролик; сохранение в библиотеку потребует подтверждения.',
+        'Selecting a file opens a preview. After preparation you can review the result; saving it to the library requires confirmation.',
       )}
     </p>
     <label
-      >{t('Способ выбора фрагментов')}<select
+      >{t('Segment selection method')}<select
         bind:this={recordModeSelect}
         bind:value={recordMode}
         disabled={active || recording || !ready}
         onchange={() => (cropSegmentId = null)}
       >
-        <option value={false}>{t('Время вручную')}</option><option value={true}
-          >{t('Запись при просмотре')}</option
+        <option value={false}>{t('Enter times manually')}</option><option value={true}
+          >{t('Record during playback')}</option
         >
       </select></label
     >
     {#if recordMode}
       <fieldset disabled={active || recording || !ready}>
-        <legend>{t('Область следующей записи, % исходника')}</legend>
-        {#each [{ key: 'x', label: 'Слева' }, { key: 'y', label: 'Сверху' }, { key: 'width', label: 'Ширина' }, { key: 'height', label: 'Высота' }] as field (field.key)}
+        <legend>{t('Next recording region, % of source')}</legend>
+        {#each [{ key: 'x', label: 'Left' }, { key: 'y', label: 'Above' }, { key: 'width', label: 'Width' }, { key: 'height', label: 'Height' }] as field (field.key)}
           <label
-            >{t(field.label)}{t(', % — запись')}<input
+            >{t(field.label)}{t(', % — recording')}<input
               type="number"
               min="0"
               max="100"
@@ -752,26 +748,26 @@
         {/each}
       </fieldset>
       {#if !previewCrop}<p role="alert">
-          {t('Область записи должна быть непустой и помещаться внутри исходника.')}
+          {t('The recording region must be nonempty and fit within the source.')}
         </p>{/if}
       <p>
         {t(
-          '«Записать фрагмент» начинает просмотр с текущей позиции; «Пауза записи» добавляет выбранный интервал. Между записями можно перемотать видео и изменить область. Ручной список сохраняется отдельно. При достижении 180 секунд подготовка результата начнётся автоматически; сохранение в библиотеку потребует подтверждения.',
+          'Record segment starts playback from the current position; Pause recording adds the selected interval. Between recordings you can seek and adjust the region. The manual list is retained separately. At 180 seconds, result preparation starts automatically; saving to the library requires confirmation.',
         )}
       </p>
     {/if}
     {#if cropSegment && !recordMode}<p role="status">
-        {t('Область для фрагмента')}
+        {t('Region for segment')}
         {segments.indexOf(cropSegment) + 1}{t(
-          '. Выберите её указателем под видео или задайте проценты в полях фрагмента.',
+          '. Drag it below the video or enter percentages in the segment fields.',
         )}
       </p>{/if}
     <fieldset disabled={active || recording || !ready}>
-      <legend>{t('Фрагменты в порядке воспроизведения')}</legend>
-      <StudioPopover label={t('Справка')} icon="help"
+      <legend>{t('Segments in playback order')}</legend>
+      <StudioPopover label={t('Help')} icon="help"
         ><p>
           {t(
-            'Укажите начало и конец в секундах. Фрагменты соединяются по порядку без звука, суммарно до 3 минут. До 64 фрагментов за импорт. Конец каждого фрагмента проверяется по длительности выбранного файла.',
+            'Enter start and end times in seconds. Segments are joined in order without audio, up to 3 minutes total. Up to 64 segments per import. Each segment end is checked against the selected file duration.',
           )}
         </p></StudioPopover
       >
@@ -779,17 +775,17 @@
         <div class="segment">
           {#if recordMode}
             <p>
-              {t('Фрагмент')}
+              {t('Segment')}
               {i + 1}: {segment.start?.toFixed(3)}–{segment.end?.toFixed(3)}
-              {t('с. Область:')}
+              {t('s. Region:')}
               {segment.crop
                 ? `${segment.crop.x}%, ${segment.crop.y}%, ${segment.crop.width}% × ${segment.crop.height}%`
-                : '' + t('весь кадр') + ''}.
+                : '' + t('entire frame') + ''}.
             </p>
           {:else}
             <label
-              >{t('Начало фрагмента')}
-              {i + 1}{t(', с')}<input
+              >{t('Segment start')}
+              {i + 1}{t(', s')}<input
                 type="number"
                 min="0"
                 max="3600"
@@ -799,8 +795,8 @@
               /></label
             >
             <label
-              >{t('Конец фрагмента')}
-              {i + 1}{t(', с')}<input
+              >{t('Segment end')}
+              {i + 1}{t(', s')}<input
                 type="number"
                 min="0"
                 max="3600"
@@ -809,23 +805,22 @@
               /></label
             >
             <button disabled={sourcePosition === null} onclick={() => markSegment(segment, 'start')}
-              >{t('Начало по текущему кадру')} {i + 1}</button
+              >{t('Set start to current frame')} {i + 1}</button
             >
             <button disabled={sourcePosition === null} onclick={() => markSegment(segment, 'end')}
-              >{t('Конец по текущему кадру')} {i + 1}</button
+              >{t('Set end to current frame')} {i + 1}</button
             >
             <button
               bind:this={segment.cropButton}
               aria-pressed={cropSegmentId === segment.id}
-              onclick={() => chooseCrop(segment.id)}
-              >{t('Выбрать область фрагмента')} {i + 1}</button
+              onclick={() => chooseCrop(segment.id)}>{t('Choose segment region')} {i + 1}</button
             >
             {#if segment.crop}
-              <fieldset aria-label={t('Область фрагмента {0}', i + 1)}>
-                <legend>{t('Область фрагмента')} {i + 1}{t(', % исходника')}</legend>
-                {#each [{ key: 'x', label: 'Слева' }, { key: 'y', label: 'Сверху' }, { key: 'width', label: 'Ширина' }, { key: 'height', label: 'Высота' }] as field (field.key)}
+              <fieldset aria-label={t('Segment region {0}', i + 1)}>
+                <legend>{t('Segment region')} {i + 1}{t(', % of source')}</legend>
+                {#each [{ key: 'x', label: 'Left' }, { key: 'y', label: 'Above' }, { key: 'width', label: 'Width' }, { key: 'height', label: 'Height' }] as field (field.key)}
                   <label
-                    >{t(field.label)}{t(', % — фрагмент')}
+                    >{t(field.label)}{t(', % — segment')}
                     {i + 1}<input
                       type="number"
                       min="0"
@@ -836,17 +831,17 @@
                   >
                 {/each}
                 {#if !normalizedCrop(segment.crop)}<p role="alert">
-                    {t('Область должна иметь положительный размер и помещаться внутри исходника.')}
+                    {t('The region must have positive dimensions and fit within the source.')}
                   </p>{/if}
                 <button onclick={() => resetCrop(segment.id)}
-                  >{t('Весь кадр — фрагмент')} {i + 1}</button
+                  >{t('Entire frame — segment')} {i + 1}</button
                 >
               </fieldset>
             {/if}
           {/if}
           <button
             disabled={!recordMode && segments.length === 1}
-            onclick={() => removeSegment(segment.id)}>{t('Удалить фрагмент')} {i + 1}</button
+            onclick={() => removeSegment(segment.id)}>{t('Delete segment')} {i + 1}</button
           >
         </div>
       {/each}
@@ -854,13 +849,13 @@
           bind:this={addSegmentButton}
           disabled={segments.length >= 64}
           onclick={() => setSegments([...segments, { id: nextSegmentId++, start: 0, end: 5 }])}
-          >{t('Добавить фрагмент')}</button
+          >{t('Add segment')}</button
         >{/if}
-      {#if cutValid}<p>{t('Выбрано:')} {(cutDuration / 1000).toFixed(3)} {t('с.')}</p>
-      {:else if recordMode && segments.length === 0}<p>{t('Пока нет записанных фрагментов.')}</p>
+      {#if cutValid}<p>{t('Selected:')} {(cutDuration / 1000).toFixed(3)} {t('s.')}</p>
+      {:else if recordMode && segments.length === 0}<p>{t('No recorded segments yet.')}</p>
       {:else}<p role="alert">
           {t(
-            'Укажите начало меньше конца, в пределах часа. Общая длительность — до 180 секунд; конец не должен превышать длительность выбранного видео.',
+            'The start must precede the end, within one hour. Total duration is limited to 180 seconds; the end must not exceed the selected video duration.',
           )}
         </p>{/if}
     </fieldset>
@@ -889,7 +884,7 @@
     {/if}
   {/if}
   {#if !existing}<label
-      >{t('Импортировать GIF/MP4')}
+      >{t('Import GIF/MP4')}
       <input
         type="file"
         accept=".gif,.mp4,image/gif,video/mp4"
@@ -901,12 +896,12 @@
   {#if existing}
     <button
       disabled={active || recording || !ready || !effectsValid || !cutValid || !rangeValid}
-      onclick={prepareExisting}>{t('Подготовить изменения ролика')}</button
+      onclick={prepareExisting}>{t('Prepare video edits')}</button
     >
   {:else if rangeEnabled}
     {#if sourceReady}<button
         disabled={active || !ready || !rangeValid || !effectsValid}
-        onclick={prepareInspected}>{t('Подготовить диапазон VideoEdit')}</button
+        onclick={prepareInspected}>{t('Prepare VideoEdit range')}</button
       >{/if}
   {:else if editing && selectedFile}
     <button
@@ -915,8 +910,8 @@
         if (selectedFile) void uploadFile(selectedFile);
       }}
       >{cutEnabled
-        ? '' + t('Подготовить выбранные фрагменты') + ''
-        : '' + t('Подготовить ролик') + ''}</button
+        ? '' + t('Prepare selected segments') + ''
+        : '' + t('Prepare video') + ''}</button
     >
   {/if}
   {#if job}
@@ -924,7 +919,7 @@
     {#if job.phase === 'uploading'}<progress
         value={job.received}
         max={job.total}
-        aria-label={t('Загрузка файла')}
+        aria-label={t('File upload')}
       ></progress>{/if}
     {#if job.phase === 'review_ready'}
       {#key job.id}<PreparedVideoPreview
@@ -932,20 +927,20 @@
           disabled={confirming || cancelRequested}
         />{/key}
       <button disabled={confirming || cancelRequested || !ready} onclick={confirmReview}
-        >{t('Сохранить готовый ролик')}</button
+        >{t('Save prepared video')}</button
       >
     {/if}
     {#if job.message}<p role="alert">{job.message}</p>{/if}
     {#if job.phase === 'publishing'}<p>
-        {t('Сохранение уже началось. Дождитесь результата перед повторным импортом.')}
+        {t('Saving has already started. Wait for the result before importing again.')}
       </p>{/if}
   {/if}
   {#if active || sourceReady}<button
       disabled={cancelRequested || job?.phase === 'publishing'}
-      onclick={cancel}>{t('Отменить импорт')}</button
+      onclick={cancel}>{t('Cancel import')}</button
     >{/if}
   {#if error || pollError}<p role="alert">{errorText()}</p>
-    <button onclick={refresh}>{t('Проверить импорт')}</button>{/if}
+    <button onclick={refresh}>{t('Check import')}</button>{/if}
 </section>
 
 <style>

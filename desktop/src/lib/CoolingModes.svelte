@@ -132,10 +132,10 @@
         errorContext = pendingCreate ? 'create' : 'save';
         error = pendingCreate
           ? new ValidationError(
-              'Ответ на создание не подтверждён. После подключения прочитайте режимы устройства.',
+              'The creation response is unconfirmed. Read device modes after reconnecting.',
             )
           : new ValidationError(
-              'Ответ на сохранение не подтверждён. После подключения прочитайте режимы устройства.',
+              'The save response is unconfirmed. Read device modes after reconnecting.',
             );
       }
       scope = nextScope;
@@ -264,13 +264,13 @@
     }
     if (snapshot && !durable)
       error = snapshot.persistence.last_error
-        ? new ValidationError('Сохранение настроек не подтверждено: {0}', [
+        ? new ValidationError('Settings storage is unconfirmed: {0}', [
             snapshot.persistence.last_error,
           ])
-        : new ValidationError('Настройки ещё сохраняются. Повторите чтение.');
+        : new ValidationError('Settings are still being saved. Read them again.');
     else
       error = new ValidationError(
-        'Текущие данные режима отличаются от отправленного снимка. Черновик сохранён. Перечитайте режимы перед новым Save.',
+        'The current mode differs from the submitted snapshot. Your draft is preserved. Read the modes before saving again.',
       );
     if (explicit && (durable || snapshot === null)) {
       pendingSave = null;
@@ -297,18 +297,18 @@
     }
     if (snapshot)
       error = snapshot.persistence.last_error
-        ? new ValidationError('Сохранение настроек не подтверждено: {0}', [
+        ? new ValidationError('Settings storage is unconfirmed: {0}', [
             snapshot.persistence.last_error,
           ])
-        : new ValidationError('Настройки ещё сохраняются. Повторите чтение.');
+        : new ValidationError('Settings are still being saved. Read them again.');
     else {
       error = new ValidationError(
-        'Набор режимов пока отсутствует. Перечитайте данные перед повторным созданием.',
+        'No mode bank is available yet. Read the data before trying to create it again.',
       );
       if (explicit) {
         pendingCreate = false;
         error = new ValidationError(
-          'Набор отсутствует. Перед повторным созданием проверьте выбранный источник.',
+          'The bank is absent. Check the selected source before trying to create it again.',
         );
       }
     }
@@ -437,12 +437,12 @@
         profile = bank?.[channel][0];
       } catch {
         throw new ValidationError(
-          'Приложение вернуло неверный стандартный режим. Черновик сохранён.',
+          'The app returned an invalid factory mode. Your draft is preserved.',
         );
       }
       if (!profile || profile.id !== id || !profile.use_default_name)
         throw new ValidationError(
-          'Приложение вернуло неверный стандартный режим. Черновик сохранён.',
+          'The app returned an invalid factory mode. Your draft is preserved.',
         );
       if (
         draftStamp() !== stamp ||
@@ -489,9 +489,7 @@
         new TextEncoder().encode(editName).length > 128 ||
         /\p{Cc}/u.test(editName)
       )
-        throw new ValidationError(
-          'Проверьте имя режима: оно должно быть коротким и содержать допустимые символы.',
-        );
+        throw new ValidationError('Check the mode name: use a short name with valid characters.');
       const factory = editUsesDefaultName && editName === editDefaultLabel;
       profile = {
         id: chosen.id,
@@ -551,19 +549,19 @@
 </script>
 
 <details class="device-modes">
-  <summary>{t('Сохранённые режимы устройства')}</summary>
-  <p>{t('Загрузите режим в черновик, чтобы проверить или изменить его перед Apply.')}</p>
+  <summary>{t('Saved device modes')}</summary>
+  <p>{t('Load a mode into the draft to review or edit it before Apply.')}</p>
   <div class="actions">
     <button
       bind:this={readButton}
       disabled={disabled || saving || restoring || !connected || !device}
       aria-disabled={loading}
       aria-busy={loading}
-      onclick={refresh}>{loading ? t('Загрузка…') : t('Прочитать режимы устройства')}</button
+      onclick={refresh}>{loading ? t('Loading…') : t('Read device modes')}</button
     >
     {#if loaded && modes.length}
       <label
-        >{t('Сохранённый режим')}<select
+        >{t('Saved mode')}<select
           bind:this={modeSelect}
           value={selected}
           onchange={(e) => choose(e.currentTarget.value)}
@@ -575,7 +573,7 @@
             pendingCreate ||
             !connected}
         >
-          <option value="">{t('Выберите режим')}</option>
+          <option value="">{t('Choose a mode')}</option>
           {#each modes as mode (mode.id)}<option value={mode.id}
               >{coolingModeLabel(mode)}{mode.id !== mode.name ? ` (${mode.id})` : ''}</option
             >{/each}
@@ -590,23 +588,23 @@
           pendingCreate ||
           !connected ||
           !chosen}
-        onclick={load}>{t('Загрузить режим в черновик')}</button
+        onclick={load}>{t('Load mode into draft')}</button
       >
     {/if}
   </div>
   {#if loaded && library === null}
     <p>
       {t(
-        'Создайте стандартные 8 режимов вентиляторов и 3 режима помпы. Источник температуры выбирается явно; работающие настройки не изменятся.',
+        'Create the standard 8 fan and 3 pump modes. Choose a temperature source explicitly; running settings will stay unchanged.',
       )}
     </p>
     <div class="actions">
       <label
-        >{t('Источник стандартных режимов')}<select
+        >{t('Source for standard modes')}<select
           bind:value={createSensor}
           disabled={disabled || loading || saving || pendingCreate || !connected}
         >
-          <option value="">{t('Выберите температурный источник')}</option>
+          <option value="">{t('Choose a temperature source')}</option>
           {#each temperatures as sensor (sensor.id)}<option value={sensor.id}
               >{sensor.label} · {sensor.status}</option
             >{/each}
@@ -620,23 +618,21 @@
           !temperatures.some((sensor) => sensor.id === createSensor)}
         aria-disabled={creating}
         aria-busy={creating}
-        onclick={initialize}>{creating ? t('Создание…') : t('Создать стандартные режимы')}</button
+        onclick={initialize}>{creating ? t('Creating…') : t('Create standard modes')}</button
       >
     </div>
   {/if}
   {#if creationNotice}<p role="status">
       {creationNotice === 'created'
         ? t(
-            'Стандартные режимы сохранены. Работающие настройки не изменены; выберите режим и загрузите его в черновик.',
+            'Standard modes were saved. Running settings are unchanged; choose a mode and load it into the draft.',
           )
-        : t(
-            'Найдены сохранённые режимы. Проверьте список перед загрузкой; повторная запись не отправлялась.',
-          )}
+        : t('Stored modes were found. Review the list before loading; no second write was sent.')}
     </p>{/if}
   {#if chosen && editId === chosen.id}
     <div class="actions edit">
       <label
-        >{t('Имя режима')}<input
+        >{t('Mode name')}<input
           bind:value={editName}
           oninput={() => {
             editUsesDefaultName = false;
@@ -650,10 +646,10 @@
         aria-busy={saving}
         onclick={save}
         >{saving
-          ? t('Сохранение…')
+          ? t('Saving…')
           : conflict
-            ? t('Сохранить черновик поверх обновлённого режима')
-            : t('Сохранить снимок режима')}</button
+            ? t('Overwrite updated mode with draft')
+            : t('Save mode snapshot')}</button
       >
     </div>
     {#if factorySupported}
@@ -667,7 +663,7 @@
             pendingCreate ||
             !connected ||
             (editUsesDefaultName && editName === factoryLabel)}
-          onclick={restoreName}>{t('Вернуть стандартное имя')}</button
+          onclick={restoreName}>{t('Restore default name')}</button
         >
         <button
           disabled={disabled ||
@@ -680,63 +676,60 @@
           aria-disabled={restoring}
           aria-busy={restoring}
           onclick={restoreMode}
-          >{restoring ? t('Подготовка…') : t('Стандартные параметры в черновик')}</button
+          >{restoring ? t('Preparing…') : t('Load factory settings into draft')}</button
         >
       </div>
       {#if factoryNeedsSource && !factorySourceKnown}<p>
-          {t('Выберите температурный источник в редакторе, чтобы восстановить стандартную кривую.')}
+          {t('Choose a temperature source in the editor to restore the factory curve.')}
         </p>{/if}
     {/if}
-    <p>{t('Save меняет имя и сохранённую копию черновика, но не рабочую политику охлаждения.')}</p>
+    <p>
+      {t(
+        'Save updates the name and stored draft snapshot. The running cooling policy stays unchanged.',
+      )}
+    </p>
     {#if conflict}<p>
-        {t(
-          'Сохранённые данные изменились. Загрузите актуальный режим или явно сохраните свой черновик поверх него.',
-        )}
+        {t('Stored data changed. Load the latest mode or explicitly overwrite it with your draft.')}
       </p>{/if}
   {/if}
   {#if loaded && !modes.length}<p role="status">
-      {t(
-        'Для этого устройства пока нет сохранённых режимов. Используйте пресеты или пользовательские профили.',
-      )}
+      {t('No saved modes for this device yet. Use presets or user profiles.')}
     </p>{/if}
   {#if loaded && modes.length && !loadedProfile && !savedSnapshot}<p role="status">
-      {t('Доступно сохранённых режимов: {0}', modes.length)}
+      {t('{0} saved modes available.', modes.length)}
     </p>{/if}
   {#if error}<p class="error" role="alert">
       {errorContext === 'restore'
-        ? t(
-            'Не удалось подготовить стандартный режим: {0}. Черновик сохранён.',
-            diagnosticText(error),
-          )
+        ? t('Could not prepare factory mode: {0}. Your draft is preserved.', diagnosticText(error))
         : errorContext === 'create'
-          ? t('Создание режимов не подтверждено: {0}', diagnosticText(error))
+          ? t('Mode creation is unconfirmed: {0}', diagnosticText(error))
           : errorContext === 'save'
-            ? t('Сохранение режима не подтверждено: {0}', diagnosticText(error))
-            : t('Не удалось прочитать режимы охлаждения: {0}', diagnosticText(error))}
+            ? t('Mode save is unconfirmed: {0}', diagnosticText(error))
+            : t('Could not read cooling modes: {0}', diagnosticText(error))}
     </p>{/if}
   {#if restoreNotice}<p role="status">
       {restoreNotice === 'name'
-        ? t('Стандартное имя восстановлено в черновике. Нажмите Save, чтобы сохранить его.')
+        ? t('The default name was restored in the draft. Select Save to store it.')
         : restoreNotice === 'profile'
           ? t(
-              'Стандартные параметры загружены в черновик. Save сохранит их в режиме; Apply применит текущий черновик.',
+              'Factory settings were loaded into the draft. Save stores them in the mode; Apply sends the current draft.',
             )
-          : t('Черновик изменился. Стандартные параметры не заменили ваши правки.')}
+          : t('The draft changed. Factory settings did not replace your edits.')}
     </p>{/if}
   {#if savedSnapshot}<p role="status">
       {draftChanged
         ? t(
-            'Сохранён снимок режима «{0}». В текущем черновике есть другие правки.',
+            'Mode snapshot “{0}” was saved. Your current draft has further edits.',
             coolingModeLabel(savedSnapshot),
           )
         : t(
-            'Снимок режима «{0}» сохранён. Рабочая политика не изменена.',
+            'Mode snapshot “{0}” was saved. The running policy is unchanged.',
             coolingModeLabel(savedSnapshot),
           )}
     </p>{/if}
   {#if loadedProfile}<p role="status">
       {t(
-        'Режим «{0}» загружен в черновик. Для отправки нажмите «Применить охлаждение».',
+        'Mode “{0}” loaded into the draft. Select “Apply cooling” to send it.',
         coolingModeLabel(loadedProfile),
       )}
     </p>{/if}

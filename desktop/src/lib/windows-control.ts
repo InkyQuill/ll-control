@@ -29,12 +29,12 @@ export const windowsUnitLabel = (role: WindowsRole) =>
   windowsUnit(role) === 'celsius' ? '°C' : windowsUnit(role) === 'percent' ? '%' : 'RPM';
 export const windowsRoleLabel = (role: WindowsRole) =>
   ({
-    CPULoad: () => t('CPU · Загрузка'),
-    CPUTemperature: () => t('CPU · Температура'),
-    GPULoad: () => t('GPU · Загрузка'),
-    GPUTemperature: () => t('GPU · Температура'),
-    PumpRPM: () => t('Помпа'),
-    CoolantTemp: () => t('Температура жидкости'),
+    CPULoad: () => t('CPU · Load'),
+    CPUTemperature: () => t('CPU · Temperature'),
+    GPULoad: () => t('GPU · Load'),
+    GPUTemperature: () => t('GPU · Temperature'),
+    PumpRPM: () => t('Pump'),
+    CoolantTemp: () => t('Coolant temperature'),
   })[role]();
 export const windowsSourceUnverified = (role: WindowsRole, ids: WindowsIds, sensors: Sensor[]) =>
   !!ids[role] &&

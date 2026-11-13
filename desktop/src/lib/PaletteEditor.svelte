@@ -29,7 +29,7 @@
   const active = $derived(
     theme.layers.find((layer) => layer.kind === 'meteor' || layer.kind === 'fireworks'),
   );
-  const family = $derived(active?.kind === 'fireworks' ? 'фейерверка' : 'метеоров');
+  const family = $derived(active?.kind === 'fireworks' ? 'fireworks' : 'meteors');
   const indices = $derived(
     Array.from({ length: active?.effect.colors.length ?? 0 }, (_, index) => index),
   );
@@ -168,25 +168,24 @@
 
 {#if active}
   <fieldset {disabled}>
-    <legend
-      >{active.kind === 'fireworks' ? '' + t('Фейерверк') + '' : '' + t('Метеоры') + ''}</legend
+    <legend>{active.kind === 'fireworks' ? '' + t('Firework') + '' : '' + t('Meteors') + ''}</legend
     >
     <ExperimentalNotice
       feature="procedural"
-      message="Процедурные эффекты реализованы, но их внешний вид, тайминг и отказы на LCDV2 проверены не полностью. Используйте на свой риск."
+      message="Procedural effects are implemented, but their appearance, timing, and failure behavior on LCDV2 are not fully verified. Use at your own risk."
     />
-    <StudioPopover label={t('Справка')} icon="help"
-      ><p>{t('Текст, часы и изображения остаются поверх анимации.')}</p></StudioPopover
+    <StudioPopover label={t('Help')} icon="help"
+      ><p>{t('Text, clocks and images remain above the animation.')}</p></StudioPopover
     >
     <fieldset disabled={active.effect.dynamic}>
-      <legend>{t('Статические настройки')} {family}</legend>
+      <legend>{t('Static settings')} {t(family)}</legend>
       {#if active.kind === 'meteor'}<label
-          >{t('Скорость метеоров')}<select bind:value={active.effect.speed}
+          >{t('Meteor speed')}<select bind:value={active.effect.speed}
             ><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option
             ></select
           ></label
         >{:else}<label
-          >{t('Интенсивность Fireworks')}<select bind:value={active.effect.intensity}
+          >{t('Fireworks intensity')}<select bind:value={active.effect.intensity}
             ><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option
             ></select
           ></label
@@ -194,8 +193,8 @@
       {#each indices as index (index)}
         {@const colours = active.effect.colors}
         <label
-          >{t('Цвет')}
-          {family}
+          >{t('Color')}
+          {t(family)}
           {index + 1}<input
             type="color"
             value={hex(colours[index])}
@@ -212,42 +211,42 @@
         type="checkbox"
         checked={active.effect.dynamic}
         onchange={(event) => dynamic(event.currentTarget.checked)}
-      />{t('Управлять эффектом от датчика')}</label
+      />{t('Control effect with a sensor')}</label
     >
     {#if source || active.effect.dynamic}
       <fieldset disabled={!active.effect.dynamic}>
-        <legend>{t('Датчик')} {family}</legend>
+        <legend>{t('Sensor')} {t(family)}</legend>
         <label
-          >{t('Источник эффекта')}<select
+          >{t('Effect source')}<select
             value={source ? savedKey(source) : ''}
             onchange={(event) => {
               if (!choose(event.currentTarget.value))
                 event.currentTarget.value = source ? savedKey(source) : '';
             }}
           >
-            {#if !source}<option value="" disabled>{t('Выберите датчик')}</option>{/if}
+            {#if !source}<option value="" disabled>{t('Select a sensor')}</option>{/if}
             {#each sources as sensor (key(sensor))}<option
                 value={key(sensor)}
                 disabled={!canChoose(sensor)}>{sensor.label} · {sensor.unit}</option
               >{/each}
             {#if source && !sources.some((sensor) => key(sensor) === savedKey(source))}<option
-                value={savedKey(source)}>{t('Недоступен:')} {source.binding.sensor_id}</option
+                value={savedKey(source)}>{t('Unavailable:')} {source.binding.sensor_id}</option
               >{/if}
           </select></label
         >
         {#if source}
-          <StudioPopover label={t('Справка')} icon="help"
+          <StudioPopover label={t('Help')} icon="help"
             ><p>
-              {t('Пороги в исходных единицах:')}
+              {t('Threshold source units:')}
               {source.binding.unit === 'celsius'
                 ? '°C'
                 : source.binding.unit === 'percent'
                   ? '%'
-                  : 'RPM'}{t('. Диапазон: 0–')}{maximum}.
+                  : 'RPM'}{t('. Range: 0–')}{maximum}.
             </p></StudioPopover
           >
           <label
-            >{t('Нижний порог эффекта')}<input
+            >{t('Lower effect threshold')}<input
               type="number"
               min="0"
               max={maximum}
@@ -256,7 +255,7 @@
             /></label
           >
           <label
-            >{t('Верхний порог эффекта')}<input
+            >{t('Upper effect threshold')}<input
               type="number"
               min="0"
               max={maximum}
@@ -267,8 +266,8 @@
           {#each indices as index (index)}
             {@const paletteSource = source}
             <label
-              >{t('Нижний цвет')}
-              {family}
+              >{t('Lower color')}
+              {t(family)}
               {index + 1}<input
                 type="color"
                 value={hex(paletteSource.low_colors[index])}
@@ -279,8 +278,8 @@
               /></label
             >
             <label
-              >{t('Верхний цвет')}
-              {family}
+              >{t('Upper color')}
+              {t(family)}
               {index + 1}<input
                 type="color"
                 value={hex(paletteSource.high_colors[index])}
@@ -292,11 +291,11 @@
             >
           {/each}
           {#if source.binding.low === source.binding.high}<StudioPopover
-              label={t('Справка')}
+              label={t('Help')}
               icon="help"
               ><p>
                 {t(
-                  'На равном пороге используются нижняя интенсивность и палитра; выше порога — верхние.',
+                  'At equal thresholds, the lower intensity and palette apply at the threshold; the upper settings apply above it.',
                 )}
               </p></StudioPopover
             >{/if}
@@ -305,19 +304,19 @@
     {/if}
     {#if active.effect.dynamic && !source}<p role="status">
         {choosing
-          ? '' + t('Чтение источника CPU Load…') + ''
+          ? '' + t('Reading the CPU Load source…') + ''
           : sourceError
-            ? t('Источник CPU Load не прочитан: {0}. Выберите датчик вручную.', sourceError)
-            : '' + t('Выберите источник эффекта: CPU Load недоступен или неоднозначен.') + ''}
+            ? t('Could not read the CPU Load source: {0}. Select a sensor manually.', sourceError)
+            : '' + t('Select an effect source: CPU Load is unavailable or ambiguous.') + ''}
       </p>{/if}
     {#if active.effect.dynamic && unavailable}<p role="status">
-        {t('Источник недоступен: используются сохранённые статические настройки и цвета.')}
+        {t('The source is unavailable: saved static settings and colors are used.')}
       </p>{/if}
     {#if !valid}<p role="status">
-        {t('Задайте целые пороги; нижний не должен превышать верхний.')}
+        {t('Enter integer thresholds; the lower threshold must not exceed the upper.')}
       </p>{/if}
     {#if (active.effect.retained_sensors ?? []).length >= 63}<p role="status">
-        {t('Сохранено 64 источника: можно выбирать уже настроенные.')}
+        {t('64 sources are saved: you can select previously configured sources.')}
       </p>{/if}
   </fieldset>
 {/if}

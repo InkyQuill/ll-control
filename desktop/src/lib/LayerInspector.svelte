@@ -31,18 +31,18 @@
   {#if layer.kind === 'divider'}<DividerEditor
       bind:layer={() => layer, (next) => (value = next)}
     />{/if}
-  {#if layer.kind === 'meteor'}<StudioPopover label={t('Справка')} icon="help"
-      ><p>{t('Настройки MeteorShower находятся в блоке «Метеоры».')}</p></StudioPopover
+  {#if layer.kind === 'meteor'}<StudioPopover label={t('Help')} icon="help"
+      ><p>{t('MeteorShower settings are in the Meteors section.')}</p></StudioPopover
     >{/if}
-  {#if layer.kind === 'weather'}<StudioPopover label={t('Справка')} icon="help"
-      ><p>{t('Настройки Rain/Snow находятся в блоке «Анимация LCD».')}</p></StudioPopover
+  {#if layer.kind === 'weather'}<StudioPopover label={t('Help')} icon="help"
+      ><p>{t('Rain/Snow settings are in the LCD animation section.')}</p></StudioPopover
     >{/if}
   {#if layer.kind === 'text'}<label
-      >{t('Текст')}<textarea bind:value={layer.text} maxlength="2048"></textarea></label
+      >{t('Text')}<textarea bind:value={layer.text} maxlength="2048"></textarea></label
     >{/if}
   {#if layer.kind === 'sensor'}<label
-      >{t('Источник датчика')}<select
-        aria-label={t('Источник датчика')}
+      >{t('Sensor source')}<select
+        aria-label={t('Sensor source')}
         value={layer.sensor_id}
         onchange={(event) => {
           const source = sensors.find((s) => s.id === event.currentTarget.value);
@@ -56,16 +56,16 @@
             >{source.label} · {source.unit}</option
           >{/each}
         {#if !sensors.some((source) => source.id === layer.sensor_id)}<option
-            value={layer.sensor_id}>{t('Недоступен:')} {layer.sensor_id}</option
+            value={layer.sensor_id}>{t('Unavailable:')} {layer.sensor_id}</option
           >{/if}
       </select></label
-    ><label>{t('Подпись')}<input bind:value={layer.label} /></label><code>{layer.sensor_id}</code>
+    ><label>{t('Label')}<input bind:value={layer.label} /></label><code>{layer.sensor_id}</code>
     <div class="row">
       <label
-        >{t('Точность')}<input type="number" bind:value={layer.decimals} min="0" max="2" /></label
+        >{t('Decimals')}<input type="number" bind:value={layer.decimals} min="0" max="2" /></label
       >{#if layer.unit === 'celsius'}<label
-          >{t('Единица')}<select bind:value={layer.temperature_unit}
-            ><option value="system">{t('Общие настройки')}</option><option value="celsius"
+          >{t('Unit')}<select bind:value={layer.temperature_unit}
+            ><option value="system">{t('Global settings')}</option><option value="celsius"
               >°C</option
             ><option value="fahrenheit">°F</option></select
           ></label
@@ -73,7 +73,7 @@
     </div>{/if}
   {#if layer.kind === 'sensor_cycle'}
     <label
-      >{t('Интервал переключения, с')}<input
+      >{t('Cycle interval, s')}<input
         type="number"
         min="1"
         max="3600"
@@ -83,16 +83,16 @@
     <button
       disabled={layer.sensors.length >= 16}
       onclick={() => layer.sensors.push({ ...layer.sensors[layer.sensors.length - 1] })}
-      >{t('Добавить показатель в цикл')}</button
+      >{t('Add a reading to the cycle')}</button
     >
     {#each layer.sensors as sensor, j (sensor.sensor_id)}
       <button
         disabled={layer.sensors.length === 1}
         onclick={(event) => removeCycleSensor(layer, j, event.currentTarget)}
-        >{t('Удалить показатель')} {j + 1}</button
+        >{t('Remove reading')} {j + 1}</button
       >
       <label
-        >{t('Источник')}
+        >{t('Source')}
         {j + 1}<select
           data-cycle-source
           value={sensor.sensor_id}
@@ -108,19 +108,19 @@
               >{source.label} · {source.unit}</option
             >{/each}
           {#if !sensors.some((s) => s.id === sensor.sensor_id)}<option value={sensor.sensor_id}
-              >{t('Недоступен:')} {sensor.sensor_id}</option
+              >{t('Unavailable:')} {sensor.sensor_id}</option
             >{/if}
         </select></label
       >
-      <label>{t('Подпись')} {j + 1}<input bind:value={sensor.label} /></label>
+      <label>{t('Label')} {j + 1}<input bind:value={sensor.label} /></label>
       <label
-        >{t('Точность')}
+        >{t('Decimals')}
         {j + 1}<input type="number" min="0" max="2" bind:value={sensor.decimals} /></label
       >
       {#if sensor.unit === 'celsius'}<label
-          >{t('Единица')}
+          >{t('Unit')}
           {j + 1}<select bind:value={sensor.temperature_unit}
-            ><option value="system">{t('Общие настройки')}</option><option value="celsius"
+            ><option value="system">{t('Global settings')}</option><option value="celsius"
               >°C</option
             ><option value="fahrenheit">°F</option></select
           ></label
@@ -148,15 +148,13 @@
               }
             : null;
         }}
-      />{t('Раздельные стили подписи и единицы')}</label
+      />{t('Separate label and unit styles')}</label
     >
     {#if layer.parts}
       {#each ['label', 'unit'] as part (part)}
         <fieldset>
           <legend
-            >{part === 'label'
-              ? '' + t('Подпись датчика') + ''
-              : '' + t('Единица датчика') + ''}</legend
+            >{part === 'label' ? '' + t('Sensor label') + '' : '' + t('Sensor unit') + ''}</legend
           >
           <TextStyleControls
             bind:style={layer.parts[part as 'label' | 'unit']}
@@ -167,22 +165,22 @@
     {/if}
   {/if}
   {#if layer.kind === 'clock'}<label
-      >{t('Содержимое часов')}<select
-        aria-label={t('Содержимое часов')}
+      >{t('Clock content')}<select
+        aria-label={t('Clock content')}
         value={layer.format ?? 'time'}
         onchange={(e) => {
           layer.format = e.currentTarget.value as typeof layer.format;
         }}
-        ><option value="time">{t('Время')}</option><option value="time_without_period"
-          >{t('Время без AM/PM')}</option
-        ><option value="date">{t('Дата YYYY/MM/DD')}</option><option value="period"
+        ><option value="time">{t('Time')}</option><option value="time_without_period"
+          >{t('Time without AM/PM')}</option
+        ><option value="date">{t('Date YYYY/MM/DD')}</option><option value="period"
           >A.M. / P.M.</option
         ></select
       ></label
     >
     <div class="row">
-      <label><input type="checkbox" bind:checked={layer.twenty_four_hour} />{t('24 часа')}</label
-      ><label><input type="checkbox" bind:checked={layer.show_seconds} />{t('Секунды')}</label>
+      <label><input type="checkbox" bind:checked={layer.twenty_four_hour} />{t('24 hours')}</label
+      ><label><input type="checkbox" bind:checked={layer.show_seconds} />{t('Seconds')}</label>
     </div>{/if}
   {#if layer.kind === 'image'}
     <label
@@ -193,18 +191,18 @@
           (layer.watermark_position = e.currentTarget.checked
             ? { horizontal: 50, vertical: 50 }
             : null)}
-      />{t('Положение watermark как в L-Connect')}</label
+      />{t('L-Connect watermark positioning')}</label
     >
     {#if layer.watermark_position}
-      <StudioPopover label={t('Справка')} icon="help"
+      <StudioPopover label={t('Help')} icon="help"
         ><p>
           {t(
-            'Центр изображения задаётся в процентах экрана. Значение 0 размещает центр в 22 px от края, как в L-Connect.',
+            'The image center is a percentage of the screen. A value of 0 positions it 22 px from the edge, matching L-Connect.',
           )}
         </p></StudioPopover
       >
       <label
-        >{t('Watermark по горизонтали')}<input
+        >{t('Watermark horizontal position')}<input
           type="number"
           min="0"
           max="100"
@@ -212,7 +210,7 @@
         /></label
       >
       <label
-        >{t('Watermark по вертикали')}<input
+        >{t('Watermark vertical position')}<input
           type="number"
           min="0"
           max="100"
@@ -221,11 +219,11 @@
       >
     {/if}
     <label
-      >{t('Масштаб')}<select bind:value={layer.fit}
-        ><option value="crop">{t('Заполнить с обрезкой')}</option><option value="contain"
-          >{t('Вписать')}</option
-        ><option value="contain_native">{t('Вписать без увеличения (watermark)')}</option><option
-          value="stretch">{t('Растянуть')}</option
+      >{t('Scale')}<select bind:value={layer.fit}
+        ><option value="crop">{t('Fill and crop')}</option><option value="contain"
+          >{t('Fit')}</option
+        ><option value="contain_native">{t('Fit without upscaling (watermark)')}</option><option
+          value="stretch">{t('Stretch')}</option
         ></select
       ></label
     >
@@ -237,12 +235,12 @@
           (layer.shadow = e.currentTarget.checked
             ? { x: 2, y: 2, blur: 2, color: [0, 0, 0], opacity: 60 }
             : null)}
-      />{t('Тень изображения')}</label
+      />{t('Image shadow')}</label
     >
     {#if layer.shadow}
       <div class="row">
         <label
-          >{t('Смещение тени изображения X')}<input
+          >{t('Image shadow offset X')}<input
             type="number"
             min="-32"
             max="32"
@@ -250,7 +248,7 @@
           /></label
         >
         <label
-          >{t('Смещение тени изображения Y')}<input
+          >{t('Image shadow offset Y')}<input
             type="number"
             min="-32"
             max="32"
@@ -258,7 +256,7 @@
           /></label
         >
         <label
-          >{t('Размытие тени изображения')}<input
+          >{t('Image shadow blur')}<input
             type="number"
             min="0"
             max="16"
@@ -266,7 +264,7 @@
           /></label
         >
         <label
-          >{t('Непрозрачность тени изображения, %')}<input
+          >{t('Image shadow opacity, %')}<input
             type="number"
             min="0"
             max="100"
@@ -274,7 +272,7 @@
           /></label
         >
         <label
-          >{t('Цвет тени изображения')}<input
+          >{t('Image shadow color')}<input
             type="color"
             value={hex(layer.shadow.color)}
             oninput={(e) => {
@@ -284,14 +282,7 @@
         >
       </div>
     {/if}
-    <label
-      >{t('Непрозрачность')}<input
-        type="range"
-        min="0"
-        max="255"
-        bind:value={layer.opacity}
-      /></label
-    >
+    <label>{t('Opacity')}<input type="range" min="0" max="255" bind:value={layer.opacity} /></label>
     <div class="row">
       {#each ['x', 'y', 'width', 'height'] as key (key)}<label
           >{key}<input

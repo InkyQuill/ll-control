@@ -48,7 +48,7 @@
   );
   const builtin = (key: string) => assets.find((asset) => asset.key === key)?.is_default === true;
   const title = (key: string) =>
-    assets.find((asset) => asset.key === key)?.name ?? t('Изображение {0}', key.slice(0, 8));
+    assets.find((asset) => asset.key === key)?.name ?? t('Image {0}', key.slice(0, 8));
   type Diagnostic = { detail: string };
   let edit = $state<AssetInfo | null>(null),
     saving = $state(false),
@@ -149,7 +149,7 @@
         expected_revision: target.revision,
         keep: [...keep],
       });
-      if (started === generation) deleteNotice = 'Изображение удалено. Исходный файл сохранён.';
+      if (started === generation) deleteNotice = 'Image deleted. The original file was preserved.';
     } catch (e) {
       if (started === generation) deleteNotice = { detail: message(e) };
     } finally {
@@ -237,79 +237,77 @@
 </script>
 
 <StudioPopover
-  label={t('Библиотека изображений')}
+  label={t('Image library')}
   bind:open
   bind:trigger={summaryElement}
   icon="image"
   text
   wide
 >
-  <StudioPopover label={t('Справка')} icon="help"
+  <StudioPopover label={t('Help')} icon="help"
     ><p>
-      {t(
-        'Добавьте сохранённое изображение в черновик. Вывод на LCD изменится после применения темы.',
-      )}
+      {t('Add a saved image to the draft. The LCD output changes after you apply the theme.')}
     </p></StudioPopover
   >
-  {#if !connected}<p role="status">{t('Библиотека недоступна без связи с daemon.')}</p>
+  {#if !connected}<p role="status">
+      {t('The library is unavailable while the daemon is disconnected.')}
+    </p>
   {:else}
     <label
       ><input type="checkbox" bind:checked={catalogMode} />{t(
-        'Показать все файлы изображений для управления',
+        'Show all image files for management',
       )}</label
     >
     <label
-      >{t('Назначение изображения')}<select bind:value={context} disabled={saving}>
-        <option value="image">{t('Слой изображения')}</option><option value="background"
-          >{t('Фон')}</option
-        ><option value="watermark">{t('Водяной знак')}</option>
+      >{t('Image destination')}<select bind:value={context} disabled={saving}>
+        <option value="image">{t('Image layer')}</option><option value="background"
+          >{t('Background')}</option
+        ><option value="watermark">{t('Watermark')}</option>
       </select></label
     >
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {context === 'background'
           ? '' +
             t(
-              'Выбранное изображение заменит фон, сохранив все слои. Видео для фона доступно в библиотеке роликов.',
+              'The selected image replaces the background and preserves all layers. Background videos are available in the video library.',
             ) +
             ''
           : context === 'watermark'
             ? '' +
               t(
-                'Водяной знак добавится поверх остальных слоёв. Размер, положение и прозрачность можно изменить в редакторе.',
+                'The watermark is added above all other layers. Adjust its size, position and opacity in the editor.',
               ) +
               ''
-            : '' + t('Изображение добавится отдельным слоем.') + ''}
+            : '' + t('The image is added as a separate layer.') + ''}
       </p></StudioPopover
     >
-    <button disabled={loading || saving} onclick={() => revision++}
-      >{t('Обновить изображения')}</button
-    >
+    <button disabled={loading || saving} onclick={() => revision++}>{t('Refresh images')}</button>
     {#if error}<p role="alert">
-        {t('Не удалось загрузить изображения:')}
+        {t('Could not load images:')}
         {diagnosticText(error)}
       </p>{/if}
-    {#if loading}<p role="status">{t('Загрузка изображений…')}</p>
+    {#if loading}<p role="status">{t('Loading images…')}</p>
     {:else if !keys.length && !error}<p>
-        {t('Сохранённых изображений пока нет. Импортируйте файл кнопкой «+ Изображение».')}
+        {t('No saved images yet. Import a file using + Image.')}
       </p>{/if}
     <div class="images">
       {#each visible as key (key)}
         <article>
           <p>{title(key)}</p>
           {#if !imageInCollection(membership, key, context)}<StudioPopover
-              label={t('Справка')}
+              label={t('Help')}
               icon="help"
               ><p>
                 {t(
-                  'Файл вне выбранной коллекции. Добавьте его через «Коллекции LCD» для выбора в тему.',
+                  'This file is outside the selected collection. Add it through LCD collections to use it in a theme.',
                 )}
               </p></StudioPopover
             >{/if}
-          {#if builtin(key)}<p>{t('Встроенное изображение')}</p>{/if}
+          {#if builtin(key)}<p>{t('Built-in image')}</p>{/if}
           {#if previews[key]}<img src={previews[key]} alt={title(key)} width="144" height="144" />
-          {:else if failures[key]}<p role="status">{t('Миниатюра недоступна:')} {failures[key]}</p>
-          {:else}<p role="status">{t('Подготовка миниатюры…')}</p>{/if}
+          {:else if failures[key]}<p role="status">{t('Thumbnail unavailable:')} {failures[key]}</p>
+          {:else}<p role="status">{t('Preparing thumbnail…')}</p>{/if}
           <button
             disabled={!imageInCollection(membership, key, context) ||
               disabled ||
@@ -320,10 +318,10 @@
               !previews[key]}
             onclick={() => onadd(key, context)}
             >{context === 'background'
-              ? t('Сделать фоном {0}', title(key))
+              ? t('Use {0} as background', title(key))
               : context === 'watermark'
-                ? t('Добавить водяной знак {0}', title(key))
-                : t('Добавить в тему {0}', builtin(key) ? title(key) : key.slice(0, 8))}</button
+                ? t('Add watermark {0}', title(key))
+                : t('Add {0} to theme', builtin(key) ? title(key) : key.slice(0, 8))}</button
           >
           {#key `${device}:${context}:${key}`}
             <ImageEditor
@@ -343,7 +341,7 @@
               edit = { ...assets.find((asset) => asset.key === key)! };
               renameError = null;
               renameReadback = false;
-            }}>{t('Переименовать')} {title(key)}</button
+            }}>{t('Rename')} {title(key)}</button
           >
           <button
             disabled={disabled ||
@@ -356,32 +354,31 @@
               confirmDelete = { ...assets.find((asset) => asset.key === key)! };
               edit = null;
               deleteNotice = '';
-            }}>{t('Удалить')} {title(key)}…</button
+            }}>{t('Delete')} {title(key)}…</button
           >
-          {#if keep.includes(key)}<p>{t('Изображение используется в черновике темы.')}</p>{/if}
+          {#if keep.includes(key)}<p>{t('This image is used by the theme draft.')}</p>{/if}
         </article>
       {/each}
     </div>
     {#if confirmDelete}
       <p>
-        {t('Удалить «')}{confirmDelete.name ??
-          t('Изображение {0}', confirmDelete.key.slice(0, 8))}{t(
-          '» из библиотеки? Исходный файл останется на диске.',
+        {t('Delete «')}{confirmDelete.name ?? t('Image {0}', confirmDelete.key.slice(0, 8))}{t(
+          '» from the library? The original file will remain on disk.',
         )}
       </p>
       <button
         disabled={disabled || saving || deleteReadback || keep.includes(confirmDelete.key)}
-        onclick={deleteImage}>{t('Подтвердить удаление изображения')}</button
+        onclick={deleteImage}>{t('Confirm image deletion')}</button
       >
       <button disabled={saving} onclick={() => (confirmDelete = null)}
-        >{t('Отмена удаления изображения')}</button
+        >{t('Cancel image deletion')}</button
       >
     {/if}
     {#if deleteNotice}<p role="status">
         {typeof deleteNotice === 'string'
           ? t(deleteNotice)
           : t(
-              'Удаление не подтверждено: {0}. Проверьте обновлённый список перед повтором.',
+              'Deletion was not confirmed: {0}. Check the updated list before retrying.',
               deleteNotice.detail,
             )}
       </p>{/if}
@@ -392,7 +389,7 @@
         }}
       >
         <label
-          >{t('Имя изображения')}<input
+          >{t('Image name')}<input
             bind:value={edit.name}
             required
             maxlength="256"
@@ -405,7 +402,7 @@
             !connected ||
             loading ||
             renameReadback ||
-            !edit.name?.trim()}>{t('Сохранить имя изображения')}</button
+            !edit.name?.trim()}>{t('Save image name')}</button
         >
         <button
           type="button"
@@ -414,22 +411,22 @@
             edit = null;
             renameError = null;
             renameReadback = false;
-          }}>{t('Отмена переименования')}</button
+          }}>{t('Cancel rename')}</button
         >
       </form>{/if}
     {#if renameError}<p role="alert">
         {t(
-          'Переименование не подтверждено: {0}. Обновлённые данные будут загружены; перед повтором выберите переименование заново.',
+          'Renaming was not confirmed: {0}. Updated data will be loaded; select Rename again before retrying.',
           renameError.detail,
         )}
       </p>{/if}
-    {#if keys.length}<nav aria-label={t('Страницы изображений')}>
+    {#if keys.length}<nav aria-label={t('Image pages')}>
         <button disabled={currentPage === 0} onclick={() => (page = currentPage - 1)}
-          >{t('Предыдущие изображения')}</button
+          >{t('Previous images')}</button
         >
-        <span role="status">{t('Страница')} {currentPage + 1} {t('из')} {pages}</span>
+        <span role="status">{t('Page')} {currentPage + 1} {t('of')} {pages}</span>
         <button disabled={currentPage + 1 >= pages} onclick={() => (page = currentPage + 1)}
-          >{t('Следующие изображения')}</button
+          >{t('Next images')}</button
         >
       </nav>{/if}
   {/if}

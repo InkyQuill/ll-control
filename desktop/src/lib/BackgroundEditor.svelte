@@ -38,50 +38,48 @@
 </script>
 
 <fieldset>
-  <legend>{t('Фон LCD')}</legend>
+  <legend>{t('LCD background')}</legend>
   <label
-    >{t('Тип фона')}<select value={mode} onchange={(e) => select(e.currentTarget.value)}>
-      {#if theme.background_image}<option value="image">{t('Изображение из библиотеки')}</option
-        >{/if}
-      {#if theme.background_video}<option value="video">{t('Видео из библиотеки')}</option>{/if}
-      <option value="solid">{t('Сплошной цвет')}</option><option value="horizontal"
-        >{t('Горизонтальный градиент')}</option
+    >{t('Background type')}<select value={mode} onchange={(e) => select(e.currentTarget.value)}>
+      {#if theme.background_image}<option value="image">{t('Library image')}</option>{/if}
+      {#if theme.background_video}<option value="video">{t('Library video')}</option>{/if}
+      <option value="solid">{t('Solid color')}</option><option value="horizontal"
+        >{t('Horizontal gradient')}</option
       >
-      <option value="vertical">{t('Вертикальный градиент')}</option><option value="radial"
-        >{t('Радиальный градиент')}</option
+      <option value="vertical">{t('Vertical gradient')}</option><option value="radial"
+        >{t('Radial gradient')}</option
       >
     </select></label
   >
   {#if theme.background_video}
-    <MediaThumbnail clipKey={theme.background_video} name={t('Видео фона')} />
-    <StudioPopover label={t('Справка')} icon="help"
+    <MediaThumbnail clipKey={theme.background_video} name={t('Background video')} />
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'Видео воспроизводится на холсте. Для замены откройте библиотеку роликов. Изменения LCD требуют применения.',
+          'Video plays on the canvas. Open the video library to replace it. Apply to update the LCD.',
         )}
       </p></StudioPopover
     >
   {:else if theme.background_image}
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'Изображение выбрано фоном темы. Замените его в библиотеке изображений, выбрав назначение «Фон».',
+          'An image is selected as the theme background. Replace it in the image library using the Background destination.',
         )}
       </p></StudioPopover
     >
     <label
-      >{t('Размещение фона')}<select bind:value={theme.background_image.fit}>
-        <option value="crop">{t('Заполнить с обрезкой')}</option><option value="contain"
-          >{t('Вписать')}</option
+      >{t('Background placement')}<select bind:value={theme.background_image.fit}>
+        <option value="crop">{t('Fill and crop')}</option><option value="contain">{t('Fit')}</option
         >
-        <option value="contain_native">{t('Вписать без увеличения')}</option><option value="stretch"
-          >{t('Растянуть')}</option
+        <option value="contain_native">{t('Fit without upscaling')}</option><option value="stretch"
+          >{t('Stretch')}</option
         >
       </select></label
     >
   {:else if gradient}
     <label
-      >{t('Первый цвет фона')}<input
+      >{t('First background color')}<input
         type="color"
         value={hex(gradient.colors[0])}
         oninput={(e) => {
@@ -90,7 +88,7 @@
       /></label
     >
     <label
-      >{t('Второй цвет фона')}<input
+      >{t('Second background color')}<input
         type="color"
         value={hex(gradient.colors[1])}
         oninput={(e) => {
@@ -105,11 +103,11 @@
         onchange={(e) => {
           if (gradient) gradient.flip = e.currentTarget.checked;
         }}
-      />{t('Обратить градиент')}</label
+      />{t('Reverse gradient')}</label
     >
   {:else}
     <label
-      >{t('Фон')}<input
+      >{t('Background')}<input
         type="color"
         value={hex(theme.background)}
         oninput={(e) => (theme.background = rgb(e.currentTarget.value))}

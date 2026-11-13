@@ -31,8 +31,8 @@
 </script>
 
 <fieldset {disabled}>
-  <legend>{t('Карточки роликов')}</legend>
-  <p>{t('Выбор карточки не запускает LCD. Примените выбранный ролик отдельной кнопкой.')}</p>
+  <legend>{t('Video cards')}</legend>
+  <p>{t('Selecting a card does not start the LCD. Apply the selected video separately.')}</p>
   <div class="cards">
     {#each visible as clip (clip.key)}
       <article class:selected={choice === clip.key}>
@@ -45,18 +45,18 @@
           /><span>{clip.name}</span></label
         >
         <MediaThumbnail clipKey={clip.key} name={clip.name} compact />
-        {#if clip.is_default}<p>{t('Встроенный ролик')}</p>{/if}
-        <p>{(clip.frames / clip.fps).toFixed(1)} {t('с ·')} {clip.fps} fps</p>
+        {#if clip.is_default}<p>{t('Built-in video')}</p>{/if}
+        <p>{(clip.frames / clip.fps).toFixed(1)} {t('s ·')} {clip.fps} fps</p>
       </article>
     {/each}
   </div>
-  <nav aria-label={t('Страницы роликов')}>
+  <nav aria-label={t('Video pages')}>
     <button disabled={disabled || visiblePage === 0} onclick={() => (page = visiblePage - 1)}
-      >{t('Предыдущие ролики')}</button
+      >{t('Previous videos')}</button
     >
-    <span role="status">{t('Страница')} {visiblePage + 1} {t('из')} {pages}</span>
+    <span role="status">{t('Page')} {visiblePage + 1} {t('of')} {pages}</span>
     <button disabled={disabled || visiblePage + 1 >= pages} onclick={() => (page = visiblePage + 1)}
-      >{t('Следующие ролики')}</button
+      >{t('Next videos')}</button
     >
   </nav>
 </fieldset>

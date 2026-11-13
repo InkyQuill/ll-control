@@ -281,7 +281,7 @@ export function coolingPreset(
 }
 
 export async function importImageAsset(file: File): Promise<string> {
-  if (file.size > 16 * 1024 * 1024) throw new ValidationError('Изображение превышает 16 MiB');
+  if (file.size > 16 * 1024 * 1024) throw new ValidationError('Image exceeds 16 MiB');
   return invoke<string>('import_image', {
     name: file.name,
     bytes: Array.from(new Uint8Array(await file.arrayBuffer())),
