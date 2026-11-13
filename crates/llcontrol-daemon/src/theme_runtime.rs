@@ -20,7 +20,6 @@ use std::sync::{
 #[derive(Debug)]
 pub struct PreparedTheme {
     pub(crate) runtime: Arc<ThemeRuntime>,
-    pub(crate) jpeg: bytes::Bytes,
 }
 
 /// Immutable assets shared across frames; sensor caches remain live.
@@ -147,12 +146,11 @@ impl ThemeRuntime {
 
     /// Render and validate the first frame without holding the display actor.
     pub async fn prepare(self: &Arc<Self>) -> Result<PreparedTheme> {
-        let jpeg = self.frame().await?;
-        llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request(&jpeg)
-            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        // Validate rendering before enqueueing. The keeper separately preflights
+        // the H.264 first frame before replacing the current source.
+        self.frame().await?;
         Ok(PreparedTheme {
             runtime: self.clone(),
-            jpeg,
         })
     }
 
