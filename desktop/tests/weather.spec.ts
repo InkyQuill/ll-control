@@ -574,7 +574,9 @@ for (const mode of ['none', 'ambiguous'] as const)
     ).toBeVisible();
     await page.getByRole('button', { name: 'Применить к LCD', exact: true }).click();
     await expect(
-      page.getByText('Выберите источник эффекта перед сохранением или Apply.', { exact: true }),
+      page.getByText('Выберите источник эффекта перед сохранением или применением.', {
+        exact: true,
+      }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -957,7 +959,7 @@ test('Meteor missing CPU Load blocks Apply and profile Save until explicit corre
   ).toBeVisible();
   await page.getByRole('button', { name: 'Применить к LCD', exact: true }).click();
   await expect(
-    page.getByText('Выберите источник эффекта перед сохранением или Apply.', { exact: true }),
+    page.getByText('Выберите источник эффекта перед сохранением или применением.', { exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Сохранённые профили', exact: true }).click();
   await page.getByRole('button', { name: 'Обновить список профилей', exact: true }).click();

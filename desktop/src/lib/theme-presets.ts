@@ -17,7 +17,7 @@ export type PresetId = (typeof presets)[number]['id'];
 export function presetTheme(id: PresetId, bindings: Sensor[]): Theme {
   const preset = presets.find((p) => p.id === id)!;
   if (bindings.length !== preset.sensors)
-    throw new ValidationError('Select {1} sensors for {0}', [preset.name, preset.sensors]);
+    throw new ValidationError('Sensors required for {0}: {1}', [preset.name, preset.sensors]);
   const textStyle = (x: number, y: number, size: number, muted = false): Style => ({
     line_box: true,
     x,

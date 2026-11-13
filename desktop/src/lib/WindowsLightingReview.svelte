@@ -35,9 +35,9 @@
   {#each review.pump_modes as mode (mode.mode)}
     {@const dynamic = review.dynamic_rgb_profiles.modes.find((p) => p.mode === mode.mode)}
     <details class="mode">
-      <summary>{mode.mode} · {mode.dynamic_mode ? t('Dynamic mode') : t('Manual mode')}</summary>
+      <summary>{mode.mode} · {mode.dynamic_mode ? t('Dynamic mode') : t('Regular mode')}</summary>
       <p>
-        {t('Manual settings')} · {t('Brightness')}
+        {t('Regular settings')} · {t('Brightness')}
         {mode.brightness_percent}% · {t('Speed')}
         {mode.speed_percent}% · {t('Direction')}
         {mode.direction}<br /><code>{palette([mode.color, ...(mode.additional_colors ?? [])])}</code

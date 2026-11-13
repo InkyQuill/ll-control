@@ -293,7 +293,9 @@ async function setup(page: Page, language: 'en-US' | 'ru-RU' = 'ru-RU') {
   }, language);
   await page.goto('/?view=display');
   await page.getByRole('button', { name: copy[language].cooling, exact: true }).click();
-  await expect(page.getByText('Applied: 80%')).toBeVisible();
+  await expect(
+    page.getByText(language === 'en-US' ? 'Applied PWM: 80%' : 'Применённый PWM: 80%'),
+  ).toBeVisible();
 }
 
 for (const kind of ['local', 'remote'] as const) {

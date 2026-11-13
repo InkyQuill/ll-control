@@ -346,7 +346,7 @@
       {target === 'pump' ? t('Daemon state · pump') : t('Daemon state · fans')}
     </h2>
     <div class="row">
-      <strong>Applied: {current?.applied_percent ?? '—'}%</strong><span
+      <strong>{t('Applied PWM: {0}%', current?.applied_percent ?? '—')}</strong><span
         >{current?.motherboard ? 'Motherboard' : 'MCU'}</span
       ><span
         >{current?.fallback_active

@@ -127,13 +127,13 @@ test('external cooling policy updates applied state without replacing PWM draft'
   page,
 }) => {
   await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
-  await expect(page.getByText('Applied: 60%')).toBeVisible();
+  await expect(page.getByText('Применённый PWM: 60%')).toBeVisible();
   const pwm = page.getByLabel('PWM, %', { exact: true });
   await pwm.fill('83');
   await page.evaluate(() => {
     (window as unknown as { externalFixture: ExternalFixture }).externalFixture.changed = true;
   });
-  await expect(page.getByText('Applied: 72%')).toBeVisible();
+  await expect(page.getByText('Применённый PWM: 72%')).toBeVisible();
   await expect(pwm).toHaveValue('83');
   await page.getByRole('button', { name: 'Загрузить текущую политику' }).click();
   await expect(pwm).toHaveValue('72');
@@ -205,7 +205,9 @@ test('external LCD settings update requested state while both edited fields surv
   await page.evaluate(() => {
     (window as unknown as { externalFixture: ExternalFixture }).externalFixture.changed = true;
   });
-  await expect(page.getByText('Текущее requested: 72% · 270°.', { exact: false })).toBeVisible();
+  await expect(
+    page.getByText('Запрошенные настройки: 72% · 270°.', { exact: false }),
+  ).toBeVisible();
   await expect(brightness).toHaveValue('83');
   await expect(rotation).toHaveValue('180');
   await load.click();

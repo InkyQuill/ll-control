@@ -145,7 +145,7 @@ test('every effect draft validation path has localized EN/RU resources', async (
     const cases = [
       [
         theme({ kind: 'fireworks', effect: { dynamic: true, sensor: null, intensity: 1 } }),
-        'Выберите источник эффекта перед сохранением или Apply.',
+        'Выберите источник эффекта перед сохранением или применением.',
         'Select an effect source before saving or applying.',
       ],
       [
@@ -168,7 +168,7 @@ test('every effect draft validation path has localized EN/RU resources', async (
       ],
       [
         theme({ kind: 'meteor', effect: { dynamic: true, sensor: null, speed: 2 } }),
-        'Выберите источник эффекта перед сохранением или Apply.',
+        'Выберите источник эффекта перед сохранением или применением.',
         'Select an effect source before saving or applying.',
       ],
       [
@@ -186,7 +186,7 @@ test('every effect draft validation path has localized EN/RU resources', async (
       ],
       [
         theme({ kind: 'weather', effect: { dynamic: true, sensor: null, intensity: 1 } }),
-        'Выберите источник эффекта перед сохранением или Apply.',
+        'Выберите источник эффекта перед сохранением или применением.',
         'Select an effect source before saving or applying.',
       ],
       [
@@ -240,4 +240,35 @@ test('English is the literal source language and Russian is a separate catalog',
     readFileSync(new URL('../src/lib/locales/ru-RU.json', import.meta.url)),
   );
   for (const key of Object.keys(catalog)) assert.doesNotMatch(key, /[А-Яа-яЁё]/);
+});
+
+test('recording validation and Windows record labels have Russian resources', () => {
+  for (const source of [
+    'Invalid recording ID',
+    'Recording editor is closed',
+    'Invalid source preview size',
+    'Invalid recording review ID',
+    'Recording review is closed',
+    'Recording is not ready to save',
+    'Preview dimensions exceed preparation budget',
+    'Canvas unavailable',
+    'Unexpected preview dimensions',
+  ]) {
+    assert.equal(translate(source, 'en-US'), source);
+    assert.match(translate(source, 'ru-RU'), /[А-Яа-яЁё]/);
+  }
+  assert.equal(translate('Record {0} · {1}', 'ru-RU', 2, 'abc123'), 'Запись 2 · abc123');
+});
+
+test('preset sensor requirements avoid count-dependent grammar and retain literal names', () => {
+  for (const count of [1, 2, 5]) {
+    assert.equal(
+      translate('Sensors required for {0}: {1}', 'en-US', 'Focus {1}', count),
+      `Sensors required for Focus {1}: ${count}`,
+    );
+    assert.equal(
+      translate('Sensors required for {0}: {1}', 'ru-RU', 'Focus {1}', count),
+      `Необходимое число датчиков для Focus {1}: ${count}`,
+    );
+  }
 });

@@ -87,6 +87,11 @@ for (const language of ['en-US', 'ru-RU'] as const) {
     await expect(area.getByRole('button', { name: c.apply, exact: true })).toBeEnabled();
     await area.locator('.windows-lighting-review > summary').click();
     await expect(area.locator('.windows-lighting-review .mode')).toHaveCount(16);
+    await expect(
+      area.locator('.windows-lighting-review .mode > summary').filter({
+        hasText: language === 'en-US' ? 'Regular mode' : 'Обычный режим',
+      }),
+    ).toHaveCount(15);
     for (const [width, height] of [
       [1280, 1000],
       [1024, 900],
