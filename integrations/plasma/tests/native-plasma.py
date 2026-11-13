@@ -101,7 +101,7 @@ try:
   maps=Path(f'/proc/{gui.pid}/maps').read_text()
   for library in ['libllcontrol_mini_feed.so','libllcontrol_mini_feedplugin.so']:
    assert str(qml_path/'net/inkyquill/llcontrol'/library) in maps, 'Packaged QML library not loaded: '+library
- helper_ids=subprocess.run(['pgrep','-P',str(gui.pid),'llcontrol'],text=True,stdout=subprocess.PIPE).stdout.splitlines();assert len(helper_ids)==1,helper_ids
+ helper_ids=subprocess.run(['pgrep','-x','-P',str(gui.pid),'llcontrol'],text=True,stdout=subprocess.PIPE).stdout.splitlines();assert len(helper_ids)==1,helper_ids
  subprocess.run(['xdotool','windowquit',window],env=env,check=True,timeout=5);gui.wait(timeout=15);assert gui.returncode==0
  for pid in helper_ids:assert not Path('/proc/'+pid).exists(),'Helper survived widget destruction'
  assert 'languageCache=ru-RU' in (root/'config/plasmawindowedrc').read_text(),'Confirmed Russian cache was not persisted by Plasma'

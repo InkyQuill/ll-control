@@ -31,7 +31,9 @@ it again. To remove: `systemctl --user disable --now llcontrold`, then
 Before using a development build from the old naming scheme, stop and disable
 `lconnectd.service` and quit `lconnect-gui`. Remove the old manually installed
 binaries, desktop entry and user service so they cannot compete with LL-Control.
-If you need existing settings, copy the old XDG `lconnect` configuration and data
-directories to `llcontrol` while both applications are stopped. Review paths in
+If the old build was installed with pacman, uninstall its package before installing
+`ll-control`. To keep daemon settings, profiles and assets, copy
+`$XDG_CONFIG_HOME/lconnectd/` to `$XDG_CONFIG_HOME/llcontrold/` while both
+daemons are stopped. XDG_CONFIG_HOME defaults to `~/.config`. Review paths in
 your configuration, then reload systemd and start `llcontrold.service`.
 There is no automatic migration or compatibility alias in this pre-release rename.
