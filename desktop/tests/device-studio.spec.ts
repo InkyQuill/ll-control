@@ -113,7 +113,7 @@ test('composition survives library navigation and overview; disconnected selecti
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: '../.impeccable/review/production-lcd.png', fullPage: true });
   await page.getByRole('button', { name: 'Готовые темы', exact: true }).click();
-  await expect(page.getByLabel('Раскладка', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Focus/ })).toBeVisible();
   await page.screenshot({ path: '../.impeccable/review/production-presets.png', fullPage: true });
   await page.getByRole('button', { name: 'Композиция', exact: true }).click();
   await page.getByLabel('Название', { exact: true }).fill('Мой несохранённый экран');

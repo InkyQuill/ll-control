@@ -272,17 +272,13 @@ for (const language of ['en-US', 'ru-RU'] as const) {
     await page
       .getByRole('button', { name: english ? 'Theme presets' : 'Готовые темы', exact: true })
       .click();
-    const layout = page.getByRole('combobox', {
-      name: english ? 'Layout' : 'Раскладка',
-      exact: true,
-    });
-    await expect(layout.locator('option[value="focus"]')).toHaveText(
-      english ? 'Focus · One large reading and a clock' : 'Focus · Один крупный показатель и часы',
+    await expect(page.getByRole('button', { name: /^Focus/ })).toContainText(
+      english ? 'One large reading and a clock' : 'Один крупный показатель и часы',
     );
-    await expect(layout.locator('option[value="clock"]')).toHaveText(
+    await expect(page.getByRole('button', { name: /^Clock/ })).toContainText(
       english
-        ? 'Clock · Date, time and AM/PM with separate colors'
-        : 'Clock · Дата, время и AM/PM с отдельными цветами',
+        ? 'Date, time and AM/PM with separate colors'
+        : 'Дата, время и AM/PM с отдельными цветами',
     );
     await page
       .getByRole('button', { name: english ? 'Composition' : 'Композиция', exact: true })

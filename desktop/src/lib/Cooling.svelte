@@ -411,7 +411,7 @@
         fill="none"
         stroke="var(--accent)"
         stroke-width="3"
-      />{#each points as p (p.celsius)}<circle
+      />{#each points as p (p)}<circle
           cx={(Math.max(-50, Math.min(150, p.celsius)) + 50) * 1.5}
           cy={120 - Math.max(0, Math.min(1, p.value / (rpmMode ? 3600 : 100))) * 120}
           r="4"
