@@ -1,4 +1,5 @@
 import type { VideoCrop } from './video-crop';
+import { ValidationError } from './validation-error';
 import type { SourceMetadata } from './video-range';
 export type RecordingPhase = 'reserved' | 'selecting' | 'setup' | 'recording' | 'paused' | 'limit_reached' | 'finalizing' | 'ready' | 'cancelling' | 'cancelled' | 'failed';
 export interface RecordingStatus {
@@ -14,10 +15,10 @@ export class RecordingSession {
   private closing: Promise<void> | null = null;
   private disposed = false;
   constructor(readonly id: string, private readonly invoke: RecordingInvoke) {
-    if (!/^[0-9a-f]{32}$/.test(id)) throw new Error('Invalid recording ID');
+    if (!/^[0-9a-f]{32}$/.test(id)) throw new ValidationError('Invalid recording ID');
   }
   begin(): Promise<RecordingStatus | null> {
-    if (this.disposed) return Promise.reject(new Error('Recording editor is closed'));
+    if (this.disposed) return Promise.reject(new ValidationError('Recording editor is closed'));
     return this.opening ??= this.open();
   }
   private async open(): Promise<RecordingStatus | null> {
@@ -45,7 +46,7 @@ export class RecordingSession {
     return this.disposed ? null : status;
   }
   async control(action: RecordingAction): Promise<void> {
-    if (this.disposed) throw new Error('Recording editor is closed');
+    if (this.disposed) throw new ValidationError('Recording editor is closed');
     // Ambiguous controls are not replayed; caller refreshes status first.
     await this.invoke<void>('screen_record_control', { id: this.id, action });
   }
@@ -54,11 +55,11 @@ export class RecordingSession {
     const raw = await this.invoke<ArrayBuffer | number[]>('screen_record_snapshot', { id: this.id });
     if (this.disposed) return null;
     const bytes = new Uint8Array(raw);
-    if (!bytes.length || bytes.length > 2 * 1024 * 1024) throw new Error('Invalid source preview size');
+    if (!bytes.length || bytes.length > 2 * 1024 * 1024) throw new ValidationError('Invalid source preview size');
     return bytes;
   }
   async preview(): Promise<string> {
-    if (this.disposed) throw new Error('Recording editor is closed');
+    if (this.disposed) throw new ValidationError('Recording editor is closed');
     return this.invoke<string>('media_playback_url', { id: this.id, kind: 'recording' });
   }
   dispose(): Promise<void> {
@@ -93,7 +94,7 @@ export class RecordingReview {
   private closing: Promise<void> | null = null;
   private disposed = false;
   constructor(readonly id: string, readonly recordingId: string, private readonly invoke: RecordingInvoke) {
-    if (![id, recordingId].every(value => /^[0-9a-f]{32}$/.test(value))) throw new Error('Invalid recording review ID');
+    if (![id, recordingId].every(value => /^[0-9a-f]{32}$/.test(value))) throw new ValidationError('Invalid recording review ID');
   }
   private async read(): Promise<RecordingReviewStatus | null> {
     const status = await this.invoke<RecordingReviewStatus | null>('media_status');
@@ -105,7 +106,7 @@ export class RecordingReview {
     return this.disposed ? null : status;
   }
   prepare(edit: RecordingEdit): Promise<void> {
-    if (this.disposed) return Promise.reject(new Error('Recording review is closed'));
+    if (this.disposed) return Promise.reject(new ValidationError('Recording review is closed'));
     if (this.preparation) return this.preparation;
     this.admission = (async () => {
       try { await this.invoke('screen_record_admit', { recordingId: this.recordingId, id: this.id, ...edit }); }
@@ -123,9 +124,9 @@ export class RecordingReview {
     return this.preparation;
   }
   async confirm(): Promise<void> {
-    if (this.disposed) throw new Error('Recording review is closed');
+    if (this.disposed) throw new ValidationError('Recording review is closed');
     const status = await this.read();
-    if (this.disposed || status?.phase !== 'review_ready') throw new Error('Recording is not ready to save');
+    if (this.disposed || status?.phase !== 'review_ready') throw new ValidationError('Recording is not ready to save');
     // Explicit user action only; recover an ambiguous publication through status.
     await this.invoke<void>('media_confirm', { id: this.id });
   }

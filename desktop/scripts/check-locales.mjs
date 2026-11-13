@@ -10,7 +10,7 @@ const keys=new Map(),dynamic=[];
 for(const file of files){const module=file.endsWith('.ts'),original=fs.readFileSync(path.join(root,file),'utf8');const source=module?`<script lang="ts">\n${original}\n</script>`:original;const ast=parse(source,{modern:true});
  function walk(node){if(!node||typeof node!=='object')return;
   if((node.type==='CallExpression'&&node.callee?.type==='Identifier'&&node.callee.name==='t')||
-     (node.type==='NewExpression'&&node.callee?.type==='Identifier'&&node.callee.name==='ValidationError')){
+     (node.type==='NewExpression'&&node.callee?.type==='Identifier'&&['ValidationError','Error'].includes(node.callee.name))){
    const first=node.arguments[0],location={file,line:source.slice(0,node.start).split('\n').length-(module?1:0)};
    if(first?.type==='Literal'&&typeof first.value==='string'){const key=first.value.trim().replace(/\s+/g,' ');keys.set(key,[...(keys.get(key)??[]),location]);}
    else dynamic.push({...location,expression:source.slice(first?.start??node.start,first?.end??node.end)});

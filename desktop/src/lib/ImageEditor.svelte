@@ -73,7 +73,7 @@
       if(owned)captureId=owned;
       try {
         const outcome=owned ? await invoke<unknown>('cancel_screenshot',{id:owned}) : 'closed';
-        if(outcome!=='closed' && outcome!=='owner_gone')throw new Error('Unsupported screenshot cancellation receipt');
+        if(outcome!=='closed' && outcome!=='owner_gone')throw new ValidationError('Неподдерживаемый ответ отмены захвата экрана.');
         captureOwnerGone=outcome==='owner_gone';
         if(!owned || captureId===owned){captureId=null;capturing=false;loading=false;}
         return true;
