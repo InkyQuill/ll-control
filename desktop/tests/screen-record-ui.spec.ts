@@ -1231,7 +1231,7 @@ for (const state of ['paused', 'ready', 'review-capture', 'review-media'] as con
         page.getByRole('button', { name: en ? english : russian, exact: true });
       await button('Select screen or window', 'Выбрать экран или окно').click();
       await button('Start screen recording', 'Начать запись экрана').click();
-      if (state === 'paused') await button('Pause recording', 'Приостановить запись').click();
+      if (state === 'paused') await button('Pause the recording', 'Приостановить запись').click();
       else {
         await button('Finish and review recording', 'Завершить и просмотреть запись').click();
         await button('Edit recording', 'Редактировать запись').click();
@@ -1474,7 +1474,7 @@ for (const language of ['en-US', 'ru-RU'])
     await start.click();
     await expect(
       page.getByRole('button', {
-        name: english ? 'Pause recording' : 'Приостановить запись',
+        name: english ? 'Pause the recording' : 'Приостановить запись',
         exact: true,
       }),
     ).toBeVisible();
@@ -1509,7 +1509,10 @@ for (const language of ['en-US', 'ru-RU'])
         })
         .click();
       await page
-        .getByRole('button', { name: en ? 'Pause recording' : 'Приостановить запись', exact: true })
+        .getByRole('button', {
+          name: en ? 'Pause the recording' : 'Приостановить запись',
+          exact: true,
+        })
         .click();
       const area = page.getByRole('button', {
         name: en ? 'Capture region selection on frame' : 'Выбор области захвата на кадре',
