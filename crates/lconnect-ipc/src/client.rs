@@ -45,6 +45,7 @@ pub struct IpcClient {
     reader_task: tokio::task::JoinHandle<()>,
     writer_task: tokio::task::JoinHandle<()>,
     tx: mpsc::Sender<ClientMsg>,
+    call_timeout: Option<std::time::Duration>,
     /// The `hello` notification the server pushed on connect (carries
     /// version + capability info). Exposed so callers can sanity-check
     /// the wire protocol version before issuing calls.
@@ -275,17 +276,41 @@ impl IpcClient {
             reader_task,
             writer_task,
             tx,
+            call_timeout: None,
             hello,
         })
     }
 
+    /// Bound every subsequent RPC response wait on this client.
+    pub fn with_call_timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.call_timeout = Some(timeout);
+        self
+    }
+
     /// One-shot RPC call. Awaits the matching response.
+    ///
+    /// When a call timeout is configured, expiry returns an ambiguous-outcome
+    /// transport error. The request is never replayed automatically.
     ///
     /// # Errors
     /// Returns the daemon's [`IpcError`] (mapped from JSON-RPC error
     /// codes) on failure, or [`IpcError::Transport`] /
     /// [`IpcError::Serialization`] for connection-level problems.
     pub async fn call(&self, method: &str, params: Value) -> Result<Value> {
+        if let Some(timeout) = self.call_timeout {
+            return tokio::time::timeout(timeout, self.call_inner(method, params))
+                .await
+                .map_err(|_| {
+                    IpcError::Transport(format!(
+                        "RPC '{method}' timed out after {} ms; outcome is ambiguous and the request may have been applied; do not retry automatically",
+                        timeout.as_millis()
+                    ))
+                })?;
+        }
+        self.call_inner(method, params).await
+    }
+
+    async fn call_inner(&self, method: &str, params: Value) -> Result<Value> {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let req = Request::new(id, method, params);
         let mut line =
