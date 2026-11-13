@@ -1,6 +1,6 @@
 import {expect,type Page} from '@playwright/test';
 import type {GroupStatus} from '../../src/lib/group-archive';
-export interface Fixture {job:GroupStatus|null;calls:{command:string;args:Record<string,unknown>}[];lost:boolean;lostFinish?:boolean;rejectWindows?:boolean;commits?:number;holdPreview?:boolean;rejectPreview?:boolean;releasePreview?:(()=>void)|null}
+export interface Fixture {language:string;job:GroupStatus|null;calls:{command:string;args:Record<string,unknown>}[];lost:boolean;lostFinish?:boolean;rejectWindows?:boolean;commits?:number;holdPreview?:boolean;rejectPreview?:boolean;releasePreview?:(()=>void)|null}
 export const panel=(p:Page)=>p.getByText('Резервная копия группы настроек',{exact:true}).locator('..');
 export async function setup(page:Page,language='ru-RU'){
  await page.addInitScript(language=>{

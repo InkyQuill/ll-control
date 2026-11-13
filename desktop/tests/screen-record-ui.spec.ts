@@ -49,6 +49,7 @@ async function setup(page:Page,videoUrl='data:video/mp4;base64,',language='ru-RU
   },{videoUrl,language});
   await page.goto('/?view=display');await page.getByRole('button',{name:/^(Библиотека|Library)$/}).click();
   await page.getByRole('button',{name:language==='en-US'?'Video library':'Библиотека роликов',exact:true}).click();
+  await expect(page.locator('[data-feature="recording"]')).toContainText(language==='en-US'?'Experimental':'Экспериментально');
   await page.getByRole('button',{name:language==='en-US'?'Record screen…':'Записать экран…',exact:true}).click();
 }
 test('capture pause resume review and explicit save add gallery membership',async({page})=>{

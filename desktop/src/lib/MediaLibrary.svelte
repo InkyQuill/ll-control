@@ -1,5 +1,6 @@
 <script lang="ts">
   import StudioPopover from "./StudioPopover.svelte";
+  import ExperimentalNotice from './ExperimentalNotice.svelte';
   import { ValidationError, type UiDiagnostic } from './validation-error';
   import {t, diagnosticText} from './i18n.svelte';
   import { untrack, tick } from 'svelte';
@@ -156,6 +157,7 @@
     {#if open && captureDevice}
       {#key captureDevice}<ScreenRecorder device={captureDevice} onclose={()=>captureDevice=null} onsave={async(key,target)=>{await imported(key,target);}}/>{/key}
     {:else if open && !editing}
+      <ExperimentalNotice feature="recording" message="Захват и запись экрана не проверены во всех поддерживаемых сеансах. Используйте на свой риск." />
       <button disabled={disabled || importBusy || editBusy || !available} onclick={()=>captureDevice=device}>{t("Записать экран…")}</button>
     {/if}
     <button bind:this={refreshButton} disabled={disabled || loading} onclick={() => refresh()}>{t("Обновить ролики")}</button>

@@ -13,6 +13,8 @@ main=(package/'contents/ui/main.qml').read_text()
 assert '||"LL-Control"' in main
 assert '||"LL-Control Mini"' in main
 assert 'L-Connect' not in main
+config=(package/'contents/ui/configGeneral.qml').read_text()
+assert 'Mini.text("experimental",root.language)' in config
 with tempfile.TemporaryDirectory(prefix='lconnect-mini-config-') as tmp:
  root=Path(tmp);(root/'bin').mkdir()
  def sensor(key,unit,value,label):return dict(id=key,unit=unit,value=value,label=label,status='valid',age_ms=0)

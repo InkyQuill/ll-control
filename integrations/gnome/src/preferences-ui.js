@@ -96,7 +96,7 @@ export class PreferencesController {
         if (this._language !== cached) this.settings.set_string('language-cache', this._language);
         const language = this._language;
         this.page.title = Mini.text('configuration', language);
-        this.info.description = text('description', language);
+        this.info.description = `${text('description', language)} ${Mini.text('experimental', language)}`;
         const conflict = this.settings.get_string('slot-config') !== this._base;
         const message = !this._draft ? Mini.text('invalid', language) : conflict ? text('changed', language) : this._notice ? text(this._notice, language) : '';
         this.status.title = message;

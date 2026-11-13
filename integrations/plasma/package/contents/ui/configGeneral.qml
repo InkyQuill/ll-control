@@ -29,6 +29,7 @@ ColumnLayout {
   next.slots[index]=kind?{kind:kind,source:source}:null
   cfg_slotConfig=JSON.stringify(next)
  }
+ Controls.Label {text:Mini.text("experimental",root.language);wrapMode:Text.Wrap;Layout.fillWidth:true}
  Controls.Label {text:Mini.text("invalid",root.language);visible:!root.draft;wrapMode:Text.Wrap;Layout.fillWidth:true}
  Repeater {
   model:slotsModel

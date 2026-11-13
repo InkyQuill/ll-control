@@ -1420,5 +1420,13 @@
   "Recording is not ready to save": "Recording is not ready to save",
   "Preview dimensions exceed preparation budget": "Preview dimensions exceed preparation budget",
   "Canvas unavailable": "Canvas unavailable",
-  "Unexpected preview dimensions": "Unexpected preview dimensions"
+  "Unexpected preview dimensions": "Unexpected preview dimensions",
+  "Экспериментально": "Experimental",
+  "Проверка не завершена": "Verification incomplete",
+  "Ограничения экспериментальной функции": "Experimental feature limitations",
+  "Захват и запись экрана не проверены во всех поддерживаемых сеансах. Используйте на свой риск.": "Screen capture and recording are not verified in every supported session. Use at your own risk.",
+  "Импорт Windows поддерживает ограниченный набор форматов и не подтверждён для всех экспортов L-Connect 2.1.28. Используйте на свой риск.": "Windows import supports a limited set of formats and is not verified for every L-Connect 2.1.28 export. Use at your own risk.",
+  "FPS — среднее значение по кадрам из лога MangoHud, а не проверенный аналог PresentMon. Совместимость с играми не подтверждена; используйте на свой риск.": "FPS is a mean of logged MangoHud frames, not a verified PresentMon equivalent. Game compatibility is unverified; use at your own risk.",
+  "Процедурные эффекты реализованы, но их внешний вид, тайминг и отказы на LCDV2 проверены не полностью. Используйте на свой риск.": "Procedural effects are implemented, but their appearance, timing, and failure behavior on LCDV2 are not fully verified. Use at your own risk.",
+  "Поддержка этого устройства не прошла полную аппаратную проверку. Используйте элементы управления на свой риск.": "This device has not completed full hardware verification. Use its controls at your own risk."
 }
