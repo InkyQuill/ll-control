@@ -75,7 +75,7 @@ pub async fn run(device: Option<String>, json: bool) -> anyhow::Result<()> {
                         let _ = writeln!(stdout);
                     }
                     let _ = stdout.flush();
-                    return Err(anyhow!("daemon closed the snapshot subscription"));
+                    return Err(anyhow!("snapshot subscription closed (connection lost or consumer too slow)"));
                 };
                 let snap_val = notif
                     .params

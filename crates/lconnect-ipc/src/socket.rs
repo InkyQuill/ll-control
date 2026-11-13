@@ -6,16 +6,10 @@
 //! when its inode is still the one this process bound.
 
 use std::fs::{File, OpenOptions};
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Seek, SeekFrom, Write};
 use std::os::unix::fs::{FileTypeExt, MetadataExt, OpenOptionsExt};
-use std::os::unix::net::{UnixListener, UnixStream};
+use std::os::unix::net::UnixListener;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
-
-/// How long a connected peer may take to send `hello` before it is treated
-/// as a live occupant. A refused connection is stale immediately.
-const LIVE_SOCKET_PROBE_TIMEOUT: Duration = Duration::from_millis(300);
-
 const LOCK_FILE_NAME: &str = "lconnectd.lock";
 
 /// Return the well-known daemon socket inside an already-resolved runtime directory.
@@ -138,7 +132,7 @@ impl DaemonOwnership {
         let lock = acquire_lock(&lock_path_for(socket_path)?)?;
         match classify_socket(socket_path)? {
             SocketState::Absent => {}
-            SocketState::Stale => remove_stale_socket(socket_path)?,
+            SocketState::Stale(identity) => remove_stale_socket(socket_path, identity)?,
             SocketState::Occupied(detail) => {
                 return Err(io::Error::new(
                     io::ErrorKind::AlreadyExists,
@@ -277,7 +271,7 @@ impl Drop for DaemonGuard {
 
 enum SocketState {
     Absent,
-    Stale,
+    Stale(SocketIdentity),
     Occupied(String),
 }
 
@@ -371,73 +365,56 @@ fn lock_held(path: &Path) -> io::Error {
 }
 
 fn classify_socket(path: &Path) -> io::Result<SocketState> {
-    match std::fs::symlink_metadata(path) {
+    let identity = match std::fs::symlink_metadata(path) {
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(SocketState::Absent),
         Err(error) => return Err(error),
-        Ok(metadata) if metadata.file_type().is_socket() => {}
+        Ok(metadata) if metadata.file_type().is_socket() => {
+            SocketIdentity::from_metadata(&metadata)
+        }
         Ok(_) => {
             return Ok(SocketState::Occupied(format!(
                 "{} exists and is not a socket; refusing to remove it",
                 path.display()
             )));
         }
-    }
+    };
 
-    match UnixStream::connect(path) {
+    let socket = rustix::net::socket_with(
+        rustix::net::AddressFamily::UNIX,
+        rustix::net::SocketType::STREAM,
+        rustix::net::SocketFlags::NONBLOCK | rustix::net::SocketFlags::CLOEXEC,
+        None,
+    )?;
+    let address = rustix::net::SocketAddrUnix::new(path)?;
+    match rustix::net::connect(&socket, &address).map_err(io::Error::from) {
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(SocketState::Absent),
-        Err(error) if error.kind() == io::ErrorKind::ConnectionRefused => Ok(SocketState::Stale),
+        Err(error) if error.kind() == io::ErrorKind::ConnectionRefused => {
+            Ok(SocketState::Stale(identity))
+        }
         Err(error) => Err(io::Error::new(
             error.kind(),
             format!("cannot probe {}: {error}", path.display()),
         )),
-        Ok(stream) => Ok(SocketState::Occupied(describe_live_peer(&stream))),
+        Ok(()) => Ok(SocketState::Occupied("accepted a connection".to_owned())),
     }
 }
 
-fn describe_live_peer(stream: &UnixStream) -> String {
-    match read_probe_line(stream) {
-        Ok(line) => match serde_json::from_str::<serde_json::Value>(&line) {
-            Ok(value) => match value.get("method").and_then(|method| method.as_str()) {
-                Some(method) => format!("answered {method}"),
-                None => "accepted a connection and sent a response".to_owned(),
-            },
-            Err(_) => "accepted a connection and sent a response".to_owned(),
-        },
-        Err(error) => format!("accepted a connection but did not answer hello ({error})"),
-    }
-}
-
-fn read_probe_line(stream: &UnixStream) -> io::Result<String> {
-    let mut stream = stream;
-    stream.set_read_timeout(Some(LIVE_SOCKET_PROBE_TIMEOUT))?;
-    let mut buf = Vec::new();
-    let mut byte = [0u8; 1];
-    loop {
-        if buf.len() >= 8192 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "probe response exceeds 8192 bytes",
-            ));
-        }
-        match stream.read(&mut byte) {
-            Ok(0) => break,
-            Ok(_) if byte[0] == b'\n' => break,
-            Ok(_) => buf.push(byte[0]),
-            Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
-            Err(error) => return Err(error),
-        }
-    }
-    String::from_utf8(buf).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))
-}
-
-fn remove_stale_socket(path: &Path) -> io::Result<()> {
+fn remove_stale_socket(path: &Path, identity: SocketIdentity) -> io::Result<()> {
     match std::fs::symlink_metadata(path) {
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(error),
-        Ok(metadata) if metadata.file_type().is_socket() => std::fs::remove_file(path),
+        Ok(metadata)
+            if metadata.file_type().is_socket()
+                && SocketIdentity::from_metadata(&metadata) == identity =>
+        {
+            std::fs::remove_file(path)
+        }
         Ok(_) => Err(io::Error::new(
             io::ErrorKind::AlreadyExists,
-            format!("refusing to remove non-socket {}", path.display()),
+            format!(
+                "refusing to remove changed or non-socket {}",
+                path.display()
+            ),
         )),
     }
 }
@@ -559,6 +536,24 @@ mod ownership_tests {
     }
 
     #[test]
+    fn stale_cleanup_refuses_a_replacement_socket() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = socket_path(temp.path());
+        let stale = UnixListener::bind(&path).unwrap();
+        let identity = SocketIdentity::of_path(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        let replacement = UnixListener::bind(&path).unwrap();
+        let replacement_identity = SocketIdentity::of_path(&path).unwrap();
+
+        assert!(super::remove_stale_socket(&path, identity).is_err());
+        assert_eq!(
+            SocketIdentity::of_path(&path).unwrap(),
+            replacement_identity
+        );
+        drop((stale, replacement));
+    }
+
+    #[test]
     fn second_acquire_fails_before_replacing_the_winner_socket() {
         let temp = tempfile::tempdir().unwrap();
         let path = socket_path(temp.path());
@@ -592,7 +587,7 @@ mod ownership_tests {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
                         stream.set_nonblocking(false).unwrap();
-                        stream.write_all(HELLO).unwrap();
+                        let _ = stream.write_all(HELLO);
                     }
                     Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                         thread::sleep(Duration::from_millis(10));
@@ -605,7 +600,10 @@ mod ownership_tests {
 
         let error = DaemonOwnership::acquire(&path).unwrap_err();
 
-        assert!(error.to_string().contains("answered hello"), "{error}");
+        assert!(
+            error.to_string().contains("accepted a connection"),
+            "{error}"
+        );
         assert_eq!(SocketIdentity::of_path(&path).unwrap(), identity);
         let mut client = UnixStream::connect(&path).unwrap();
         client
@@ -632,9 +630,9 @@ mod ownership_tests {
 
         let error = DaemonOwnership::acquire(&path).unwrap_err();
 
-        assert!(started.elapsed() >= super::LIVE_SOCKET_PROBE_TIMEOUT);
+        assert!(started.elapsed() < Duration::from_millis(200));
         assert!(
-            error.to_string().contains("did not answer hello"),
+            error.to_string().contains("accepted a connection"),
             "{error}"
         );
         assert_eq!(SocketIdentity::of_path(&path).unwrap(), identity);
