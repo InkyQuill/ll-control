@@ -177,3 +177,13 @@ and all wire offsets were zero. Packet contents, device replies and the cause of
 flicker are unverified for this run. Display stability remains open.
 
 **Post-session reset check.** With the test daemon stopped and the installed service stopped first, one cmd 142 reset received a 64-byte acknowledgement. The device stayed enumerated throughout the 20-second watch. The restored service discovered the cooler but reported it could not open it. The operator confirmed LocalUI still flickered. The reset did not recover stable display; the cause remains unresolved.
+
+### LocalUI edge artifact after streaming
+
+![Operator-supplied frame showing horizontal bright strokes above the logo rim and along its diagonal](evidence/2026-11-13-localui-logo.png)
+
+The operator supplied this frame to identify the artifact seen by eye. Short bright horizontal strokes repeat along the top of the circular rim, the inner diagonal and the lettering. The still documents their shape; it cannot establish field order or interlacing.
+
+In session `20261113-141252-741589`, the bench captured 535 H.264 frames over 22.9 seconds. After the test daemon exited, the chart lingered for about ten seconds before LocalUI returned and continued flickering. Both daemons were stopped for about 97 seconds. Restarting the installed service produced no visible change. The photograph is supplemental evidence; it has no synchronized HID timestamp.
+
+Cold-start baseline pending: after full power removal, observe the static logo in UEFI before Linux starts. Persistence there would prioritize a panel/controller or power-path fault. A clean baseline followed by recurrence after streaming would motivate isolating the first command or stream transition that triggers it. LIAN LI identifies screen MOSFET damage as one possible explanation for GA II LCD flicker/ghosting; this frame does not diagnose that component. [GA II LCD FAQ](https://lian-li.com/faq/faq_galahad-ii-lcd/)
