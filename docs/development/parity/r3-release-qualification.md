@@ -14,6 +14,7 @@ installed-session or physical observations.
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
+| Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity, thermal trigger and restore |
 | Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
@@ -198,3 +199,25 @@ Pavel observed a clean logo at power-on and through GRUB on an earlier boot, fol
 For R3, classify persistent LocalUI flicker as a probable hardware fault on this unit. The Windows reproduction shows the Linux daemon is unnecessary for the symptom. LIAN LI identifies possible LCD MOSFET damage for this symptom and recommends requesting a screen replacement. The failed component has not been independently identified. [GA II LCD FAQ](https://lian-li.com/faq/faq_galahad-ii-lcd/)
 
 The observed four-angle rotation and brightness results stand. Stable-display acceptance remains open for a known-good or replacement screen.
+
+### Pump and RGB manual run, 2026-11-13
+
+Private session `20261113-151441-874792`, instrumented build `69e7df7`. Values below are measured pump RPM from fresh device snapshots (age under three seconds), starting five seconds after each Apply and ending at the next trial. Quiet and Performance used the same AMD GPU temperature sensor.
+
+| Pump request | Applied MCU duty | Median RPM | Observed range | Samples |
+|---|---:|---:|---:|---:|
+| Fixed 80% | 80% | 3060 | 3060–3090 | 28 |
+| Fixed 40% | 40% | 1740 | 1740–1950 | 15 |
+| Target 2400 RPM | 60% | 2460 | 2460–2490 | 25 |
+| Quiet | 55% | 2310 | 2310–2340 | 10 |
+| Performance | 70% | 2790 | 2760–2790 | 47 |
+
+Fixed duty response, RPM-target response and both preset responses were physically observed. Exact target tracking or full curve coverage was not demonstrated. Motherboard source, unavailable-sensor fallback/recovery and fan PWM remain open. The last snapshot showed 3030 pump RPM at restored 80% MCU and 0 fan RPM.
+
+| Lighting trial | Applied vs observed |
+|---|---|
+| Pump, all LEDs | Static red, breathing, runway, meteor, static starry night and voice marked Works with no exception noted. |
+| Pump animation continuity | Four-color ticker tape restarted before the second color finished at speed 75%; at 100% it ran faster and showed three colors before restarting. Four-color fluctuation showed only two colors. Transmit jumped halfway and colorful starry night jumped. Mode selection worked; complete animation cycles remain unqualified. During the 75% ticker trial the HID trace contains 46 pump-lighting cmd 131 writes in about 89 seconds, generally two seconds apart. Test whether periodic reapplication restarts animations. |
+| Zones and fan sync | Inner and outer were sent; the two visible side tracks could not be mapped to those names. Changing pump lighting alone left fans rainbow. After fan configuration, operator reported that synced fans take the pump setting; sync-on trial marked inconclusive. Sync off allowed independent fan color (static cyan requested). Fan rainbow, meteor and runway marked Works; rainbow morph restarted early. Only 360 / 24 LEDs was configured; physical count and alternative topologies remain unverified. |
+| Thermal override | First two 57°C attempts rejected because fan and pump lighting bases were not both known. After establishing both bases, the 60°C yellow rule was accepted for the CPU rule slot but bound to AMD GPU temp1. Operator saw no change while watching CPU temperature. All 75 subsequent trial samples reported no active thermal source. No recorded threshold crossing on the bound sensor; visible alert and return to base remain open. |
+| Restore | Daemon accepted 80% MCU, cleared thermal rules, and static blue on pump/all and fan (sync off, 360 / 24). Operator noted RGB appeared saved after stop; final colors were not individually identified. Test daemon exited successfully. Previous system owner was inactive. |
