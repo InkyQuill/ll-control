@@ -174,3 +174,22 @@ automatic source restore, явный Disable и точный registry/flags по
 
 Исходный широкий RGB-критерий сохраняется открытым до оставшейся проверки
 каталога и зон. Закрыт только явно перечисленный runtime software контракт.
+
+### Manual animation replay (Windows 2.1.28, Galahad2Vision)
+
+The screen LED page sends changes through SendScreenLEDLightingSettingRequest
+(Galahad2VisionScreenLEDPage.cs:146–280). In the service,
+Galahad2VisionController.setScreenLEDLighting (:568–621) copies the regular palette,
+speed and direction and issues SetPumpLighting. The one-second timer (:192,451–465)
+writes the pump setting only for sensor-driven dynamic MCU output, outside direct
+color mode and suspend. setFanLEDLighting (:675–697) writes on configuration.
+ApplyAll (:1358–1376) explicitly reapplies saved settings. No two-second
+unconditional regular ticker-tape write was identified in this product path.
+
+In the previous Linux 75% ticker trial, 46 pump mode writes were captured in
+about 89 seconds. The keeper now leaves successfully applied autonomous pump
+and fan modes running across idle ticks. Initial replay, manual changes,
+thermal layer transitions, retry and direct-color refresh remain supported.
+Physical retest: apply red/blue/green/yellow ticker tape once at 75%, observe
+for 30 seconds without edits, then repeat at 100%. Compare the full color
+sequence and discontinuities with the number of cmd 131 writes since each Apply.
