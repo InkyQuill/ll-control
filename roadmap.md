@@ -76,7 +76,7 @@ The [2026-11-12 comprehensive review](docs/development/2026-11-12-comprehensive-
 
 | Review ID | Current disposition and next work |
 |---|---|
-| [P0-01](https://github.com/InkyQuill/lconnect-linux/issues/1) | Startup ownership, bounded occupied-socket probing and stale-inode cleanup are implemented with regression coverage. Qualify the final exact source and two-process behavior in a socket-capable runner; package acceptance remains under P1-03. |
+| [P0-01](https://github.com/InkyQuill/lconnect-linux/issues/1) | Startup ownership, bounded occupied-socket probing and stale-inode cleanup are implemented with regression coverage. Host-side qualification on 2026-11-13 passed the IPC suite and a production-executable losing-startup regression with isolated sockets; see [evidence and reproduction](docs/development/parity/singleton-qualification-2026-11-13.md). Repeat on the combined release revision; package acceptance remains under P1-03. |
 | [P0-02](https://github.com/InkyQuill/lconnect-linux/issues/2) | Open R3 gate: physical cooling, RGB, display, soak and lifecycle acceptance on the exact package. Deferred observation. |
 | [P1-01](https://github.com/InkyQuill/lconnect-linux/issues/3) | Open: recorded physical static-JPEG rotation failure; intermediate brightness inconclusive. Software investigation first; physical retest required. |
 | [P1-02](https://github.com/InkyQuill/lconnect-linux/issues/4) | Fixed in `b599d92`: generated udev access no longer depends on the missing `plugdev` group. The packaging validator checks the complete logical device rule; clean Arch installation and active-session ACL acceptance remain open. |
