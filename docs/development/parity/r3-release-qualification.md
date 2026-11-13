@@ -13,7 +13,7 @@ installed-session or physical observations.
 | Installed Plasma Wayland lifecycle | Current session is KDE Wayland; no installed daemon unit or running L-Connect process found | Install/upgrade/remove with retained data, udev access, tray/single instance/hide/show/exit and actual login autostart |
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
-| Display and controls | [Manual LCD retest](#manual-lcd-retest-2026-11-13): brightness response observed; static JPEG unstable and rotation failed | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
+| Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; LocalUI flicker persists; brightness response observed | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
 | Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
@@ -150,3 +150,28 @@ Times below are Moscow time. No raw serials or machine-specific logs are publish
 Physical cooling, RGB, combined soak, cold boot, suspend/resume, deliberate USB
 reconnect and exact-package qualification remain open. For the Windows comparison
 and next controlled test see [static image rotation and display mode](../protocol/lcdv2-screen-pipeline-2.1.28.md#static-image-rotation-and-display-mode).
+
+## Host-rotated H.264 retest
+
+Private session `20261113-135910-230948`, November 13, 2026, candidate
+`69e7df7956e2c009d5937a92cb4d32b31bf8d3d7` ([#38](https://github.com/InkyQuill/lconnect-linux/pull/38)).
+The input was the same asymmetric TOP chart. Brightness stayed at 100% during the
+angle sweep. The previous cmd 14 results above remain the baseline.
+
+| Trial | Physical observation | Rotation | Stable display |
+|---|---|---|---|
+| Initial 0° | Chart appeared with LocalUI visible through it and heavy flicker | Initial position | Failed |
+| 90° | Chart rotated correctly; LocalUI flicker still visible | Passed | Failed |
+| 180° | Chart rotated correctly; LocalUI flicker still visible | Passed | Failed |
+| 270° | Chart rotated correctly; LocalUI still visible and flickering | Passed | Failed |
+| Return to 0° | Chart returned upright as intended | Passed | No separate flicker verdict on this transition |
+
+The operator marked brightness 0–45% in five-point steps as working.
+90% was inconclusive; flicker prevented distinguishing 45% from 50%.
+The system service restart succeeded. No post-handoff visual verdict was recorded in this run.
+
+Daemon counters stayed on generation 1 through the rotation sweep and brightness
+tests. The last sample reported 5,727 frames in 245.376 seconds (23.34 fps),
+zero failed frame transactions and 5,571 read timeouts. The raw HID log was empty
+and all wire offsets were zero. Packet contents, device replies and the cause of
+flicker are unverified for this run. Display stability remains open.
