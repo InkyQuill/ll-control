@@ -80,7 +80,10 @@ pub async fn resolve_device(
         return Ok(DeviceId::new(s));
     }
     let v = client
-        .call("list_devices", serde_json::json!({}))
+        .call(
+            lconnect_ipc::methods::LIST_DEVICES_NAME,
+            serde_json::json!({}),
+        )
         .await
         .map_err(|e| anyhow!("list_devices RPC failed: {e}"))?;
     let descs: Vec<DeviceDescriptor> = serde_json::from_value(v)

@@ -47,15 +47,15 @@ async fn system_font_read(id: String) -> Result<tauri::ipc::Response, BridgeErro
 fn allowed(method: &str) -> bool {
     matches!(
         method,
-        "list_devices"
+        lconnect_ipc::methods::LIST_DEVICES_NAME
             | "get_firmware"
             | "get_firmware_recovery"
-            | "list_sensors"
+            | lconnect_ipc::methods::LIST_SENSORS_NAME
             | "get_system_spec"
             | "get_fps_source"
             | "set_fps_source"
-            | "get_display_settings"
-            | "set_display_settings"
+            | lconnect_ipc::methods::GET_DISPLAY_SETTINGS_NAME
+            | lconnect_ipc::methods::SET_DISPLAY_SETTINGS_NAME
             | "get_sensor_defaults"
             | "set_sensor_defaults"
             | "reset_screen"

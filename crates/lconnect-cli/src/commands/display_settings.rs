@@ -25,8 +25,11 @@ pub enum Language {
 }
 pub async fn run(command: Command, json_mode: bool) -> Result<()> {
     let client = crate::connection::connect().await?;
-    let mut settings: DisplaySettings =
-        serde_json::from_value(client.call("get_display_settings", json!({})).await?)?;
+    let mut settings: DisplaySettings = serde_json::from_value(
+        client
+            .call(lconnect_ipc::methods::GET_DISPLAY_SETTINGS_NAME, json!({}))
+            .await?,
+    )?;
     settings.validate()?;
     if let Command::Set {
         temperature_unit,
@@ -47,7 +50,10 @@ pub async fn run(command: Command, json_mode: bool) -> Result<()> {
         }
         settings = serde_json::from_value(
             client
-                .call("set_display_settings", json!({"settings":settings}))
+                .call(
+                    lconnect_ipc::methods::SET_DISPLAY_SETTINGS_NAME,
+                    json!({"settings":settings}),
+                )
                 .await?,
         )?;
         settings.validate()?;

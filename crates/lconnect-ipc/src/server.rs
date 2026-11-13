@@ -562,9 +562,10 @@ where
 {
     match method {
         // ---- Discovery ----
-        "list_devices" => {
-            let v = rpc.list_devices().await?;
-            to_value(&v)
+        crate::methods::LIST_DEVICES_NAME => {
+            crate::methods::validate_request(method, params)?;
+            let value = rpc.list_devices().await?;
+            registered_response(method, &value)
         }
         "get_firmware_recovery" => {
             if !params.as_object().is_some_and(|p| p.is_empty()) {
@@ -599,22 +600,16 @@ where
             p.settings.validate()?;
             to_value(&rpc.set_fps_source(p.settings).await?)
         }
-        "get_display_settings" => {
-            #[derive(Deserialize)]
-            #[serde(deny_unknown_fields)]
-            struct Params {}
-            let _: Params = from_value(params)?;
-            to_value(&rpc.get_display_settings().await?)
+        crate::methods::GET_DISPLAY_SETTINGS_NAME => {
+            crate::methods::validate_request(method, params)?;
+            let value = rpc.get_display_settings().await?;
+            registered_response(method, &value)
         }
-        "set_display_settings" => {
-            #[derive(Deserialize)]
-            #[serde(deny_unknown_fields)]
-            struct Params {
-                settings: crate::DisplaySettings,
-            }
-            let p: Params = from_value(params)?;
-            p.settings.validate()?;
-            to_value(&rpc.set_display_settings(p.settings).await?)
+        crate::methods::SET_DISPLAY_SETTINGS_NAME => {
+            crate::methods::validate_request(method, params.clone())?;
+            let params: crate::methods::SetDisplaySettingsParams = from_value(params)?;
+            let value = rpc.set_display_settings(params.settings).await?;
+            registered_response(method, &value)
         }
         "get_system_spec" => {
             #[derive(serde::Deserialize)]
@@ -626,7 +621,11 @@ where
             let p: Params = from_value(params)?;
             to_value(&rpc.get_system_spec(p.refresh).await?)
         }
-        "list_sensors" => to_value(&rpc.list_sensors().await?),
+        crate::methods::LIST_SENSORS_NAME => {
+            crate::methods::validate_request(method, params)?;
+            let value = rpc.list_sensors().await?;
+            registered_response(method, &value)
+        }
         "get_sensor_defaults" => to_value(&rpc.get_sensor_defaults().await?),
         "set_sensor_defaults" => {
             #[derive(serde::Deserialize)]
@@ -1243,6 +1242,12 @@ fn unit_ok() -> Value {
 /// [`IpcError::Serialization`]. Used after a successful trait call.
 fn to_value<T: serde::Serialize>(v: &T) -> crate::Result<Value> {
     serde_json::to_value(v).map_err(|e| IpcError::Serialization(e.to_string()))
+}
+
+fn registered_response<T: serde::Serialize>(method: &str, value: &T) -> crate::Result<Value> {
+    let value = to_value(value)?;
+    crate::methods::validate_response(method, &value)?;
+    Ok(value)
 }
 
 /// Decode JSON params into the per-arm parameter struct, mapping any

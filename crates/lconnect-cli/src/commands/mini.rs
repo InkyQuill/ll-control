@@ -30,9 +30,9 @@ struct Snapshot {
 }
 async fn read(client: &IpcClient) -> Result<Data> {
     let (sensors, defaults, display) = tokio::try_join!(
-        client.call("list_sensors", json!({})),
+        client.call(lconnect_ipc::methods::LIST_SENSORS_NAME, json!({})),
         client.call("get_sensor_defaults", json!({})),
-        client.call("get_display_settings", json!({}))
+        client.call(lconnect_ipc::methods::GET_DISPLAY_SETTINGS_NAME, json!({}))
     )?;
     let data = Data {
         sensors: serde_json::from_value(sensors)?,
