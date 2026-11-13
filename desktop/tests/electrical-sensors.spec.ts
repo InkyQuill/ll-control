@@ -70,7 +70,7 @@ test('voltage, clocks, network and storage stay typed from Sensors to LCD Apply'
   await expect(page.getByText('2.0 GiB', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Экран помпы', exact: true }).click();
   await page.getByRole('button', { name: 'Готовые темы', exact: true }).click();
-  await page.getByLabel('Раскладка', { exact: true }).selectOption('quad');
+  await page.getByRole('button', { name: /^Quad/ }).click();
   await page.getByRole('checkbox', { name: 'GPU voltage · volts' }).check();
   await page.getByRole('checkbox', { name: 'GFX clock · hertz' }).check();
   await page.getByRole('checkbox', { name: 'Network RX · bytes_per_second' }).check();
