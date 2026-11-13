@@ -1,3 +1,6 @@
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
+use display_firmware::FirmwareMock;
 use llcontrol_daemon::{
     config::Config,
     ipc_server::IpcServerImpl,
@@ -30,9 +33,14 @@ async fn collection_rpc_reports_legacy_then_durable_membership_and_rejects_stale
     let mut config = Config::default();
     config.poll.hotplug_ms = 20;
     let stats = Arc::new(Stats::default());
-    let manager = DeviceManager::new(Arc::new(mock), store.clone(), config.clone(), stats.clone())
-        .spawn()
-        .await;
+    let manager = DeviceManager::new(
+        Arc::new(FirmwareMock(mock)),
+        store.clone(),
+        config.clone(),
+        stats.clone(),
+    )
+    .spawn()
+    .await;
     let dev = tokio::time::timeout(Duration::from_secs(3), async {
         loop {
             if let Some(device) = manager.list().await.first() {
