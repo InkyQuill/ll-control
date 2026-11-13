@@ -1796,6 +1796,7 @@
   }
   .brand img {
     flex: none;
+    filter: brightness(0) invert(1);
   }
   nav,
   .global-nav {
