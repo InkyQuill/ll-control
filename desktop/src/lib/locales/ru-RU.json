@@ -1450,5 +1450,6 @@
   "Firework": "Фейерверк",
   "Could not create variants for this theme.": "Не удалось создать варианты для этой темы.",
   "Create independent variants from the current draft and edit each one separately.": "Создайте независимые варианты из текущего черновика и настройте каждый отдельно.",
-  "Create variants": "Создать варианты"
+  "Create variants": "Создать варианты",
+  "Sensor variants use available sensors; add missing readings in the editor.": "Варианты с датчиками используют доступные датчики; недостающие показатели можно добавить в редакторе."
 }

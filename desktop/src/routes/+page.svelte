@@ -1632,6 +1632,7 @@
                     >
                   </section>{/if}<BasicEditor
                   bind:theme
+                  {sensors}
                   disabled={busy}
                   onchange={() => (loadedMediaKey = '')}
                 />{#await import('$lib/WeatherEditor.svelte')}

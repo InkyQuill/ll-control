@@ -1,6 +1,6 @@
 <script lang="ts">
   import StudioPopover from './StudioPopover.svelte';
-  import type { BasicBackground, BasicOverlay, Theme } from './api';
+  import type { BasicBackground, BasicOverlay, Sensor, Theme } from './api';
   import { basicOverlays, createBasicEditor, selectBasicEditor } from './basic-editor';
   import { lcdPageKind } from './lcd-pages';
   import { t } from './i18n.svelte';
@@ -8,8 +8,9 @@
   let {
     theme = $bindable(),
     disabled = false,
+    sensors = [],
     onchange = () => {},
-  }: { theme: Theme; disabled?: boolean; onchange?: () => void } = $props();
+  }: { theme: Theme; sensors?: Sensor[]; disabled?: boolean; onchange?: () => void } = $props();
   const editor = $derived(lcdPageKind(theme) === 'basic' ? theme.basic_editor : null);
   const selected = $derived(
     editor?.banks.find((bank) => bank.background === editor.selected_background),
@@ -40,7 +41,7 @@
   function create() {
     if (disabled) return;
     try {
-      theme = createBasicEditor($state.snapshot(theme));
+      theme = createBasicEditor($state.snapshot(theme), $state.snapshot(sensors));
       failure = null;
       onchange();
     } catch (error) {
@@ -79,6 +80,7 @@
   <fieldset class="basic-presets" {disabled}>
     <legend>{t('Background and text presets')}</legend>
     <p>{t('Create independent variants from the current draft and edit each one separately.')}</p>
+    <p>{t('Sensor variants use available sensors; add missing readings in the editor.')}</p>
     <button type="button" onclick={create}>{t('Create variants')}</button>
     {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}
   </fieldset>
