@@ -7,6 +7,10 @@ function fixture(){
  return {version:1,available:true,data:{display:{temperature_unit:'fahrenheit',interface_language:'en-US'},sensors:[sensor('cpu:temperature','celsius',40,'Настройки'),sensor('gpu:A:power','watts',72),sensor('gpu:B:power','watts',99)],defaults:{candidates:[{role:'cpu_temperature',reading:sensor('cpu:temperature','celsius',40)},{role:'gpu_power',reading:sensor('gpu:A:power','watts',72)},{role:'gpu_power',reading:sensor('gpu:B:power','watts',99)}],values:[{role:'cpu_temperature',sensor_id:'cpu:temperature'},{role:'gpu_power',sensor_id:'gpu:A:power'}]}}};
 }
 function slots(...values){return {version:1,slots:[...values,...Array(6-values.length).fill(null)]};}
+test('experimental Mini disclosure is explicit in EN/RU',()=>{
+ assert.match(M.text('experimental','en-US'),/^Experimental:.*Use at your own risk\.$/);
+ assert.match(M.text('experimental','ru-RU'),/^Экспериментально:.*Используйте на свой риск\.$/);
+});
 test('same renderer resolves default GPU, explicit GPU and global Fahrenheit while raw labels stay unchanged',()=>{
  const f=fixture(),config=slots({kind:'cpu_temperature',source:null},{kind:'gpu_power',source:'gpu:B:power'},{kind:'gpu_power',source:null});const r=M.render(f,config);
  assert.deepEqual(r.cards.slice(0,3).map(c=>c.values),[['104.0 °F'],['99.0 W'],['72.0 W']]);assert.equal(r.cards[0].sourceLabel,'Настройки');assert.equal(r.cards.length,6);

@@ -2,6 +2,7 @@
   import type { Device } from './api';
   import { deviceCapabilities } from './device-capabilities';
   import DeviceGlyph from './DeviceGlyph.svelte';
+  import ExperimentalNotice from './ExperimentalNotice.svelte';
   import { t } from './i18n.svelte';
   let { devices, connected, disabled, onopen }: { devices: Device[]; connected: boolean; disabled: boolean; onopen: (id: string, section: 'display' | 'lighting' | 'cooling' | 'settings') => void } = $props();
 </script>
@@ -13,6 +14,7 @@
       <div class="device-description"><h2>{device.display_name}</h2><p>{connected ? t('Устройство подключено') : t('Ожидание подключения')}</p>
         {#if device.vid != null && device.pid != null}<p class="device-identity">USB {device.vid.toString(16).padStart(4, '0')}:{device.pid.toString(16).padStart(4, '0')}{#if device.serial} · {t('Серийный номер')}: {device.serial}{/if}</p>{/if}
         {#if device.family === 'galahad2-lcdv2'}<p>{t('Управление помпой, её экраном и подключёнными к LCDV2 вентиляторами. Отдельные контроллеры UNI FAN TL пока не поддерживаются.')}</p>{/if}
+        <ExperimentalNotice feature="device" label="Проверка не завершена" message="Поддержка этого устройства не прошла полную аппаратную проверку. Используйте элементы управления на свой риск." />
         <div class="device-actions">
           {#if capabilities.lighting}<button disabled={disabled || !connected} onclick={() => onopen(device.id, 'lighting')}>{t('Подсветка')}</button>{/if}
           {#if capabilities.cooling}<button disabled={disabled || !connected} onclick={() => onopen(device.id, 'cooling')}>{t('Охлаждение')}</button>{/if}

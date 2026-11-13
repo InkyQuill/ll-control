@@ -1,7 +1,12 @@
 # LL-Control Mini for Plasma
 
-Plasma 6 applet with six configurable cached readings. The widget owns its CLI
-helper and does not need the Tauri GUI. English is the default; confirmed Russian
+Plasma 6 applet with six configurable cached readings.
+
+**Experimental / Экспериментально:** Shell integration and FPS compatibility are
+not fully verified; use at your own risk. / Интеграция с оболочкой и совместимость
+FPS проверены не полностью; используйте на свой риск.
+
+The widget owns its CLI helper and does not need the Tauri GUI. English is the default; confirmed Russian
 in the daemon switches the widget and its settings to Russian. Other languages
 and environments are deferred.
 

@@ -24,6 +24,7 @@ async function main() {
     controller = new PreferencesController(window, settings);window.present();
     await until(() => controller.rows[0].reading.model !== null && controller.feed.frame.available, 'real GTK controls and CLI frame');
     assert(controller.page.title === 'Six readings', 'English default');
+    assert(controller.info.description.includes('Experimental:') && controller.info.description.includes('Use at your own risk.'), 'English experimental disclosure');
     const row = controller.rows[0];
     row.reading.selected = Mini.kinds.indexOf('gpu_power') + 1;
     await until(() => row.source.model.get_n_items() === 3, 'GPU choices from native feed');
@@ -66,6 +67,7 @@ async function main() {
 
     GLib.file_set_contents(`${root}/language`, 'ru-RU');
     await until(() => controller.page.title === 'Шесть показаний', 'Confirmed Russian switches GTK labels');
+    assert(controller.info.description.includes('Экспериментально:') && controller.info.description.includes('Используйте на свой риск.'), 'Russian experimental disclosure');
     assert(controller.saveButton.label === 'Сохранить слоты', 'Russian action text');
     assert(settings.get_string('language-cache') === 'ru-RU', 'Confirmed language cache');
     assert(controller.rows[0].reading.model.get_string(1) === 'Загрузка CPU', 'Russian reading names');

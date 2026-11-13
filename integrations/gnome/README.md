@@ -1,6 +1,11 @@
 # LL-Control Mini for GNOME Shell
 
 Initial GNOME Shell extension: a panel summary and six readings in its menu.
+
+**Experimental / Экспериментально:** Shell integration and FPS compatibility are
+not fully verified; use at your own risk. / Интеграция с оболочкой и совместимость
+FPS проверены не полностью; используйте на свой риск.
+
 There is no separate Mini application window. The standard extension preferences
 process edits six slots and explicit source IDs through GSettings. English is the
 fresh default; confirmed Russian is cached for offline use. Other languages and

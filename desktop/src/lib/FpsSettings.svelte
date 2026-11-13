@@ -1,5 +1,6 @@
 <script lang="ts">
  import {t} from './i18n.svelte';
+ import ExperimentalNotice from './ExperimentalNotice.svelte';
  import {ValidationError} from './validation-error';
  import {rpc,message,type FpsSourceSettings} from './api';
  let {connected}:{connected:boolean}=$props();
@@ -40,6 +41,7 @@
 </script>
 <section aria-label={t('Источник FPS')}>
  <h2>{t('Источник FPS')}</h2>
+ <ExperimentalNotice feature="fps" message="FPS — среднее значение по кадрам из лога MangoHud, а не проверенный аналог PresentMon. Совместимость с играми не подтверждена; используйте на свой риск." />
  <p>{t('Используйте существующий лог MangoHud с log_interval=0. Включение читает новые кадры из выбранного файла.')}</p>
  {#if draft}
   <label><input type="checkbox" bind:checked={draft.enabled} disabled={busy}/>{t('Читать FPS')}</label>

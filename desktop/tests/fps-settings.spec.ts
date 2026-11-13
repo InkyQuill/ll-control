@@ -28,6 +28,7 @@ async function setup(page:Page){
  await page.goto('/?view=display');await expect(page.getByText('Daemon connected',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Settings',exact:true}).click();
  await expect(panel(page).getByLabel('Read FPS',{exact:true})).toBeVisible();
+ await expect(panel(page).locator('[data-feature="fps"]')).toContainText('Experimental');
 }
 const panel=(page:Page)=>page.getByRole('region',{name:'FPS source',exact:true});
 const writes=(page:Page)=>page.evaluate(()=>(window as unknown as {fpsFixture:Fixture}).fpsFixture.calls.filter(c=>c.method==='set_fps_source'));
@@ -40,6 +41,7 @@ test('EN/RU global FPS draft requires explicit Save and disabling retains the lo
  await expect(p.getByLabel('MangoHud log file',{exact:true})).toHaveValue('/tmp/Настройки game.csv');
  await page.evaluate(()=>{(window as unknown as {fpsFixture:Fixture}).fpsFixture.language='ru-RU';});
  const ru=page.getByRole('region',{name:'Источник FPS',exact:true});await expect(ru.getByLabel('Читать FPS',{exact:true})).toBeVisible();
+ await expect(ru.locator('[data-feature="fps"]')).toContainText('Экспериментально');
  await expect(ru.getByLabel('Файл лога MangoHud',{exact:true})).toHaveValue('/tmp/Настройки game.csv');
  expect(await page.evaluate(()=>(window as unknown as {fpsFixture:Fixture}).fpsFixture.state.enabled)).toBe(false);
 });

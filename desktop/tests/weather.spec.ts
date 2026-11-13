@@ -453,3 +453,17 @@ test('late Fireworks default reply cannot overwrite manual palettes or a replace
   await page.evaluate(()=>{window.weatherFixture.active={version:1,name:'Replacement',background:[0,0,0],layers:[]};window.weatherFixture.resolveDefaults=undefined;});await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('fireworks');await page.getByLabel('Управлять эффектом от датчика',{exact:true}).check();await expect.poll(()=>page.evaluate(()=>typeof window.weatherFixture.resolveDefaults)).toBe('function');
   await loadControls(page);await page.getByRole('button',{name:'Загрузить активную тему',exact:true}).click();await effect.selectOption('meteor');await page.evaluate(()=>window.weatherFixture.resolveDefaults?.());await expect(effect).toHaveValue('meteor');await expect(page.getByLabel('Цвет метеоров 2',{exact:true})).toHaveValue('#0000ff');await expect(page.getByLabel('Цвет метеоров 3',{exact:true})).toHaveCount(0);
 });
+
+
+test('procedural effect experimental disclosure explains verification limits in EN/RU',async({page})=>{
+ const disclosure=page.locator('[data-feature="procedural"]');
+ await expect(disclosure).toContainText('Экспериментально');
+ await disclosure.getByRole('button',{name:'Ограничения экспериментальной функции',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Ограничения экспериментальной функции',exact:true})).toContainText('проверены не полностью');
+ await page.keyboard.press('Escape');
+ await page.evaluate(()=>localStorage.setItem('lconnect.interface-language','en-US'));
+ await page.reload();
+ await expect(disclosure).toContainText('Experimental');
+ await disclosure.getByRole('button',{name:'Experimental feature limitations',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Experimental feature limitations',exact:true})).toContainText('not fully verified');
+});

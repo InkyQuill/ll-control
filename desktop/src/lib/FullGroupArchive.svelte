@@ -1,5 +1,6 @@
 <script lang="ts">
   import {t} from './i18n.svelte';
+  import ExperimentalNotice from './ExperimentalNotice.svelte';
   import WindowsScreenPreview from './WindowsScreenPreview.svelte';
   import type {DisplayGeometry} from './device-capabilities';
   import WindowsScreenBindings from './WindowsScreenBindings.svelte';
@@ -117,6 +118,7 @@
     <p>{t("Полный сброс вернёт стандартные 8 режимов вентиляторов и 3 режима помпы, их имена и выбор Fan Standard / Pump Quiet RPM, Rainbow, topology 360 мм/24 LED и восемь named fan/pump-слотов. Screen, файлы и общая thermal policy сохранятся. При недоступном датчике действует fallback 100%.")}</p>
     <button disabled={blocked||!resetSensor} onclick={()=>start('reset')}>{t("Подготовить полный сброс охлаждения и подсветки…")}</button>
   {/if}
+  <ExperimentalNotice feature="windows-import" message="Импорт Windows поддерживает ограниченный набор форматов и не подтверждён для всех экспортов L-Connect 2.1.28. Используйте на свой риск." />
   <div class="buttons">{#if group==='fan_and_lighting'}<button disabled={blocked} onclick={()=>start('windows')}>{t('Выбрать Windows ZIP…')}</button>{:else}<button disabled={blocked} onclick={()=>start('windows_screen')}>{t('Выбрать Windows ZIP экрана…')}</button>{/if}<button disabled={blocked} onclick={()=>start('export')}>{t("Экспортировать группу…")}</button><button disabled={blocked} onclick={()=>start('import')}>{t("Выбрать архив группы…")}</button></div>
   <p>{t("Существующие файлы при экспорте не заменяются. Выбор и проверка архива не применяют настройки.")}</p>
   {#if job}

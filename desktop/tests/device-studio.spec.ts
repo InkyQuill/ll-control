@@ -26,12 +26,16 @@ test('overview reflects discovered devices, unknown families never inherit LCD c
   await expect(page.getByRole('heading', { name: 'Ваши устройства', exact: true })).toBeVisible();
   const cards = page.locator('.device-card');
   await expect(cards).toHaveCount(2);
+  await expect(cards.locator('[data-status="experimental"]')).toHaveCount(2);
+  await cards.first().getByRole('button', { name: 'Ограничения экспериментальной функции', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Ограничения экспериментальной функции', exact: true })).toContainText('Используйте элементы управления на свой риск.');
+  await page.keyboard.press('Escape');
   await expect(cards.first()).toContainText('0416:7395');
   await expect(cards.first()).toContainText('LCD-IDENTITY-TEST');
   await expect(cards.first()).toContainText('Отдельные контроллеры UNI FAN TL пока не поддерживаются.');
   await expect(cards.filter({ hasText: 'Galahad II' }).locator('[data-device-screen="square"]')).toHaveCount(1);
   await page.screenshot({path:'../.impeccable/review/production-overview.png',fullPage:true});
-  await expect(cards.filter({ hasText: 'Future controller' }).getByRole('button')).toHaveCount(0);
+  await expect(cards.filter({ hasText: 'Future controller' }).locator('.device-actions').getByRole('button')).toHaveCount(0);
   await page.getByRole('button', { name: 'Future controller', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Экран помпы', exact: true })).toHaveCount(0);
   await page.waitForTimeout(1600); // Exercise the next real refresh after selecting the unsupported family.

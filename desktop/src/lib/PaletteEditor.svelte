@@ -1,5 +1,6 @@
 <script lang="ts">
   import StudioPopover from "./StudioPopover.svelte";
+  import ExperimentalNotice from './ExperimentalNotice.svelte';
   import {t} from './i18n.svelte';
   import {onDestroy,untrack} from 'svelte';
   import {rpc,message,hex,rgb,type Theme,type Sensor,type MeteorSensor,type FireworksSensor,type EffectSensor,type SensorDefaultsState,fireworksColors} from './api';
@@ -65,6 +66,7 @@
 {#if active}
 <fieldset disabled={disabled}>
   <legend>{active.kind==='fireworks'?"" + t("Фейерверк") + "":"" + t("Метеоры") + ""}</legend>
+  <ExperimentalNotice feature="procedural" message="Процедурные эффекты реализованы, но их внешний вид, тайминг и отказы на LCDV2 проверены не полностью. Используйте на свой риск." />
   <StudioPopover label={t("Справка")} icon="help"><p>{t("Текст, часы и изображения остаются поверх анимации.")}</p></StudioPopover>
   <fieldset disabled={active.effect.dynamic}><legend>{t("Статические настройки")} {family}</legend>
     {#if active.kind==='meteor'}<label>{t("Скорость метеоров")}<select bind:value={active.effect.speed}><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label>{:else}<label>{t("Интенсивность Fireworks")}<select bind:value={active.effect.intensity}><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label>{/if}

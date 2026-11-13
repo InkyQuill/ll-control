@@ -1,5 +1,6 @@
 <script lang="ts">
   import StudioPopover from "./StudioPopover.svelte";
+  import ExperimentalNotice from './ExperimentalNotice.svelte';
   import {t} from './i18n.svelte';
   import TemperatureInput from './TemperatureInput.svelte';
   import {presentation} from './presentation.svelte';
@@ -78,6 +79,7 @@
 </script>
 <fieldset disabled={disabled}>
   <legend>{t("Анимация LCD")}</legend>
+  <ExperimentalNotice feature="procedural" message="Процедурные эффекты реализованы, но их внешний вид, тайминг и отказы на LCDV2 проверены не полностью. Используйте на свой риск." />
   <label>{t("Эффект LCD")}<select value={pageKind==='basic'?'none':pageKind} onchange={event=>{if(select(event.currentTarget.value)===false)event.currentTarget.value=pageKind==='basic'?'none':pageKind;}}>
     <option value="none" disabled={!settingsValid}>{t("Без эффекта")}</option>
     <option value="rain" disabled={!canSelect('rain')}>{t("Rain — дождь")}</option>

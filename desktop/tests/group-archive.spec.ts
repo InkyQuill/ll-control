@@ -145,3 +145,17 @@ for(const language of ['en-US','ru-RU']) {
   }
  });
 }
+
+
+test('Windows import experimental disclosure explains unverified behavior in EN/RU',async({page})=>{
+ await setup(page);
+ const disclosure=page.locator('details').filter({hasText:'Windows ZIP'}).locator('[data-feature="windows-import"]');
+ await expect(disclosure).toContainText('Экспериментально');
+ await disclosure.getByRole('button',{name:'Ограничения экспериментальной функции',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Ограничения экспериментальной функции',exact:true})).toContainText('не подтверждён для всех экспортов L-Connect 2.1.28');
+ await page.keyboard.press('Escape');
+ await page.evaluate(()=>{(window as unknown as {groupFixture:Fixture}).groupFixture.language='en-US';});
+ await expect(disclosure).toContainText('Experimental');
+ await disclosure.getByRole('button',{name:'Experimental feature limitations',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Experimental feature limitations',exact:true})).toContainText('not verified for every L-Connect 2.1.28 export');
+});
