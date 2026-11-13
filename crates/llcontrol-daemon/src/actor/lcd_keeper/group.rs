@@ -270,16 +270,6 @@ impl Display {
         }
         let applied = match prepared.source {
             PreparedSource::Idle => Ok(()),
-            PreparedSource::Theme(frame) => {
-                self.source = Source::Jpeg(frame.jpeg);
-                let result = self.frame().await;
-                if result.is_ok() {
-                    self.source = Source::Theme(frame.runtime);
-                    self.state.source = LcdSourceKind::Theme;
-                    self.deadline = Instant::now() + Duration::from_secs(1);
-                }
-                result
-            }
             PreparedSource::Media { source, .. } => {
                 self.media_pin = Some(source.pin());
                 self.source = Source::Media(MediaReader::spawn(source));
