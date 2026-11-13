@@ -597,7 +597,7 @@ async fn panic_exit_releases_blocked_mock_hid_worker_before_runtime_shutdown() {
         inner: mock.open(&target).unwrap(),
         gate: gate.clone(),
     };
-    let writer = std::thread::spawn(move || handle.write(&[1, 14]));
+    let writer = std::thread::spawn(move || handle.write(&[3, 13]));
     tokio::time::timeout(Duration::from_secs(2), gate.started.notified())
         .await
         .unwrap();
@@ -607,5 +607,5 @@ async fn panic_exit_releases_blocked_mock_hid_worker_before_runtime_shutdown() {
     });
     assert!(exit.join().is_err());
     writer.join().unwrap().unwrap();
-    assert_eq!(mock.write_history(&target), vec![vec![1, 14]]);
+    assert_eq!(mock.write_history(&target), vec![vec![3, 13]]);
 }

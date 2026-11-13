@@ -315,7 +315,8 @@ impl Harness {
 }
 
 #[tokio::test]
-async fn jpeg_group_commits_before_writes_retains_rotation_and_renders_live_sensor_updates() {
+async fn static_theme_group_commits_before_writes_retains_rotation_and_renders_live_sensor_updates()
+{
     let h = Harness::new();
     h.sample(15.);
     let archive = h.archive("theme", 90).await;
@@ -654,7 +655,8 @@ async fn shutdown_during_config_ack_keeps_receipt_but_never_starts_a_new_frame()
 }
 
 #[tokio::test]
-async fn replacing_imported_media_joins_old_reader_and_never_emits_old_video_after_new_jpeg() {
+async fn replacing_imported_media_joins_old_reader_and_never_emits_old_video_after_new_static_theme(
+) {
     let h = Harness::new();
     let media = h.archive("media", 0).await;
     h.import(&"a".repeat(32), h.expected(), media)
@@ -932,7 +934,7 @@ async fn queued_checked_composition_reapply_is_joined_on_shutdown_without_output
 }
 
 #[tokio::test]
-async fn imported_editor_video_is_retained_but_only_the_independent_active_jpeg_scene_runs() {
+async fn imported_editor_video_is_retained_but_only_the_independent_active_static_scene_runs() {
     let h = Harness::new();
     h.sample(42.);
     let archive = h.archive("editor", 0).await;
@@ -954,8 +956,9 @@ async fn imported_editor_video_is_retained_but_only_the_independent_active_jpeg_
         let frames = h.frames.lock().unwrap();
         assert!(!frames.is_empty());
         assert!(
-            frames[0].windows(2).any(|pair| pair == [0xff, 0xd8]),
-            "actual active frame is JPEG, not the editor H264 unit"
+            frames[0].starts_with(&[3, 13])
+                && frames[0].windows(4).any(|unit| unit == [0, 0, 0, 1]),
+            "active static scene must be encoded as an Annex B access unit"
         );
     }
     assert!(h.writes.lock().unwrap().iter().all(|committed| *committed));

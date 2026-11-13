@@ -1,3 +1,5 @@
+#[path = "support/firmware_fixture.rs"]
+mod firmware_fixture;
 use llcontrol_daemon::{
     actor::{lcd_keeper, FrameOutcome, HidCommand, LcdCommand},
     sensors::SensorCache,
@@ -60,18 +62,24 @@ fn publish(cache: &SensorCache, value: f64) {
 #[tokio::test]
 async fn live_theme_updates_and_manual_image_replaces_its_producer() {
     let (hid, mut requests) = mpsc::channel(8);
-    let (frames, mut observed) = mpsc::channel(8);
+    let (frames, mut observed) = mpsc::unbounded_channel();
     let fake_hid = tokio::spawn(async move {
         while let Some(request) = requests.recv().await {
             match request {
                 HidCommand::FrameBatch { packets, reply, .. } => {
                     let written_reports = packets.len();
-                    frames.send(packets).await.unwrap();
+                    frames.send(packets).unwrap();
                     let _ = reply.send(Ok(FrameOutcome {
                         written_reports,
                         readback: vec![],
                         elapsed: Duration::ZERO,
                     }));
+                }
+                HidCommand::Write { reply, .. } => {
+                    let _ = reply.send(Ok(()));
+                }
+                HidCommand::Firmware { reply } => {
+                    let _ = reply.send(Ok(firmware_fixture::reply()));
                 }
                 _ => panic!("unexpected HID command"),
             }
@@ -114,18 +122,25 @@ async fn live_theme_updates_and_manual_image_replaces_its_producer() {
     let (reply, response) = oneshot::channel();
     commands
         .send(LcdCommand::SetImage {
-            jpeg: bytes::Bytes::from_static(&[255, 216, 255, 217]),
+            jpeg: runtime.frame().await.unwrap(),
             reply,
         })
         .await
         .unwrap();
     assert_eq!(response.await.unwrap().unwrap().source, LcdSourceKind::Jpeg);
     observed.recv().await.unwrap();
+    let next = tokio::time::timeout(Duration::from_secs(2), observed.recv())
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(next.iter().all(|report| report.starts_with(&[3, 13])));
+    let (reply, response) = oneshot::channel();
+    commands.send(LcdCommand::Theme { reply }).await.unwrap();
     assert!(
-        tokio::time::timeout(Duration::from_millis(1300), observed.recv())
-            .await
-            .is_err()
+        response.await.unwrap().is_none(),
+        "manual JPEG must release the live theme"
     );
+
     shutdown.send(true).unwrap();
     actor.await.unwrap();
     drop(commands);
@@ -166,13 +181,13 @@ async fn preparation_fails_before_replacing_current_source() {
 #[tokio::test]
 async fn superseded_preparation_cannot_restore_a_cleared_or_newer_theme() {
     let (hid, mut requests) = mpsc::channel(8);
-    let (frames, mut observed) = mpsc::channel(8);
+    let (frames, mut observed) = mpsc::unbounded_channel();
     let fake_hid = tokio::spawn(async move {
         while let Some(request) = requests.recv().await {
             match request {
                 HidCommand::FrameBatch { packets, reply, .. } => {
                     let written_reports = packets.len();
-                    frames.send(packets).await.unwrap();
+                    frames.send(packets).unwrap();
                     let _ = reply.send(Ok(FrameOutcome {
                         written_reports,
                         readback: vec![],
@@ -181,6 +196,9 @@ async fn superseded_preparation_cannot_restore_a_cleared_or_newer_theme() {
                 }
                 HidCommand::Write { reply, .. } => {
                     let _ = reply.send(Ok(()));
+                }
+                HidCommand::Firmware { reply } => {
+                    let _ = reply.send(Ok(firmware_fixture::reply()));
                 }
                 _ => panic!("unexpected HID command"),
             }

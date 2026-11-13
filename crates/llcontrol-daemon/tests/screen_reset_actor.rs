@@ -1,3 +1,5 @@
+#[path = "support/firmware_fixture.rs"]
+mod firmware_fixture;
 use llcontrol_daemon::{
     actor::{
         command_dispatch::spawn_updates, lcd_keeper, FrameOutcome, HidCommand, LcdCommand,
@@ -66,6 +68,10 @@ impl Harness {
         let injected = failure.clone();
         let transport = tokio::spawn(async move {
             while let Some(request) = requests.recv().await {
+                if let HidCommand::Firmware { reply } = request {
+                    let _ = reply.send(Ok(firmware_fixture::reply()));
+                    continue;
+                }
                 let read_store = read_store.clone();
                 let committed = tokio::task::spawn_blocking(move || {
                     read_store
