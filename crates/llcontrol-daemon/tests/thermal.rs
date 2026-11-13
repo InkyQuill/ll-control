@@ -112,6 +112,14 @@ impl Harness {
         bases: bool,
         dynamic: Option<DynamicRgbConfig>,
     ) -> Self {
+        Self::with_bases(initial, bases.then(fan), bases.then(pump), dynamic)
+    }
+    fn with_bases(
+        initial: ThermalConfig,
+        fan_base: Option<LightingState>,
+        pump_base: Option<PumpLightingState>,
+        dynamic: Option<DynamicRgbConfig>,
+    ) -> Self {
         let (hidtx, mut hidrx) = mpsc::channel(32);
         let writes = Arc::new(Mutex::new(Vec::new()));
         let w = writes.clone();
@@ -149,8 +157,8 @@ impl Harness {
         let task = lighting_keeper::spawn_with_thermal(
             hidtx,
             100,
-            bases.then(fan),
-            bases.then(pump),
+            fan_base,
+            pump_base,
             ThermalInputs {
                 dynamic_profiles: Default::default(),
                 dynamic,
@@ -290,13 +298,7 @@ async fn partial_failure_retry_stale_recovery_and_direct_restore_failure() {
     h.stop().await;
 }
 #[tokio::test(start_paused = true)]
-async fn missing_base_bad_binding_and_invalid_persisted_config_fail_closed() {
-    let h = Harness::new(config(), false);
-    h.tick(Duration::from_secs(1)).await;
-    assert!(h.state().await.blocked_reason.is_some());
-    assert!(h.set(config()).await.is_err());
-    assert!(h.writes.lock().unwrap().is_empty());
-    h.stop().await;
+async fn bad_binding_and_invalid_persisted_config_fail_closed() {
     let h = Harness::new(Default::default(), true);
     let mut wrong = row("cpu", 80.0);
     wrong.unit = SensorUnit::Percent;
@@ -848,4 +850,102 @@ async fn saved_dynamic_mode_restore_rejects_before_writes_and_retains_intent_on_
         1
     );
     h.stop().await;
+}
+
+#[tokio::test(start_paused = true)]
+async fn thermal_without_saved_effects_triggers_and_replays_only_available_bases() {
+    for (saved_fan, saved_pump) in [(false, false), (true, false), (false, true)] {
+        for replay in [false, true] {
+            let h = Harness::with_bases(
+                if replay {
+                    config()
+                } else {
+                    ThermalConfig::default()
+                },
+                saved_fan.then(fan),
+                saved_pump.then(pump),
+                None,
+            );
+            if replay {
+                h.tick(Duration::from_secs(1)).await;
+            } else {
+                h.set(config()).await.unwrap();
+            }
+            let state = h.state().await;
+            assert!(state.blocked_reason.is_none());
+            assert_eq!(state.active_source, Some(ThermalSource::Cpu));
+            assert_eq!(state.fan.applied, Some(ThermalLayer::Alert { color: RED }));
+            assert_eq!(state.pump.applied, Some(ThermalLayer::Alert { color: RED }));
+            let last_packet = |command| {
+                h.writes
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .rev()
+                    .find(|packet| packet[1] == command)
+                    .unwrap()
+                    .clone()
+            };
+            let alert_fan = last_packet(133);
+            let alert_pump = last_packet(131);
+            assert!(alert_fan.windows(3).any(|bytes| bytes == [255, 0, 0]));
+            assert_eq!(&alert_pump[10..13], &[255, 0, 0]);
+
+            // Cooling below the threshold runs ApplyAll: replay saved effects,
+            // retaining the last alert color for any zone with no saved effect.
+            h.cache
+                .publish(Instant::now(), vec![row("cpu", 10.0), row("gpu", 10.0)]);
+            h.tick(Duration::from_secs(1)).await;
+            assert_eq!(h.state().await.active_source, None);
+            if saved_fan {
+                assert!(last_packet(133).windows(3).any(|bytes| bytes == [1, 2, 3]));
+            } else {
+                assert_eq!(last_packet(133), alert_fan);
+            }
+            if saved_pump {
+                assert_eq!(&last_packet(131)[10..13], &[4, 5, 6]);
+            } else {
+                assert_eq!(last_packet(131), alert_pump);
+            }
+            // Disabling a currently active rule follows the same ApplyAll path.
+            h.cache
+                .publish(Instant::now(), vec![row("cpu", 80.0), row("gpu", 10.0)]);
+            h.tick(Duration::from_secs(1)).await;
+            assert_eq!(h.state().await.active_source, Some(ThermalSource::Cpu));
+            h.set(ThermalConfig::default()).await.unwrap();
+            assert_eq!(h.state().await.active_source, None);
+            if saved_fan {
+                assert!(last_packet(133).windows(3).any(|bytes| bytes == [1, 2, 3]));
+            } else {
+                assert_eq!(last_packet(133), alert_fan);
+            }
+            if saved_pump {
+                assert_eq!(&last_packet(131)[10..13], &[4, 5, 6]);
+            } else {
+                assert_eq!(last_packet(131), alert_pump);
+            }
+            for (kind, saved) in [
+                (LightingKind::Fan, saved_fan),
+                (LightingKind::Pump, saved_pump),
+            ] {
+                let (reply, rx) = oneshot::channel();
+                h.tx.send(LightingStateMsg::Base { kind, reply })
+                    .await
+                    .unwrap();
+                assert_eq!(rx.await.unwrap().current.is_some(), saved);
+            }
+            h.tick(Duration::from_secs(1)).await;
+            assert!(
+                h.updates.lock().unwrap().iter().all(|update| !matches!(
+                    update,
+                    llcontrol_daemon::actor::command_dispatch::SettingsUpdate::LightingFan(_)
+                        | llcontrol_daemon::actor::command_dispatch::SettingsUpdate::LightingPump(
+                            _
+                        )
+                )),
+                "thermal fallback must never manufacture persisted manual effects"
+            );
+            h.stop().await;
+        }
+    }
 }
