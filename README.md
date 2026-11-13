@@ -1,7 +1,11 @@
 # LL-Control
 
-Control Lian Li cooling, lighting and LCD content from Linux.
-Current device target: **Galahad II LCDV2 (`0416:7395`), square 480×480 LCD**.
+**ll-control** (UI: **LL-Control**) is an independent Rust application for Lian Li
+cooling, lighting and LCD content on Linux, based on the original .NET L-Connect 3
+behavior. The user's physical target is **Galahad II LCDV2 (`0416:7395`), square
+480×480 LCD**. The broader goal includes applicable device parity and all functions
+of the separate third-party [ll-connect3](https://github.com/joeytroy/ll-connect3),
+including UNI FAN SL-INF.
 
 **Software preview:** core workflows are implemented, but current hardware and
 real desktop acceptance are incomplete. The first release targets **KDE Plasma
@@ -15,7 +19,10 @@ Wayland on Arch Linux x86_64**. English and Russian are available.
 
 Screenshot/recording, Windows import, procedural effects and Mini/FPS integrations
 are experimental. Firmware flashing and Windows-compatible export are not yet
-available. Other Lian Li devices are not qualified. See the
+available. Other parity devices and third-party functions are unverified; use of
+unverified hardware is at the user's own risk. Scope does not mean a function is
+implemented or usable, and software tests alone do not establish hardware support.
+See the
 [release support table](docs/development/parity/release-contract.md).
 
 ## Development

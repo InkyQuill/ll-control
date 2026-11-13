@@ -1,10 +1,22 @@
 # Roadmap: usable LCDV2 release, then full parity
 
-Updated **2026-10-17** after a source/evidence audit and decisions confirmed with
-Pavel. Baseline: **Windows L-Connect 3 2.1.28.0**, **Galahad II LCDV2 0416:7395**,
-square LCD **480×480**. Other hardware remains future scope.
+Updated **2026-11-12** for product scope; milestone evidence below is historical.
+**ll-control** (UI: **LL-Control**) is an independent Rust application based on the
+original .NET L-Connect 3 behavior. The user's physical target is Galahad II LCDV2
+(`0416:7395`). Integrating all functions of the separate third-party
+[ll-connect3](https://github.com/joeytroy/ll-connect3), including its UNI FAN SL-INF
+coverage, and parity for other applicable devices are product goals. These functions
+and devices are unverified until independently tested; users operate unverified
+hardware at their own risk. No UNI FAN TL ownership or validation follows from the
+LCDV2 target. Distinguish unimplemented functions from implemented but unverified
+ones, and record hardware evidence per device and operation. The milestones below
+prioritize LCDV2; they do not exclude the broader scope.
 
-**R0, R1 and R2 are complete. Next: R3 release qualification.** Exact Windows grid typography is a later import-fidelity task;
+The original roadmap was updated **2026-10-17** after a source/evidence audit and decisions confirmed with
+Pavel. Baseline: **Windows L-Connect 3 2.1.28.0**, **Galahad II LCDV2 0416:7395**,
+square LCD **480×480**.
+
+**R0, R1 and R2 are historical completed milestones; R3 release qualification remains open.** The immediate work sequence is the review follow-up below, starting with documentation and then software work that does not require observation. Exact Windows grid typography is a later import-fidelity task;
 it does not block native Linux authoring or the initial release.
 
 - [Complete implementation/parity audit](docs/development/parity/release-audit-2026-10-17.md)
@@ -45,12 +57,53 @@ can be a software preview only. This roadmap does not authorize hardware tests.
 | R8 — Additional theme transfer and authoring | Nice to have initially; full-parity requirement | Remaining 16 pages, controls/defaults/state, own assets, runtime and import/export |
 | R9 — Polish and chosen languages | Polish | Bounded authoring conveniences, discovery/visual refinement and explicitly chosen locale breadth |
 | R10 — Full-parity closure | Final gate | Every applicable requirement qualified or explicitly adapted/excluded with evidence |
+| Additional device and third-party function integration | Product scope; scheduling open | Implement applicable device parity and all ll-connect3 functions; track implementation and device/function validation separately |
 
 **Release path: R0 → R1 + R2 → R3.** R2 can advance alongside R1; final acceptance
 includes it. R4–R9 do not block first release unless they expose a shipped core
 failure. R4 precedes base export R5; R8 extends both to effects. Additional effects
 stay last among functional expansion. [Detailed plans](docs/development/parity/release-milestones.md)
 contain work items, affected areas, dependencies, exit scenarios and legacy mapping.
+
+## Review follow-up and execution order
+
+The [2026-11-12 comprehensive review](docs/development/2026-11-12-comprehensive-app-review.md) is a historical snapshot at `5749fc6`; its findings and evidence remain intact. The table below records subsequent fixes and remaining work. Host-side implementation and tests do not establish physical, real-session, clean-host or exact-package acceptance; reassess each disposition against the final source and recorded verification.
+
+1. **Documentation and scope first:** current scope and review dispositions are recorded here, and all review findings are registered as issues. Remaining historical documentation and comment drift stays open. [Repository rename (#29)](https://github.com/InkyQuill/lconnect-linux/issues/29) plans the separate GitHub rename to `ll-control`; prepare and then verify project metadata, README badges, clone URLs, issue/action links, package references and redirects. Preserve external project and historical evidence links where appropriate. A name change does not imply changing compatibility-sensitive service, package, schema or configuration identifiers.
+2. **Next, software work without physical observation:** verify the daemon ownership and installation fixes, then address UI disclosures, diagnostic/IPC robustness, localization and other bounded fixes. Investigate static-JPEG rotation semantics and develop software tests without representing them as physical acceptance. Build and qualify an exact source/package snapshot and CI as their environments become available.
+3. **Deferred observation and release gate:** physical device, real desktop session, clean-host and Windows interoperability observations remain separately scheduled and authorized. Do not run hardware tests under this roadmap. Stable LCDV2 release requires the R3 evidence on the exact package; until then the product is a software preview.
+4. **Expansion:** pursue required Windows interoperability, integrations, device/function coverage and parity after the relevant core dependencies. Additional effects remain last among functional expansion. The ll-connect3 functions and other applicable devices are product goals, not proof of implementation or validation; track each device and operation independently.
+
+| Review ID | Current disposition and next work |
+|---|---|
+| [P0-01](https://github.com/InkyQuill/lconnect-linux/issues/1) | Startup ownership, bounded occupied-socket probing and stale-inode cleanup are implemented with regression coverage. Qualify the final exact source and two-process behavior in a socket-capable runner; package acceptance remains under P1-03. |
+| [P0-02](https://github.com/InkyQuill/lconnect-linux/issues/2) | Open R3 gate: physical cooling, RGB, display, soak and lifecycle acceptance on the exact package. Deferred observation. |
+| [P1-01](https://github.com/InkyQuill/lconnect-linux/issues/3) | Open: recorded physical static-JPEG rotation failure; intermediate brightness inconclusive. Software investigation first; physical retest required. |
+| [P1-02](https://github.com/InkyQuill/lconnect-linux/issues/4) | Fixed in `b599d92`: generated udev access no longer depends on the missing `plugdev` group. The packaging validator checks the complete logical device rule; clean Arch installation and active-session ACL acceptance remain open. |
+| [P1-03](https://github.com/InkyQuill/lconnect-linux/issues/5) | Open: exact-source green CI, package and clean-host qualification are missing. Retain failure evidence and qualify the intended snapshot. |
+| [P1-04](https://github.com/InkyQuill/lconnect-linux/issues/6) | Open: expose experimental dispositions in the application and Mini help, with EN/RU coverage. |
+| [P1-05](https://github.com/InkyQuill/lconnect-linux/issues/7) | Open acceptance gap, not a proven performance defect: measure production editor latency and sustained resources at stated layer limits. |
+| [P2-01](https://github.com/InkyQuill/lconnect-linux/issues/8) | Merged in PR #30 (`3db4d906`), issue closed: CLI propagates `journalctl` spawn and exit failures. Package qualification remains under P1-03. |
+| [P2-02](https://github.com/InkyQuill/lconnect-linux/issues/9) | Open: bounded CLI connection/RPC deadlines and explicit ambiguous-write outcomes. |
+| [P2-03](https://github.com/InkyQuill/lconnect-linux/issues/10) | Merged in PR #30 (`3db4d906`), issue closed: slow multiplexed subscribers are evicted so unrelated responses can proceed; dedicated subscriptions retain reliable delivery. Package qualification remains under P1-03. |
+| [P2-04](https://github.com/InkyQuill/lconnect-linux/issues/11) | Open: localize application-owned errors and extend coverage checks. |
+| [P2-05](https://github.com/InkyQuill/lconnect-linux/issues/12) | Backend fix merged in PR #30 (`3db4d906`), issue closed: fontconfig enumeration has a three-second deadline and 4 MiB output limit. Font picker follow-up remains local; package qualification remains under P1-03. |
+| [P2-06](https://github.com/InkyQuill/lconnect-linux/issues/13) | Open R4: Windows import is a supported subset; genuine exports and fidelity qualification remain. |
+| [P2-07](https://github.com/InkyQuill/lconnect-linux/issues/14) | Open R5: Windows-compatible export and semantic round-trips remain unimplemented. |
+| [P2-08](https://github.com/InkyQuill/lconnect-linux/issues/15) | Open R6: capture, shell integrations and FPS require remaining implementation and real-environment qualification. |
+| [P2-09](https://github.com/InkyQuill/lconnect-linux/issues/16) | Open: sensor breadth, identity, accuracy and recovery require evidence; unavailable values stay unavailable. |
+| [P2-10](https://github.com/InkyQuill/lconnect-linux/issues/17) | Open R7: product firmware update and durable recovery are not available; physical qualification requires separate authorization. |
+| [P2-11](https://github.com/InkyQuill/lconnect-linux/issues/18) | Open maintainability risk: incrementally consolidate RPC contracts and test boundaries. |
+| [P3-01](https://github.com/InkyQuill/lconnect-linux/issues/19) | Open: frontend readability, lint and measured bundle improvements. |
+| [P3-02](https://github.com/InkyQuill/lconnect-linux/issues/20) | Fixed in `b16f0b0`: active CLI/HID comments and the LCDV2 protocol document match the implemented C-packet/H.264 codecs; historical evidence remains unchanged. |
+| [P3-03](https://github.com/InkyQuill/lconnect-linux/issues/21) | Fixed in `6172ca3`: visible Mini branding is LL-Control while package, service, schema and configuration identifiers remain stable. Real-shell acceptance remains under R6. |
+| [P3-04](https://github.com/InkyQuill/lconnect-linux/issues/22) | Fixed in `e7dbe97`: existing invalid configuration aborts startup explicitly, missing configuration retains defaults, and failure cases have host-side coverage. |
+| [P3-05](https://github.com/InkyQuill/lconnect-linux/issues/23) | Merged in PR #30 (`3db4d906`), issue closed: cargo-audit CI and policy added. Audit passed with 14 warnings tracked in [#31](https://github.com/InkyQuill/lconnect-linux/issues/31); ZIP is 9.0.4, affected MSRV is 1.88, and 66 profile tests passed. This does not qualify the package; P1-03 remains open. |
+| [P3-06](https://github.com/InkyQuill/lconnect-linux/issues/24) | Open R10 research: offline content, global pump sync caller and legacy firmware applicability. |
+| [P4-01](https://github.com/InkyQuill/lconnect-linux/issues/25) | Open R8: remaining LCD effects and existing-effect acceptance; schedule last among functional expansion. |
+| [P4-02](https://github.com/InkyQuill/lconnect-linux/issues/26) | Open R9: optional editor polish and additional locales; EN/RU correctness remains core. |
+| [P4-03](https://github.com/InkyQuill/lconnect-linux/issues/27) | Open: additional hardware, desktops and package formats need per-device/session implementation and qualification; broader device and ll-connect3 function coverage remain product goals. |
+| [P4-04](https://github.com/InkyQuill/lconnect-linux/issues/28) | Open: optional native authoring conveniences after core and required parity work. |
 
 ## Current baseline, not the future release
 

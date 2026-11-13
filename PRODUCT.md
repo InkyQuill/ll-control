@@ -18,11 +18,18 @@ Let users customize supported Lian Li hardware, control cooling and inspect syst
 
 ## Positioning
 
-Linux-native hardware control with LCD media/composition, cooling, lighting and persistent profiles. Windows L-Connect 3 is a capability reference; its screen organization is not a design constraint. The user explicitly permits rethinking UX while preserving capabilities.
+**ll-control** is the project and application name; **LL-Control** is its visible UI branding. It is an independent Rust application based on the behavior of the original .NET L-Connect 3, with Linux-native LCD media/composition, cooling, lighting and persistent profiles. The original application is a behavioral reference; its screen organization is not a design constraint. The user permits rethinking UX while preserving capabilities.
 
 ## Operating Context
 
-The desktop talks to a local daemon. The current hardware target is Galahad II LCDV2 (`0416:7395`); Windows L-Connect 3 2.1.28.0 is the parity baseline. Other hardware families are planned product scope, even though their implementation and hardware acceptance are future work. The product architecture must support devices without LCDs and multiple device families. Media editing applies only to screen-equipped devices; it must not define the application shell.
+The desktop talks to a local daemon. The user's physical target is Galahad II LCDV2 (`0416:7395`); Windows L-Connect 3 2.1.28.0 is the parity baseline. The separate third-party [ll-connect3](https://github.com/joeytroy/ll-connect3) project is a reference for UNI FAN SL-INF and its other functions; integrating all of its functions is in scope, subject to implementation and verification. It is not this project. Other devices covered by the parity goal are also in scope, but their operation is unverified and at the user's own risk unless specific hardware evidence establishes otherwise. Do not infer ownership or validation of UNI FAN TL hardware from the LCDV2 target. The architecture must support devices without LCDs and multiple device families. Media editing applies only to screen-equipped devices; it must not define the application shell.
+
+Implementation and validation are separate: a planned or unimplemented function is not usable merely because it is in scope; an implemented function is not hardware-verified merely because software tests pass. Record evidence per device, function and relevant operation, and state untested combinations and limitations explicitly. A successful test of one function or device does not establish another.
+
+Before use, visibly label unverified devices on their device cards and unverified
+functions at their controls, including that use is at the user's own risk. Provide
+these labels in English and Russian. Unimplemented controls must be presented as
+unavailable, not as working functionality.
 
 ## Capabilities and Constraints
 
@@ -50,7 +57,8 @@ Avoid an immediately overwhelming, multicolored gallery. Motion is welcome in mo
 - `roadmap.md`, `docs/development/parity/`: capability baseline, contracts and remaining acceptance.
 - `desktop/src/`: existing interface and behavior.
 - `desktop/README.md`: desktop operation and verification workflows.
-- https://github.com/joeytroy/ll-connect3: user-provided reference; its README targets SL-Infinity Hub and explicitly describes mirroring Windows L-Connect 3. This does not establish what hardware its authors own.
+- https://github.com/joeytroy/ll-connect3: separate third-party reference for SL-Infinity Hub and its functions. Its scope is not evidence of hardware validation in ll-control.
+- [Pinned reference inventory](docs/development/2026-09-08-reference-2.1.28-and-ll-connect3.md): original application and third-party capability research.
 
 ## Product Principles
 

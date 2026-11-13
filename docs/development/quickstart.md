@@ -313,6 +313,33 @@ CLI предоставляет `lconnectctl lcd delete-clip KEY`; список �
 | После изменения текста сдвинулась вёрстка | Проверить CSS mode, wrapping width, line height, anchors и нужный font. [Text acceptance](parity/text-wrapping-acceptance.md) описывает покрытие и оставшиеся raster/locale gaps |
 | После restart нет diagnostic clip | Diagnostic stream/JPEG source не сохраняется; запустить явно. Managed theme и явно выбранный saved media clip восстанавливаются; одноразовый play-saved-clip не включает autoplay |
 
+Если установлен другой Linux-порт L-Connect на .NET, совпадение имени пакета
+`lconnect-linux` само по себе не означает, что запущен daemon этого репозитория.
+На Arch проверьте фактические исполняемый файл, владельца пакета, unit и socket:
+
+```sh
+command -v lconnectctl
+pacman -Qo "$(command -v lconnectctl)"  # если команда найдена
+pacman -Ql lconnect-linux               # файлы установленного пакета
+systemctl --user cat lconnectd
+systemctl --user status lconnectd
+systemctl cat lconnectd
+systemctl status lconnectd
+printf '%s\n' "$XDG_RUNTIME_DIR/lconnectd.sock"
+ss -xlpn | grep -i lconnect
+```
+
+Для локальной сборки ожидается `~/.local/bin/lconnectd`, для собранного здесь
+дистрибутива — `/usr/bin/lconnectd`; сравните `ExecStart` с нужной установкой.
+У проверенного порта на .NET system unit находится в
+`/usr/lib/systemd/system/lconnectd.service`, а socket —
+`/run/lconnect/lconnect.sock`; это отдельный system service, не user unit этого
+репозитория. Обнаружение USB
+`0416:7395` подтверждает присутствие устройства, но не создание контроллера:
+другой порт может не поддерживать его протокол, а доступ к hidraw или открытие
+устройства могут завершиться ошибкой. Проверяйте журнал именно запущенного
+daemon и права устройства, прежде чем делать вывод о причине.
+
 Настройки и managed resources находятся в `${XDG_CONFIG_HOME:-~/.config}/lconnectd`:
 `daemon.toml`, `devices/`, `theme-assets/`, `theme-fonts/`, `prepared-clips/` и profile storage.
 Для резервной копии остановить daemon и копировать весь каталог, включая ресурсы.

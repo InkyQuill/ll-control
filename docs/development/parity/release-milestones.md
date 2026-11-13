@@ -5,6 +5,15 @@ and explicit user decisions. Baseline: Windows **2.1.28.0**, LCDV2 **0416:7395**
 These **R** milestones replace old M1–M6 scheduling; old plans remain acceptance
 sources. This document authorizes planning, not new hardware testing or flashing.
 
+The LCDV2-first milestones prioritize the user's physical device; they do not
+exclude other applicable parity devices or the requirement to integrate all
+functions of the separate third-party [ll-connect3](https://github.com/joeytroy/ll-connect3),
+including UNI FAN SL-INF. Plan and track that work separately by function and device,
+distinguishing unimplemented from implemented but unverified. Hardware remains
+unverified until evidence covers the particular device and operation, and its use
+is at the user's own risk. LCDV2 ownership does not establish UNI FAN TL ownership
+or validation. See the [reference inventory](../2026-09-08-reference-2.1.28-and-ll-connect3.md).
+
 ## Priority and completion rules
 
 | Priority | Meaning | Planned work |

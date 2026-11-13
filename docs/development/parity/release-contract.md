@@ -4,6 +4,15 @@ The first release is a usable **Galahad II LCDV2 0416:7395 / 480×480** applicat
 on **KDE Plasma Wayland**, packaged initially for **Arch Linux x86_64**. EN/RU are
 required. Windows L-Connect3 2.1.28.0 is the capability reference.
 
+The first-release cut does not limit product scope: applicable parity for other
+devices and integration of all functions of the separate third-party
+[ll-connect3](https://github.com/joeytroy/ll-connect3), including UNI FAN SL-INF,
+are required goals. These are unverified unless device- and operation-specific
+evidence says otherwise; use of unverified hardware is at the user's own risk.
+Unimplemented functions must be identified as unavailable, not as usable merely
+because they are planned. The user's LCDV2 does not imply UNI FAN TL ownership or
+validation. See the [reference inventory](../2026-09-08-reference-2.1.28-and-ll-connect3.md).
+
 ## Immutable starting point
 
 Commit **299fe6c3c20bf042e48f3bd88049227afd3324d9**, branch
@@ -34,7 +43,8 @@ qualification for changed code. No release tag or remote publication is implied.
 | Firmware identity / saved recovery inspection | Read-only core candidate | R3 device identity/latency; no flash or recovery-clear implied |
 | Firmware flashing / clear quarantine / product updater | Unavailable in public GUI | R7; existing command allowlist denies these writes |
 | Remaining 16 LCD pages / Windows-compatible export | Unavailable, not advertised as implemented | R8 / R5 |
-| Other devices / other DEs / legacy FW<1.5 | Unqualified, outside initial support | Separate evidence/support decision |
+| Other parity devices / ll-connect3 functions | Product goals; implementation varies and hardware is unverified | Implement missing functions and qualify each device and operation separately |
+| Other DEs / legacy FW<1.5 | Unqualified, outside initial support | Separate evidence/support decision |
 
 Experimental features remain accessible to preserve existing functionality. The
 README and this table label the entire current application a **software preview**;
