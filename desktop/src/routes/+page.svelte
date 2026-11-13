@@ -1347,16 +1347,27 @@
           <div data-studio-panel="presets" hidden={lcdPanel !== 'presets'}>
             <section class="preset-picker">
               <h2>{t('Готовые темы — редактируемые раскладки')}</h2>
-              <label
-                >{t('Раскладка')}<select
-                  aria-label={t('Раскладка')}
-                  bind:value={presetId}
-                  onchange={() => (presetBindings = [])}
-                  >{#each presets as preset (preset.id)}<option value={preset.id}
-                      >{preset.name} · {t(preset.description)}</option
-                    >{/each}</select
-                ></label
-              >
+              <div class="preset-gallery" aria-label={t('Готовые темы')}>
+                {#each presets as preset (preset.id)}
+                  <button
+                    type="button"
+                    class:chosen={presetId === preset.id}
+                    aria-pressed={presetId === preset.id}
+                    onclick={() => {
+                      presetId = preset.id;
+                      presetBindings = [];
+                    }}
+                  >
+                    <span class="preset-thumbnail {preset.id}" aria-hidden="true">
+                      {#each Array.from({ length: Math.max(preset.sensors, 1) }, (_, index) => index) as index (index)}<span
+                        ></span>{/each}
+                      <i class="thumbnail-clock"></i>
+                    </span>
+                    <strong>{preset.name}</strong>
+                    <small>{t(preset.description)}</small>
+                  </button>
+                {/each}
+              </div>
               {#if presetRequired}<p>
                   {t('Выберите')}
                   {presetRequired}
@@ -2105,5 +2116,74 @@
     .visual {
       padding: 18px;
     }
+  }
+
+  .preset-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .preset-gallery button {
+    display: grid;
+    gap: 0.4rem;
+    text-align: left;
+    padding: 0.7rem;
+  }
+  .preset-gallery button.chosen {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .preset-gallery small {
+    color: var(--text-muted);
+  }
+  .preset-thumbnail {
+    aspect-ratio: 1;
+    max-height: 7rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    place-content: center;
+    gap: 0.35rem;
+    padding: 1rem;
+    background: #0c121e;
+    border-radius: 0.5rem;
+  }
+  .preset-thumbnail span {
+    display: block;
+    height: 0.5rem;
+    border-radius: 1rem;
+    background: #90b1c9;
+  }
+  .preset-thumbnail {
+    position: relative;
+  }
+  .preset-thumbnail.focus span {
+    grid-column: 1 / -1;
+    height: 1rem;
+  }
+  .preset-thumbnail.duo {
+    grid-template-columns: 1fr;
+  }
+  .preset-thumbnail.triple {
+    grid-template-columns: 1fr;
+  }
+  .preset-thumbnail.cycle span:not(:first-child) {
+    opacity: 0.25;
+  }
+  .preset-thumbnail.clock span {
+    grid-column: 1 / -1;
+    height: 1rem;
+  }
+  .thumbnail-clock {
+    position: absolute;
+    bottom: 12%;
+    left: 35%;
+    width: 30%;
+    height: 0.25rem;
+    background: #90b1c9;
+    border-radius: 1rem;
+  }
+  .preset-thumbnail.clock .thumbnail-clock {
+    bottom: 25%;
   }
 </style>

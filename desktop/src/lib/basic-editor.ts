@@ -86,3 +86,22 @@ export function selectBasicEditor(
   if (theme.page_cache) next.page_cache = structuredClone(theme.page_cache);
   return next;
 }
+
+/** Start independent native variants from the current draft without changing its appearance. */
+export function createBasicEditor(theme: Theme): Theme {
+  if (lcdPageKind(theme) !== 'basic' || theme.basic_editor)
+    throw new ValidationError('Не удалось создать варианты для этой темы.');
+  const current = structuredClone(theme);
+  delete current.page_cache;
+  delete current.basic_editor;
+  const selectedBackground: BasicBackground =
+    current.background_image || current.background_video ? 'image_video' : 'background_color';
+  const banks = (['image_video', 'background_color'] as const).map((background) => ({
+    background,
+    selected_overlay: 'custom' as const,
+    overlays: basicOverlays.map((overlay) => ({ overlay, theme: structuredClone(current) })),
+  }));
+  const result = structuredClone(theme);
+  result.basic_editor = { selected_background: selectedBackground, banks };
+  return result;
+}

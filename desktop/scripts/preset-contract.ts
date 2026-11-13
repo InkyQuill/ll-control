@@ -9,6 +9,7 @@ const server = await createServer({
 });
 try {
   const { presets, presetTheme } = await server.ssrLoadModule('/src/lib/theme-presets.ts');
+  const { createBasicEditor } = await server.ssrLoadModule('/src/lib/basic-editor.ts');
   const themes = presets.map((preset) =>
     presetTheme(
       preset.id,
@@ -22,6 +23,7 @@ try {
       })),
     ),
   );
+  themes.push(createBasicEditor(presetTheme('clock', [])));
   for (const unit of ['volts', 'hertz', 'bytes_per_second', 'bytes', 'percent'] as const) {
     const sensor = { id: `gpu:${unit}`, label: unit, unit, value: 1, status: 'valid', age_ms: 10 };
     themes.push(presetTheme('focus', [sensor]), presetTheme('cycle', [sensor, sensor, sensor]));
