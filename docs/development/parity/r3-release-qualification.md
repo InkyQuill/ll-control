@@ -13,9 +13,14 @@ installed-session or physical observations.
 | Installed Plasma Wayland lifecycle | Current session is KDE Wayland; no installed daemon unit or running L-Connect process found | Install/upgrade/remove with retained data, udev access, tray/single instance/hide/show/exit and actual login autostart |
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
-| Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
+| Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
 | Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
+
+### Completed physical display checks on Galahad II LCDV2
+
+- [x] LCD-013 rotation: 90°, 180°, 270° and return to 0° passed with host-rotated H.264.
+- [x] LCD-012 brightness: blackout and visible intermediate response passed. Flicker limited fine comparisons between adjacent levels.
 
 ## Initial host inspection
 

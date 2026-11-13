@@ -175,8 +175,12 @@ from optional R9 conveniences and additional R8 themes.
 - [ ] When hardware testing is authorized, record current device/firmware identity,
   single HID owner, known working pump/source/RGB restore settings and actual fan
   wiring. Firmware flashing is not part of this milestone.
-- [ ] Qualify LCD image/video/overlays, stale/recovery, units, brightness/four
-  rotations, LocalUI, stop/replace and operation after GUI close.
+- [x] Physically verify all four orientations on the Galahad II LCDV2. The daemon
+  rotates the image before H.264 encoding. [Four-angle retest](r3-release-qualification.md#host-rotated-h264-retest).
+- [x] Physically verify backlight response including intermediate levels. Flicker
+  limits fine visual comparisons. [Brightness observations](r3-release-qualification.md#manual-lcd-retest-2026-11-13).
+- [ ] Finish LCD video/overlays, stale/recovery, units, LocalUI, stop/replace and
+  operation after GUI close; verify stable presentation on a working panel.
 - [ ] Qualify pump duty/RPM/source/presets/fallback and available fan channels;
   prove RGB zones/modes/sync/count/thermal restore physically. Motherboard-wired
   fans are not a passing LCDV2 fan test; record unavailable and the support limit.
