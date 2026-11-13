@@ -175,3 +175,5 @@ tests. The last sample reported 5,727 frames in 245.376 seconds (23.34 fps),
 zero failed frame transactions and 5,571 read timeouts. The raw HID log was empty
 and all wire offsets were zero. Packet contents, device replies and the cause of
 flicker are unverified for this run. Display stability remains open.
+
+**Post-session reset check.** With the test daemon stopped and the installed service stopped first, one cmd 142 reset received a 64-byte acknowledgement. The device stayed enumerated throughout the 20-second watch. The restored service discovered the cooler but reported it could not open it. The operator confirmed LocalUI still flickered. The reset did not recover stable display; the cause remains unresolved.
