@@ -78,7 +78,7 @@ async fn verify_replay(
         .expect("transport config acknowledged");
     assert_eq!(applied.brightness_percent, 50);
     assert_eq!(applied.rotation_degrees, 0);
-    assert_eq!(applied.mode, "Application");
+    assert_eq!(applied.mode, "LCDSetting");
     assert_eq!(
         rpc.get_lcd_theme(dev.clone()).await.unwrap().as_ref(),
         Some(default)
@@ -315,7 +315,7 @@ async fn failed_reset_replays_after_sleep_without_reusing_old_retry_capability()
             applied.brightness_percent,
             applied.rotation_degrees
         ),
-        ("Application", 50, 0)
+        ("LCDSetting", 50, 0)
     );
     assert_eq!(rpc.get_lcd_theme(new.clone()).await.unwrap(), Some(theme));
     assert!(rpc
