@@ -85,7 +85,7 @@
       onclick={() => layer.sensors.push({ ...layer.sensors[layer.sensors.length - 1] })}
       >{t('Добавить показатель в цикл')}</button
     >
-    {#each layer.sensors as sensor, j (sensor.sensor_id)}
+    {#each layer.sensors as sensor, j (sensor)}
       <button
         disabled={layer.sensors.length === 1}
         onclick={(event) => removeCycleSensor(layer, j, event.currentTarget)}
