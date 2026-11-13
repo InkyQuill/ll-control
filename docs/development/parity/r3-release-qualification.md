@@ -15,7 +15,7 @@ installed-session or physical observations.
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
 | Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13). [Thermal trigger and recovery on both targets passed](#thermal-recovery-with-both-effects-saved) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity |
-| Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
+| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak) | Restart, cold boot, sleep/wake and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
 ### Completed physical display checks on Galahad II LCDV2
@@ -253,3 +253,9 @@ This matches the Windows 2.1.28 restore path for the tested cases. The three man
 **Passed on the Galahad II LCDV2.** Session `20261113-193523-927080`, build `ec5e587`. Daemon readback confirmed green breathing on the fan (sync off) and red/blue runway on all pump LEDs. The CPU rule used `k10temp: Tctl`, a 63 °C threshold and static red.
 
 Two alert/clear cycles occurred before teardown. The first showed active at 64.125 °C and clear at 60.875 °C. The second showed active at 63.875 °C and clear at 60.125 °C. In both cycles the HID log shows successful static red writes to fan (133) and pump (131), then replay of each target’s original effect packet on cooling. The operator confirmed both effects visibly resumed. This closes the saved-fan recovery case left open in the previous session.
+
+### Installed package combined soak
+
+Arch package `ll-control 0.1.0-1`, revision `5c2e354`, Galahad II LCDV2 firmware 1.6. The installed user service streamed a video background with live Tctl and clock overlays, ran the pump at 80%, and drove green breathing fan LEDs and red/blue runway pump LEDs. Over 1,800.016 seconds and 361 samples it sent 42,007 frames (23.34 fps), with zero failed frame transactions, 40,955 empty optional readbacks and at most one frame pending. All sampled temperatures were valid. Pump speed was 3,030–3,060 RPM, maximum snapshot age 714 ms (rounded up), snapshot RPC p95 2.35 ms, and peak daemon RSS growth after minute one 2.64 MiB.
+
+The operator confirmed the clock advanced, Tctl tracked the motherboard display, and both RGB effects worked. The known panel flicker persisted and the dark background made its motion difficult to judge. In a separate follow-up on the same installed service, the operator confirmed a yellow bar swept smoothly across a blue background behind the live overlays. Afterward the daemon reported LocalUI applied and the LCD source idle.
