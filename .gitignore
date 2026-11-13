@@ -2,9 +2,10 @@
 /target
 **/*.rs.bk
 
-# IDE
+# IDE and local agent state
 .vscode/
 .idea/
+.cursor/
 
 # OS
 .DS_Store

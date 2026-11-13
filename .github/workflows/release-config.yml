@@ -1,0 +1,35 @@
+name: Release configuration checks
+on:
+  push:
+    branches: [master]
+    paths: ['release-please-config.json', '.release-please-manifest.json', 'version.txt', 'Cargo.toml', 'Cargo.lock', 'desktop/package.json', 'desktop/src-tauri/tauri.conf.json', '.github/workflows/release-*.yml', 'tools/tests/*release*']
+  pull_request:
+    paths: ['release-please-config.json', '.release-please-manifest.json', 'version.txt', 'Cargo.toml', 'Cargo.lock', 'desktop/package.json', 'desktop/src-tauri/tauri.conf.json', '.github/workflows/release-*.yml', 'tools/tests/*release*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.2.0
+      - name: Check current product versions
+        run: |
+          python3 tools/tests/check-release-versions.py
+      - name: Install the release-please version bundled by action v4.4.0
+        run: npm install --prefix "$RUNNER_TEMP/release-please" --ignore-scripts --no-audit --no-fund release-please@17.1.3
+      - name: Exercise first release, patch, feature and breaking release updates
+        env:
+          NODE_PATH: ${{ runner.temp }}/release-please/node_modules
+          RELEASE_FIXTURE_DIR: ${{ runner.temp }}/release-fixtures
+        run: |
+          node tools/tests/release-please-fixtures.cjs
+          for fixture in "$RELEASE_FIXTURE_DIR"/*; do
+            python3 tools/tests/check-release-versions.py --root "$fixture"
+          done

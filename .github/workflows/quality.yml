@@ -1,0 +1,65 @@
+name: Full quality checks
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Source ref to verify
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Source ref to verify (defaults to selected ref)
+        required: false
+        type: string
+permissions:
+  contents: read
+jobs:
+  arch:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: 2
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_TEST_DEBUG: 0
+      CARGO_PROFILE_TEST_STRIP: symbols
+      CARGO_INCREMENTAL: 0
+    steps:
+      - name: Provision Arch build environment
+        run: |
+          pacman -Syu --noconfirm --needed git rustup nodejs npm python cmake ninja pkgconf hidapi systemd gtk3 webkit2gtk-4.1 libayatana-appindicator ffmpeg gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-plugin-pipewire qt6-declarative desktop-file-utils kirigami gjs gtk4 libadwaita dconf xorg-server-xvfb xorg-xauth
+          rm -rf /var/cache/pacman/pkg/*
+          df -h /
+          rustup toolchain install 1.96.0 --profile minimal --component rustfmt --component clippy
+          rustup default 1.96.0
+          npm install --global pnpm@12.9.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
+      - name: Frozen frontend dependencies
+        run: pnpm --dir desktop install --frozen-lockfile
+      - name: Build embedded frontend before all-feature Rust checks
+        run: pnpm --dir desktop build
+      - name: Rust and frontend checks
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          cargo build --locked -p lconnect-daemon -p lconnect-cli -p lconnect-gui --bins --no-default-features --features lconnect-gui/custom-protocol
+          df -h .
+          cargo clean
+          cargo test --locked --workspace --all-features
+          df -h .
+          cargo clean
+          RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --all-features --no-deps
+          df -h .
+          cargo clean
+          pnpm --dir desktop check
+          pnpm --dir desktop test:localization
+          pnpm --dir desktop check:locales
+          pnpm --dir desktop check:contracts
+          python3 -m unittest discover -s tools/tests -p test_distribution.py -v
+      - name: Report disk usage after checks
+        if: always()
+        run: df -h .
