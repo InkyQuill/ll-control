@@ -78,6 +78,7 @@ fn historical_metadata_is_bounded_object_json_and_future_formats_are_rejected() 
         assert!(bad.validate().is_err());
     }
     let mut json = serde_json::to_value(valid).unwrap();
+    assert_eq!(json["source"]["format"], "windows_lconnect3_2_1_28");
     json["source"]["format"] = "future_format".into();
     assert!(serde_json::from_value::<CoolingModeBanks>(json).is_err());
 }
