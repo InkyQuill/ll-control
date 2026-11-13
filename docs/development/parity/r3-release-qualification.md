@@ -14,7 +14,7 @@ installed-session or physical observations.
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
-| Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity, restore of a saved fan effect |
+| Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13). [Thermal trigger and recovery on both targets passed](#thermal-recovery-with-both-effects-saved) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity |
 | Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
@@ -247,3 +247,9 @@ Windows 2.1.28 service source: `TemperatureAlertController.evaluate/updateTrigge
 After the operator applied a static blue pump base, explicitly clearing the 60 °C rule replayed blue on the pump and yellow on the fan. Later, under a **63 °C red** rule with a green breathing pump base, the 63.75 °C active sample and 62.875 °C clear sample bracketed red writes to both targets followed by green breathing on the pump and retained red on the fan. This repeated on subsequent crossings. The operator confirmed pump effect recovery and that the fan stayed the alert color. All 32 pump and 28 fan lighting writes in the session completed with 64 bytes.
 
 This matches the Windows 2.1.28 restore path for the tested cases. The three manual lighting requests and the final lighting restore all targeted the pump. No fan effect request reached the daemon. The operator reported changing fan controls several times, but the log does not capture local edits or rejected clicks. Restoring a **saved fan effect** remains unverified.
+
+### Thermal recovery with both effects saved
+
+**Passed on the Galahad II LCDV2.** Session `20261113-193523-927080`, build `ec5e587`. Daemon readback confirmed green breathing on the fan (sync off) and red/blue runway on all pump LEDs. The CPU rule used `k10temp: Tctl`, a 63 °C threshold and static red.
+
+Two alert/clear cycles occurred before teardown. The first showed active at 64.125 °C and clear at 60.875 °C. The second showed active at 63.875 °C and clear at 60.125 °C. In both cycles the HID log shows successful static red writes to fan (133) and pump (131), then replay of each target’s original effect packet on cooling. The operator confirmed both effects visibly resumed. This closes the saved-fan recovery case left open in the previous session.
