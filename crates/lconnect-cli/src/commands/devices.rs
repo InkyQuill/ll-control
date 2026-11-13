@@ -18,7 +18,7 @@ use crate::connection::{self, resolve_device};
 pub async fn run(json_mode: bool) -> Result<()> {
     let client = connection::connect().await?;
     let value = client
-        .call("list_devices", json!({}))
+        .call(lconnect_ipc::methods::LIST_DEVICES_NAME, json!({}))
         .await
         .context("list_devices RPC failed")?;
     let descriptors: Vec<DeviceDescriptor> = serde_json::from_value(value)
@@ -151,7 +151,7 @@ pub async fn sensors(json_mode: bool) -> Result<()> {
     let client = connection::connect().await?;
     let rows: Vec<lconnect_ipc::SensorReading> = serde_json::from_value(
         client
-            .call("list_sensors", json!({}))
+            .call(lconnect_ipc::methods::LIST_SENSORS_NAME, json!({}))
             .await
             .context("list_sensors RPC failed")?,
     )?;

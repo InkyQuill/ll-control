@@ -14,6 +14,7 @@ pub use snow3d::*;
 pub mod error;
 pub mod framing;
 pub mod jsonrpc;
+pub mod methods;
 pub mod sensors;
 pub mod server;
 pub mod socket;

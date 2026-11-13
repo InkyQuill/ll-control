@@ -1,31 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { ValidationError } from './validation-error';
-export type Unit =
-  | 'celsius'
-  | 'percent'
-  | 'bytes'
-  | 'rpm'
-  | 'watts'
-  | 'volts'
-  | 'hertz'
-  | 'bytes_per_second'
-  | 'frames_per_second';
-export interface Sensor {
-  id: string;
-  label: string;
-  unit: Unit;
-  value: number | null;
-  status: string;
-  age_ms: number | null;
-}
-export interface Device {
-  id: string;
-  display_name: string;
-  family: string;
-  vid?: number;
-  pid?: number;
-  serial?: string | null;
-}
+import type { Device, Sensor, DisplaySettings, Unit } from './rpc-contract';
+export type { Device, Sensor, DisplaySettings, Unit } from './rpc-contract';
 export interface Style {
   font_asset?: string | null;
   line_box?: boolean;
@@ -416,13 +392,6 @@ export interface SystemSpec {
   version: number;
   collected_at_unix_ms: number;
   groups: SpecGroup[];
-}
-
-export interface DisplaySettings {
-  version: number;
-  revision: number;
-  temperature_unit: 'celsius' | 'fahrenheit';
-  interface_language?: 'ru-RU' | 'en-US';
 }
 
 export interface FpsSourceSettings {

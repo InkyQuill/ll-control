@@ -8,7 +8,7 @@
     "build": "vite build",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri",
-    "check:contracts": "node --experimental-strip-types scripts/preset-contract.ts | cargo run --quiet --locked --manifest-path ../Cargo.toml -p lconnect-ipc --example validate-themes",
+    "check:contracts": "node --experimental-strip-types scripts/preset-contract.ts | cargo run --quiet --locked --manifest-path ../Cargo.toml -p lconnect-ipc --example validate-themes && cargo run --quiet --locked --manifest-path ../Cargo.toml -p lconnect-ipc --example generate-rpc-contract",
     "check:locales": "node scripts/check-locales.mjs --strict",
     "audit:locales": "node scripts/check-locales.mjs",
     "test:localization": "node --experimental-strip-types --test scripts/localization.test.mjs",
