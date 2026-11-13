@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { ValidationError } from './validation-error';
 export type Unit = 'celsius' | 'percent' | 'bytes' | 'rpm' | 'watts' | 'volts' | 'hertz' | 'bytes_per_second' | 'frames_per_second';
 export interface Sensor { id: string; label: string; unit: Unit; value: number | null; status: string; age_ms: number | null }
 export interface Device { id: string; display_name: string; family: string; vid?: number; pid?: number; serial?: string | null }
@@ -66,7 +67,7 @@ export function coolingPreset(target: 'fan' | 'pump', preset: string, sensorId: 
 }
 
 export async function importImageAsset(file: File): Promise<string> {
-  if (file.size > 16 * 1024 * 1024) throw new Error('Изображение превышает 16 MiB');
+  if (file.size > 16 * 1024 * 1024) throw new ValidationError('Изображение превышает 16 MiB');
   return invoke<string>('import_image', { name: file.name, bytes: Array.from(new Uint8Array(await file.arrayBuffer())) });
 }
 

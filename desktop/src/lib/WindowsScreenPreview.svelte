@@ -1,6 +1,7 @@
 <script lang="ts">
  import {onDestroy,untrack} from 'svelte';
  import {t} from './i18n.svelte';
+ import {ValidationError} from './validation-error';
  import {rpc,message} from './api';
  import LcdPreview from './LcdPreview.svelte';
  import type {DisplayGeometry} from './device-capabilities';
@@ -19,10 +20,10 @@
   try{
    const bytes=await rpc<number[]>('preview_windows_screen_upload',request);
    if(!alive||current!==epoch)return;
-   if(!Array.isArray(bytes)||bytes.length>1024*1024||bytes[0]!==255||bytes[1]!==216||bytes.some(v=>!Number.isInteger(v)||v<0||v>255))throw new Error(t('Некорректный кадр preview.'));
+   if(!Array.isArray(bytes)||bytes.length>1024*1024||bytes[0]!==255||bytes[1]!==216||bytes.some(v=>!Number.isInteger(v)||v<0||v>255))throw new ValidationError('Некорректный кадр preview.');
    candidate=URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:'image/jpeg'}));
    const image=new Image();image.src=candidate;await image.decode();
-   if(image.naturalWidth!==480||image.naturalHeight!==480)throw new Error(t('Некорректный размер preview.'));
+   if(image.naturalWidth!==480||image.naturalHeight!==480)throw new ValidationError('Некорректный размер preview.');
    if(alive&&current===epoch){url=candidate;candidate='';}
   }catch(e){if(alive&&current===epoch)error=message(e);}
   finally{if(candidate)URL.revokeObjectURL(candidate);if(alive){busy=false;onbusy(false);}}

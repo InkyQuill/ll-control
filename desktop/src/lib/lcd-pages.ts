@@ -1,4 +1,5 @@
 import {fireworksColors} from './api';
+import {ValidationError} from './validation-error';
 import type {Theme,LcdPageKind,WeatherEffect} from './api';
 import {assertWeatherDraft} from './weather-settings';
 export function isProcedural(layer:import('./api').Layer|undefined):boolean {return layer?.kind==='weather'||layer?.kind==='meteor'||layer?.kind==='snow3d'||layer?.kind==='fireworks';}
@@ -33,7 +34,7 @@ export function switchLcdPage(theme:Theme,target:LcdPageKind):Theme {
     next=snapshot(theme);next.layers=next.layers.filter(layer=>!isProcedural(layer));
     if(target!=='basic') {
       delete next.basic_editor;
-      if(next.layers.length>=32)throw new Error('Для нового эффекта нужен свободный слой.');
+      if(next.layers.length>=32)throw new ValidationError('Для нового эффекта нужен свободный слой.');
       if(target==='meteor')next.layers.unshift({kind:'meteor',effect:{speed:2,colors:[[0,255,0],[0,0,255]],dynamic:false,sensor:null,seed:42}});
       else if(target==='fireworks')next.layers.unshift({kind:'fireworks',effect:{intensity:1,colors:fireworksColors(),dynamic:false,sensor:null,seed:42}});
       else if(target==='snow3d')next.layers.unshift({kind:'snow3d',effect:{intensity:1,seed:42}});

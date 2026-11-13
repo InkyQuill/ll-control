@@ -1,5 +1,6 @@
 <script lang="ts">
   import {t} from './i18n.svelte';
+  import {ValidationError} from './validation-error';
   import { onMount } from 'svelte';
   import type { VideoCrop } from './video-crop';
   import { videoChannelLut, type VideoAdjustments } from './video-adjustments';
@@ -88,12 +89,12 @@
     }
     let frame:CanvasImageSource=player;
     if(lut && adjustments && (adjustments.contrast!==0 || adjustments.brightness!==0)) {
-      if(player.videoWidth>4096 || player.videoHeight>4096)throw new Error('Preview dimensions exceed preparation budget');
+      if(player.videoWidth>4096 || player.videoHeight>4096)throw new ValidationError('Preview dimensions exceed preparation budget');
       effectCanvas ??= document.createElement('canvas');
       if(effectCanvas.width!==player.videoWidth)effectCanvas.width=player.videoWidth;
       if(effectCanvas.height!==player.videoHeight)effectCanvas.height=player.videoHeight;
       const context=effectCanvas.getContext('2d',{willReadFrequently:true});
-      if(!context)throw new Error('Canvas unavailable');
+      if(!context)throw new ValidationError('Canvas unavailable');
       context.drawImage(player,0,0);
       const pixels=context.getImageData(0,0,effectCanvas.width,effectCanvas.height);
       for(let i=0;i<pixels.data.length;i+=4) {

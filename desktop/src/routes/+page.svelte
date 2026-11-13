@@ -174,7 +174,7 @@
           if(pending && pending.rotation_degrees===displayPatch.rotation_degrees && pending.brightness_percent===displayPatch.brightness_percent)delete pendingDisplay[target];
         } catch(cause) {
           try {const state=await rpc<LcdState>('get_lcd_state',{dev:target});if(selection===selectionRevision)lcd=state;}catch{/* Keep the pending draft when readback is unavailable. */}
-          throw new Error(t('Тема отправлена, но настройки экрана не подтверждены: {0}',message(cause)));
+          throw new ValidationError('Тема отправлена, но настройки экрана не подтверждены: {0}',[message(cause)]);
         }
       }
       if (selection !== selectionRevision) return;
@@ -549,7 +549,7 @@
           <section class="preset-picker"><h2>{t("Готовые темы — редактируемые раскладки")}</h2>
             <label>{t("Раскладка")}<select aria-label="{t("Раскладка")}" bind:value={presetId} onchange={() => presetBindings = []}>{#each presets as preset}<option value={preset.id}>{preset.name} · {t(preset.description)}</option>{/each}</select></label>
             {#if presetRequired}<p>{t("Выберите")} {presetRequired} {t("датчиков. Порядок выбора задаёт расположение.")}</p><div class="preset-sensors">{#each sensors as sensor (sensor.id)}<label><input type="checkbox" checked={presetBindings.includes(sensor.id)} onchange={e => { presetBindings = e.currentTarget.checked ? [...presetBindings, sensor.id] : presetBindings.filter(id => id !== sensor.id); }} disabled={!presetBindings.includes(sensor.id) && presetBindings.length >= presetRequired}/>{sensor.label} · {sensor.unit}</label>{/each}</div>{/if}
-            <button disabled={presetBindings.length !== presetRequired || busy} onclick={() => { try { theme = presetTheme(presetId, presetBindings.map(id => { const sensor = sensors.find(s => s.id === id); if (!sensor) throw new Error('Датчик исчез из каталога'); return sensor; })); selectedLayer=-1;lcdPanel = 'composition'; notice = 'Раскладка заменила локальный черновик. Настройте её и нажмите Apply для отправки.'; error = ''; } catch (e) { error = message(e); } }}>{t("Создать черновик из раскладки")}</button>
+            <button disabled={presetBindings.length !== presetRequired || busy} onclick={() => { try { theme = presetTheme(presetId, presetBindings.map(id => { const sensor = sensors.find(s => s.id === id); if (!sensor) throw new ValidationError('Датчик исчез из каталога'); return sensor; })); selectedLayer=-1;lcdPanel = 'composition'; notice = 'Раскладка заменила локальный черновик. Настройте её и нажмите Apply для отправки.'; error = ''; } catch (e) { error = message(e); } }}>{t("Создать черновик из раскладки")}</button>
           </section>
           </div>
           <div data-studio-panel="library" hidden={lcdPanel !== 'library'}>

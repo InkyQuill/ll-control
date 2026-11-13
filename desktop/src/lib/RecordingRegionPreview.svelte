@@ -1,5 +1,6 @@
 <script lang="ts">
   import {t} from './i18n.svelte';
+  import {ValidationError} from './validation-error';
   import { onMount } from 'svelte';
   import type { RecordingSession } from './screen-record';
   import type { VideoCrop } from './video-crop';
@@ -23,7 +24,7 @@
       url=URL.createObjectURL(new Blob([new Uint8Array(bytes)],{type:'image/jpeg'}));
       const image=new Image();image.src=url;await image.decode();
       if(!active || attempt!==revision)return;
-      if(!image.naturalWidth || !image.naturalHeight || image.naturalWidth>640 || image.naturalHeight>640)throw new Error('Unexpected preview dimensions');
+      if(!image.naturalWidth || !image.naturalHeight || image.naturalWidth>640 || image.naturalHeight>640)throw new ValidationError('Unexpected preview dimensions');
       ownedUrl=url;picture=image;
     }catch {if(active && attempt===revision)error='Не удалось загрузить кадр источника. Повторите запрос или задайте область числами.';}
     finally {
