@@ -1349,6 +1349,7 @@
                     class:chosen={presetId === preset.id}
                     aria-pressed={presetId === preset.id}
                     onclick={() => {
+                      if (presetId === preset.id) return;
                       presetId = preset.id;
                       presetBindings = [];
                     }}

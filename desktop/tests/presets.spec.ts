@@ -56,6 +56,8 @@ for (const preset of ['duo', 'triple', 'cycle'] as const) {
       await page.getByRole('checkbox', { name: 'GPU · celsius' }).check();
       await page.getByRole('checkbox', { name: 'CPU · celsius' }).check();
       if (preset !== 'duo') await page.getByRole('checkbox', { name: 'COOLANT · celsius' }).check();
+      await page.getByRole('button', { name: new RegExp('^' + preset, 'i') }).click();
+      await expect(create).toBeEnabled();
       await create.click();
       await expect(page.getByLabel('Название', { exact: true })).toHaveValue(
         preset[0].toUpperCase() + preset.slice(1),
