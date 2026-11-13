@@ -54,7 +54,7 @@ software results and deferred hardware checks.
 
 ## Saved firmware recovery state
 
-`lconnectctl firmware-recovery` (or `--json firmware-recovery`) reads saved
+`llcontrol firmware-recovery` (or `--json firmware-recovery`) reads saved
 firmware journal/settings guards through the daemon, including when the LCDV2 is
 absent or ordinary maintenance admission is closed. It does not query HID,
 retry an update, clear quarantine, or replay settings. Last durable progress can
@@ -73,20 +73,20 @@ See [roadmap.md](../../roadmap.md) and the [M1 evidence](protocol/captures/2026-
 for the current verification status. Other product families are not hardware verified.
 
 The daemon and CLI require an absolute existing `XDG_RUNTIME_DIR` and share
-`$XDG_RUNTIME_DIR/lconnectd.sock`. `LCONNECTCTL_SOCKET` remains an explicit CLI override.
+`$XDG_RUNTIME_DIR/llcontrold.sock`. `LLCONTROL_SOCKET` remains an explicit CLI override.
 Brightness, rotation, and mode commands patch only the selected field.
 `requested` records the user configuration; `applied` records the last successfully
 sent control configuration, including the internal `LCDSetting` mode used during
 diagnostic playback. Neither value is a readback of the physical screen.
 
 ```sh
-lconnectctl lcd state
-lconnectctl lcd brightness 70
-lconnectctl lcd rotation 0
+llcontrol lcd state
+llcontrol lcd brightness 70
+llcontrol lcd rotation 0
 python3 tools/prepare-lcdv2-clip.py --output /tmp/lcdv2-clip.json
-lconnectctl lcd play-clip /tmp/lcdv2-clip.json --loops 30
-lconnectctl lcd playback-stats
-lconnectctl lcd clear
+llcontrol lcd play-clip /tmp/lcdv2-clip.json --loops 30
+llcontrol lcd playback-stats
+llcontrol lcd clear
 ```
 
 The diagnostic clip is 480×480, 24 fps, baseline H.264, split into complete
@@ -111,7 +111,7 @@ automatically assigned: reapply known settings to create the stable-key file.
 
 ## Host sensors
 
-`lconnectctl sensors` (or `lconnectctl --json sensors`) reads the daemon's cached
+`llcontrol sensors` (or `llcontrol --json sensors`) reads the daemon's cached
 catalog. Providers cover hwmon temperatures and GPU power, procfs CPU/RAM,
 AMDGPU load/VRAM/voltage/clocks, NVIDIA temperature/load/VRAM/power/clocks,
 RAPL CPU power, CPUFreq and Intel GT clocks, i915 per-engine counters,
@@ -122,13 +122,13 @@ Intel hwmon voltage is implemented for supported i915/xe rails. Intel memory que
 Windows aggregate load semantics, CPU voltage on remaining platforms and
 broader NVIDIA platform coverage remain incomplete.
 Optional NVIDIA core voltage uses NV-CONTROL with explicitly configured
-`LCONNECT_NVIDIA_VOLTAGE_DISPLAY` and `LCONNECT_NVIDIA_VOLTAGE_XAUTHORITY`
+`LLCONTROL_NVIDIA_VOLTAGE_DISPLAY` and `LLCONTROL_NVIDIA_VOLTAGE_XAUTHORITY`
 (absolute path), plus `/usr/bin/nvidia-settings`. It is disabled without both
 variables; the daemon does not discover or copy desktop credentials. See
 [setup, source semantics and limitations](parity/nvidia-voltage-abi.md).
 
 ASUS WMI CPU core voltage can be explicitly enabled with
-`LCONNECT_ASUS_WMI_VOLTAGE=1` in the daemon environment. It requires the existing
+`LLCONTROL_ASUS_WMI_VOLTAGE=1` in the daemon environment. It requires the existing
 `asus_wmi_sensors` driver and an unambiguous `CPU Core Voltage` label. Kernel
 documentation records BIOS polling defects on some boards; this extra voltage
 query is off by default. No driver is loaded or firmware changed. See the
@@ -164,8 +164,8 @@ per-frame CSV and save its absolute path. Changes apply without restarting the
 daemon; disabling retains the selected path. English is the default interface
 language, and Russian is supported.
 
-Alternatively, use `lconnectctl fps show --json`, then
-`lconnectctl fps set --revision N --enabled true --log-path /absolute/path/game.csv`
+Alternatively, use `llcontrol fps show --json`, then
+`llcontrol fps set --revision N --enabled true --log-path /absolute/path/game.csv`
 with the returned revision. Set replaces the whole record; include the path when
 disabling if you want to keep it. Configure MangoHud `log_interval=0` separately;
 the app does not enable game logging. Mini uses a selected daemon FPS source in
@@ -174,16 +174,16 @@ for source identity, stale data, supported input and remaining qualification.
 
 ## M2b autonomous cooling
 
-`lconnectctl sensors` now also lists the attached LCDV2's coolant, fan RPM and
+`llcontrol sensors` now also lists the attached LCDV2's coolant, fan RPM and
 pump RPM under its stable device identity. These readings become stale after
 three seconds without a successful poll. A curve can bind a host temperature or
 the target device's coolant, but cannot bind utilization, RPM, or another AIO.
 
-Inspect state with `lconnectctl cooling state`. Apply a JSON policy with:
+Inspect state with `llcontrol cooling state`. Apply a JSON policy with:
 
 ```sh
-lconnectctl cooling set fan --policy /path/to/fan-policy.json
-lconnectctl cooling set pump --policy /path/to/pump-policy.json
+llcontrol cooling set fan --policy /path/to/fan-policy.json
+llcontrol cooling set pump --policy /path/to/pump-policy.json
 ```
 
 A fixed-duty policy is `{"mode":"fixed","percent":80}`. A pump-only motherboard
@@ -221,7 +221,7 @@ policy, last successfully applied duty, fallback state and current control error
 A failed initial HID write retains policy intent, reports an error and is retried
 on later ticks; the CLI returns unsuccessful status for that initial failure.
 
-`lconnectctl fan <percent>` or `lconnectctl pump <percent> --source mcu` cancels the
+`llcontrol fan <percent>` or `llcontrol pump <percent> --source mcu` cancels the
 corresponding policy after a successful manual write. The policy and legacy
 manual setting update together. On restart, a persisted policy owns its target
 and suppresses conflicting legacy PWM replay. Missing temperature starts in
@@ -243,9 +243,9 @@ acceptance. The existing `curve` mode retains percent interpolation.
 Generate an editable Quiet or Performance pump policy without contacting a daemon:
 
 ```bash
-lconnectctl cooling preset quiet --sensor 'CPU_TEMPERATURE_ID' > /tmp/pump-quiet.json
+llcontrol cooling preset quiet --sensor 'CPU_TEMPERATURE_ID' > /tmp/pump-quiet.json
 # Inspect/edit the file, then apply when appropriate for your hardware:
-lconnectctl cooling set pump --policy /tmp/pump-quiet.json
+llcontrol cooling set pump --policy /tmp/pump-quiet.json
 ```
 
 Replace `CPU_TEMPERATURE_ID` with the chosen ID from `sensors`. `performance`
@@ -280,13 +280,13 @@ changing physical LEDs or saved settings. With thermal alerts enabled, clear is 
 
 ## Thermal RGB alerts (M2c)
 
-`lconnectctl thermal state` reports requested rules, the active source, degraded
+`llcontrol thermal state` reports requested rules, the active source, degraded
 inputs, remaining manual grace and per-zone applied layer/error. Applied means
 the HID write succeeded; visual acceptance on the physical LCDV2 is pending.
 
 First configure both fan and pump lighting modes through the existing lighting
 commands; these form the restorable base. Then create a JSON config using IDs
-from `lconnectctl sensors`:
+from `llcontrol sensors`:
 
 ```json
 {
@@ -304,9 +304,9 @@ chosen sensor. Both CPU and GPU slots accept an explicit known Celsius binding;
 there is no automatic selection or remapping. A null slot disables that rule.
 
 ```bash
-lconnectctl thermal set --config /path/to/thermal.json
-lconnectctl thermal state
-lconnectctl thermal disable
+llcontrol thermal set --config /path/to/thermal.json
+llcontrol thermal state
+llcontrol thermal disable
 ```
 
 At or above the threshold, static warning color overrides both zones. The most
@@ -352,7 +352,7 @@ promise a final restoration write. Physical RGB acceptance has not been run.
 Generate Quiet, Standard, High or Full without contacting a daemon:
 
 ```bash
-lconnectctl cooling preset standard --target fan --sensor 'CPU_TEMPERATURE_ID' > /tmp/fan-standard.json
+llcontrol cooling preset standard --target fan --sensor 'CPU_TEMPERATURE_ID' > /tmp/fan-standard.json
 ```
 
 Names are `quiet`, `standard`, `high`, `full`. The existing pump syntax and

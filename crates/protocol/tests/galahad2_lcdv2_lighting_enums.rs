@@ -3,7 +3,7 @@
 //! Wire-format discriminants from FanLightingMode.cs, PumpLightingMode.cs,
 //! LightingDirection.cs, ARGBSignalSource.cs, PumpLightingScope.cs.
 
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
+use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{
     ArgbSignalSource, FanLightingMode, LightingDirection, PumpLightingMode, PumpLightingScope,
 };
 

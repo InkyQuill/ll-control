@@ -43,7 +43,7 @@ interface Fixture {
 async function setup(page: Page, response: unknown, language = 'en-US', sealed = false) {
   await page.addInitScript(
     ({ response, language, sealed }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const f: Fixture = { response, fail: false, hold: false, pending: [], sealed, calls: [] };
       Object.assign(window, {
         recoveryFixture: f,

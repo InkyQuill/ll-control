@@ -1,0 +1,13 @@
+[Unit]
+Description=LL-Control daemon
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/llcontrold
+Restart=on-failure
+RestartSec=2
+Environment=RUST_LOG=llcontrold=info
+
+[Install]
+WantedBy=default.target

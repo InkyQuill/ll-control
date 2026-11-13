@@ -16,7 +16,7 @@ export const panel = (p: Page) =>
   p.getByText('Резервная копия группы настроек', { exact: true }).locator('..');
 export async function setup(page: Page, language = 'ru-RU') {
   await page.addInitScript((language) => {
-    localStorage.setItem('lconnect.interface-language', language);
+    localStorage.setItem('llcontrol.interface-language', language);
     const summary = {
       version: 1,
       slots: [{ group: 'screen', slot: 7, name: 'Ночной экран' }],

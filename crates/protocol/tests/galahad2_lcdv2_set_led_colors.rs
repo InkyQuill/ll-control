@@ -1,7 +1,7 @@
 //! Tests for SetLEDColors (cmd 20). Source: Galahad2VisionDevice.cs:283-308.
 
-use lconnect_protocol::galahad2_lcdv2::lighting::Rgb;
-use lconnect_protocol::galahad2_lcdv2::set_led_colors::{
+use llcontrol_protocol::galahad2_lcdv2::lighting::Rgb;
+use llcontrol_protocol::galahad2_lcdv2::set_led_colors::{
     build_set_fan_led_colors_request, build_set_screen_led_colors_request, fan_led_payload,
     screen_led_payload, MAX_FAN_LEDS, MAX_SCREEN_LEDS,
 };
@@ -116,7 +116,7 @@ fn build_set_fan_led_request_rejects_empty() {
     let err = build_set_fan_led_colors_request(&[]).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLedCount {
+        llcontrol_protocol::Error::InvalidLedCount {
             kind: "fan",
             count: 0,
             max: MAX_FAN_LEDS,
@@ -129,7 +129,7 @@ fn build_set_screen_led_request_rejects_empty() {
     let err = build_set_screen_led_colors_request(&[]).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLedCount {
+        llcontrol_protocol::Error::InvalidLedCount {
             kind: "screen",
             count: 0,
             max: MAX_SCREEN_LEDS,
@@ -143,7 +143,7 @@ fn build_set_fan_led_request_rejects_over_max() {
     let err = build_set_fan_led_colors_request(&too_many).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLedCount { kind: "fan", .. }
+        llcontrol_protocol::Error::InvalidLedCount { kind: "fan", .. }
     ));
 }
 
@@ -153,7 +153,7 @@ fn build_set_screen_led_request_rejects_over_max() {
     let err = build_set_screen_led_colors_request(&too_many).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLedCount { kind: "screen", .. }
+        llcontrol_protocol::Error::InvalidLedCount { kind: "screen", .. }
     ));
 }
 

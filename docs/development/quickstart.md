@@ -22,8 +22,8 @@ GStreamer1.28.8; реальные capture portals пока не квалифиц
 Из корня репозитория, с Rust/Cargo, pkg-config и development library libudev:
 
 ```sh
-cargo build --locked -p lconnect-daemon -p lconnect-cli
-cargo test --locked -p lconnect-image
+cargo build --locked -p llcontrol-daemon -p llcontrol-cli
+cargo test --locked -p llcontrol-image
 ```
 
 Для полного Rust suite также нужен `dbus-daemon` в PATH: logind tests
@@ -46,7 +46,7 @@ pnpm exec playwright test
 Browser tests используют mocks. [Native smoke](parity/native-desktop-smoke.md)
 и [native keyboard](parity/native-keyboard-acceptance.md) работают под отдельным
 Xvfb с MockBackend. Не запускать их GUI на активном рабочем display.
-Сам `lconnectd` — production process: его запуск открывает HID и может
+Сам `llcontrold` — production process: его запуск открывает HID и может
 восстановить сохранённые настройки. Он не является offline smoke-test.
 
 ## Установка и обычный запуск
@@ -65,17 +65,17 @@ Plasma и GNOME Shell. Ручное копирование виджетов по
 production daemon и низкоуровневый `verify-galahad`.
 
 ```sh
-cargo install --locked --path crates/lconnect-daemon --root "$HOME/.local"
-cargo install --locked --path crates/lconnect-cli --root "$HOME/.local"
+cargo install --locked --path crates/llcontrol-daemon --root "$HOME/.local"
+cargo install --locked --path crates/llcontrol-cli --root "$HOME/.local"
 mkdir -p "$HOME/.config/systemd/user"
-cp packaging/systemd/lconnectd.service "$HOME/.config/systemd/user/"
+cp packaging/systemd/llcontrold.service "$HOME/.config/systemd/user/"
 systemctl --user daemon-reload
 ```
 
-`--root "$HOME/.local"` важен: unit запускает `%h/.local/bin/lconnectd`.
+`--root "$HOME/.local"` важен: unit запускает `%h/.local/bin/llcontrold`.
 Обычный `cargo install` без этого параметра использует другой каталог.
 Для коротких команд ниже добавить `~/.local/bin` в PATH своей shell или
-использовать полный путь `~/.local/bin/lconnectctl`.
+использовать полный путь `~/.local/bin/llcontrol`.
 
 Установить актуальное сгенерированное udev-правило:
 
@@ -92,22 +92,22 @@ permissions требуют отдельной настройки админис�
 USB AIO ради проверки без аппаратного протокола.
 
 ```sh
-systemctl --user start lconnectd
-lconnectctl daemon status
-lconnectctl devices
-lconnectctl sensors
-lconnectctl spec             # static hardware inventory; no pump required
-lconnectctl spec --refresh   # bypass the short inventory cache
-lconnectctl display-settings get
-lconnectctl display-settings set --temperature-unit fahrenheit
-lconnectctl display-settings set --language english  # current English catalog is partial
+systemctl --user start llcontrold
+llcontrol daemon status
+llcontrol devices
+llcontrol sensors
+llcontrol spec             # static hardware inventory; no pump required
+llcontrol spec --refresh   # bypass the short inventory cache
+llcontrol display-settings get
+llcontrol display-settings set --temperature-unit fahrenheit
+llcontrol display-settings set --language english  # current English catalog is partial
 ```
 
-Автозапуск включается отдельно: `systemctl --user enable lconnectd`.
+Автозапуск включается отдельно: `systemctl --user enable llcontrold`.
 Его cold-boot/sleep-wake поведение ещё требует аппаратной приёмки.
 Сервис и клиенты должны работать от одного пользователя с существующим
-абсолютным `XDG_RUNTIME_DIR`; socket — `$XDG_RUNTIME_DIR/lconnectd.sock`.
-`LCONNECTCTL_SOCKET` переопределяет только CLI connection, не socket daemon/GUI.
+абсолютным `XDG_RUNTIME_DIR`; socket — `$XDG_RUNTIME_DIR/llcontrold.sock`.
+`LLCONTROL_SOCKET` переопределяет только CLI connection, не socket daemon/GUI.
 
 GUI запускается из `desktop/` командой `pnpm tauri dev`. Она открывает настоящее
 окно и подключается к уже запущенному daemon. Закрытие окна не останавливает
@@ -134,23 +134,23 @@ LCD, clocks, cooling или RGB policies. Готового проверенно�
 Формат темы: [пример v1](examples/lcd-theme.json),
 [поля и CLI workflow](parity/lcd-theme-workflow.md),
 [правила совместимости](parity/schema-compatibility.md). Авторитетные типы и
-ограничения находятся в [IPC theme schema](../../crates/lconnect-ipc/src/theme.rs).
+ограничения находятся в [IPC theme schema](../../crates/llcontrol-ipc/src/theme.rs).
 
 CLI-вариант с собственным JSON:
 
 ```sh
-lconnectctl --json sensors
+llcontrol --json sensors
 cp docs/development/examples/lcd-theme.json /tmp/my-lcd-theme.json
 # Заменить REPLACE_WITH_SENSOR_ID точным ID температурного источника.
-lconnectctl theme preview /tmp/my-lcd-theme.json /tmp/my-lcd-preview.jpg
-lconnectctl theme apply /tmp/my-lcd-theme.json
-lconnectctl theme state
-lconnectctl lcd state
+llcontrol theme preview /tmp/my-lcd-theme.json /tmp/my-lcd-preview.jpg
+llcontrol theme apply /tmp/my-lcd-theme.json
+llcontrol theme state
+llcontrol lcd state
 ```
 
 Preview создаёт новый JPEG и откажется перезаписать существующий файл.
 При нескольких устройствах указать `--device` с точным ID из `devices`.
-Для возврата штатного экрана: `lconnectctl lcd clear` (LocalUI).
+Для возврата штатного экрана: `llcontrol lcd clear` (LocalUI).
 Это останавливает LCD source, но не сбрасывает охлаждение или RGB.
 
 Cooling и Lighting требуют явного Apply. До физического теста помпы нужны
@@ -169,7 +169,7 @@ Cooling и Lighting требуют явного Apply. До физическог
 
 «Загрузить профиль в редактор» подготавливает ролик отдельно от черновика темы;
 воспроизведение начинается только по «Применить ролик из профиля».
-CLI: `lconnectctl profiles apply screen 7` применяет восьмой слот; индексы CLI
+CLI: `llcontrol profiles apply screen 7` применяет восьмой слот; индексы CLI
 нулевые. Save принимает NamedProfile JSON с `content.kind="screen_media"`
 и `content.value` равным ключу из `lcd clips`.
 
@@ -184,8 +184,8 @@ CLI экспортирует named slot вместе с изображениям
 и видео, включая неактивные страницы темы:
 
 ```sh
-lconnectctl profiles export screen 0 night.lcp
-lconnectctl profiles import screen 7 night.lcp
+llcontrol profiles export screen 0 night.lcp
+llcontrol profiles import screen 7 night.lcp
 ```
 
 Export создаёт новый файл, существующий не перезаписывает. Import заменяет
@@ -195,7 +195,7 @@ fan/pump0…3. После импорта загрузите профиль в р
 и Windows archive interoperability ещё не реализованы.
 
 ID операции и progress выводятся в stderr. При потерянном ответе Finish
-используйте `lconnectctl profiles archive-state ID` или `profiles archive-finish ID`:
+используйте `llcontrol profiles archive-state ID` или `profiles archive-finish ID`:
 receipt переживает restart и не восстанавливает позднее удалённый слот.
 `profiles archive-cancel ID` закрывает незавершённую передачу; уже committed import
 не отменяется. [Контракт и границы](parity/profile-archives.md).
@@ -212,13 +212,13 @@ FanAndLighting (охлаждение и подсветка, включая со�
 потери связи; повторное применение — отдельная кнопка. Черновики сохраняются.
 
 ```sh
-lconnectctl profiles group export screen backup-screen.lcg --device DEVICE
-lconnectctl profiles group export fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
-lconnectctl profiles group inspect screen backup-screen.lcg --device DEVICE
-lconnectctl profiles group import screen backup-screen.lcg --device DEVICE
-lconnectctl profiles group import fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
-lconnectctl profiles group readback screen OPERATION_ID --device DEVICE
-lconnectctl profiles group reapply screen OPERATION_ID --device DEVICE
+llcontrol profiles group export screen backup-screen.lcg --device DEVICE
+llcontrol profiles group export fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
+llcontrol profiles group inspect screen backup-screen.lcg --device DEVICE
+llcontrol profiles group import screen backup-screen.lcg --device DEVICE
+llcontrol profiles group import fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
+llcontrol profiles group readback screen OPERATION_ID --device DEVICE
+llcontrol profiles group reapply screen OPERATION_ID --device DEVICE
 ```
 
 Export создаёт новый файл без перезаписи. Inspect проверяет данные без изменения
@@ -267,8 +267,8 @@ Daemon остаётся отдельным сервисом: выход из GUI
 CLI:
 
 ```sh
-lconnectctl profiles group reset-fan-and-lighting --sensor CPU_TEMPERATURE_ID --device DEVICE
-lconnectctl --json profiles group readback fan-and-lighting OPERATION_ID --device DEVICE
+llcontrol profiles group reset-fan-and-lighting --sensor CPU_TEMPERATURE_ID --device DEVICE
+llcontrol --json profiles group readback fan-and-lighting OPERATION_ID --device DEVICE
 ```
 
 Он возвращает Fan Standard/Pump Quiet, Rainbow, topology360/24LED/sync=false,
@@ -291,8 +291,8 @@ readback; для retry нужны прежние `--id`, `--expected` и `--sens
 Сначала снимите соответствующий выбор через LocalUI или другую тему,
 удалите/замените ссылающиеся screen slots и дождитесь сохранения настроек. При ошибке записи сначала устраните её.
 
-CLI предоставляет `lconnectctl lcd delete-clip KEY`; список ключей —
-`lconnectctl lcd clips`. Удаление не требует подключённого LCD и не посылает
+CLI предоставляет `llcontrol lcd delete-clip KEY`; список ключей —
+`llcontrol lcd clips`. Удаление не требует подключённого LCD и не посылает
 команд экрану. При потере ответа перечитайте список перед повтором; GUI делает
 это автоматически, но не повторяет удаление. Повреждённые/нечитаемые settings
 блокируют удаление, пока нельзя достоверно проверить ссылки.
@@ -301,8 +301,8 @@ CLI предоставляет `lconnectctl lcd delete-clip KEY`; список �
 
 | Симптом | Что проверить / сделать |
 |---|---|
-| GUI disconnected / socket missing | `systemctl --user status lconnectd`, затем `journalctl --user -u lconnectd -n 100 --no-pager`; тот же пользователь и XDG runtime у GUI/daemon; старый CLI socket override |
-| systemd: executable not found | Наличие `~/.local/bin/lconnectd`; установка с `--root "$HOME/.local"` соответствует ExecStart |
+| GUI disconnected / socket missing | `systemctl --user status llcontrold`, затем `journalctl --user -u llcontrold -n 100 --no-pager`; тот же пользователь и XDG runtime у GUI/daemon; старый CLI socket override |
+| systemd: executable not found | Наличие `~/.local/bin/llcontrold`; установка с `--root "$HOME/.local"` соответствует ExecStart |
 | Устройство отсутствует | VID/PID, актуальное udev-правило и права hidraw; отсутствие второго владельца; reconnect/cold boot ещё не квалифицированы |
 | Sensor unavailable/stale | Status/age/ID, применимость driver/provider; freshness3s, сбор не гарантирует точный1Hz. Не подставлять другой sensor или0 |
 | Не видны voltage/Intel load | [Provider inventory](parity/sensor-provider-inventory.md): доступность платформы/permissions; Intel per-engine не равен Windows aggregate; optional WMI/NV-CONTROL требуют явной настройки |
@@ -314,33 +314,33 @@ CLI предоставляет `lconnectctl lcd delete-clip KEY`; список �
 | После restart нет diagnostic clip | Diagnostic stream/JPEG source не сохраняется; запустить явно. Managed theme и явно выбранный saved media clip восстанавливаются; одноразовый play-saved-clip не включает autoplay |
 
 Если установлен другой Linux-порт L-Connect на .NET, совпадение имени пакета
-`lconnect-linux` само по себе не означает, что запущен daemon этого репозитория.
+`ll-control` само по себе не означает, что запущен daemon этого репозитория.
 На Arch проверьте фактические исполняемый файл, владельца пакета, unit и socket:
 
 ```sh
-command -v lconnectctl
-pacman -Qo "$(command -v lconnectctl)"  # если команда найдена
-pacman -Ql lconnect-linux               # файлы установленного пакета
-systemctl --user cat lconnectd
-systemctl --user status lconnectd
-systemctl cat lconnectd
-systemctl status lconnectd
-printf '%s\n' "$XDG_RUNTIME_DIR/lconnectd.sock"
-ss -xlpn | grep -i lconnect
+command -v llcontrol
+pacman -Qo "$(command -v llcontrol)"  # если команда найдена
+pacman -Ql ll-control               # файлы установленного пакета
+systemctl --user cat llcontrold
+systemctl --user status llcontrold
+systemctl cat llcontrold
+systemctl status llcontrold
+printf '%s\n' "$XDG_RUNTIME_DIR/llcontrold.sock"
+ss -xlpn | grep -i llcontrol
 ```
 
-Для локальной сборки ожидается `~/.local/bin/lconnectd`, для собранного здесь
-дистрибутива — `/usr/bin/lconnectd`; сравните `ExecStart` с нужной установкой.
+Для локальной сборки ожидается `~/.local/bin/llcontrold`, для собранного здесь
+дистрибутива — `/usr/bin/llcontrold`; сравните `ExecStart` с нужной установкой.
 У проверенного порта на .NET system unit находится в
-`/usr/lib/systemd/system/lconnectd.service`, а socket —
-`/run/lconnect/lconnect.sock`; это отдельный system service, не user unit этого
+`/usr/lib/systemd/system/llcontrold.service`, а socket —
+`/run/llcontrol/llcontrol.sock`; это отдельный system service, не user unit этого
 репозитория. Обнаружение USB
 `0416:7395` подтверждает присутствие устройства, но не создание контроллера:
 другой порт может не поддерживать его протокол, а доступ к hidraw или открытие
 устройства могут завершиться ошибкой. Проверяйте журнал именно запущенного
 daemon и права устройства, прежде чем делать вывод о причине.
 
-Настройки и managed resources находятся в `${XDG_CONFIG_HOME:-~/.config}/lconnectd`:
+Настройки и managed resources находятся в `${XDG_CONFIG_HOME:-~/.config}/llcontrold`:
 `daemon.toml`, `devices/`, `theme-assets/`, `theme-fonts/`, `prepared-clips/` и profile storage.
 Для резервной копии остановить daemon и копировать весь каталог, включая ресурсы.
 Это filesystem backup; совместимый Windows archive import/export ещё не реализован.
@@ -389,8 +389,8 @@ Daemon слушает logind на system bus и использует `sleep:dela
 16 LED для280mm или24 для360mm, сохраняя ручное значение.
 
 ```sh
-lconnectctl lighting set fan --mode static --color '#00d7ff' --sync-to-pump true --fan-size 280 --led-count 31
-lconnectctl lighting set fan --mode static --color '#00d7ff' --sync-to-pump false
+llcontrol lighting set fan --mode static --color '#00d7ff' --sync-to-pump true --fan-size 280 --led-count 31
+llcontrol lighting set fan --mode static --color '#00d7ff' --sync-to-pump false
 ```
 
 Второй вызов возвращает manual31; непереданные topology-поля сохраняются.
@@ -400,8 +400,8 @@ lconnectctl lighting set fan --mode static --color '#00d7ff' --sync-to-pump fals
 ### Данные для Mini shell-интеграций
 
 ```sh
-lconnectctl mini snapshot
-lconnectctl mini watch
+llcontrol mini snapshot
+llcontrol mini watch
 ```
 
 Команды возвращают JSON/NDJSON из кеша daemon без GUI и дополнительного
@@ -410,7 +410,7 @@ lconnectctl mini watch
 Plasma и расширения GNOME Shell, сами shell adapters ещё не готовы.
 [Контракт и границы поддержки](parity/mini-system-info.md).
 Новая установка приложения использует English; русский доступен через
-`lconnectctl display-settings set --language russian`. Старый выбранный русский
+`llcontrol display-settings set --language russian`. Старый выбранный русский
 при обновлении сохраняется.
 
 
@@ -422,7 +422,7 @@ MangoHud (log_interval=0), включите Read FPS и сохраните. Пе
 обновляться. Само приложение не включает логирование в игре. В Mini Plasma/GNOME
 выберите появившийся FPS source; без выбранного/свежего source будет unavailable.
 
-CLI: lconnectctl fps show --json; затем lconnectctl fps set --revision N
+CLI: llcontrol fps show --json; затем llcontrol fps set --revision N
 --enabled true --log-path /absolute/path/game.csv. Для отключения используйте
 --enabled false и тот же путь, если хотите его сохранить. N берётся из show.
 [Контракт, ограничения и оставшаяся приёмка](parity/fps-source.md).
@@ -453,5 +453,5 @@ JSON из Saved firmware diagnostics для диагностики. Это ис�
 Не трактуйте No saved firmware journal or guards were found как доказательство
 отсутствия live operation, а сохранённые markers — как успешный flash. Чтение не
 снимает блокировки, не повторяет передачу и не восстанавливает настройки. CLI
-lconnectctl firmware-recovery --json использует тот же inspection path.
+llcontrol firmware-recovery --json использует тот же inspection path.
 [Контракт и незакрытые recovery-зависимости](parity/firmware-lcdv2.md).

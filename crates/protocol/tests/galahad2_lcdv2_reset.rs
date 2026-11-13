@@ -3,8 +3,8 @@
 //! Source: Galahad2VisionDevice.cs:233-248. Success requires both
 //! Length == 1 AND Data[0] == 1.
 
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
-use lconnect_protocol::galahad2_lcdv2::reset::{build_request, parse_response};
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::reset::{build_request, parse_response};
 
 #[test]
 fn build_request_emits_command_142_with_no_payload() {
@@ -34,7 +34,7 @@ fn parse_response_with_data_byte_not_0x01_is_data_invalid() {
     buf[5] = 1;
     buf[6] = 0x00; // device returned 0 for some reason
     let err = parse_response(&buf).unwrap_err();
-    assert!(matches!(err, lconnect_protocol::Error::DataNotValid));
+    assert!(matches!(err, llcontrol_protocol::Error::DataNotValid));
 }
 
 #[test]
@@ -50,6 +50,6 @@ fn parse_response_with_wrong_length_is_invalid_length() {
     // because the C# rejects it by length-mismatch *before* checking Data[0].
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLength { length: 2, max: 1 }
+        llcontrol_protocol::Error::InvalidLength { length: 2, max: 1 }
     ));
 }

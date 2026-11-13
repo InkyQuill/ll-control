@@ -6,10 +6,10 @@ repo=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--without-dividers',action='store_true',help='Measure the same four live sensors without divider layers')
 args=parser.parse_args()
-root=Path(tempfile.mkdtemp(prefix='lconnect-divider-composition-'));root.chmod(0o700)
+root=Path(tempfile.mkdtemp(prefix='llcontrol-divider-composition-'));root.chmod(0o700)
 (root/'fixture-marker').write_text('MockBackend only\n')
-env={key:value for key,value in os.environ.items() if not key.startswith('LCONNECT_')}
-env.update(LCONNECT_SMOKE_ROOT=str(root),LCONNECT_MOCK_EXPORT_VIDEO='1',XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_DATA_HOME=str(root/'data'),XDG_CACHE_HOME=str(root/'cache'))
+env={key:value for key,value in os.environ.items() if not key.startswith('LLCONTROL_')}
+env.update(LLCONTROL_SMOKE_ROOT=str(root),LLCONTROL_MOCK_EXPORT_VIDEO='1',XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_DATA_HOME=str(root/'data'),XDG_CACHE_HOME=str(root/'cache'))
 def wait(test,label):
  end=time.monotonic()+45
  while not test():
@@ -18,7 +18,7 @@ def wait(test,label):
   time.sleep(.05)
 def rpc(method,params=None):
  with socket.socket(socket.AF_UNIX) as peer:
-  peer.settimeout(20);peer.connect(str(root/'lconnectd.sock'));stream=peer.makefile('rwb');stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
+  peer.settimeout(20);peer.connect(str(root/'llcontrold.sock'));stream=peer.makefile('rwb');stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
   while True:
    reply=json.loads(stream.readline())
    if reply.get('id')==1:
@@ -27,7 +27,7 @@ def rpc(method,params=None):
 log=(root/'daemon.log').open('w')
 process=subprocess.Popen([repo/'target/release/examples/desktop-mock'],env=env,stdout=log,stderr=subprocess.STDOUT)
 try:
- wait(lambda:(root/'lconnectd.sock').exists(),'mock socket');wait(lambda:len(rpc('list_devices'))==1,'mock device')
+ wait(lambda:(root/'llcontrold.sock').exists(),'mock socket');wait(lambda:len(rpc('list_devices'))==1,'mock device')
  dev=rpc('list_devices')[0]['id'];clip=next(c for c in rpc('list_prepared_clips') if c['is_default'])
  style=lambda x,y,size,align,color:{'x':x,'y':y,'size':size,'align':align,'color':color,'line_box':True,'shadow':{'x':0,'y':3,'blur':2,'color':[0,0,0],'opacity':20}}
  layers=[]

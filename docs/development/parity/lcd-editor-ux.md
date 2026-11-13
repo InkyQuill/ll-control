@@ -31,7 +31,7 @@ The canvas is the editor from entry. Editing never writes to hardware until Appl
 - The GUI reads requested screen rotation but provides no editor control for it.
   The daemon exposes `patch_lcd_config` for orientation and brightness; theme Apply
   is a separate operation. `LcdTheme` does not store screen orientation.
-- `crates/lconnect-ipc/src/theme.rs`: layers have no common stable ID, user name,
+- `crates/llcontrol-ipc/src/theme.rs`: layers have no common stable ID, user name,
   hidden or locked metadata. A Photoshop-like eye/lock/name UI needs actual model,
   persistence and renderer work; these controls cannot be decorative.
 - Physical video-composition rotation worked. Static-JPEG rotation failed. A0%

@@ -18,8 +18,8 @@ import time
 
 REPO = Path(__file__).resolve().parents[2]
 TEST = "screen_record::resource_profile::profile_recording_engine_resources"
-PHASE = "LCONNECT_RECORD_PROFILE "
-RESULT = "LCONNECT_RECORD_PROFILE_RESULT "
+PHASE = "LLCONTROL_RECORD_PROFILE "
+RESULT = "LLCONTROL_RECORD_PROFILE_RESULT "
 
 
 def records(log, prefix):
@@ -61,14 +61,14 @@ def run_case(executable, root, dimensions, seconds):
     case.mkdir()
     staging = case / "staging"
     staging.mkdir()
-    env = {k: v for k, v in os.environ.items() if not k.startswith("LCONNECT_") and
+    env = {k: v for k, v in os.environ.items() if not k.startswith("LLCONTROL_") and
            k not in {"DISPLAY", "WAYLAND_DISPLAY", "DBUS_SESSION_BUS_ADDRESS", "AT_SPI_BUS_ADDRESS"}}
     env.update(TMPDIR=str(staging), XDG_RUNTIME_DIR=str(case),
                XDG_CONFIG_HOME=str(case / "config"), XDG_DATA_HOME=str(case / "data"),
                XDG_CACHE_HOME=str(case / "cache"),
                DBUS_SYSTEM_BUS_ADDRESS=f"unix:path={case}/no-system-bus",
-               LCONNECT_RECORD_PROFILE_DIMENSIONS=dimensions,
-               LCONNECT_RECORD_PROFILE_SECONDS=str(seconds), LC_ALL="C.UTF-8")
+               LLCONTROL_RECORD_PROFILE_DIMENSIONS=dimensions,
+               LLCONTROL_RECORD_PROFILE_SECONDS=str(seconds), LC_ALL="C.UTF-8")
     log_path = case / "engine.log"
     samples = []
     start = time.monotonic()
@@ -116,12 +116,12 @@ def main():
                         nargs="+", default=["320x240", "1920x1080", "3840x2160"])
     args = parser.parse_args()
     if args.test_executable is None:
-        build = subprocess.run(["cargo", "test", "--locked", "--release", "-p", "lconnect-gui",
+        build = subprocess.run(["cargo", "test", "--locked", "--release", "-p", "llcontrol-gui",
                                 "--lib", "--no-run", "--message-format=json"],
                                cwd=REPO, check=True, stdout=subprocess.PIPE, text=True)
         artifacts = [json.loads(line) for line in build.stdout.splitlines() if line.startswith("{")]
         matches = [Path(a["executable"]) for a in artifacts if a.get("reason") == "compiler-artifact"
-                   and a.get("executable") and a["target"]["name"] == "lconnect_gui"
+                   and a.get("executable") and a["target"]["name"] == "llcontrol_gui"
                    and a.get("profile", {}).get("test")]
         assert len(matches) == 1, "Expected one release lib test artifact"
         args.test_executable = matches[0]
@@ -130,7 +130,7 @@ def main():
     assert 5 <= args.seconds <= 180
     listed = subprocess.run([executable, "--list"], check=True, capture_output=True, text=True).stdout
     assert f"{TEST}: test" in listed
-    root = Path(tempfile.mkdtemp(prefix="lconnect-recording-profile-"))
+    root = Path(tempfile.mkdtemp(prefix="llcontrol-recording-profile-"))
     root.chmod(0o700)
     print(f"Profile artifacts: {root}", flush=True)
     report = dict(scope="Synthetic release recording engine, no portal/GUI/physical HID",

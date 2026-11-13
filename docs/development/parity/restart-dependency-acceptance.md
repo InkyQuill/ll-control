@@ -1,7 +1,7 @@
 # LCD theme replay: отсутствующий asset при запуске
 
 2026-10-10. Изолированный native WebKitGTK → Unix IPC → daemon fixture с
-MockBackend. Файлы и сокеты находятся в отдельном `/tmp/lconnect-native-*`;
+MockBackend. Файлы и сокеты находятся в отдельном `/tmp/llcontrol-native-*`;
 production daemon и реальные устройства не запускаются.
 
 ## Сценарии
@@ -34,7 +34,7 @@ fault cases. Старый stats.json удаляется до старта; harne
 запрос ошибкой; следующие запросы на том же соединении продолжают работать.
 Unit mutations сохраняют прежний wire payload `{}`.
 
-`crates/lconnect-ipc/tests/null_response.rs` проверяет null/missing/conflict,
+`crates/llcontrol-ipc/tests/null_response.rs` проверяет null/missing/conflict,
 error:null, malformed error, typed application error и последующий успешный
 null на том же соединении. Native flow воспроизводит исходный пользовательский
 сценарий отсутствующей темы через Tauri bridge.

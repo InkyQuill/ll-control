@@ -12,7 +12,7 @@ fn store(root: &Path, executable: &str) -> Store {
 #[test]
 fn desired_and_actual_registration_survive_restart_move_disable_and_stale_writes() {
     let root = tempfile::tempdir().unwrap();
-    let a = store(root.path(), "bin/lconnect-gui");
+    let a = store(root.path(), "bin/llcontrol-gui");
     let initial = a.read().unwrap();
     assert_eq!(initial.revision, 0);
     assert_eq!(initial.registration.enabled, Some(false));
@@ -27,13 +27,13 @@ fn desired_and_actual_registration_survive_restart_move_disable_and_stale_writes
     assert_eq!(enabled.registration.enabled, Some(true));
     assert!(enabled.integration_error.is_none());
     assert_eq!(a.apply(1, wanted.clone()).unwrap().revision, 1);
-    let moved = store(root.path(), "new bin/lconnect-gui");
+    let moved = store(root.path(), "new bin/llcontrol-gui");
     let update = moved.apply(1, wanted.clone()).unwrap();
     assert_eq!(update.revision, 2);
     assert_eq!(update.registration.enabled, Some(true));
     assert!(String::from_utf8(fs::read(&moved.autostart).unwrap())
         .unwrap()
-        .contains("new bin/lconnect-gui"));
+        .contains("new bin/llcontrol-gui"));
     assert!(a.apply(1, Preferences::default()).is_err());
     let disabled = moved
         .apply(
@@ -47,7 +47,7 @@ fn desired_and_actual_registration_survive_restart_move_disable_and_stale_writes
     assert_eq!(disabled.registration.enabled, Some(false));
     assert!(!moved.autostart.exists());
     assert_eq!(
-        store(root.path(), "third/lconnect-gui")
+        store(root.path(), "third/llcontrol-gui")
             .read()
             .unwrap()
             .preferences,
@@ -57,7 +57,7 @@ fn desired_and_actual_registration_survive_restart_move_disable_and_stale_writes
 #[test]
 fn integration_failure_preserves_durable_intent_and_retry_repairs_only_owned_file() {
     let root = tempfile::tempdir().unwrap();
-    let a = store(root.path(), "bin/lconnect-gui");
+    let a = store(root.path(), "bin/llcontrol-gui");
     fs::create_dir_all(root.path().join("config")).unwrap();
     fs::write(root.path().join("config/autostart"), b"blocked directory").unwrap();
     let requested = Preferences {

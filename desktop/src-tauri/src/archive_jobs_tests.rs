@@ -1,13 +1,13 @@
 use super::*;
-use lconnect_daemon::{
+use llcontrol_daemon::{
     config::Config,
     ipc_server::IpcServerImpl,
     manager::{DeviceManager, ManagerHandle},
     persistence::PersistenceStore,
     stats::Stats,
 };
-use lconnect_hid::MockBackend;
-use lconnect_ipc::{server::IpcServer, LcdTheme, NamedProfile, ProfileContent, ProfileEdit};
+use llcontrol_hid::MockBackend;
+use llcontrol_ipc::{server::IpcServer, LcdTheme, NamedProfile, ProfileContent, ProfileEdit};
 use std::sync::atomic::Ordering;
 async fn daemon(
     root: &std::path::Path,
@@ -79,7 +79,7 @@ async fn native_files_roundtrip_large_font_without_payload_in_status_and_recover
     let font = store
         .theme_fonts()
         .import(include_bytes!(
-            "../../../crates/lconnect-image/assets/NotoSansTC-Regular.otf"
+            "../../../crates/llcontrol-image/assets/NotoSansTC-Regular.otf"
         ))
         .unwrap();
     let theme:LcdTheme=serde_json::from_value(serde_json::json!({"version":1,"name":"Native CJK","background":[0,0,0],"layers":[{"kind":"text","text":"日本語 繁體中文","style":{"font_asset":font,"x":20,"y":20,"size":36,"color":[255,255,255],"align":"left"}}]})).unwrap();

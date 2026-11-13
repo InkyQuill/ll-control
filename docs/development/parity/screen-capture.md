@@ -110,7 +110,7 @@ binary Rust tests,12 browser tests, strict Clippy/docs/fmt and frontend check/bu
 raw IPC, red/blue preview pixels, explicit480×480 PNG publication, portal cancel,
 editor Close/focus and WM close/Request.Close passed. Harness:
 `python3 desktop/scripts/native-screenshot.py`, after building frontend and
-`cargo build -p lconnect-gui --features native-smoke,custom-protocol` plus the
+`cargo build -p llcontrol-gui --features native-smoke,custom-protocol` plus the
 `desktop-mock` example. It creates its own Xvfb and bus; the portal always returns
 a generated fixture and never captures the active desktop.
 

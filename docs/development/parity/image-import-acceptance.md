@@ -26,12 +26,12 @@ limits image crate. Поворот90/270 может создавать допо�
 
 | Требование | Проверка |
 |---|---|
-| PNG/JPEG/WebP/BMP → managed PNG | `lconnect-image/tests/orientation.rs::all_static_import_formats_normalize_without_changing_decoded_pixels`: размеры и все decoded RGBA pixels, включая lossy JPEG decode, сохранены |
+| PNG/JPEG/WebP/BMP → managed PNG | `llcontrol-image/tests/orientation.rs::all_static_import_formats_normalize_without_changing_decoded_pixels`: размеры и все decoded RGBA pixels, включая lossy JPEG decode, сохранены |
 | EXIF1…8, зеркальные и повёрнутые варианты | `exif_orientation_is_applied_once_before_normalization_and_lcd_fit`: synthetic JPEG APP1, независимые coordinate mappings каждого pixel, normalization и LCD letterbox JPEG |
 | Ошибка воспроизведена до исправления | EXIF2 возвращал исходные pixels вместо горизонтального отражения |
 | Corrupt/truncated/oversized | Truncated headers всех4 formats; `assets.rs::malformed_large_and_overdimension_images_fail`, encoded и dimension limits |
 | Alpha, oversampling, IPC budget | `normalization_preserves_alpha_and_bounds_dimensions`, `incompressible_rgba_upload_fits_wire_budget_after_normalization` |
-| Store/reload/invalid asset | `lconnect-daemon/tests/theme_assets.rs::import_persists_and_reload_requires_all_referenced_assets` и nonregular/corrupt tests |
+| Store/reload/invalid asset | `llcontrol-daemon/tests/theme_assets.rs::import_persists_and_reload_requires_all_referenced_assets` и nonregular/corrupt tests |
 | Preview и Apply | [Native GUI acceptance](native-desktop-smoke.md), `theme_ipc` failed dependency preserves active composition |
 | Удаление используемого asset и recovery | [Cleanup matrix](cleanup-acceptance.md), [restart dependencies](restart-dependency-acceptance.md) |
 

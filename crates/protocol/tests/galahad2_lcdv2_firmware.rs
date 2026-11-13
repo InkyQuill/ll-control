@@ -4,8 +4,8 @@
 //! - Wire flow: Galahad2VisionDevice.cs:88-105 (two ACommandPacket reads).
 //! - Version-string parser: FirmwareVersion.cs (comma-split into 7 fields).
 
-use lconnect_protocol::galahad2_lcdv2::firmware::{build_request, FirmwareVersion};
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::firmware::{build_request, FirmwareVersion};
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
 #[test]
 fn parse_canonical_version_string() {
@@ -45,7 +45,7 @@ fn parse_rejects_too_few_fields() {
     let err = FirmwareVersion::parse("N9,01,HS", "Apr 12 2024 14:33:21").unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::MalformedFirmwareVersion { got_fields: 3 }
+        llcontrol_protocol::Error::MalformedFirmwareVersion { got_fields: 3 }
     ));
 }
 
@@ -54,7 +54,7 @@ fn parse_rejects_empty_version() {
     let err = FirmwareVersion::parse("", "Apr 12 2024 14:33:21").unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::MalformedFirmwareVersion { got_fields: 0 }
+        llcontrol_protocol::Error::MalformedFirmwareVersion { got_fields: 0 }
     ));
 }
 
@@ -104,7 +104,7 @@ fn from_two_responses_rejects_wrong_command_echo_on_first_packet() {
     let err = FirmwareVersion::from_two_responses(&buf1, &buf2).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 134,
             got: 0x81
         }
@@ -113,7 +113,7 @@ fn from_two_responses_rejects_wrong_command_echo_on_first_packet() {
 
 #[test]
 fn missing_date_is_empty_and_duplicate_version_cannot_be_a_date() {
-    let version = *lconnect_protocol::galahad2_lcdv2::packets::ACommandPacket::new_request(
+    let version = *llcontrol_protocol::galahad2_lcdv2::packets::ACommandPacket::new_request(
         134,
         b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6",
     )
@@ -123,7 +123,7 @@ fn missing_date_is_empty_and_duplicate_version_cannot_be_a_date() {
     assert!(parsed.raw_datetime.is_empty());
     assert!(matches!(
         FirmwareVersion::from_two_responses(&version, &version),
-        Err(lconnect_protocol::Error::UnexpectedPacketNumber {
+        Err(llcontrol_protocol::Error::UnexpectedPacketNumber {
             expected: 1,
             got: 0
         })

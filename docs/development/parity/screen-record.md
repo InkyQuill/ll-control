@@ -427,7 +427,7 @@ select the same display before the server lock appears and share a window manage
 cd desktop
 npm run build
 cd ..
-cargo build -p lconnect-gui --features native-smoke,custom-protocol
+cargo build -p llcontrol-gui --features native-smoke,custom-protocol
 python3 desktop/scripts/native-recording.py
 python3 desktop/scripts/native-recording.py --full-limit
 python3 desktop/scripts/native-recording-faults.py
@@ -437,7 +437,7 @@ python3 desktop/scripts/native-recording-faults.py
 The ordinary harness retains its60s deadline. The fault harness externally stops or kills only its own synthetic recorder child, then checks localized recovery, reaping, fresh capture, native decode and explicit Save in EN/RU; its close cases check joined shutdown while the child is stopped. The cleanup modes separately inject one custom-protocol error response before delivery for paused capture or prepared review. The cleanup-review-lost mode first executes native media cancellation and substitutes an error for its successful reply. These modes verify retained UI fences and explicit retry without signalling the child. These are bounded process/transport fixtures, not real plugin/kernel stall tests. The separate full engine test is:
 
 ```sh
-cargo test -p lconnect-gui --lib --locked full_production_limit -- --ignored --nocapture
+cargo test -p llcontrol-gui --lib --locked full_production_limit -- --ignored --nocapture
 ```
 
 Recent evidence (each file records its exact scope and limitations):

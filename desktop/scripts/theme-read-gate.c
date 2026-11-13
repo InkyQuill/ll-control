@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 ssize_t read(int fd, void *buf, size_t size) {
-    const char *root = getenv("LCONNECT_SMOKE_ROOT");
+    const char *root = getenv("LLCONTROL_SMOKE_ROOT");
     char proc[64], path[4096], target[4096], hold[4096], entered[4096];
     if (!root || root[0] != '/') return syscall(SYS_read, fd, buf, size);
     int n = snprintf(target, sizeof target, "%s/settings/theme-assets/22222222222222222222222222222222.png", root);

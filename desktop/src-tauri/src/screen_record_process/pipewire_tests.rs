@@ -6,13 +6,13 @@ use super::*;
 #[ignore = "requires scripts/test-recording-pipewire.py private server"]
 fn selected_pipewire_fd_records_real_plugin_frames() {
     let root =
-        PathBuf::from(std::env::var_os("LCONNECT_PRIVATE_PIPEWIRE").expect("private wrapper"));
+        PathBuf::from(std::env::var_os("LLCONTROL_PRIVATE_PIPEWIRE").expect("private wrapper"));
     assert!(root.starts_with("/tmp"));
     assert!(root
         .file_name()
         .unwrap()
         .to_string_lossy()
-        .starts_with("lconnect-private-pipewire-"));
+        .starts_with("llcontrol-private-pipewire-"));
     assert_eq!(
         std::fs::read_to_string(root.join("fixture-marker")).unwrap(),
         "synthetic-only\n"
@@ -27,15 +27,15 @@ fn selected_pipewire_fd_records_real_plugin_frames() {
     );
     assert!(std::env::var_os("DISPLAY").is_none());
     assert!(std::env::var_os("WAYLAND_DISPLAY").is_none());
-    let node = std::env::var("LCONNECT_PRIVATE_NODE")
+    let node = std::env::var("LLCONTROL_PRIVATE_NODE")
         .unwrap()
         .parse()
         .unwrap();
-    let serial = std::env::var("LCONNECT_PRIVATE_SERIAL")
+    let serial = std::env::var("LLCONTROL_PRIVATE_SERIAL")
         .unwrap()
         .parse()
         .unwrap();
-    let fd = UnixStream::connect(root.join("lconnect-private"))
+    let fd = UnixStream::connect(root.join("llcontrol-private"))
         .unwrap()
         .into();
     let recorder = Recorder::open(
@@ -145,7 +145,7 @@ fn selected_pipewire_fd_records_real_plugin_frames() {
         );
     }
     eprintln!(
-        "LCONNECT_PIPEWIRE_RESULT frames={} worker={child}",
+        "LLCONTROL_PIPEWIRE_RESULT frames={} worker={child}",
         file.frames
     );
     drop(file);
@@ -153,7 +153,7 @@ fn selected_pipewire_fd_records_real_plugin_frames() {
 
     // A dead remote is not an unchanged desktop. It must fail, reap and discard
     // the unfinished MP4 instead of reporting a healthy frozen recording.
-    let fd = UnixStream::connect(root.join("lconnect-private"))
+    let fd = UnixStream::connect(root.join("llcontrol-private"))
         .unwrap()
         .into();
     let recorder = Recorder::open(
@@ -174,7 +174,7 @@ fn selected_pipewire_fd_records_real_plugin_frames() {
         assert!(Instant::now() < deadline);
         std::thread::sleep(IO_TICK);
     }
-    let loss_phase = std::env::var("LCONNECT_PRIVATE_LOSS_PHASE").unwrap();
+    let loss_phase = std::env::var("LLCONTROL_PRIVATE_LOSS_PHASE").unwrap();
     assert!(["setup", "recording", "paused"].contains(&loss_phase.as_str()));
     if loss_phase != "setup" {
         recorder.resume().unwrap();
@@ -212,6 +212,6 @@ fn selected_pipewire_fd_records_real_plugin_frames() {
     assert!(!PathBuf::from(format!("/proc/{child}")).exists());
     assert!(!staging.exists());
     eprintln!(
-        "LCONNECT_PIPEWIRE_DISCONNECT_RESULT worker={child} phase={loss_phase} reaped=true staging_removed=true millis={}", disconnect_started.elapsed().as_millis()
+        "LLCONTROL_PIPEWIRE_DISCONNECT_RESULT worker={child} phase={loss_phase} reaped=true staging_removed=true millis={}", disconnect_started.elapsed().as_millis()
     );
 }

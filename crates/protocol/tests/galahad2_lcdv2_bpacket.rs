@@ -2,7 +2,7 @@
 //!
 //! Source: Products/Galahad2Vision/BCommandPacket.cs:1-189.
 
-use lconnect_protocol::galahad2_lcdv2::bpacket::{
+use llcontrol_protocol::galahad2_lcdv2::bpacket::{
     BCommandPacket, HEADER_LEN, INPUT_LEN, OUTPUT_LEN, PAYLOAD_MAX, REPORT_ID,
 };
 
@@ -73,7 +73,7 @@ fn from_response_too_short_rejected() {
     let err = BCommandPacket::from_response(&[0x02, 23][..], 23).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { need: 11, .. }
+        llcontrol_protocol::Error::BufferTooShort { need: 11, .. }
     ));
 }
 
@@ -85,7 +85,7 @@ fn from_response_wrong_report_id_rejected() {
     let err = BCommandPacket::from_response(&buf, 23).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedReportId {
+        llcontrol_protocol::Error::UnexpectedReportId {
             expected: 0x02,
             got: 0x01
         }
@@ -100,7 +100,7 @@ fn from_response_wrong_command_echo_rejected() {
     let err = BCommandPacket::from_response(&buf, 23).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 23,
             got: 99
         }
@@ -118,7 +118,7 @@ fn from_response_length_exceeding_payload_max_rejected() {
     let err = BCommandPacket::from_response(&buf, 23).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLength {
+        llcontrol_protocol::Error::InvalidLength {
             length: 1014,
             max: 1013
         }

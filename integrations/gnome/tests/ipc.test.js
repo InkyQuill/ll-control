@@ -1,6 +1,6 @@
 import GLib from 'gi://GLib';
 import System from 'system';
-const root = GLib.getenv('LCONNECT_MINI_TEST_ROOT');
+const root = GLib.getenv('LLCONTROL_MINI_TEST_ROOT');
 const loop = new GLib.MainLoop(null, false);
 let feed = null;
 let exitStatus = 0;

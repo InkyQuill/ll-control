@@ -102,8 +102,8 @@ Source anchors: [main editor](../../../desktop/src/routes/+page.svelte),
 [basic selector](../../../desktop/src/lib/BasicEditor.svelte),
 [preset authoring](../../../desktop/src/lib/theme-presets.ts),
 [page switching](../../../desktop/src/lib/lcd-pages.ts),
-[Windows conversion](../../../crates/lconnect-profile/src),
-[stored editor](../../../crates/lconnect-daemon/src/screen_editor.rs),
+[Windows conversion](../../../crates/llcontrol-profile/src),
+[stored editor](../../../crates/llcontrol-daemon/src/screen_editor.rs),
 [Tauri command boundary](../../../desktop/src-tauri/src/main.rs).
 Detailed behavior/evidence remains in the linked contracts in
 [implementation status](implementation-status.md) and [acceptance checklist](basic-parity-checklist.md).

@@ -3,7 +3,7 @@ import { chromium } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 const fonts = ['AbrilFatface-Regular.ttf', 'DejaVuSans.ttf', 'NotoSansTC-Regular.otf'];
 const data = fonts.map((file) =>
-  readFileSync(new URL(`../../crates/lconnect-image/assets/${file}`, import.meta.url)).toString(
+  readFileSync(new URL(`../../crates/llcontrol-image/assets/${file}`, import.meta.url)).toString(
     'base64',
   ),
 );

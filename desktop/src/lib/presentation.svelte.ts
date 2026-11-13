@@ -1,6 +1,6 @@
 import type { DisplaySettings } from './api';
 import type { InterfaceLanguage } from './localization';
-const languageKey = 'lconnect.interface-language';
+const languageKey = 'llcontrol.interface-language';
 function cachedLanguage(): InterfaceLanguage {
   if (typeof window === 'undefined') return 'en-US';
   try {

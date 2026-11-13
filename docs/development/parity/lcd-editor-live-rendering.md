@@ -33,7 +33,7 @@ releasing its permit and asset pin. This path never owns a HID writer.
 - `pnpm --dir desktop check` and `pnpm --dir desktop check:locales`.
 - Run Playwright from `desktop`; do not rebuild/sync SvelteKit during the run,
   because development-server reloads invalidate in-progress interaction tests.
-- Build `lconnect-gui` with `custom-protocol,native-smoke` and the daemon's
+- Build `llcontrol-gui` with `custom-protocol,native-smoke` and the daemon's
   `desktop-mock` example, then run `desktop/scripts/native-canvas.py`.
   This checks native input, seven layers, explicit Apply, profiles and restart in
   English/Russian, and captures1280×800 and1024×768 windows on isolated X11.

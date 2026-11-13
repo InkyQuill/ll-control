@@ -45,7 +45,7 @@ try {
       };
     },
     readFileSync(
-      new URL('../../crates/lconnect-image/assets/NotoSansTC-Regular.otf', import.meta.url),
+      new URL('../../crates/llcontrol-image/assets/NotoSansTC-Regular.otf', import.meta.url),
     ).toString('base64'),
   );
   console.log(JSON.stringify(result, null, 2));

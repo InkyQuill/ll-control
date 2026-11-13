@@ -30,12 +30,12 @@ No firmware/reset/raw unknown commands are used.
 
 Prepare fixed and curve JSON files using the documented `CoolingPolicy` schema;
 record exact selected values and SHA256 before writes. Choose only sensor IDs
-reported by `lconnectctl sensors`. Apply with `cooling set fan|pump --policy FILE`,
+reported by `llcontrol sensors`. Apply with `cooling set fan|pump --policy FILE`,
 inspect `cooling state` and `snapshot` each second. Stop on transport/control
 errors, stale cooling telemetry or unexpected RPM behavior.
 
-Restore fan via `lconnectctl fan RESTORE_PERCENT`; restore pump via
-`lconnectctl pump RESTORE_PERCENT --source RESTORE_SOURCE` (legacy source spelling
+Restore fan via `llcontrol fan RESTORE_PERCENT`; restore pump via
+`llcontrol pump RESTORE_PERCENT --source RESTORE_SOURCE` (legacy source spelling
 mcu/application, where application is motherboard). These manual commands remove
 the corresponding test policy atomically with its saved manual setting. Verify
 state, actual RPM and temperature, then stop/join daemon. Keep original config
@@ -57,7 +57,7 @@ had age157ms. The adjacent legacy snapshot agreed on those device readings.
 Firmware version1.6 was read; the legacy firmware RPC returned duplicated PN0
 text rather than a date in this run, so no fresh firmware-date claim is made.
 
-Commands: `lconnectctl --json sensors`, `--json snapshot`, `cooling state`,
+Commands: `llcontrol --json sensors`, `--json snapshot`, `cooling state`,
 `--json firmware`; cleanup `lcd clear` and SIGTERM with daemon join. LocalUI was
 sent as agreed. Machine evidence: `/tmp/lcdv2-m2b-catalog.json` and
 `/tmp/lcdv2-m2b-catalog.log`. Serial-bearing sensor IDs are not reproduced here.
@@ -135,7 +135,7 @@ Windows provenance остаётся в [матрице](lcdv2-2.1.28-matrix.md).
 Наличие кода проверено по тестовым assertions и production owner, а не
 по названиям тестов. Физические cases M2-02–07 выше от этого не меняют статус.
 
-Все имена ниже относятся к `crates/lconnect-daemon/tests/`:
+Все имена ниже относятся к `crates/llcontrol-daemon/tests/`:
 
 | Требование | Проверяемое поведение | Доказательство |
 |---|---|---|

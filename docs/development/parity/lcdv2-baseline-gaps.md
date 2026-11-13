@@ -65,7 +65,7 @@ physical recovery/lifecycle остаются открытыми. Не перео
 | PAR-12 / M5,M6 / desktop/delivery | systemd/udev/xtask и production Arch payload с двумя Mini stores реализованы; private install/upgrade/remove и packaged GUI приняты; packaged Mini model/Qt/GJS/CLI/preferences и private Plasma host проверены; реальные desktop/install/release gates остаются | Packaging/CI/desktop/settings, manifest metadata | Install→autostart→upgrade→uninstall, tray/units/localization/diagnostics и воспроизводимые artifacts |
 
 Пути `daemon/`, `ipc/` и `actor/` в таблице сокращают соответствующие
-`crates/lconnect-daemon/` и `crates/lconnect-ipc/`.
+`crates/llcontrol-daemon/` и `crates/llcontrol-ipc/`.
 Текущее покрытие и checkpoints: [сводка реализации](implementation-status.md).
 
 ## Research gates, не готовые требования реализации

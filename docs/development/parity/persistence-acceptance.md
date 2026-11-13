@@ -18,7 +18,7 @@
 
 ## Сквозные сценарии
 
-`crates/lconnect-daemon/tests/persistence_acceptance.rs`:
+`crates/llcontrol-daemon/tests/persistence_acceptance.rs`:
 
 1. Сохранённая исходная конфигурация; directory вместо `<key>.toml.tmp` мешает
    новой записи даже под root. LCD Apply проходит через JSON-RPC и MockBackend,

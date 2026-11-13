@@ -42,7 +42,7 @@ Linux policy: сохраняется, включая её возможный п�
 RPC `reset_fan_and_lighting {dev,operation_id,expected,sensor_id}` принимает target
 GroupRevision из актуального FanAndLighting snapshot. Все defaults готовятся и
 валидируются до admission; prepared content имеет отдельный source digest domain
-`lconnect-lcdv2-control-reset-v1`. Reset нельзя принять за archive с тем же ID.
+`llcontrol-lcdv2-control-reset-v1`. Reset нельзя принять за archive с тем же ID.
 
 Общий FanAndLighting coordinator удерживает оба actors, выполняет preflight,
 атомарно сохраняет settings/profiles/receipt через existing redo journal,
@@ -65,9 +65,9 @@ receipt content current и opaque runtime token актуален. Новые р�
 CLI:
 
 ```sh
-lconnectctl profiles group reset-fan-and-lighting --sensor SENSOR_ID
-lconnectctl --json profiles group readback fan-and-lighting OPERATION_ID
-lconnectctl profiles group reapply fan-and-lighting OPERATION_ID
+llcontrol profiles group reset-fan-and-lighting --sensor SENSOR_ID
+llcontrol --json profiles group readback fan-and-lighting OPERATION_ID
+llcontrol profiles group reapply fan-and-lighting OPERATION_ID
 ```
 
 CLI печатает ID и исходный target token до admission. Для retry нужны оба
@@ -92,7 +92,7 @@ job/busy защищает от замены незавершённой опер�
 дожидается admitted Apply/readback; неподтверждённый результат не выдаётся за
 отменённый. Закрытие Prepared reset не выполняет его и не создаёт upload session.
 
-ID/device/group/mode сохраняются в `lconnect.group.pending`. Восстановление
+ID/device/group/mode сохраняются в `llcontrol.group.pending`. Восстановление
 сначала читает receipt; reset не запускается автоматически. При потере ACK в
 том же native worker доступен явный повтор с прежними ID/expected/sensor. Если
 commit уже состоялся, daemon возвращает receipt без нового commit/Apply. В новом

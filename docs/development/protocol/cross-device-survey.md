@@ -888,7 +888,7 @@ Only the main `0x1CBE:0xA088` PID is registered for WMI auto-discovery (`Univers
 - The **LED-side endpoint (`0x0416:0x8050`)** uses unencrypted raw 64-byte WinUSB frames per `WinUsbLed.cs` (lcd207-sdk). OpenRGB has independently reverse-engineered this path: bulk EP1, 64-byte chunks with `[0x11, offset, 0, 0, RGB...]` header, 20 LEDs / chunk, RGB byte order.
 - The **CH340 UART bridge (`0x1A86:0xAD21`)** is unmapped in either SDK survey; its command set is unknown.
 
-**Phase 0d status:** static-analysis only. Not in lconnect-linux scope until Phase 1+.
+**Phase 0d status:** static-analysis only. Not in ll-control scope until Phase 1+.
 
 **Status:** all entries `inferred-static` unless otherwise marked.
 
@@ -2086,7 +2086,7 @@ OpenRGB's driver maps to a subset of the LConnect3 `StrimerPlusDevice.cs` surfac
 **Headline finding — R-B-G byte order on per-LED writes is CONFIRMED by OpenRGB.** OpenRGB's `SetLedsDirect()` writes the per-LED bytes in the order `R, B, G` ([`LianLiStrimerLConnectController.cpp:101-103`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiStrimerLConnectController/LianLiStrimerLConnectController.cpp#L101)) — exactly mirroring the C# `StrimerPlusDevice.cs:140-142` ordering. Two independent reverse-engineering efforts arriving at the same out-of-spec byte order is strong evidence that this is a genuine **firmware quirk**, not a long-standing bug in either codebase. The Linux port should preserve the R-B-G order. (Hypothesis "JustDecompile artefact in C#" is now ruled out.)
 
 OpenRGB additionally gives us:
-- Mode-byte cross-check: OpenRGB enumerates 24 modes (`STRIMERLCONNECT_MODE_*`, [`.h:27-56`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiStrimerLConnectController/LianLiStrimerLConnectController.h#L27)) with byte values `0x00..0x06, 0x19..0x2B`. LConnect3's `LightingMode.cs:5-32` enumerates 24 modes split between `*_Individual` and `*_Complete` scopes. OpenRGB's mode-byte values match LConnect3's exactly for the modes both implement (e.g., Rainbow Wave = `0x05`, Snooker = `0x19`, Mixing = `0x1A`, Ping Pong = `0x1B`). This is a strong second-source confirmation of the mode-byte enum.
+- Mode-byte cross-check: OpenRGB enumerates 24 modes (`STRIMERLLCONTROL_MODE_*`, [`.h:27-56`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiStrimerLConnectController/LianLiStrimerLConnectController.h#L27)) with byte values `0x00..0x06, 0x19..0x2B`. LConnect3's `LightingMode.cs:5-32` enumerates 24 modes split between `*_Individual` and `*_Complete` scopes. OpenRGB's mode-byte values match LConnect3's exactly for the modes both implement (e.g., Rainbow Wave = `0x05`, Snooker = `0x19`, Mixing = `0x1A`, Ping Pong = `0x1B`). This is a strong second-source confirmation of the mode-byte enum.
 - **Speed-table confirmation:** OpenRGB's `speed_data[]` lookup is `{0x02, 0x01, 0x00, 0xFE, 0xFF}` for slow→fast ([`LianLiStrimerLConnectController.cpp:15-18`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiStrimerLConnectController/LianLiStrimerLConnectController.cpp#L15)). LConnect3's `LightingSpeed.cs` exposes `Lowest=2, Lower=1, Normal=0, Faster=255, Fastest=254` — the byte values match OpenRGB's table at every index. This **confirms** the non-monotonic encoding flagged in `strimerplus.md` (the staging doc was right to call it out as a potential footgun for naive `0..=255 → percent` mappings on Linux).
 - **Brightness-table confirmation:** OpenRGB's `brightness_data[]` is `{0x08, 0x03, 0x02, 0x01, 0x00}` for 0%→100% ([`LianLiStrimerLConnectController.cpp:20-23`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiStrimerLConnectController/LianLiStrimerLConnectController.cpp#L20)). Matches LConnect3's `LightingBrightness.cs:5-13` (`Off=8, Lowest=3, Lower=2, Higher=1, Highest=0`) byte-for-byte.
 - **OpenRGB-only command:** the `SendApply()` packet — `[0xE0, 0x2C, 0x0F, 0xFF, 0x00, 0x00, 0x00, 0x00]` — is a "commit" / "apply effect" trigger that OpenRGB sends but does **not** appear anywhere in `StrimerPlusDevice.cs`. The byte `0x2C` is the multi-port-mask form of `SetEffectEnable` (`0x20 | 0x0C`); the `0x0F, 0xFF` BE-u16 is `0x0FFF` = `PortFlags.All`. So `SendApply` is structurally **`SetEffectEnable(port=12, multiPort=0x0FFF)`** — i.e., "enable all 12 ports" — issued unconditionally after every `SetMode`. LConnect3 either issues this through a different code path (UI-side controller, not in the device class) or does not need it because of how the device latches state. Either way, this is a useful pattern for the Linux port: a "commit-all-ports" pseudo-command that may be required to actually activate writes.
@@ -2143,7 +2143,7 @@ UniversalScreen lighting framing **does not** match LCDV2's A/B/C. Specifically:
 - **Layout per packet:** byte 0 = `0x11` (cmd / message tag), byte 1 = `offset` (LED-index of first LED in this chunk), bytes 2-3 = `0x00, 0x00` (reserved), bytes 4..63 = up to **20 LEDs × 3 bytes RGB** (`R, G, B` order — *not* RBG like Strimer, *not* RBG like UniHub, plain conventional RGB).
 - **Chunked write:** OpenRGB iterates the LED list in 20-LED chunks, advancing `offset` by the chunk size each iteration ([`LianLiUniversalScreenController.cpp:75-98`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiUniversalScreenController/LianLiUniversalScreenController.cpp#L75)). The last chunk may be partial.
 
-**Headline finding — UniversalScreen needs a fourth framing class.** This is neither LCDV2 A (HID Feature, ReportID=0x01, 64-byte) nor B (1024-out / 512-in) nor C (512/512). It is a **bulk-transfer endpoint-1 path with a flat 64-byte chunk header `[0x11, offset, 0, 0, RGB...]`**. The eventual `lconnect-protocol::Framing` enum will need a "**D**" (or named) variant — `UniversalScreenBulk` or similar. Strimer Plus also doesn't fit A/B/C (uses HID Feature reports with `ReportID=0xE0` and a composite cmd-byte), so the framing taxonomy may end up as `{LcdvA, LcdvB, LcdvC, StrimerHidFeature, UniversalScreenBulk, ...}` rather than a single ordered enum. See section 6 (P0e-16) for the consolidated framing-extension discussion.
+**Headline finding — UniversalScreen needs a fourth framing class.** This is neither LCDV2 A (HID Feature, ReportID=0x01, 64-byte) nor B (1024-out / 512-in) nor C (512/512). It is a **bulk-transfer endpoint-1 path with a flat 64-byte chunk header `[0x11, offset, 0, 0, RGB...]`**. The eventual `llcontrol-protocol::Framing` enum will need a "**D**" (or named) variant — `UniversalScreenBulk` or similar. Strimer Plus also doesn't fit A/B/C (uses HID Feature reports with `ReportID=0xE0` and a composite cmd-byte), so the framing taxonomy may end up as `{LcdvA, LcdvB, LcdvC, StrimerHidFeature, UniversalScreenBulk, ...}` rather than a single ordered enum. See section 6 (P0e-16) for the consolidated framing-extension discussion.
 
 **Per-LED byte order: RGB.** Unlike Strimer Plus (R-B-G) and the UniHub family (struct named "RBG"), the UniversalScreen uses conventional R-G-B byte order ([`LianLiUniversalScreenController.cpp:89-91`](https://gitlab.com/CalcProgrammer1/OpenRGB/-/blob/master/Controllers/LianLiController/LianLiUniversalScreenController/LianLiUniversalScreenController.cpp#L89)). Lian-Li devices are **not** consistent on byte order; this varies by SKU and probably tracks the LED MCU vendor.
 
@@ -2237,7 +2237,7 @@ of the slv3 envelope. From a framing perspective they share the same
 504+512 DES envelope, but each ships a distinct opcode table and a distinct
 set of safety-relevant commands.
 
-**Recommendation for the daemon HID layer (`lconnect-hid`):** the
+**Recommendation for the daemon HID layer (`llcontrol-hid`):** the
 `Framing` enum must be extensible from day one. Don't constrain the type to
 A/B/C and then bolt on variants ad hoc; instead treat the eight classes
 above as the design target and build the abstraction such that adding the
@@ -2250,7 +2250,7 @@ ninth (some new SKU's framing) is a contained change. Either:
   every codec to declare its framing class at construction so a missing
   class surfaces at codec-write time rather than at runtime.
 
-Either way, **don't** burn A/B/C into a fixed taxonomy in `lconnect-hid`'s
+Either way, **don't** burn A/B/C into a fixed taxonomy in `llcontrol-hid`'s
 public API - the survey shows that's the wrong shape.
 
 The Phase-1 deliverable adds **C** alone (per the existing design spec); the
@@ -2431,7 +2431,7 @@ A clean recap intended to be lifted into the Phase 1 plan author's
 specific Phase 1 decision; cross-references point back to the matrix that
 authorises it.
 
-- **Framing-enum extensibility (section 6.1):** `lconnect-hid::Framing` must
+- **Framing-enum extensibility (section 6.1):** `llcontrol-hid::Framing` must
   be designed extensible from day one - at least seven framing classes
   exist across the LConnect3 device universe, and Phase 1's CCommandPacket
   addition is just the first beyond A/B. Either model `Framing` as a trait

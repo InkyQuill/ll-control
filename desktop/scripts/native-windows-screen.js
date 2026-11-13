@@ -46,7 +46,7 @@
     await wait(async () => (await rpc('list_devices')).length === 1, 'mock device');
     const dev = (await rpc('list_devices'))[0].id;
     if (window.__nativeWindowsRecover) {
-      const pending = JSON.parse(localStorage.getItem('lconnect.group.pending'));
+      const pending = JSON.parse(localStorage.getItem('llcontrol.group.pending'));
       assert(pending?.mode === 'windows_screen', 'Screen operation persisted');
       assert((await status()) === null, 'no reconstructed source grant');
       const library = await rpc('list_profiles');

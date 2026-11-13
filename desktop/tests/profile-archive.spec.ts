@@ -8,7 +8,7 @@ interface Fixture {
 }
 async function setup(page: Page, language = 'ru-RU') {
   await page.addInitScript((language) => {
-    localStorage.setItem('lconnect.interface-language', language);
+    localStorage.setItem('llcontrol.interface-language', language);
     const profile = (slot: number, name: string) => ({
       slot,
       name,
@@ -226,7 +226,7 @@ test('export delegates files to native worker and reports progress without apply
       () => (window as unknown as { archiveFixture: Fixture }).archiveFixture.writes,
     ),
   ).toEqual([]);
-  expect(await page.evaluate(() => localStorage.getItem('lconnect.archive.pending'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('llcontrol.archive.pending'))).toBeNull();
 });
 test('import changes chosen slot only after completion and keeps editor draft without Apply', async ({
   page,
@@ -285,7 +285,7 @@ test('pending ID survives reload and explicit readback imports no second copy', 
   await start(page).click();
   await expect(panel(page).getByRole('progressbar')).toBeVisible();
   const pending = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem('lconnect.archive.pending')!),
+    JSON.parse(localStorage.getItem('llcontrol.archive.pending')!),
   );
   await page.reload();
   await open(page);
@@ -304,7 +304,7 @@ test('another panel cannot overwrite the stored pending operation', async ({ pag
   await setup(page);
   await page.evaluate(() =>
     localStorage.setItem(
-      'lconnect.archive.pending',
+      'llcontrol.archive.pending',
       JSON.stringify({ id: 'b'.repeat(32), group: 'screen', slot: 7 }),
     ),
   );
@@ -314,7 +314,7 @@ test('another panel cannot overwrite the stored pending operation', async ({ pag
     panel(page).getByRole('textbox', { name: 'ID операции для восстановления' }),
   ).toHaveValue('b'.repeat(32));
   expect(
-    await page.evaluate(() => JSON.parse(localStorage.getItem('lconnect.archive.pending')!).id),
+    await page.evaluate(() => JSON.parse(localStorage.getItem('llcontrol.archive.pending')!).id),
   ).toBe('b'.repeat(32));
 });
 test('commit cannot be cancelled or dismissed', async ({ page }) => {

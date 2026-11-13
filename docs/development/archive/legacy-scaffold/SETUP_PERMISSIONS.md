@@ -64,5 +64,5 @@ cargo build
 cargo build --release
 
 # Run
-./target/release/lconnect_linux
+./target/release/llcontrol_linux
 ```

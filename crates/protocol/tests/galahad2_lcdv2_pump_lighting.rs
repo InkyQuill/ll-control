@@ -4,8 +4,8 @@
 //! (`ToBytes` returns 19 bytes — note Scope byte at offset 0, no
 //! SyncToPump or NumberOfLED).
 
-use lconnect_protocol::galahad2_lcdv2::lighting::{PumpLightingSetting, Rgb};
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{
+use llcontrol_protocol::galahad2_lcdv2::lighting::{PumpLightingSetting, Rgb};
+use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{
     ArgbSignalSource, LightingDirection, PumpLightingMode, PumpLightingScope,
 };
 

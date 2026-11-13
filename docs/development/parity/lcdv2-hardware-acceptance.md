@@ -17,7 +17,7 @@ DPI/DMABUF и явный Save → физический LCD → восстано�
 
 ## Условия прогона
 
-Рабочая директория: `/home/inky/Development/lian-li/lconnect-linux`.
+Рабочая директория: `/home/inky/Development/lian-li/ll-control`.
 Только `0416:7395`. Перед тестом записать фактические device ID/FW, commit,
 kernel, версии инструментов, время. Serial в публичных логах маскировать.
 
@@ -26,8 +26,8 @@ kernel, версии инструментов, время. Serial в публи�
 воздействие, а не read-only discovery. Для чтения через CLI использовать
 уже работающий daemon или отдельно подготовленный старт с сохранением state.
 
-До любых изменений сохранить полный `$XDG_CONFIG_HOME/lconnectd/` (если XDG
-не задан — `~/.config/lconnectd/`): devices, profiles, managed images/fonts/clips,
+До любых изменений сохранить полный `$XDG_CONFIG_HOME/llcontrold/` (если XDG
+не задан — `~/.config/llcontrold/`): devices, profiles, managed images/fonts/clips,
 receipts и journals, а не только TOML. Для согласованной копии сначала завершить
 сохранения/импорты; порядок остановки/старта daemon согласовать с его текущей
 cooling policy. Автоматической остановки службы инструкция не выполняет.
@@ -44,22 +44,22 @@ cooling policy. Автоматической остановки службы и�
 ## Read-only preflight через существующий daemon
 
 Нужен уже работающий daemon и абсолютный существующий `XDG_RUNTIME_DIR`.
-Штатный socket — `$XDG_RUNTIME_DIR/lconnectd.sock`; отдельный override уже не
-требуется. Проверить, что `LCONNECTCTL_SOCKET` не направляет CLI к другой сессии.
+Штатный socket — `$XDG_RUNTIME_DIR/llcontrold.sock`; отдельный override уже не
+требуется. Проверить, что `LLCONTROL_SOCKET` не направляет CLI к другой сессии.
 Сначала прочитать saved firmware recovery: journal/guard/unreadable state не
 являются разрешением продолжать update или удалять markers. При активном или
 неопределённом firmware recovery обычную аппаратную приёмку отложить.
 
 ```bash
-lconnectctl --json firmware-recovery
-lconnectctl --json devices
+llcontrol --json firmware-recovery
+llcontrol --json devices
 # DEV — фактический ID из devices; выбрать LCDV2 явно.
 : "${DEV:?Set DEV to the LCDV2 ID from devices}"
-lconnectctl --json firmware --device "$DEV"
-lconnectctl --json snapshot --device "$DEV"
-lconnectctl lcd available --device "$DEV"
-lconnectctl lcd state --device "$DEV"
-lconnectctl daemon stats
+llcontrol --json firmware --device "$DEV"
+llcontrol --json snapshot --device "$DEV"
+llcontrol lcd available --device "$DEV"
+llcontrol lcd state --device "$DEV"
+llcontrol daemon stats
 ```
 
 Подкоманды проверены по Clap source/help. Firmware/read availability могут
@@ -129,9 +129,9 @@ deterministic tests входят в будущий M3/M4 lifecycle plan.
 После сохранения state и подготовки единственного владельца HID:
 
 ```bash
-cargo run -q -p lconnect-cli -- lcd image crates/lconnect-image/test-images/01-radial-gradient.png --fit crop --quality 85
-cargo run -q -p lconnect-cli -- lcd image crates/lconnect-image/test-images/02-concentric-rings.png --fit crop --quality 85
-cargo run -q -p lconnect-cli -- lcd clear
+cargo run -q -p llcontrol-cli -- lcd image crates/llcontrol-image/test-images/01-radial-gradient.png --fit crop --quality 85
+cargo run -q -p llcontrol-cli -- lcd image crates/llcontrol-image/test-images/02-concentric-rings.png --fit crop --quality 85
+cargo run -q -p llcontrol-cli -- lcd clear
 ```
 
 Между первыми двумя командами наблюдать минимум 70 секунд; не исполнять блок
@@ -184,7 +184,7 @@ Fault injection firmware на единственном AIO не выполнят
   сейчас запрещён, recovery policy остаётся открытой.
 - [ ] Сравнить OS hotplug events и enumeration: наблюдается ли detach во время
   reset, меняется ли hidraw path. Пропущенный fast reset не должен считаться успехом.
-- [ ] При restart/reconnect сверить `lconnectctl --json firmware-recovery`:
+- [ ] При restart/reconnect сверить `llcontrol --json firmware-recovery`:
   saved operation/guard сохраняются и видны без ordinary DeviceId; read-only
   inspection не открывает HID и не сообщает success по старому snapshot.
 - [ ] После joined old HID owner проверить isolated cmd134 на fresh handle:

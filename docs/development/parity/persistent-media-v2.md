@@ -1,7 +1,7 @@
 # Persistent media v2: контейнер и границы интеграции
 
 2026-10-12. Первая реализация находится в
-`crates/lconnect-daemon/src/media_file.rs`. Контейнер подключён к MediaAssetStore list/open/delete и сохранению
+`crates/llcontrol-daemon/src/media_file.rs`. Контейнер подключён к MediaAssetStore list/open/delete и сохранению
 media-профилей. LCD actor и manager replay теперь используют reader worker.
 Native/GUI import и thumbnail подключены к file preparation/chunked publication.
 VP9 586frames импортирован, воспроизведён с MockBackend и декодирован после
@@ -168,7 +168,7 @@ caller. При неоднозначном fsync readback повторно под
 Linux runtime, а не доказанные ограничения Windows.
 
 Payload анонимный и освобождается при гибели процесса. Publication copy имеет
-namespace `.lconnect-media-publish-<6alnum>.tmp`; её создание/copy/persist/fsync
+namespace `.llcontrol-media-publish-<6alnum>.tmp`; её создание/copy/persist/fsync
 и очистка orphan защищены nonblocking directory flock. Guard явно делает Unlock
 перед закрытием fd, чтобы дублированный/унаследованный дескриптор не продлевал lock. Следующий begin/finish
 убирает только regular files этого namespace, максимум1024entries на scan;

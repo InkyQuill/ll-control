@@ -89,7 +89,7 @@ export class Feed {
     _launch() {
         if (!this._active || this._process)
             return;
-        const executable = GLib.find_program_in_path('lconnectctl');
+        const executable = GLib.find_program_in_path('llcontrol');
         if (!executable) {
             this._offline();
             this._schedule();

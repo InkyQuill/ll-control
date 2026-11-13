@@ -6,8 +6,8 @@ import sys
 from pathlib import Path
 import gi
 
-root = Path(os.environ['LCONNECT_SMOKE_ROOT'])
-assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1'
+root = Path(os.environ['LLCONTROL_SMOKE_ROOT'])
+assert os.environ.get('LLCONTROL_KEYBOARD_ISOLATED') == '1'
 assert (root / 'fixture-marker').is_file()
 assert os.environ.get('AT_SPI_BUS_ADDRESS') == f'unix:path={root}/a11y.sock'
 gi.require_version('Atspi', '2.0')
@@ -35,7 +35,7 @@ def walk(node, depth=0):
             walk(child, depth + 1)
 desktop = Atspi.get_desktop(0)
 apps = [desktop.get_child_at_index(i) for i in range(desktop.get_child_count())]
-app = next((app for app in apps if app and app.get_name() == 'lconnect-gui'), None)
+app = next((app for app in apps if app and app.get_name() == 'llcontrol-gui'), None)
 assert app is not None, 'Native app missing from AT-SPI'
 walk(app)
 connection = [row for row in rows if row['attributes'].get('id') == 'connection-status']

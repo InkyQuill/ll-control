@@ -82,7 +82,7 @@ jobs:
       - name: Build embedded frontend
         run: pnpm --dir desktop build
       - name: Build production-feature binaries
-        run: cargo build --locked -p lconnect-daemon -p lconnect-cli -p lconnect-gui --bins --no-default-features --features lconnect-gui/custom-protocol
+        run: cargo build --locked -p llcontrol-daemon -p llcontrol-cli -p llcontrol-gui --bins --no-default-features --features llcontrol-gui/custom-protocol
       - name: Report disk usage after checks
         if: always()
         run: df -h .

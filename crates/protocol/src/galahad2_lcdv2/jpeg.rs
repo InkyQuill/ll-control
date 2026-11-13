@@ -2,7 +2,7 @@
 //! upload to the LCDV2's pump-cap LCD.
 //!
 //! The 480x480 LCD accepts JPEG-encoded frames; for smaller-than-LCD
-//! image content, see the `lconnect-image` workspace crate for a
+//! image content, see the `llcontrol-image` workspace crate for a
 //! converter that produces 480x480 JPEG bytes ready to feed in here.
 //!
 //! # SendJpeg vs UploadJpeg
@@ -107,9 +107,9 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
+/// use llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
 ///
-/// // 4-byte SOI fragment (real callers should use the lconnect-image
+/// // 4-byte SOI fragment (real callers should use the llcontrol-image
 /// // crate to produce a 480x480 JPEG byte stream).
 /// let payload = [0xFF, 0xD8, 0xFF, 0xE0];
 /// let packets = build_send_jpeg_request(&payload).expect("valid size");
@@ -120,7 +120,7 @@ pub const MAX_JPEG_BYTES: usize = 256 * 1024;
 /// # See also
 ///
 /// - [`build_upload_jpeg_request`] — same plumbing with cmd 15.
-/// - The `lconnect-image` workspace crate produces 480x480 JPEG bytes
+/// - The `llcontrol-image` workspace crate produces 480x480 JPEG bytes
 ///   suitable for direct use here.
 #[must_use = "returns the request packet bytes; dropping without writing has no effect"]
 pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTPUT_LEN]>> {
@@ -212,7 +212,7 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::jpeg::build_upload_jpeg_request;
+/// use llcontrol_protocol::galahad2_lcdv2::jpeg::build_upload_jpeg_request;
 ///
 /// let payload = [0xFF, 0xD8, 0xFF, 0xE0];
 /// let packets = build_upload_jpeg_request(&payload).expect("valid size");
@@ -223,7 +223,7 @@ pub fn build_send_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTP
 /// # See also
 ///
 /// - [`build_send_jpeg_request`] — same plumbing with cmd 14.
-/// - The `lconnect-image` workspace crate produces 480x480 JPEG bytes
+/// - The `llcontrol-image` workspace crate produces 480x480 JPEG bytes
 ///   suitable for direct use here.
 #[must_use = "returns the request packet bytes; dropping without writing has no effect"]
 pub fn build_upload_jpeg_request(jpeg_bytes: &[u8]) -> crate::Result<Vec<[u8; OUTPUT_LEN]>> {

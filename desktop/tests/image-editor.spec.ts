@@ -11,7 +11,7 @@ async function setup(
 ) {
   await page.addInitScript(
     ({ png, fail, delay, hold, language }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const calls: { command: string; args: Record<string, unknown> }[] = [];
       const control = {
         settings: {

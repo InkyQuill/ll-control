@@ -1,6 +1,6 @@
 # Maintainer: Pavel Obruchnikov <me@inkyquill.net>
 # Generated beside a locally built, checksummed payload. No install scriptlets.
-pkgname=lconnect-linux
+pkgname=ll-control
 pkgver=@VERSION@
 pkgrel=1
 pkgdesc='Linux client for Galahad II LCDV2, with Plasma and GNOME Mini integrations'
@@ -18,7 +18,7 @@ optdepends=('plasma-workspace: Mini widget host'
             'libadwaita: GNOME extension preferences'
             'xdg-desktop-portal: interactive screen selection'
             'systemd: user daemon service')
-conflicts=('lconnect-linux-git')
+conflicts=('ll-control-git')
 source=('@ARCHIVE@')
 sha256sums=('@SHA256@')
 

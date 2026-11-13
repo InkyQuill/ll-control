@@ -7,7 +7,7 @@ interface Fixture {
 async function setup(page: Page, language: string, mode: string) {
   await page.addInitScript(
     ({ language, mode }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const f: Fixture = { language, mode, calls: [] };
       Object.assign(window, {
         membershipFixture: f,

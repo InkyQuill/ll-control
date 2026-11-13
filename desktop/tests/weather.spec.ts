@@ -1208,7 +1208,7 @@ test('procedural effect experimental disclosure explains verification limits in 
     page.getByRole('dialog', { name: 'Ограничения экспериментальной функции', exact: true }),
   ).toContainText('проверены не полностью');
   await page.keyboard.press('Escape');
-  await page.evaluate(() => localStorage.setItem('lconnect.interface-language', 'en-US'));
+  await page.evaluate(() => localStorage.setItem('llcontrol.interface-language', 'en-US'));
   await page.reload();
   await expect(disclosure).toContainText('Experimental');
   await disclosure

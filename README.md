@@ -1,5 +1,7 @@
 # LL-Control
 
+![LL-Control icon](assets/icon.png)
+
 **ll-control** (UI: **LL-Control**) is an independent Rust application for Lian Li
 cooling, lighting and LCD content on Linux, based on the original .NET L-Connect 3
 behavior. The user's physical target is **Galahad II LCDV2 (`0416:7395`), square
@@ -28,6 +30,9 @@ See the
 ## Development
 
 The application uses Rust, a local daemon and a Svelte/Tauri desktop interface.
+The commands are `llcontrol` (CLI), `llcontrold` (daemon) and `llcontrol-gui`
+(desktop). The user service is `llcontrold.service`; configuration and application
+data live under the `llcontrol` directories in the standard XDG locations.
 [Build and verification instructions](docs/development/README.md) explain how to
 work without accessing physical hardware. Windows L-Connect3 2.1.28.0 is the
 capability reference; proprietary assets are not included.

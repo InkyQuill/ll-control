@@ -19,9 +19,9 @@
 | Editor/preview/Apply | Редактирование font/layout/shadow/watermark/sensor parts сериализует ожидаемые поля; preview не пишет устройство; coalescing/obsolete errors | `display.spec.ts`, `live-preview.spec.ts`; [native flows](native-desktop-smoke.md), [ordering/runtime](theme-preparation-order.md) |
 | Assets/restart | Formats/EXIF, retention/cleanup, corruption/missing, repair и serial identity | [Image import](image-import-acceptance.md), [общий persistence](restart-dependency-acceptance.md#corrupt-dependency-при-restart--2026-10-11) |
 
-Имена image tests относятся к `crates/lconnect-image/tests/theme.rs`, browser
+Имена image tests относятся к `crates/llcontrol-image/tests/theme.rs`, browser
 files — к `desktop/tests/`. Schema bounds/unknown fields и nested styles
-проверяются дополнительно в `crates/lconnect-ipc/tests/theme.rs`.
+проверяются дополнительно в `crates/llcontrol-ipc/tests/theme.rs`.
 
 ## Новый checkpoint и границы
 

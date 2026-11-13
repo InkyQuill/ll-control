@@ -38,7 +38,7 @@ blocking job удерживает admission permit и обновляет кеш 
 нерегулярные файлы не читаются. Превышение лимита группы не выдаёт полный
 инвентарь из обрезанного списка. Общий валидный JSON report ограничен 512 KiB.
 
-CLI: `lconnectctl spec [--refresh]`, `lconnectctl --json spec`.
+CLI: `llcontrol spec [--refresh]`, `llcontrol --json spec`.
 GUI: «Сведения о системе», шесть категорий, список компонентов, detail fields,
 явное обновление. Помпа не требуется. Ошибка обновления сохраняет предыдущие
 сведения с пометкой актуальности; disconnect блокирует refresh. Нет опроса
@@ -81,8 +81,8 @@ workspace1090/3 ignored,19 browser, frontend/Clippy/docs/fmt и native acceptanc
 Воспроизводимый native сценарий после `pnpm --dir desktop build`:
 
 ```sh
-cargo build -p lconnect-daemon --example desktop-mock --locked
-cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked
+cargo build -p llcontrol-daemon --example desktop-mock --locked
+cargo build -p llcontrol-gui --features native-smoke,custom-protocol --locked
 python3 desktop/scripts/native-system-spec.py --language en-US
 python3 desktop/scripts/native-system-spec.py --language ru-RU
 ```

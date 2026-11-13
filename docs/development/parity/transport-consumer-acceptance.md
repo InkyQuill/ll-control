@@ -16,7 +16,7 @@ Unix IPC, настоящий daemon и private MockBackend. Производст
 
 ## Дополняющее компонентное покрытие
 
-Пути ниже относительно `crates/lconnect-daemon/tests`:
+Пути ниже относительно `crates/llcontrol-daemon/tests`:
 
 - `cooling.rs::rpm_binding_rejected_and_write_failure_retains_intent_without_applied_claim`:
   pump source/write error сохраняет intent без applied PWM.

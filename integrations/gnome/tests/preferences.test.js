@@ -4,7 +4,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Adw from 'gi://Adw?version=1';
 import System from 'system';
 const loop = new GLib.MainLoop(null, false);
-const root = GLib.getenv('LCONNECT_MINI_TEST_ROOT');
+const root = GLib.getenv('LLCONTROL_MINI_TEST_ROOT');
 const assert = (value, message) => {if (!value) throw new Error(message);};
 const sleep = ms => new Promise(resolve => GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {resolve(); return GLib.SOURCE_REMOVE;}));
 async function until(test, message, milliseconds = 5000) {
@@ -16,7 +16,7 @@ async function main() {
     Adw.init();
     const [{PreferencesController}, Mini] = await Promise.all([import(`file://${ARGV[0]}/preferences-ui.js`), import(`file://${ARGV[0]}/mini.mjs`)]);
     const source = Gio.SettingsSchemaSource.new_from_directory(`${ARGV[0]}/schemas`, Gio.SettingsSchemaSource.get_default(), false);
-    const schema = source.lookup('org.gnome.shell.extensions.lconnect-mini', false);
+    const schema = source.lookup('org.gnome.shell.extensions.llcontrol-mini', false);
     assert(schema !== null, 'Compiled schema missing');
     const settings = new Gio.Settings({settings_schema: schema});
     const fresh = settings.get_string('slot-config');

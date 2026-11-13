@@ -25,10 +25,10 @@ High, ниже Low; промежуточная ветка не делит на �
 
 ## Реализовано
 
-`crates/lconnect-ipc/src/dynamic_rgb.rs`: strict configuration, explicit
+`crates/llcontrol-ipc/src/dynamic_rgb.rs`: strict configuration, explicit
 sensor ID/unit, thresholds, matching 0–4 low/high colors, optional pair of
 speed percentages, requested/applied/degraded state contract.
-`crates/lconnect-daemon/src/actor/dynamic_rgb.rs`: pure evaluator с freshness
+`crates/llcontrol-daemon/src/actor/dynamic_rgb.rs`: pure evaluator с freshness
 3s, finite value validation, integer input/clamping, reference HSV/color/speed
 arithmetic. Никаких timers, settings или HID writes в вычислителе нет.
 
@@ -74,7 +74,7 @@ focused thermal/theme IPC tests и strict daemon/IPC Clippy. Hardware не за�
 
 ## CLI и GUI
 
-CLI: `lconnectctl dynamic-rgb state --device ID`,
+CLI: `llcontrol dynamic-rgb state --device ID`,
 `dynamic-rgb set --device ID --config policy.json`,
 `dynamic-rgb disable --device ID`. Читаемый вывод по умолчанию, глобальный
 `--json` для automation. JSON ограничен 64 KiB и валидируется до IPC;

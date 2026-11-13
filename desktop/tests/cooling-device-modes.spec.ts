@@ -45,7 +45,7 @@ const copy = {
 
 async function setup(page: Page, language: 'en-US' | 'ru-RU' = 'ru-RU') {
   await page.addInitScript((language) => {
-    localStorage.setItem('lconnect.interface-language', language);
+    localStorage.setItem('llcontrol.interface-language', language);
     const bank = {
       version: 1,
       revision: '1'.repeat(64),
@@ -943,7 +943,7 @@ for (const language of ['en-US', 'ru-RU'] as const) {
       c = copy[language];
     await page.getByRole('spinbutton', { name: 'PWM, %', exact: true }).fill('77');
     await expect(panel.getByRole('button', { name: create, exact: true })).toBeDisabled();
-    for (const [width, height] of process.env.LCONNECT_SKIP_DESIGN_CAPTURE
+    for (const [width, height] of process.env.LLCONTROL_SKIP_DESIGN_CAPTURE
       ? []
       : [
           [1280, 1000],
@@ -976,7 +976,7 @@ for (const language of ['en-US', 'ru-RU'] as const) {
     await expect(panel.getByRole('textbox', { name, exact: true })).toHaveValue(
       language === 'en-US' ? 'Fixed RPM' : 'Фиксированные RPM',
     );
-    for (const [width, height] of process.env.LCONNECT_SKIP_DESIGN_CAPTURE
+    for (const [width, height] of process.env.LLCONTROL_SKIP_DESIGN_CAPTURE
       ? []
       : [
           [1280, 1000],

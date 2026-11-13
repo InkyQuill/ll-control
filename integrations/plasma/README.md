@@ -13,15 +13,15 @@ and environments are deferred.
 Build (Qt 6 development libraries, CMake, Node, installed desktop dependencies):
 
 ```sh
-cmake -S integrations/plasma -B /tmp/lconnect-mini-plasma-build -DCMAKE_BUILD_TYPE=Debug
-cmake --build /tmp/lconnect-mini-plasma-build -j4
-ctest --test-dir /tmp/lconnect-mini-plasma-build --output-on-failure
+cmake -S integrations/plasma -B /tmp/llcontrol-mini-plasma-build -DCMAKE_BUILD_TYPE=Debug
+cmake --build /tmp/llcontrol-mini-plasma-build -j4
+ctest --test-dir /tmp/llcontrol-mini-plasma-build --output-on-failure
 ```
 
 The shared TypeScript model is compiled to an ES module targeting ES2017 for
 Qt's JavaScript engine. The same source can be used by the future GNOME adapter.
-The native `net.inkyquill.lconnect` QML module launches only
-`lconnectctl mini watch`, without a shell or a configurable command. Each applet
+The native `net.inkyquill.llcontrol` QML module launches only
+`llcontrol mini watch`, without a shell or a configurable command. Each applet
 or open configuration view has one owned helper. Removing the view kills and
 reaps that helper, never the daemon. Missing CLI, invalid/oversized frames,
 helper crashes and stale data become unavailable readings; the helper retries
@@ -39,7 +39,7 @@ Network RX/TX and RAM values require complete fresh pairs. FPS supports an expli
 without a configured fresh source it remains unavailable. See the
 [FPS contract](../../docs/development/parity/fps-source.md).
 
-The package requires both the compiled QML module and `lconnectctl` on PATH.
+The package requires both the compiled QML module and `llcontrol` on PATH.
 Installing only the applet directory is insufficient. Release packaging must
 place the module under Qt's QML import path and the applet under Plasma's package
 path. No installer is run against the user's session by the development tests.
@@ -47,8 +47,8 @@ path. No installer is run against the user's session by the development tests.
 An isolated staged-package check:
 
 ```sh
-cmake --install /tmp/lconnect-mini-plasma-build --prefix /tmp/lconnect-mini-plasma-build/stage
-python3 integrations/plasma/tests/native-plasma.py /tmp/lconnect-mini-plasma-build --staged
+cmake --install /tmp/llcontrol-mini-plasma-build --prefix /tmp/llcontrol-mini-plasma-build/stage
+python3 integrations/plasma/tests/native-plasma.py /tmp/llcontrol-mini-plasma-build --staged
 ```
 
 This launches a Plasma widget test host inside private Xvfb/session D-Bus/XDG,

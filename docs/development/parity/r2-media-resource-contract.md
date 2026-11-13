@@ -28,7 +28,7 @@ credits. A single-frame placeholder path has capacity one. This queue contract
 is not inferred from RSS. Six reader unit tests cover backpressure, blocked first
 read cancellation, failure/panic, repeated stop and ownership release.
 
-Build with `cargo build -p lconnect-daemon --example desktop-mock --release --locked`,
+Build with `cargo build -p llcontrol-daemon --example desktop-mock --release --locked`,
 then run `/usr/bin/python3 desktop/scripts/media-resource-smoke.py`. The driver
 prints its private output root. Keep every result and sample file ignored.
 A failed budget remains a failure; changing a budget requires an explicit

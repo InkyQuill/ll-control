@@ -1,5 +1,5 @@
 //! Bounded, read-only image preparation. Publication uses the existing import path.
-use lconnect_image::editor::{prepare_edited, SquareCrop, Transform};
+use llcontrol_image::editor::{prepare_edited, SquareCrop, Transform};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Semaphore;
@@ -43,7 +43,7 @@ pub struct Filters {
     #[serde(default)]
     pub blur: f32,
 }
-impl From<Filters> for lconnect_image::editor_filters::ColorFilters {
+impl From<Filters> for llcontrol_image::editor_filters::ColorFilters {
     fn from(value: Filters) -> Self {
         Self {
             hue: value.hue,
@@ -74,12 +74,12 @@ impl Editor {
     /// preparation ends. Inspect returns oriented dimensions and a bounded preview.
     pub async fn prepare(&self, bytes: Vec<u8>, edit: Option<Edit>) -> anyhow::Result<Prepared> {
         anyhow::ensure!(
-            !bytes.is_empty() && bytes.len() <= lconnect_image::assets::MAX_ASSET_BYTES,
+            !bytes.is_empty() && bytes.len() <= llcontrol_image::assets::MAX_ASSET_BYTES,
             "Image must be within 16 MiB"
         );
         if let Some(edit) = &edit {
             anyhow::ensure!(
-                edit.transforms.len() <= lconnect_image::editor::MAX_TRANSFORMS,
+                edit.transforms.len() <= llcontrol_image::editor::MAX_TRANSFORMS,
                 "Too many geometry actions"
             );
         }
@@ -108,13 +108,13 @@ impl Editor {
                     png: prepare_edited(&bytes, crop, &transforms, edit.filters.into())?,
                 })
             } else {
-                let source = lconnect_image::assets::decode_asset(&bytes)?;
+                let source = llcontrol_image::assets::decode_asset(&bytes)?;
                 let (width, height) = (source.width(), source.height());
                 drop(source);
                 Ok(Prepared {
                     width,
                     height,
-                    png: lconnect_image::assets::normalize_asset(&bytes)?,
+                    png: llcontrol_image::assets::normalize_asset(&bytes)?,
                 })
             }
         })
@@ -131,7 +131,7 @@ mod tests {
         let editor = Editor::default();
         let inspected = editor.prepare(source.clone(), None).await.unwrap();
         assert_eq!((inspected.width, inspected.height), (1920, 960));
-        let preview = lconnect_image::assets::decode_asset(&inspected.png).unwrap();
+        let preview = llcontrol_image::assets::decode_asset(&inspected.png).unwrap();
         assert_eq!((preview.width(), preview.height()), (960, 480));
         assert!(editor
             .prepare(

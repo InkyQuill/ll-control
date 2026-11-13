@@ -19,10 +19,10 @@ fn closed_worker_socket_has_the_same_recovery_error_on_read_and_write() {
 }
 
 // Re-exec the ordinary Rust test executable so cargo test needs no prebuilt GUI
-// or extra installed worker binary. Production re-execs lconnect-gui before Tauri.
+// or extra installed worker binary. Production re-execs llcontrol-gui before Tauri.
 #[test]
 fn worker_entry() {
-    if std::env::var_os("LCONNECT_TEST_RECORD_WORKER").is_some() {
+    if std::env::var_os("LLCONTROL_TEST_RECORD_WORKER").is_some() {
         let result = worker_main();
         if let Err(error) = &result {
             eprintln!("test recording worker: {error:#}");

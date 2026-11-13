@@ -33,13 +33,13 @@ def verify(root, manifest):
         assert sha(path) == info["sha256"], name
         assert oct(path.stat().st_mode & 0o777) == info["mode"], name
     # System-wide Mini assets and its native plugin must survive both transactions.
-    assert (root / "usr/share/plasma/plasmoids/net.inkyquill.lconnect.mini/metadata.json").is_file()
-    assert (root / "usr/lib/qt6/qml/net/inkyquill/lconnect/qmldir").is_file()
-    assert list((root / "usr/lib/qt6/qml/net/inkyquill/lconnect").glob("*.so"))
-    extension = root / "usr/share/gnome-shell/extensions/lconnect-mini@inkyquill.net"
+    assert (root / "usr/share/plasma/plasmoids/net.inkyquill.llcontrol.mini/metadata.json").is_file()
+    assert (root / "usr/lib/qt6/qml/net/inkyquill/llcontrol/qmldir").is_file()
+    assert list((root / "usr/lib/qt6/qml/net/inkyquill/llcontrol").glob("*.so"))
+    extension = root / "usr/share/gnome-shell/extensions/llcontrol-mini@inkyquill.net"
     assert json.loads((extension / "metadata.json").read_text())["shell-version"]
     assert (extension / "schemas/gschemas.compiled").is_file()
-    assert "ExecStart=/usr/bin/lconnectd" in (root / "usr/lib/systemd/user/lconnectd.service").read_text()
+    assert "ExecStart=/usr/bin/llcontrold" in (root / "usr/lib/systemd/user/llcontrold.service").read_text()
     assert not (root / "usr/bin/verify-galahad").exists()
 
 
@@ -58,21 +58,21 @@ def transactions(work, first, second, manifest):
     for package in [first, second]:
         run([*base, "--noscriptlet", "-Udd", package])
         verify(root, manifest)
-        result = run([root / "usr/bin/lconnectctl", "--version"], capture_output=True, text=True)
+        result = run([root / "usr/bin/llcontrol", "--version"], capture_output=True, text=True)
         assert manifest["version"] in result.stdout
-        for binary in ["lconnectctl", "lconnectd", "lconnect-gui"]:
+        for binary in ["llcontrol", "llcontrold", "llcontrol-gui"]:
             result = run(["ldd", root / "usr/bin" / binary], capture_output=True, text=True)
             assert "not found" not in result.stdout, result.stdout
-    installed = run([*base, "-Q", "lconnect-linux"], capture_output=True, text=True).stdout
+    installed = run([*base, "-Q", "ll-control"], capture_output=True, text=True).stdout
     assert installed.strip().endswith("-2"), installed
     # Simulated existing intent lives outside the package-owned paths.
-    state = root / "home/test/.config/lconnect/sentinel"
+    state = root / "home/test/.config/llcontrol/sentinel"
     state.parent.mkdir(parents=True)
     state.write_text("existing user intent\n")
-    run([*base, "--noscriptlet", "-Rdd", "lconnect-linux"])
+    run([*base, "--noscriptlet", "-Rdd", "ll-control"])
     assert state.read_text() == "existing user intent\n"
     assert not any((root / name).exists() for name in manifest["files"])
-    assert not (root / "usr/share/doc/lconnect-linux/manifest.json").exists()
+    assert not (root / "usr/share/doc/ll-control/manifest.json").exists()
     print("PASS private pacman install -> upgrade -1 to -2 -> uninstall; both Mini assets; user intent retained")
 
 
@@ -97,7 +97,7 @@ def main():
     spec = importlib.util.spec_from_file_location("dist", Path(__file__).with_name("build-distribution.py"))
     dist = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(dist)
-    with tempfile.TemporaryDirectory(prefix="lconnect-package-acceptance-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="llcontrol-package-acceptance-") as temporary:
         work = Path(temporary)
         archive = next(distribution.glob("*.tar.gz"))
         with tarfile.open(archive) as tar:

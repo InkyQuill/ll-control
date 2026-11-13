@@ -1,6 +1,6 @@
 //! One owned thumbnail decoder; cancellation and window shutdown await its reap.
 use anyhow::{bail, Result};
-use lconnect_ipc::H264Clip;
+use llcontrol_ipc::H264Clip;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,

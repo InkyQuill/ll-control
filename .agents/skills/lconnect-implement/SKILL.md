@@ -13,7 +13,7 @@ Complete the requested change through appropriate verification. Resolve routine 
 
 ## Project decisions
 
-- Trace the affected path across `crates/protocol`, `crates/lconnect-hid`, `crates/lconnect-daemon`, `crates/lconnect-ipc`, `crates/lconnect-cli`, and `crates/lconnect-image`. Read the affected crate manifests for package names.
+- Trace the affected path across `crates/protocol`, `crates/llcontrol-hid`, `crates/llcontrol-daemon`, `crates/llcontrol-ipc`, `crates/llcontrol-cli`, and `crates/llcontrol-image`. Read the affected crate manifests for package names.
 - Keep wire encoding in protocol, device access in HID, and persistent device work in the daemon. Inspect actor/keeper ownership before changing cancellation, replay, or streaming; avoid competing device writers.
 - Match the user-visible LCDV2 scenario in the current roadmap. Do not turn a small milestone into support for other device families or an unsolicited GUI scaffold.
 - For a protocol change, locate the relevant versioned reference and fixture. Firmware-dependent framing and successful USB writes require separate consideration from visible playback.

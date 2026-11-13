@@ -157,7 +157,7 @@ def main() -> None:
         "-show_entries", "packet=pos,size,flags", "-of", "json",
     ]
 
-    with tempfile.TemporaryDirectory(prefix="lconnect-lcdv2-") as directory:
+    with tempfile.TemporaryDirectory(prefix="llcontrol-lcdv2-") as directory:
         encoded_path = Path(directory) / "diagnostic.h264"
         run([*ffmpeg_args, str(encoded_path)])
         if encoded_path.stat().st_size >= ENCODE_FILE_LIMIT:
