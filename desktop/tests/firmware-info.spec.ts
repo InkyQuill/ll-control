@@ -158,7 +158,7 @@ test('missing date is unavailable; failed and malformed reads clear previous val
     };
   });
   await read(page).click();
-  await expect(panel(page).locator('dd').last()).toHaveText('Unavailable');
+  await expect(panel(page).locator('dd').last()).toHaveText('Currently unavailable');
   await page.evaluate(() => {
     (window as unknown as { firmwareFixture: Fixture }).firmwareFixture.fail = true;
   });
