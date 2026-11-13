@@ -5,10 +5,8 @@
 //! issues one or more JSON-RPC calls, and renders the response as either
 //! human-readable text or JSON (via the global `--json` flag).
 //!
-//! The dispatch tree below is final for Phase 1. Per-subcommand bodies
-//! land incrementally as P1E-2..P1E-7 — until then each stub returns
-//! `anyhow::bail!` so individual commands fail loudly while the binary
-//! itself builds and `--help` works end-to-end.
+//! Subcommand implementations live under [`commands`]; the definitions
+//! below describe the arguments and dispatch parsed commands to them.
 
 use clap::{Args, Parser, Subcommand};
 
@@ -215,11 +213,6 @@ pub enum CoolingSubcommand {
         device: Option<String>,
     },
 }
-
-// The arg structs below are intentionally minimal placeholders. The
-// owning P1E-* task fleshes each one out with its real flags; keeping
-// them as `Option<String>` shaped today lets `main.rs` compile without
-// blocking the parallel tasks on a shared schema.
 
 /// `lconnectctl lighting <set|clear|info> ...` — see [`LightingSubcommand`].
 #[derive(Args)]

@@ -1,8 +1,6 @@
 //! Subcommand implementations.
 //!
-//! Each submodule is a stub until its corresponding P1E-* task lands.
-//! Stubs expose the function signatures `main.rs` dispatches to so the
-//! binary builds today; bodies return `anyhow::bail!` until replaced.
+//! Each submodule implements a related group of CLI operations.
 
 pub mod devices;
 pub mod lcd;
