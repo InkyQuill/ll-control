@@ -193,3 +193,38 @@ assembly целиком; не считать `-t` гарантией scoped IL o
 
 Каждый ответ должен иметь observation и восстановление прежнего состояния.
 До spike общий movie player и renderer/editor API не фиксируются.
+
+## Static image rotation and display mode
+
+Versioned source audit for the [2026-11-13 LCD bench](../parity/r3-release-qualification.md#manual-lcd-retest-2026-11-13).
+References below use the 2.1.28.0 decompilation identified at the top of this document.
+
+| User action | Galahad2Vision Windows path |
+|---|---|
+| Select an image | UI `Galahad2VisionScreenSettingPage_ImageVideo.cs:296–337,504–523` selects a gallery asset. Service `Galahad2VisionController.cs:836–858,911–922,1090–1107` sends screen configuration to the off-screen browser and starts the image-source timer. Still images use the composed screen stream. |
+| Change orientation | Service `Galahad2VisionController.cs:749–786,1142–1185` stores the rotation, takes a fresh browser frame and applies RotateFlip before encoding. Each tick starts from fresh pixels, avoiding cumulative rotation. |
+| Display the frame | Service `Galahad2VisionController.cs:212,1037–1043,1077–1085,1253–1281` uses a 480×480, 24 fps encoder. Core `Galahad2VisionDevice.cs:168–172,221–225` sends cmd 13; firmware ≥1.5 selects C/512. Cmd 14 exists in the product enum, but no cmd 14 call was identified in this product's ordinary still-image display path. |
+| Change brightness | Service `Galahad2VisionController.cs:793–810` sends LCDSetting with brightness and 24 FPS. Core `LCDControlSetting.cs:7–17` defaults hardware rotation to zero. Core `Galahad2VisionDevice.cs:162–166` writes cmd 12 and reads a response. No Application-mode switch was identified in the normal stream startup sequence. |
+
+Linux `actor/lcd_keeper.rs` (SetImage, config, send_frame) sends static JPEGs
+with cmd 14 and passes requested rotation to cmd 12 for this source. Normal
+refresh bursts in the bench trace were 15 seconds apart. Cmd 12 echoes matched
+the requested angles while the chart stayed upright. The last instrumented
+transaction cannot establish what the separately installed daemon sent later.
+
+**Fix candidate and retest.** Keep the original image and requested angle.
+Feed a static frame through the existing host-rotated H.264 output, using the
+same frame cadence, transport admission, and source lifecycle as the supported
+video path. Keep hardware rotation at zero for streamed pixels. Preserve the
+verified backlight path and avoid an implicit LocalUI switch on image load,
+refresh or rotation. Do not change transport based solely on a missing firmware
+response. The source comparison identifies a testable difference; flicker
+causation is still unconfirmed.
+
+Compare cmd 14 baseline with the stream candidate using the same asymmetric
+chart and brightness. Hold each setting longer than the old 15-second refresh
+interval; observe at least 60 seconds of steady display. Check TOP at all four
+angles including a return to zero, then check 0%, 25%, 75% and 100% without
+changing orientation. Record wire traffic and physical observations separately.
+End with an explicit handoff and verify the restored owner's device open and
+visible state. No reset or firmware operation is needed for this comparison.

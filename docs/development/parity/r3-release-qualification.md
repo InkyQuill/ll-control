@@ -13,9 +13,9 @@ installed-session or physical observations.
 | Installed Plasma Wayland lifecycle | Current session is KDE Wayland; no installed daemon unit or running L-Connect process found | Install/upgrade/remove with retained data, udev access, tray/single instance/hide/show/exit and actual login autostart |
 | Real input/accessibility | R1/R2 supporting tests exist | Actual compositor pointer/keyboard, fractional scaling, choosers and screen-reader speech |
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
-| Display and controls | Not run in R3 | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
+| Display and controls | [Manual LCD retest](#manual-lcd-retest-2026-11-13): brightness response observed; static JPEG unstable and rotation failed | Physical image/video/overlays/units/rotation/brightness/LocalUI, cooling and RGB observations |
 | Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
-| Restoration and cutover | Not run | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
+| Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
 ## Initial host inspection
 
@@ -130,3 +130,23 @@ Pavel explicitly requested Impeccable polish; preserve explicit Apply.
 The clean7fd3058 production package passed the packaged GUI sensor/cooling test
 with MockBackend and no instrumentation. This is package verification, not
 physical hardware acceptance. Remote Arch/browser CI remains pending.
+
+## Manual LCD retest, 2026-11-13
+
+Galahad II LCDV2 `0416:7395`, Linux `7.3.3-1-cachyos`, temporary HID-logging build of
+`7e3bda531fbc65ce68e4e46000eaa1be0352763d`. The earlier bench session read FW 1.6;
+the completed session did not query firmware. This qualifies observations on the
+instrumented build. Exact release-package acceptance remains open. Private session
+`20261113-132042-972062` contains `events.jsonl`, `hid.log` and `daemon.log`.
+Times below are Moscow time. No raw serials or machine-specific logs are published.
+
+| Scenario | Command and physical observation | Result |
+|---|---|---|
+| Static image ownership | The 12,657-byte TOP chart reached the LCD in 13 cmd 14 reports. It appeared with LocalUI flickering behind it. Explicit reload reproduced this. | Image transfer observed; stable display failed |
+| Backlight | 0% black; 1% appeared black (inconclusive); 2% just visible. 5% visibly dimmer than 10%, 10% dimmer than 25%, 25% dimmer than 100%, and 75% brighter than 50%. Difference between 75% and 100% uncertain. The operator confirmed brightness response after the full sequence. | Visible intermediate control confirmed; no luminance calibration |
+| Static JPEG orientation | First 90° request briefly blanked the screen before LocalUI appeared. On the later full sweep the device echoed cmd 12 settings for 180°, 270°, 0° and 90°. TOP stayed upright at 180°, 270° and 90°. Returning to 0° from an already upright image was inconclusive. | Failed at 90°/180°/270°; 0° transition unverified |
+| Ownership change | First run detached and reattached with a different daemon device ID. One 180° trial ended before any write; a later trial actually sent 180°. At final shutdown the last settings write and echo were 100% / 90°. At 13:31:00 the installed service started and reported it could not open the LCDV2. The operator then saw LocalUI rotated 90° with the chart flickering behind it. | Service restart confirmed; successful HID reacquisition unverified; clean visual restoration failed |
+
+Physical cooling, RGB, combined soak, cold boot, suspend/resume, deliberate USB
+reconnect and exact-package qualification remain open. For the Windows comparison
+and next controlled test see [static image rotation and display mode](../protocol/lcdv2-screen-pipeline-2.1.28.md#static-image-rotation-and-display-mode).
