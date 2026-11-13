@@ -10,6 +10,7 @@ export default [
       'build',
       '.svelte-kit',
       'test-results',
+      'src-tauri/gen',
       'playwright-report',
       'src/lib/rpc-contract.ts',
     ],

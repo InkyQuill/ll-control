@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { ValidationError } from './validation-error';
-import type { Device, Sensor, DisplaySettings, Unit } from './rpc-contract';
+import type { Sensor, Unit } from './rpc-contract';
 export type { Device, Sensor, DisplaySettings, Unit } from './rpc-contract';
 export interface Style {
   font_asset?: string | null;
