@@ -20,7 +20,7 @@ async function main() {
     assert(schema !== null, 'Compiled schema missing');
     const settings = new Gio.Settings({settings_schema: schema});
     const fresh = settings.get_string('slot-config');
-    window = new Adw.PreferencesWindow({title: 'L-Connect Mini preferences test', default_width: 760, default_height: 850});
+    window = new Adw.PreferencesWindow({title: 'LL-Control Mini preferences test', default_width: 760, default_height: 850});
     controller = new PreferencesController(window, settings);window.present();
     await until(() => controller.rows[0].reading.model !== null && controller.feed.frame.available, 'real GTK controls and CLI frame');
     assert(controller.page.title === 'Six readings', 'English default');

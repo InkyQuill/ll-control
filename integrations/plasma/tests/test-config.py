@@ -3,6 +3,16 @@
 import json,os,subprocess,sys,tempfile
 from pathlib import Path
 build=Path(sys.argv[1]).resolve()
+package=build/'package'
+metadata=json.loads((package/'metadata.json').read_text())['KPlugin']
+assert metadata['Id']=='net.inkyquill.lconnect.mini'
+assert metadata['Name']==metadata['Name[ru]']=='LL-Control Mini'
+assert metadata['Description']=='Six cached LL-Control sensor readings'
+assert metadata['Description[ru]']=='Шесть показаний из кеша LL-Control'
+main=(package/'contents/ui/main.qml').read_text()
+assert '||"LL-Control"' in main
+assert '||"LL-Control Mini"' in main
+assert 'L-Connect' not in main
 with tempfile.TemporaryDirectory(prefix='lconnect-mini-config-') as tmp:
  root=Path(tmp);(root/'bin').mkdir()
  def sensor(key,unit,value,label):return dict(id=key,unit=unit,value=value,label=label,status='valid',age_ms=0)
