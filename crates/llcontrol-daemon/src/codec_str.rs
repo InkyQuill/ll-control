@@ -10,7 +10,7 @@
 //! prior call-site arms so neither path loses behaviour.
 
 use llcontrol_ipc::Rgb as IpcRgb;
-use llcontrol_protocol::galahad2_lcdv2::lcd::{LCDControlMode, ScreenRotation};
+use llcontrol_protocol::galahad2_lcdv2::lcd::LCDControlMode;
 use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{
     ArgbSignalSource, FanLightingMode, LightingDirection, PumpLightingMode, PumpLightingScope,
 };
@@ -147,17 +147,6 @@ pub(crate) fn parse_lcd_mode(s: &str) -> LCDControlMode {
             warn!("ignoring unknown/unsafe LCD mode '{s}'; falling back to LocalUI");
             LCDControlMode::LocalUI
         }
-    }
-}
-
-/// Convert a degree value (0/90/180/270) to the wire-format rotation enum.
-/// Out-of-range values fall back to [`ScreenRotation::Rotate0`].
-pub(crate) fn rotation_from_degrees(deg: u16) -> ScreenRotation {
-    match deg {
-        90 => ScreenRotation::Rotate90,
-        180 => ScreenRotation::Rotate180,
-        270 => ScreenRotation::Rotate270,
-        _ => ScreenRotation::Rotate0,
     }
 }
 

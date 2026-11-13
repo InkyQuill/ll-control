@@ -3,11 +3,7 @@ use super::{
     command_dispatch::SettingsUpdate, lcd_state::merge_lcd_config, FrameOutcome, FrameReadPolicy,
     HidCommand, LcdCommand, Shutdown,
 };
-use crate::{
-    codec_str::{parse_lcd_mode, rotation_from_degrees},
-    media_reader::MediaReader,
-    persistence::LcdSection,
-};
+use crate::{codec_str::parse_lcd_mode, media_reader::MediaReader, persistence::LcdSection};
 use llcontrol_ipc::{
     validate_h264_clip, H264Clip, IpcError, LcdConfig, LcdConfigPatch, LcdPlaybackStats,
     LcdSourceKind, LcdState, Result,
@@ -1143,14 +1139,8 @@ impl Display {
             parse_lcd_mode(&config.mode)
         };
         setting.brightness = Brightness::new(config.brightness_percent).map_err(invalid)?;
-        // Active frames are rotated by the host. Keep firmware rotation at zero
-        // while streaming, and preserve the requested angle in state.
-        let host_rotated = matches!(target, ConfigTarget::HostRotated);
-        setting.rotation = rotation_from_degrees(if host_rotated {
-            0
-        } else {
-            config.rotation_degrees
-        });
+        // Mount rotation belongs to the frame producer, even across handoff to LocalUI.
+        // LCDControlSetting::default leaves the hardware rotation byte at zero.
         setting.video_fps = 24;
         let (reply, rx) = oneshot::channel();
         self.hid

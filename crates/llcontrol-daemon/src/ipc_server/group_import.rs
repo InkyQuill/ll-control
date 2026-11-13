@@ -559,10 +559,14 @@ mod tests {
             let socket = runtime.join("llcontrold.sock");
             let cfg = Config::default();
             let stats = Arc::new(Stats::new());
-            let manager =
-                DeviceManager::new(Arc::new(mock), store.clone(), cfg.clone(), stats.clone())
-                    .spawn()
-                    .await;
+            let manager = DeviceManager::new(
+                Arc::new(crate::display_firmware::FirmwareMock(mock)),
+                store.clone(),
+                cfg.clone(),
+                stats.clone(),
+            )
+            .spawn()
+            .await;
             let dev = tokio::time::timeout(Duration::from_secs(3), async {
                 loop {
                     if let Some(d) = manager.list().await.first() {
