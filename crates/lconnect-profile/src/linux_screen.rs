@@ -810,7 +810,7 @@ fn grid(
         } else {
             let index = if count == 3 { i - 1 } else { i };
             (
-                if index % 2 == 0 { 133 } else { 347 },
+                if index.is_multiple_of(2) { 133 } else { 347 },
                 if count == 3 || index >= 2 { 270 } else { 34 },
             )
         };

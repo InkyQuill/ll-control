@@ -156,7 +156,7 @@ fn parse(bytes: &[u8]) -> Result<Vec<EngineDevice>, SensorStatus> {
         if !pci_address(&d.pci)
             || !d.physical.starts_with("2f")
             || d.physical.len() > 900
-            || d.physical.len() % 2 != 0
+            || !d.physical.len().is_multiple_of(2)
             || !d
                 .physical
                 .bytes()

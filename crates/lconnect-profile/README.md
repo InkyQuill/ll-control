@@ -277,7 +277,7 @@ Stored cooling banks carry all8/3 modes, selection identity and source metadata
 Persistence, native load-to-draft/Save/Apply/restore, Linux archives and restart
 are documented in [cooling modes](../../docs/development/parity/cooling-modes.md).
 
-ZIP4.6.1 declares Rust1.82 support; the current workspace toolchain is Rust1.96,
+ZIP 9 requires Rust 1.88; the current qualified toolchain is Rust 1.96,
 not a fresh minimum-toolchain qualification. Deflate uses the Rust backend.
 Fixtures are owned synthetic .NET DTO/ZIP and Rust/Python structural values.
 WPF property-shape emulation is not an actual WPF application export. No vendor

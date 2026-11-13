@@ -9,7 +9,7 @@ on the new source is still required before release qualification.
 
 ## Build and contents
 
-Use Python >=3.11, Rust1.96.0 (qualified host, workspace MSRV1.82 is not qualified),
+Use Python >=3.11, Rust1.96.0 (qualified host, package MSRVs are not qualified),
 Node26.2.0 and pnpm12.9.1, CMake/Qt6 Core/Qml development files, GTK3/WebKitGTK4.1,
 AppIndicator, hidapi, GStreamer development files and plugins, FFmpeg/libx264,
 `glib-compile-schemas`, `makepkg`, `fakeroot`, `desktop-file-validate`.
