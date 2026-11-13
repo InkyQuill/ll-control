@@ -1477,4 +1477,8 @@ async fn batch(
         .map_err(|_| llcontrol_hid::Error::BlockingTaskFailed("HID reply dropped".into()))?
 }
 
+#[cfg(test)]
+#[path = "lcd_render_tests.rs"]
+mod render_tests;
+
 mod group;
