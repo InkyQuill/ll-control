@@ -81,9 +81,14 @@ Linux port produces independent owned `[u8; 1024]` buffers per chunk
 it through an iterator — that pattern is unsafe in Rust).
 
 The C# also has a `CCommandPacket` (third framing class: ReportID=3,
-512/512 lengths, 501-byte chunks) used by `SendH264Frame512`. CCommandPacket
-is **not implemented** in this crate yet; it would be needed to support
-the higher-bandwidth H.264 streaming path on certain device variants.
+512/512 lengths, 501-byte chunks) used by `SendH264Frame512`. The Linux
+port implements this framing as `CCommandPacket` in
+`crates/protocol/src/galahad2_lcdv2/cpacket.rs`, including chunking and
+response parsing. `build_send_h264_frame_512_request` in `h264.rs` implements
+the corresponding H.264 request codec. **Status:** `codec-verified` by
+`galahad2_lcdv2_cpacket.rs` and the C-class cases in
+`galahad2_lcdv2_send_h264_frame.rs`; this path has not been live-verified
+on a device.
 
 ---
 
@@ -499,8 +504,9 @@ on FW 1.6).
 - Wire flow: `Galahad2VisionDevice.cs:255-260` — `writeBCommand(13,
   frameBytes)` followed by `readCommand(out numArray, 512, 20)` (the
   C# discards the buffer; our codec exposes a typed parser).
-- Sibling deferred: `Galahad2VisionDevice.cs:262-267` (`SendH264Frame512`,
-  CCommandPacket framing — out of scope for Phase 0d).
+- Sibling: `Galahad2VisionDevice.cs:262-267` (`SendH264Frame512`,
+  CCommandPacket framing). Its request codec is implemented and covered
+  by byte-level tests, but is not live-verified.
 
 ### Request
 
@@ -528,17 +534,20 @@ the next unrelated read).
   conservative cap; should be revisited once a live capture surfaces
   the firmware's actual buffer limit.
 - Both `SendH264Frame` (this codec, B-class) and `SendH264Frame512`
-  (deferred, C-class) write cmd byte 13. Discrimination is presumably
-  via ReportID (B = 0x02, C = 0x03) at the HID layer, but device-variant
-  or firmware-revision sensitivity is unverified. Confirm BCommandPacket
-  support on a given firmware via the handshake or firmware-version
-  response before relying on this codec.
+  (implemented and codec-verified, C-class) write cmd byte 13.
+  Discrimination is presumably via ReportID (B = 0x02, C = 0x03) at the
+  HID layer, but device-variant or firmware-revision sensitivity is
+  unverified. Confirm BCommandPacket support on a given firmware via the
+  handshake or firmware-version response before relying on this codec.
 
 ### Implementation
 
 - `crates/protocol/src/galahad2_lcdv2/h264.rs` (`MAX_H264_FRAME_BYTES`,
-  `build_send_h264_frame_request`, `parse_send_h264_frame_response`).
-- `crates/protocol/tests/galahad2_lcdv2_send_h264_frame.rs`.
+  `build_send_h264_frame_request`, `build_send_h264_frame_512_request`,
+  `parse_send_h264_frame_response`).
+- `crates/protocol/src/galahad2_lcdv2/cpacket.rs` (`CCommandPacket`).
+- `crates/protocol/tests/galahad2_lcdv2_send_h264_frame.rs` and
+  `crates/protocol/tests/galahad2_lcdv2_cpacket.rs`.
 
 ---
 
@@ -823,22 +832,21 @@ Coverage in subsequent phases:
     codec-verified; live runs ACK'd 56-packet writes but produced no
     visible LCD change in either default or Application-mode preflight,
     activation path unknown.
-  - **H.264 frame upload**: `SendH264Frame` (cmd 13) codec-verified
-    (wire shape confirmed against the C# call site). Not live-verified.
-    Sibling `SendH264Frame512` (CCommandPacket framing) deferred.
+  - **H.264 frame upload**: `SendH264Frame` (cmd 13, BCommandPacket) and
+    `SendH264Frame512` (cmd 13, CCommandPacket) request codecs are
+    implemented and codec-verified against the C# call sites with
+    byte-level tests. Neither path is live-verified.
   - **Image conversion**: the `lconnect-image` workspace crate provides
     arbitrary-input → 480×480 JPEG conversion (PNG/JPEG/WebP/BMP/GIF in,
     JPEG out). The verify-galahad `upload-jpeg` subcommand demonstrates
     the end-to-end pipeline: any image → 480×480 JPEG → BCommandPacket
     chunks → device.
 - **Phase 1+:** `UploadFirmware` (11), `ActiveFirmware` (10) —
-  firmware-touching, higher risk; deferred. `SendH264Frame512`
-  (CCommandPacket framing — third framing class, ReportID=3, 512/512
-  lengths) for the higher-bandwidth H.264 streaming path on device
-  variants that support it. `GetSerialNumber` (136), `SetSerialNumber`
-  (137), `UploadAvi` (18), `UploadH264` (19), `UploadH264Info` (21),
-  `UploadStartupAviMovie` (22). These are either rarely used or risky
-  (writing serial numbers); they get implemented on demand.
+  firmware-touching, higher risk; deferred. `GetSerialNumber` (136),
+  `SetSerialNumber` (137), `UploadAvi` (18), `UploadH264` (19),
+  `UploadH264Info` (21), `UploadStartupAviMovie` (22). These are either
+  rarely used or risky (writing serial numbers); they get implemented on
+  demand.
 
 ## Crypto status
 

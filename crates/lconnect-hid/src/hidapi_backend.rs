@@ -50,7 +50,7 @@ impl HidApiBackend {
     ///
     /// Returns `Error::HidApi` if `hidapi::HidApi::new()` fails (typically
     /// missing udev permissions on Linux — see the project's
-    /// `99-lian-li-galahad2.rules` udev rule).
+    /// `packaging/udev/70-lianli-hid.rules` udev rule).
     pub fn new(registry: FamilyRegistry) -> Result<Self> {
         let api = hidapi::HidApi::new()?;
         Ok(Self {
