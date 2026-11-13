@@ -40,10 +40,7 @@ fn main() -> Result<()> {
 async fn run_daemon() -> Result<()> {
     init_tracing();
 
-    let config = Config::load().unwrap_or_else(|e| {
-        tracing::warn!("config load failed ({e}); using defaults");
-        Config::default()
-    });
+    let config = Config::load().context("failed to load daemon configuration")?;
     tracing::info!("lconnectd starting; log_level={}", config.daemon.log_level);
 
     let socket_path =
