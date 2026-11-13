@@ -69,13 +69,14 @@ test('cleanup previews before deletion and protects current draft assets', async
   await page
     .getByRole('button', { name: 'Очистка неиспользуемых изображений', exact: true })
     .click();
+  const cleanup = page.getByRole('dialog', { name: 'Очистка неиспользуемых изображений' });
   await expect(
-    page.getByRole('button', { name: 'Удалить неиспользуемые изображения' }),
+    cleanup.getByRole('button', { name: 'Удалить неиспользуемые изображения' }),
   ).toHaveCount(0);
-  await page.getByRole('button', { name: 'Проверить неиспользуемые изображения' }).click();
-  await expect(page.getByRole('status')).toContainText('Можно удалить: 1');
-  await page.getByRole('button', { name: 'Удалить неиспользуемые изображения' }).click();
-  await expect(page.getByRole('status')).toContainText('Удалено: 1');
+  await cleanup.getByRole('button', { name: 'Проверить неиспользуемые изображения' }).click();
+  await expect(cleanup.getByRole('status')).toContainText('Можно удалить: 1');
+  await cleanup.getByRole('button', { name: 'Удалить неиспользуемые изображения' }).click();
+  await expect(cleanup.getByRole('status')).toContainText('Удалено: 1');
   expect(
     await page.evaluate(() => (window as unknown as { cleanupCalls: unknown[] }).cleanupCalls),
   ).toEqual([
