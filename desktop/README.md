@@ -76,7 +76,6 @@ lock against other IPC clients.
 
 LCD preview geometry comes from the implemented device capability registry: GALAHAD II LCDV2 is square, 480×480. The same metadata drives its inventory glyph; circular clipping is reserved for explicitly round displays. This does not enable an additional hardware family.
 
-
 ScreenRecord has an opt-in real PipeWire transport check, independent of the
 user's desktop and physical devices. From the repository root run
 `python3 desktop/scripts/test-recording-pipewire.py`. It owns a private server
@@ -84,7 +83,6 @@ and synthetic video producer, verifies inherited FD transport, serial target
 property, crop/codec output, pause/resume and remote-loss cleanup. It manually
 links nodes and does not qualify real portal permissions or automatic routing.
 See the [recording contract](../docs/development/parity/screen-record.md).
-
 
 Native recording and region selection accept explicit UI language, using a private
 X11 display, accessibility bus, synthetic source and MockBackend. From the
@@ -96,7 +94,6 @@ loss, draft ownership, crop retained through review recovery, decode, explicit
 Save/membership and joined cleanup on normal close. The separate `--full-limit`
 workflow remains Russian-only. This does not qualify real portal routing,
 Wayland/scaling, physical hardware, or encoded pixel parity with Windows.
-
 
 Native image-import membership readback faults use the same isolated language
 harness. After building with `native-smoke,custom-protocol`, run from the root:

@@ -11,21 +11,30 @@
     "check:contracts": "node --experimental-strip-types scripts/preset-contract.ts | cargo run --quiet --locked --manifest-path ../Cargo.toml -p lconnect-ipc --example validate-themes",
     "check:locales": "node scripts/check-locales.mjs --strict",
     "audit:locales": "node scripts/check-locales.mjs",
-    "test:localization": "node --experimental-strip-types --test scripts/localization.test.mjs"
+    "test:localization": "node --experimental-strip-types --test scripts/localization.test.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
     "svelte": "^5"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@playwright/test": "^1.64.0",
     "@sveltejs/adapter-static": "^3",
     "@sveltejs/kit": "^2",
     "@sveltejs/vite-plugin-svelte": "^6",
     "@tauri-apps/cli": "^2",
     "@types/node": "^26.6.4",
+    "eslint": "10.14.0",
+    "eslint-plugin-svelte": "3.24.1",
+    "prettier": "3.10.1",
+    "prettier-plugin-svelte": "4.1.1",
     "svelte-check": "^4",
     "typescript": "^5",
+    "typescript-eslint": "8.72.2",
     "vite": "^7"
   }
 }

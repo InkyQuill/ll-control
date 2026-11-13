@@ -1,85 +1,446 @@
-(async()=>{
-  if(window.__nativeWeatherStarted)return;
-  window.__nativeWeatherStarted=true;
-  const invoke=(command,args)=>window.__TAURI_INTERNALS__.invoke(command,args);
-  const rpc=(method,params={})=>invoke('daemon_call',{method,params});
-  const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-  const assert=(ok,message)=>{if(!ok)throw new Error(message);};
-  async function until(predicate,message){for(let i=0;i<150;i++){if(await predicate())return;await delay(100);}throw new Error(message);}
-  const button=name=>[...document.querySelectorAll('button')].find(el=>el.textContent.trim()===name);
-  const field=name=>[...document.querySelectorAll('label')].find(el=>el.textContent.trim().startsWith(name))?.querySelector('input,select,textarea');
-  async function change(name,value){await until(()=>field(name)&&!field(name).matches(':disabled'),`field ${name} enabled`);const el=field(name);el.value=String(value);el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));await delay(0);}
-  async function click(name){await until(()=>button(name)&&!button(name).matches(':disabled'),`button ${name} enabled`);button(name).click();await delay(0);}
-  try{
+(async () => {
+  if (window.__nativeWeatherStarted) return;
+  window.__nativeWeatherStarted = true;
+  const invoke = (command, args) => window.__TAURI_INTERNALS__.invoke(command, args);
+  const rpc = (method, params = {}) => invoke('daemon_call', { method, params });
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const assert = (ok, message) => {
+    if (!ok) throw new Error(message);
+  };
+  async function until(predicate, message) {
+    for (let i = 0; i < 150; i++) {
+      if (await predicate()) return;
+      await delay(100);
+    }
+    throw new Error(message);
+  }
+  const button = (name) =>
+    [...document.querySelectorAll('button')].find((el) => el.textContent.trim() === name);
+  const field = (name) =>
+    [...document.querySelectorAll('label')]
+      .find((el) => el.textContent.trim().startsWith(name))
+      ?.querySelector('input,select,textarea');
+  async function change(name, value) {
+    await until(() => field(name) && !field(name).matches(':disabled'), `field ${name} enabled`);
+    const el = field(name);
+    el.value = String(value);
+    el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+    await delay(0);
+  }
+  async function click(name) {
+    await until(() => button(name) && !button(name).matches(':disabled'), `button ${name} enabled`);
+    button(name).click();
+    await delay(0);
+  }
+  try {
     await click('Экран помпы');
     await click('Композиция');
-    await until(()=>button('Загрузить активную тему'),'native app mounted');
-    const devices=await rpc('list_devices');assert(devices.length===1,'one mock device');const dev=devices[0].id;
-    const sources=(await rpc('list_sensors')).filter(s=>['celsius','percent','rpm'].includes(s.unit));
-    const cpu=sources.find(s=>s.id==='fixture:cpu');const load=sources.find(s=>s.unit==='percent');assert(cpu&&load,'native fixture sensor sources');
-    const cpuLoad=sources.find(s=>s.id==='proc:cpu:utilization');assert(cpuLoad,'classified synthetic CPU Load');
-    const key=s=>JSON.stringify([s.id,s.unit]);
-    const png=Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg=='),c=>c.charCodeAt(0));
-    const asset=await invoke('import_image',{bytes:png});
-    const base={version:1,name:'Native Weather',background:[12,18,30],background_image:{asset,fit:'crop'},layers:[{kind:'text',text:'Weather overlay',style:{x:240,y:120,size:32,color:[255,0,0],align:'center'}}]};
-    await rpc('set_lcd_theme',{dev,theme:base});
-    const canonicalBase=await rpc('get_lcd_theme',{dev});
-    await click('Загрузить активную тему');await until(()=>field('Название')?.value===base.name,'base theme loaded');
-    await change('Эффект LCD','rain');await change('Название','Native Rain page');await change('Тип фона','solid');await change('Фон','#ff0000');await change('Текст','Rain overlay');
-    field('Управлять эффектом от датчика').click();await until(()=>field('Источник эффекта')?.value===key(cpuLoad),'initial CPU Load source');
-    await change('Источник эффекта',key(cpu));
-    assert(field('Нижний порог эффекта').value==='30'&&field('Верхний порог эффекта').value==='60','Windows temperature defaults');
-    await change('Нижний порог эффекта',40);await change('Верхний порог эффекта',40);
-    await change('Источник эффекта',key(load));await change('Нижний порог эффекта',15);await change('Верхний порог эффекта',90);
-    await change('Источник эффекта',key(cpu));assert(field('Нижний порог эффекта').value==='40','temperature range retained');
-    assert(JSON.stringify(await rpc('get_lcd_theme',{dev}))===JSON.stringify(canonicalBase),'draft does not apply');
+    await until(() => button('Загрузить активную тему'), 'native app mounted');
+    const devices = await rpc('list_devices');
+    assert(devices.length === 1, 'one mock device');
+    const dev = devices[0].id;
+    const sources = (await rpc('list_sensors')).filter((s) =>
+      ['celsius', 'percent', 'rpm'].includes(s.unit),
+    );
+    const cpu = sources.find((s) => s.id === 'fixture:cpu');
+    const load = sources.find((s) => s.unit === 'percent');
+    assert(cpu && load, 'native fixture sensor sources');
+    const cpuLoad = sources.find((s) => s.id === 'proc:cpu:utilization');
+    assert(cpuLoad, 'classified synthetic CPU Load');
+    const key = (s) => JSON.stringify([s.id, s.unit]);
+    const png = Array.from(
+      atob(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==',
+      ),
+      (c) => c.charCodeAt(0),
+    );
+    const asset = await invoke('import_image', { bytes: png });
+    const base = {
+      version: 1,
+      name: 'Native Weather',
+      background: [12, 18, 30],
+      background_image: { asset, fit: 'crop' },
+      layers: [
+        {
+          kind: 'text',
+          text: 'Weather overlay',
+          style: { x: 240, y: 120, size: 32, color: [255, 0, 0], align: 'center' },
+        },
+      ],
+    };
+    await rpc('set_lcd_theme', { dev, theme: base });
+    const canonicalBase = await rpc('get_lcd_theme', { dev });
+    await click('Загрузить активную тему');
+    await until(() => field('Название')?.value === base.name, 'base theme loaded');
+    await change('Эффект LCD', 'rain');
+    await change('Название', 'Native Rain page');
+    await change('Тип фона', 'solid');
+    await change('Фон', '#ff0000');
+    await change('Текст', 'Rain overlay');
+    field('Управлять эффектом от датчика').click();
+    await until(() => field('Источник эффекта')?.value === key(cpuLoad), 'initial CPU Load source');
+    await change('Источник эффекта', key(cpu));
+    assert(
+      field('Нижний порог эффекта').value === '30' && field('Верхний порог эффекта').value === '60',
+      'Windows temperature defaults',
+    );
+    await change('Нижний порог эффекта', 40);
+    await change('Верхний порог эффекта', 40);
+    await change('Источник эффекта', key(load));
+    await change('Нижний порог эффекта', 15);
+    await change('Верхний порог эффекта', 90);
+    await change('Источник эффекта', key(cpu));
+    assert(field('Нижний порог эффекта').value === '40', 'temperature range retained');
+    assert(
+      JSON.stringify(await rpc('get_lcd_theme', { dev })) === JSON.stringify(canonicalBase),
+      'draft does not apply',
+    );
     await click('Обновить preview');
-    await until(()=>{const image=document.querySelector('.lcd img');return image?.complete&&image.naturalWidth===480&&image.naturalHeight===480;},'native preview JPEG decodes');
-    assert(JSON.stringify(await rpc('get_lcd_theme',{dev}))===JSON.stringify(canonicalBase),'preview does not apply');
-    await click('Применить к LCD');await until(async()=>(await rpc('get_lcd_theme',{dev}))?.version===3,'weather Apply');
-    const rain=await rpc('get_lcd_theme',{dev});assert(rain.layers[0].effect.sensor.low===40&&rain.layers[0].effect.sensor.high===40,'equal Rain range applied');assert(rain.layers[0].effect.retained_sensors.find(range=>range.sensor_id===load.id&&range.unit===load.unit)?.low===15,'inactive range applied');
-    const profile=[...document.querySelectorAll('summary')].find(el=>el.textContent.trim()==='Сохранённые профили');assert(profile,'profile controls');profile.click();
-    await click('Обновить список профилей');await change('Слот профиля',0);await change('Имя профиля','Native Rain ranges');await click('Сохранить черновик в слот');
-    await until(async()=>(await rpc('list_profiles')).profiles.some(p=>p.slot===0&&p.name==='Native Rain ranges'),'weather profile saved');
-    await change('Эффект LCD','snow');field('Управлять эффектом от датчика').click();await delay(0);await change('Источник эффекта',key(cpu));await change('Нижний порог эффекта',40);
-    await click('Загрузить профиль в редактор');await until(()=>field('Эффект LCD')?.value==='rain'&&field('Нижний порог эффекта')?.value==='40','weather profile loaded');
-    assert(JSON.stringify(await rpc('get_lcd_theme',{dev}))===JSON.stringify(rain),'profile load does not apply');
-    await change('Источник эффекта',key(load));assert(field('Нижний порог эффекта').value==='15','profile retains inactive range');
-    await change('Эффект LCD','snow');await change('Название','Native Snow page');await change('Фон','#0000ff');await change('Текст','Snow overlay');
-    await change('Эффект LCD','none');assert(field('Название').value===base.name&&field('Текст').value==='Weather overlay','Basic restored through None');
-    await change('Эффект LCD','rain');assert(field('Название').value==='Native Rain page'&&field('Текст').value==='Rain overlay','Rain full page restored');
-    await change('Эффект LCD','snow');assert(field('Название').value==='Native Snow page'&&field('Текст').value==='Snow overlay','Snow full page restored');field('Управлять эффектом от датчика').click();await delay(0);await change('Источник эффекта',key(cpuLoad));await change('Нижний порог эффекта',45);await change('Верхний порог эффекта',45);await click('Применить к LCD');
-    await until(async()=>(await rpc('get_lcd_theme',{dev}))?.layers[0]?.effect.kind==='snow','Snow Apply');
-    let theme=await rpc('get_lcd_theme',{dev});assert(theme.layers[0].effect.sensor.low===45&&theme.layers[0].effect.sensor.high===45&&theme.layers[0].effect.sensor.sensor_id===cpuLoad.id,'equal Snow range on constant45 CPU Load');assert(theme.page_cache.find(page=>page.page==='rain')?.theme.layers[0].effect.sensor.low===15,'independent Rain settings retained');await click('Заменить профиль черновиком');await until(async()=>(await rpc('list_profiles')).profiles.find(p=>p.slot===0&&p.content.kind==='screen')?.content.value.layers[0].effect.kind==='snow','both pages saved in slot');assert(theme.page_cache.find(page=>page.page==='basic').theme.background_image.asset===asset,'cached managed background retained');assert(theme.layers[1].text==='Snow overlay'&&theme.name==='Native Snow page'&&theme.background[2]===255,'Snow page retained');assert(theme.page_cache.find(page=>page.page==='rain').theme.layers[1].text==='Rain overlay','cached Rain overlay retained');assert(theme.page_cache.find(page=>page.page==='basic').theme.name===base.name,'Basic cached through Apply');
-    await change('Эффект LCD','meteor');await change('Название','Native Meteor page');await change('Скорость метеоров',3);await change('Цвет метеоров 1','#ff1122');
-    field('Управлять эффектом от датчика').click();await until(()=>field('Источник эффекта')?.value===key(cpuLoad),'Meteor CPU Load default');
-    await change('Нижний цвет метеоров 1','#ff0000');await change('Верхний цвет метеоров 2','#ffff00');await change('Нижний порог эффекта',15);
-    await change('Источник эффекта',key(cpu));await change('Нижний цвет метеоров 1','#ffffff');await change('Нижний порог эффекта',40);await change('Верхний порог эффекта',40);
-    await change('Источник эффекта',key(cpuLoad));assert(field('Нижний порог эффекта').value==='15'&&field('Нижний цвет метеоров 1').value==='#ff0000','Meteor per-source palette/ranges retained');
-    await change('Эффект LCD','rain');await change('Эффект LCD','meteor');assert(field('Название').value==='Native Meteor page'&&field('Нижний цвет метеоров 1').value==='#ff0000','Meteor page restored');
-    const oldPreview=document.querySelector('.lcd img')?.src;await click('Обновить preview');await until(()=>{const image=document.querySelector('.lcd img');return image?.src!==oldPreview&&image?.complete&&image.naturalWidth===480;},'Meteor native preview decodes');
-    await click('Применить к LCD');await until(async()=>(await rpc('get_lcd_theme',{dev}))?.layers[0]?.kind==='meteor','Meteor Apply');theme=await rpc('get_lcd_theme',{dev});
-    assert(theme.page_cache.length===3&&theme.page_cache.find(page=>page.page==='basic').theme.background_image.asset===asset,'four complete pages retain cached image');
-    assert(theme.layers[0].effect.sensor.binding.sensor_id===cpuLoad.id&&theme.layers[0].effect.sensor.low_colors[0][0]===255,'Meteor live binding/palette applied');
-    await click('Заменить профиль черновиком');await until(async()=>(await rpc('list_profiles')).profiles.find(p=>p.slot===0&&p.content.kind==='screen')?.content.value.layers[0].kind==='meteor','Meteor slot saved');
-    await change('Эффект LCD','none');await click('Загрузить профиль в редактор');await until(()=>field('Эффект LCD')?.value==='meteor'&&field('Название')?.value==='Native Meteor page','Meteor slot restored into editor');
-    assert(JSON.stringify(await rpc('get_lcd_theme',{dev}))===JSON.stringify(theme),'Meteor profile load does not Apply');
-    await change('Эффект LCD','snow3d');assert(field('Интенсивность Snow3D').value==='1','Snow3D default intensity');assert(!field('Управлять эффектом от датчика'),'Snow3D is static only');await change('Интенсивность Snow3D',3);await change('Название','Native Snow3D page');await change('Фон','#112233');await change('Текст','Snow3D overlay');
-    await change('Эффект LCD','none');await change('Эффект LCD','snow3d');assert(field('Интенсивность Snow3D').value==='3'&&field('Текст').value==='Snow3D overlay','Snow3D independent page restored');
-    const snowPreview=document.querySelector('.lcd img')?.src;await click('Обновить preview');await until(()=>{const image=document.querySelector('.lcd img');return image?.src!==snowPreview&&image?.complete&&image.naturalWidth===480;},'Snow3D preview decodes');
-    await click('Применить к LCD');await until(async()=>(await rpc('get_lcd_theme',{dev}))?.layers[0]?.kind==='snow3d','Snow3D Apply');theme=await rpc('get_lcd_theme',{dev});assert(theme.page_cache.length===4&&theme.layers[0].effect.intensity===3,'all five pages persisted');
-    await click('Заменить профиль черновиком');await until(async()=>(await rpc('list_profiles')).profiles.find(p=>p.slot===0&&p.content.kind==='screen')?.content.value.layers[0].kind==='snow3d','Snow3D profile saved');
-    await change('Эффект LCD','none');await click('Загрузить профиль в редактор');await until(()=>field('Эффект LCD')?.value==='snow3d'&&field('Название')?.value==='Native Snow3D page','Snow3D profile loaded');
-    await change('Эффект LCD','fireworks');assert(field('Интенсивность Fireworks').value==='1','Fireworks default intensity');await change('Интенсивность Fireworks',3);await change('Название','Native Fireworks page');await change('Цвет фейерверка 6','#112233');
-    field('Управлять эффектом от датчика').click();await until(()=>field('Источник эффекта')?.value===key(cpuLoad),'Fireworks CPU Load default');await change('Нижний цвет фейерверка 6','#ffffff');await change('Верхний цвет фейерверка 5','#00ffff');await change('Нижний порог эффекта',15);
-    await change('Источник эффекта',key(cpu));await change('Нижний цвет фейерверка 6','#ff0000');await change('Нижний порог эффекта',40);await change('Верхний порог эффекта',40);await change('Источник эффекта',key(cpuLoad));assert(field('Нижний цвет фейерверка 6').value==='#ffffff'&&field('Нижний порог эффекта').value==='15','Fireworks per-source palettes/ranges');
-    await change('Эффект LCD','meteor');await change('Эффект LCD','fireworks');assert(field('Название').value==='Native Fireworks page'&&field('Нижний цвет фейерверка 6').value==='#ffffff','Fireworks full page restored');
-    const firePreview=document.querySelector('.lcd img')?.src;await click('Обновить preview');await until(()=>{const image=document.querySelector('.lcd img');return image?.src!==firePreview&&image?.complete&&image.naturalWidth===480;},'Fireworks preview JPEG decodes');
-    await click('Применить к LCD');await until(async()=>(await rpc('get_lcd_theme',{dev}))?.layers[0]?.kind==='fireworks','Fireworks Apply');theme=await rpc('get_lcd_theme',{dev});assert(theme.page_cache.length===5&&theme.page_cache.find(page=>page.page==='basic').theme.background_image.asset===asset,'six complete pages retain managed image');
-    const fire=theme.layers[0].effect;assert(fire.sensor.binding.sensor_id===cpuLoad.id&&fire.sensor.low_colors.length===6&&fire.sensor.low_colors[5][0]===255,'Fireworks binding/six palette');assert(fire.retained_sensors.find(source=>source.binding.sensor_id===cpu.id)?.binding.high===40,'Fireworks retained equal temperature range');
-    await click('Заменить профиль черновиком');await until(async()=>(await rpc('list_profiles')).profiles.find(p=>p.slot===0&&p.content.kind==='screen')?.content.value.layers[0].kind==='fireworks','Fireworks profile saved');await change('Эффект LCD','none');await click('Загрузить профиль в редактор');await until(()=>field('Эффект LCD')?.value==='fireworks'&&field('Название')?.value==='Native Fireworks page','Fireworks profile loaded');
-    assert(JSON.stringify(await rpc('get_lcd_theme',{dev}))===JSON.stringify(theme),'Fireworks profile load does not Apply');
-    await delay(1000);const state=await rpc('get_lcd_state',{dev});assert(state.source==='Theme'&&!state.last_error,'native weather stream has no actor error');
-    await invoke('native_smoke_result',{result:{ok:true,dev,theme,rain,profiles:await rpc('list_profiles'),preview_width:480,preview_height:480,native_fireworks:true,native_snow3d:true,native_meteor:true,native_full_page_state:true,native_equal_thresholds:true,native_cpu_load_default:true,native_ranges:true,native_profile:true,native_draft_boundary:true},keepOpen:false});
-  }catch(error){await invoke('native_smoke_result',{result:{ok:false,error:String(error),stack:error.stack},keepOpen:false});}
+    await until(() => {
+      const image = document.querySelector('.lcd img');
+      return image?.complete && image.naturalWidth === 480 && image.naturalHeight === 480;
+    }, 'native preview JPEG decodes');
+    assert(
+      JSON.stringify(await rpc('get_lcd_theme', { dev })) === JSON.stringify(canonicalBase),
+      'preview does not apply',
+    );
+    await click('Применить к LCD');
+    await until(async () => (await rpc('get_lcd_theme', { dev }))?.version === 3, 'weather Apply');
+    const rain = await rpc('get_lcd_theme', { dev });
+    assert(
+      rain.layers[0].effect.sensor.low === 40 && rain.layers[0].effect.sensor.high === 40,
+      'equal Rain range applied',
+    );
+    assert(
+      rain.layers[0].effect.retained_sensors.find(
+        (range) => range.sensor_id === load.id && range.unit === load.unit,
+      )?.low === 15,
+      'inactive range applied',
+    );
+    const profile = [...document.querySelectorAll('summary')].find(
+      (el) => el.textContent.trim() === 'Сохранённые профили',
+    );
+    assert(profile, 'profile controls');
+    profile.click();
+    await click('Обновить список профилей');
+    await change('Слот профиля', 0);
+    await change('Имя профиля', 'Native Rain ranges');
+    await click('Сохранить черновик в слот');
+    await until(
+      async () =>
+        (await rpc('list_profiles')).profiles.some(
+          (p) => p.slot === 0 && p.name === 'Native Rain ranges',
+        ),
+      'weather profile saved',
+    );
+    await change('Эффект LCD', 'snow');
+    field('Управлять эффектом от датчика').click();
+    await delay(0);
+    await change('Источник эффекта', key(cpu));
+    await change('Нижний порог эффекта', 40);
+    await click('Загрузить профиль в редактор');
+    await until(
+      () => field('Эффект LCD')?.value === 'rain' && field('Нижний порог эффекта')?.value === '40',
+      'weather profile loaded',
+    );
+    assert(
+      JSON.stringify(await rpc('get_lcd_theme', { dev })) === JSON.stringify(rain),
+      'profile load does not apply',
+    );
+    await change('Источник эффекта', key(load));
+    assert(field('Нижний порог эффекта').value === '15', 'profile retains inactive range');
+    await change('Эффект LCD', 'snow');
+    await change('Название', 'Native Snow page');
+    await change('Фон', '#0000ff');
+    await change('Текст', 'Snow overlay');
+    await change('Эффект LCD', 'none');
+    assert(
+      field('Название').value === base.name && field('Текст').value === 'Weather overlay',
+      'Basic restored through None',
+    );
+    await change('Эффект LCD', 'rain');
+    assert(
+      field('Название').value === 'Native Rain page' && field('Текст').value === 'Rain overlay',
+      'Rain full page restored',
+    );
+    await change('Эффект LCD', 'snow');
+    assert(
+      field('Название').value === 'Native Snow page' && field('Текст').value === 'Snow overlay',
+      'Snow full page restored',
+    );
+    field('Управлять эффектом от датчика').click();
+    await delay(0);
+    await change('Источник эффекта', key(cpuLoad));
+    await change('Нижний порог эффекта', 45);
+    await change('Верхний порог эффекта', 45);
+    await click('Применить к LCD');
+    await until(
+      async () => (await rpc('get_lcd_theme', { dev }))?.layers[0]?.effect.kind === 'snow',
+      'Snow Apply',
+    );
+    let theme = await rpc('get_lcd_theme', { dev });
+    assert(
+      theme.layers[0].effect.sensor.low === 45 &&
+        theme.layers[0].effect.sensor.high === 45 &&
+        theme.layers[0].effect.sensor.sensor_id === cpuLoad.id,
+      'equal Snow range on constant45 CPU Load',
+    );
+    assert(
+      theme.page_cache.find((page) => page.page === 'rain')?.theme.layers[0].effect.sensor.low ===
+        15,
+      'independent Rain settings retained',
+    );
+    await click('Заменить профиль черновиком');
+    await until(
+      async () =>
+        (await rpc('list_profiles')).profiles.find(
+          (p) => p.slot === 0 && p.content.kind === 'screen',
+        )?.content.value.layers[0].effect.kind === 'snow',
+      'both pages saved in slot',
+    );
+    assert(
+      theme.page_cache.find((page) => page.page === 'basic').theme.background_image.asset === asset,
+      'cached managed background retained',
+    );
+    assert(
+      theme.layers[1].text === 'Snow overlay' &&
+        theme.name === 'Native Snow page' &&
+        theme.background[2] === 255,
+      'Snow page retained',
+    );
+    assert(
+      theme.page_cache.find((page) => page.page === 'rain').theme.layers[1].text === 'Rain overlay',
+      'cached Rain overlay retained',
+    );
+    assert(
+      theme.page_cache.find((page) => page.page === 'basic').theme.name === base.name,
+      'Basic cached through Apply',
+    );
+    await change('Эффект LCD', 'meteor');
+    await change('Название', 'Native Meteor page');
+    await change('Скорость метеоров', 3);
+    await change('Цвет метеоров 1', '#ff1122');
+    field('Управлять эффектом от датчика').click();
+    await until(() => field('Источник эффекта')?.value === key(cpuLoad), 'Meteor CPU Load default');
+    await change('Нижний цвет метеоров 1', '#ff0000');
+    await change('Верхний цвет метеоров 2', '#ffff00');
+    await change('Нижний порог эффекта', 15);
+    await change('Источник эффекта', key(cpu));
+    await change('Нижний цвет метеоров 1', '#ffffff');
+    await change('Нижний порог эффекта', 40);
+    await change('Верхний порог эффекта', 40);
+    await change('Источник эффекта', key(cpuLoad));
+    assert(
+      field('Нижний порог эффекта').value === '15' &&
+        field('Нижний цвет метеоров 1').value === '#ff0000',
+      'Meteor per-source palette/ranges retained',
+    );
+    await change('Эффект LCD', 'rain');
+    await change('Эффект LCD', 'meteor');
+    assert(
+      field('Название').value === 'Native Meteor page' &&
+        field('Нижний цвет метеоров 1').value === '#ff0000',
+      'Meteor page restored',
+    );
+    const oldPreview = document.querySelector('.lcd img')?.src;
+    await click('Обновить preview');
+    await until(() => {
+      const image = document.querySelector('.lcd img');
+      return image?.src !== oldPreview && image?.complete && image.naturalWidth === 480;
+    }, 'Meteor native preview decodes');
+    await click('Применить к LCD');
+    await until(
+      async () => (await rpc('get_lcd_theme', { dev }))?.layers[0]?.kind === 'meteor',
+      'Meteor Apply',
+    );
+    theme = await rpc('get_lcd_theme', { dev });
+    assert(
+      theme.page_cache.length === 3 &&
+        theme.page_cache.find((page) => page.page === 'basic').theme.background_image.asset ===
+          asset,
+      'four complete pages retain cached image',
+    );
+    assert(
+      theme.layers[0].effect.sensor.binding.sensor_id === cpuLoad.id &&
+        theme.layers[0].effect.sensor.low_colors[0][0] === 255,
+      'Meteor live binding/palette applied',
+    );
+    await click('Заменить профиль черновиком');
+    await until(
+      async () =>
+        (await rpc('list_profiles')).profiles.find(
+          (p) => p.slot === 0 && p.content.kind === 'screen',
+        )?.content.value.layers[0].kind === 'meteor',
+      'Meteor slot saved',
+    );
+    await change('Эффект LCD', 'none');
+    await click('Загрузить профиль в редактор');
+    await until(
+      () =>
+        field('Эффект LCD')?.value === 'meteor' &&
+        field('Название')?.value === 'Native Meteor page',
+      'Meteor slot restored into editor',
+    );
+    assert(
+      JSON.stringify(await rpc('get_lcd_theme', { dev })) === JSON.stringify(theme),
+      'Meteor profile load does not Apply',
+    );
+    await change('Эффект LCD', 'snow3d');
+    assert(field('Интенсивность Snow3D').value === '1', 'Snow3D default intensity');
+    assert(!field('Управлять эффектом от датчика'), 'Snow3D is static only');
+    await change('Интенсивность Snow3D', 3);
+    await change('Название', 'Native Snow3D page');
+    await change('Фон', '#112233');
+    await change('Текст', 'Snow3D overlay');
+    await change('Эффект LCD', 'none');
+    await change('Эффект LCD', 'snow3d');
+    assert(
+      field('Интенсивность Snow3D').value === '3' && field('Текст').value === 'Snow3D overlay',
+      'Snow3D independent page restored',
+    );
+    const snowPreview = document.querySelector('.lcd img')?.src;
+    await click('Обновить preview');
+    await until(() => {
+      const image = document.querySelector('.lcd img');
+      return image?.src !== snowPreview && image?.complete && image.naturalWidth === 480;
+    }, 'Snow3D preview decodes');
+    await click('Применить к LCD');
+    await until(
+      async () => (await rpc('get_lcd_theme', { dev }))?.layers[0]?.kind === 'snow3d',
+      'Snow3D Apply',
+    );
+    theme = await rpc('get_lcd_theme', { dev });
+    assert(
+      theme.page_cache.length === 4 && theme.layers[0].effect.intensity === 3,
+      'all five pages persisted',
+    );
+    await click('Заменить профиль черновиком');
+    await until(
+      async () =>
+        (await rpc('list_profiles')).profiles.find(
+          (p) => p.slot === 0 && p.content.kind === 'screen',
+        )?.content.value.layers[0].kind === 'snow3d',
+      'Snow3D profile saved',
+    );
+    await change('Эффект LCD', 'none');
+    await click('Загрузить профиль в редактор');
+    await until(
+      () =>
+        field('Эффект LCD')?.value === 'snow3d' &&
+        field('Название')?.value === 'Native Snow3D page',
+      'Snow3D profile loaded',
+    );
+    await change('Эффект LCD', 'fireworks');
+    assert(field('Интенсивность Fireworks').value === '1', 'Fireworks default intensity');
+    await change('Интенсивность Fireworks', 3);
+    await change('Название', 'Native Fireworks page');
+    await change('Цвет фейерверка 6', '#112233');
+    field('Управлять эффектом от датчика').click();
+    await until(
+      () => field('Источник эффекта')?.value === key(cpuLoad),
+      'Fireworks CPU Load default',
+    );
+    await change('Нижний цвет фейерверка 6', '#ffffff');
+    await change('Верхний цвет фейерверка 5', '#00ffff');
+    await change('Нижний порог эффекта', 15);
+    await change('Источник эффекта', key(cpu));
+    await change('Нижний цвет фейерверка 6', '#ff0000');
+    await change('Нижний порог эффекта', 40);
+    await change('Верхний порог эффекта', 40);
+    await change('Источник эффекта', key(cpuLoad));
+    assert(
+      field('Нижний цвет фейерверка 6').value === '#ffffff' &&
+        field('Нижний порог эффекта').value === '15',
+      'Fireworks per-source palettes/ranges',
+    );
+    await change('Эффект LCD', 'meteor');
+    await change('Эффект LCD', 'fireworks');
+    assert(
+      field('Название').value === 'Native Fireworks page' &&
+        field('Нижний цвет фейерверка 6').value === '#ffffff',
+      'Fireworks full page restored',
+    );
+    const firePreview = document.querySelector('.lcd img')?.src;
+    await click('Обновить preview');
+    await until(() => {
+      const image = document.querySelector('.lcd img');
+      return image?.src !== firePreview && image?.complete && image.naturalWidth === 480;
+    }, 'Fireworks preview JPEG decodes');
+    await click('Применить к LCD');
+    await until(
+      async () => (await rpc('get_lcd_theme', { dev }))?.layers[0]?.kind === 'fireworks',
+      'Fireworks Apply',
+    );
+    theme = await rpc('get_lcd_theme', { dev });
+    assert(
+      theme.page_cache.length === 5 &&
+        theme.page_cache.find((page) => page.page === 'basic').theme.background_image.asset ===
+          asset,
+      'six complete pages retain managed image',
+    );
+    const fire = theme.layers[0].effect;
+    assert(
+      fire.sensor.binding.sensor_id === cpuLoad.id &&
+        fire.sensor.low_colors.length === 6 &&
+        fire.sensor.low_colors[5][0] === 255,
+      'Fireworks binding/six palette',
+    );
+    assert(
+      fire.retained_sensors.find((source) => source.binding.sensor_id === cpu.id)?.binding.high ===
+        40,
+      'Fireworks retained equal temperature range',
+    );
+    await click('Заменить профиль черновиком');
+    await until(
+      async () =>
+        (await rpc('list_profiles')).profiles.find(
+          (p) => p.slot === 0 && p.content.kind === 'screen',
+        )?.content.value.layers[0].kind === 'fireworks',
+      'Fireworks profile saved',
+    );
+    await change('Эффект LCD', 'none');
+    await click('Загрузить профиль в редактор');
+    await until(
+      () =>
+        field('Эффект LCD')?.value === 'fireworks' &&
+        field('Название')?.value === 'Native Fireworks page',
+      'Fireworks profile loaded',
+    );
+    assert(
+      JSON.stringify(await rpc('get_lcd_theme', { dev })) === JSON.stringify(theme),
+      'Fireworks profile load does not Apply',
+    );
+    await delay(1000);
+    const state = await rpc('get_lcd_state', { dev });
+    assert(
+      state.source === 'Theme' && !state.last_error,
+      'native weather stream has no actor error',
+    );
+    await invoke('native_smoke_result', {
+      result: {
+        ok: true,
+        dev,
+        theme,
+        rain,
+        profiles: await rpc('list_profiles'),
+        preview_width: 480,
+        preview_height: 480,
+        native_fireworks: true,
+        native_snow3d: true,
+        native_meteor: true,
+        native_full_page_state: true,
+        native_equal_thresholds: true,
+        native_cpu_load_default: true,
+        native_ranges: true,
+        native_profile: true,
+        native_draft_boundary: true,
+      },
+      keepOpen: false,
+    });
+  } catch (error) {
+    await invoke('native_smoke_result', {
+      result: { ok: false, error: String(error), stack: error.stack },
+      keepOpen: false,
+    });
+  }
 })();

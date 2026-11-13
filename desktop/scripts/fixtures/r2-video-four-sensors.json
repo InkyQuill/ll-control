@@ -1,9 +1,5 @@
 {
-  "background": [
-    0,
-    0,
-    0
-  ],
+  "background": [0, 0, 0],
   "background_video": "bcf5a102bf2a426286d34310cad4a001",
   "layers": [
     {
@@ -13,19 +9,11 @@
       "parts": {
         "label": {
           "align": "right",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -36,19 +24,11 @@
         },
         "unit": {
           "align": "left",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -61,19 +41,11 @@
       "sensor_id": "fixture:cpu",
       "style": {
         "align": "center",
-        "color": [
-          235,
-          245,
-          255
-        ],
+        "color": [235, 245, 255],
         "line_box": true,
         "shadow": {
           "blur": 2,
-          "color": [
-            0,
-            0,
-            0
-          ],
+          "color": [0, 0, 0],
           "opacity": 20,
           "x": 0,
           "y": 3
@@ -92,19 +64,11 @@
       "parts": {
         "label": {
           "align": "right",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -115,19 +79,11 @@
         },
         "unit": {
           "align": "left",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -140,19 +96,11 @@
       "sensor_id": "fixture:cpu",
       "style": {
         "align": "center",
-        "color": [
-          235,
-          245,
-          255
-        ],
+        "color": [235, 245, 255],
         "line_box": true,
         "shadow": {
           "blur": 2,
-          "color": [
-            0,
-            0,
-            0
-          ],
+          "color": [0, 0, 0],
           "opacity": 20,
           "x": 0,
           "y": 3
@@ -171,19 +119,11 @@
       "parts": {
         "label": {
           "align": "right",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -194,19 +134,11 @@
         },
         "unit": {
           "align": "left",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -219,19 +151,11 @@
       "sensor_id": "fixture:cpu",
       "style": {
         "align": "center",
-        "color": [
-          235,
-          245,
-          255
-        ],
+        "color": [235, 245, 255],
         "line_box": true,
         "shadow": {
           "blur": 2,
-          "color": [
-            0,
-            0,
-            0
-          ],
+          "color": [0, 0, 0],
           "opacity": 20,
           "x": 0,
           "y": 3
@@ -250,19 +174,11 @@
       "parts": {
         "label": {
           "align": "right",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -273,19 +189,11 @@
         },
         "unit": {
           "align": "left",
-          "color": [
-            71,
-            201,
-            137
-          ],
+          "color": [71, 201, 137],
           "line_box": true,
           "shadow": {
             "blur": 2,
-            "color": [
-              0,
-              0,
-              0
-            ],
+            "color": [0, 0, 0],
             "opacity": 20,
             "x": 0,
             "y": 3
@@ -298,19 +206,11 @@
       "sensor_id": "fixture:cpu",
       "style": {
         "align": "center",
-        "color": [
-          235,
-          245,
-          255
-        ],
+        "color": [235, 245, 255],
         "line_box": true,
         "shadow": {
           "blur": 2,
-          "color": [
-            0,
-            0,
-            0
-          ],
+          "color": [0, 0, 0],
           "opacity": 20,
           "x": 0,
           "y": 3
@@ -324,21 +224,13 @@
     },
     {
       "axis": "vertical",
-      "color": [
-        71,
-        201,
-        137
-      ],
+      "color": [71, 201, 137],
       "kind": "divider",
       "length": 169.0,
       "opacity": 100,
       "shadow": {
         "blur": 5,
-        "color": [
-          0,
-          0,
-          0
-        ],
+        "color": [0, 0, 0],
         "opacity": 100,
         "x": 0,
         "y": 0
@@ -349,21 +241,13 @@
     },
     {
       "axis": "horizontal",
-      "color": [
-        71,
-        201,
-        137
-      ],
+      "color": [71, 201, 137],
       "kind": "divider",
       "length": 412.0,
       "opacity": 100,
       "shadow": {
         "blur": 5,
-        "color": [
-          0,
-          0,
-          0
-        ],
+        "color": [0, 0, 0],
         "opacity": 100,
         "x": 0,
         "y": 0
@@ -374,21 +258,13 @@
     },
     {
       "axis": "vertical",
-      "color": [
-        71,
-        201,
-        137
-      ],
+      "color": [71, 201, 137],
       "kind": "divider",
       "length": 166.0,
       "opacity": 100,
       "shadow": {
         "blur": 5,
-        "color": [
-          0,
-          0,
-          0
-        ],
+        "color": [0, 0, 0],
         "opacity": 100,
         "x": 0,
         "y": 0

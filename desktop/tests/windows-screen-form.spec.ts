@@ -1,106 +1,281 @@
-import {test,expect} from '@playwright/test';
-import {setup,type Fixture} from './fixtures/group-archive';
-for(const language of ['en-US','ru-RU'])test(`${language}: explicit Screen bindings prepare once, retain profile library and require separate Apply`,async({page})=>{
- await page.setViewportSize({width:1024,height:1000});await setup(page,language);
- const text=(en:string,ru:string)=>language==='en-US'?en:ru;
- const panel=page.getByText(text('Settings group backup','Резервная копия группы настроек'),{exact:true}).locator('..');
- await panel.getByRole('button',{name:text('Choose Windows Screen ZIP…','Выбрать Windows ZIP экрана…'),exact:true}).click();
- const form=panel.getByRole('region',{name:text('Windows Screen bindings','Привязки Windows Screen')});
- await form.getByLabel(text('Windows source controller','Исходный контроллер Windows'),{exact:true}).selectOption('1');
- await form.getByRole('button',{name:text('Read screen requirements','Прочитать требования экрана'),exact:true}).click();
- const prepare=form.getByRole('button',{name:text('Prepare screen import','Подготовить импорт экрана'),exact:true});
- await expect(prepare).toBeDisabled();
- await form.getByLabel(text('Imported theme name','Название импортированной темы'),{exact:true}).fill('Owned imported screen');
- await form.getByLabel(/CPU.*(Temperature|Температура)/).fill('cpu:test');
- await form.getByLabel(/(Pump|Помпа).*RPM/).fill('rpm:unavailable');
- await expect(form.getByText(text('Source unavailable or unverified. The ID is retained without substitution.','Источник недоступен или не подтверждён. ID сохранён без подмены.'),{exact:true})).toBeVisible();
- await form.getByLabel(text('Font for HyperspaceRace_BoldItalic','Шрифт для HyperspaceRace_BoldItalic'),{exact:true}).selectOption('sans');
- const video=form.getByRole('combobox').filter({has:page.locator('option[value="archive:wmsq/clip.mp4"]')});
- await video.selectOption('archive:wmsq/clip.mp4');
- const watermark=form.getByRole('combobox').filter({has:page.locator('option[value="archive:wmsq/art.png"]')}).filter({hasNot:page.locator('option[value="archive:wmsq/clip.mp4"]')});
- await watermark.selectOption('archive:wmsq/art.png');
- await expect(prepare).toBeEnabled();
- const calls=()=>page.evaluate(()=>(window as unknown as {groupFixture:Fixture}).groupFixture.calls);
- expect((await calls()).filter(c=>c.args.action==='finish')).toHaveLength(0);
- await form.screenshot({path:`../.impeccable/review/windows-screen-form-${language}.png`});
- await prepare.click();
- await expect(form.getByLabel(text('Imported theme name','Название импортированной темы'),{exact:true})).toBeDisabled();
- const prepared=(await calls()).filter(c=>c.command==='group_windows_prepare');expect(prepared).toHaveLength(2);
- const options=prepared[1].args.options as {bindings_json:string;resources_json:string};
- expect(JSON.parse(options.bindings_json).sensors.PumpRPM.sensor_id).toBe('rpm:unavailable');
- expect(JSON.parse(options.resources_json)['file:///C:/owned/watermark.png']).toEqual({kind:'archive',entry:'wmsq/art.png'});
- expect((await calls()).filter(c=>c.args.action==='finish')).toHaveLength(0);
- const preview=panel.getByRole('region',{name:text('Prepared screen preview','Preview подготовленного экрана')});
- const showFrame=preview.getByRole('button',{name:text('Show prepared frame','Показать подготовленный кадр'),exact:true});
- const apply=panel.getByRole('button',{name:text('Import screen and apply','Импортировать экран и применить'),exact:true});
- await page.evaluate(()=>{(window as unknown as {groupFixture:Fixture}).groupFixture.holdPreview=true;});
- const statusCount=async()=>(await calls()).filter(c=>c.command==='group_archive_status').length;
- const priorPolls=await statusCount();
- await showFrame.click();await expect(apply).toBeDisabled();
- await expect.poll(statusCount).toBeGreaterThanOrEqual(priorPolls+2);
- await expect.poll(()=>page.evaluate(()=>!!(window as unknown as {groupFixture:Fixture}).groupFixture.releasePreview)).toBe(true);
- await page.evaluate(()=>{const f=(window as unknown as {groupFixture:Fixture}).groupFixture;f.holdPreview=false;f.releasePreview!();});
- const frame=preview.locator('img');await expect(frame).toBeVisible();
- expect(await frame.evaluate((img:HTMLImageElement)=>[img.naturalWidth,img.naturalHeight])).toEqual([480,480]);
- await expect(preview.locator('.lcd')).toHaveAttribute('data-lcd-shape','square');
- const sceneUrl=await frame.getAttribute('src');
- await preview.getByRole('combobox').selectOption('editor');await expect(frame).toHaveCount(0);
- await showFrame.click();await expect(frame).toBeVisible();expect(await frame.getAttribute('src')).not.toBe(sceneUrl);
- const previews=(await calls()).filter(c=>c.args.method==='preview_windows_screen_upload');
- expect(previews.map(c=>(c.args.params as {source:string}).source)).toEqual(['scene','editor']);
- expect((await calls()).filter(c=>c.args.action==='finish')).toHaveLength(0);
- await page.evaluate(()=>{(window as unknown as {groupFixture:Fixture}).groupFixture.rejectPreview=true;});
- await showFrame.click();await expect(preview.getByRole('alert')).toContainText('owned preview rejection');
- await expect(frame).toHaveCount(0);await expect(apply).toBeEnabled();
- await apply.click();
- await expect(panel.getByText(new RegExp(text('Group save confirmed','Сохранение группы подтверждено')))).toBeVisible();
- expect((await calls()).filter(c=>c.args.action==='finish')).toHaveLength(1);
- await page.reload();await page.getByRole('button',{name:text('Settings','Настройки'),exact:true}).click();await page.getByText(text('Settings group backup','Резервная копия группы настроек'),{exact:true}).click();
- await panel.getByRole('button',{name:text('Read group result','Прочитать результат группы'),exact:true}).click();
- await expect(panel.getByText(new RegExp(text('Group save confirmed','Сохранение группы подтверждено')))).toBeVisible();
- expect((await calls()).filter(c=>c.args.action==='finish')).toHaveLength(0);
+import { test, expect } from '@playwright/test';
+import { setup, type Fixture } from './fixtures/group-archive';
+for (const language of ['en-US', 'ru-RU'])
+  test(`${language}: explicit Screen bindings prepare once, retain profile library and require separate Apply`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 1000 });
+    await setup(page, language);
+    const text = (en: string, ru: string) => (language === 'en-US' ? en : ru);
+    const panel = page
+      .getByText(text('Settings group backup', 'Резервная копия группы настроек'), { exact: true })
+      .locator('..');
+    await panel
+      .getByRole('button', {
+        name: text('Choose Windows Screen ZIP…', 'Выбрать Windows ZIP экрана…'),
+        exact: true,
+      })
+      .click();
+    const form = panel.getByRole('region', {
+      name: text('Windows Screen bindings', 'Привязки Windows Screen'),
+    });
+    await form
+      .getByLabel(text('Windows source controller', 'Исходный контроллер Windows'), { exact: true })
+      .selectOption('1');
+    await form
+      .getByRole('button', {
+        name: text('Read screen requirements', 'Прочитать требования экрана'),
+        exact: true,
+      })
+      .click();
+    const prepare = form.getByRole('button', {
+      name: text('Prepare screen import', 'Подготовить импорт экрана'),
+      exact: true,
+    });
+    await expect(prepare).toBeDisabled();
+    await form
+      .getByLabel(text('Imported theme name', 'Название импортированной темы'), { exact: true })
+      .fill('Owned imported screen');
+    await form.getByLabel(/CPU.*(Temperature|Температура)/).fill('cpu:test');
+    await form.getByLabel(/(Pump|Помпа).*RPM/).fill('rpm:unavailable');
+    await expect(
+      form.getByText(
+        text(
+          'Source unavailable or unverified. The ID is retained without substitution.',
+          'Источник недоступен или не подтверждён. ID сохранён без подмены.',
+        ),
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await form
+      .getByLabel(
+        text('Font for HyperspaceRace_BoldItalic', 'Шрифт для HyperspaceRace_BoldItalic'),
+        { exact: true },
+      )
+      .selectOption('sans');
+    const video = form
+      .getByRole('combobox')
+      .filter({ has: page.locator('option[value="archive:wmsq/clip.mp4"]') });
+    await video.selectOption('archive:wmsq/clip.mp4');
+    const watermark = form
+      .getByRole('combobox')
+      .filter({ has: page.locator('option[value="archive:wmsq/art.png"]') })
+      .filter({ hasNot: page.locator('option[value="archive:wmsq/clip.mp4"]') });
+    await watermark.selectOption('archive:wmsq/art.png');
+    await expect(prepare).toBeEnabled();
+    const calls = () =>
+      page.evaluate(() => (window as unknown as { groupFixture: Fixture }).groupFixture.calls);
+    expect((await calls()).filter((c) => c.args.action === 'finish')).toHaveLength(0);
+    await form.screenshot({ path: `../.impeccable/review/windows-screen-form-${language}.png` });
+    await prepare.click();
+    await expect(
+      form.getByLabel(text('Imported theme name', 'Название импортированной темы'), {
+        exact: true,
+      }),
+    ).toBeDisabled();
+    const prepared = (await calls()).filter((c) => c.command === 'group_windows_prepare');
+    expect(prepared).toHaveLength(2);
+    const options = prepared[1].args.options as { bindings_json: string; resources_json: string };
+    expect(JSON.parse(options.bindings_json).sensors.PumpRPM.sensor_id).toBe('rpm:unavailable');
+    expect(JSON.parse(options.resources_json)['file:///C:/owned/watermark.png']).toEqual({
+      kind: 'archive',
+      entry: 'wmsq/art.png',
+    });
+    expect((await calls()).filter((c) => c.args.action === 'finish')).toHaveLength(0);
+    const preview = panel.getByRole('region', {
+      name: text('Prepared screen preview', 'Preview подготовленного экрана'),
+    });
+    const showFrame = preview.getByRole('button', {
+      name: text('Show prepared frame', 'Показать подготовленный кадр'),
+      exact: true,
+    });
+    const apply = panel.getByRole('button', {
+      name: text('Import screen and apply', 'Импортировать экран и применить'),
+      exact: true,
+    });
+    await page.evaluate(() => {
+      (window as unknown as { groupFixture: Fixture }).groupFixture.holdPreview = true;
+    });
+    const statusCount = async () =>
+      (await calls()).filter((c) => c.command === 'group_archive_status').length;
+    const priorPolls = await statusCount();
+    await showFrame.click();
+    await expect(apply).toBeDisabled();
+    await expect.poll(statusCount).toBeGreaterThanOrEqual(priorPolls + 2);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => !!(window as unknown as { groupFixture: Fixture }).groupFixture.releasePreview,
+        ),
+      )
+      .toBe(true);
+    await page.evaluate(() => {
+      const f = (window as unknown as { groupFixture: Fixture }).groupFixture;
+      f.holdPreview = false;
+      f.releasePreview!();
+    });
+    const frame = preview.locator('img');
+    await expect(frame).toBeVisible();
+    expect(
+      await frame.evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight]),
+    ).toEqual([480, 480]);
+    await expect(preview.locator('.lcd')).toHaveAttribute('data-lcd-shape', 'square');
+    const sceneUrl = await frame.getAttribute('src');
+    await preview.getByRole('combobox').selectOption('editor');
+    await expect(frame).toHaveCount(0);
+    await showFrame.click();
+    await expect(frame).toBeVisible();
+    expect(await frame.getAttribute('src')).not.toBe(sceneUrl);
+    const previews = (await calls()).filter(
+      (c) => c.args.method === 'preview_windows_screen_upload',
+    );
+    expect(previews.map((c) => (c.args.params as { source: string }).source)).toEqual([
+      'scene',
+      'editor',
+    ]);
+    expect((await calls()).filter((c) => c.args.action === 'finish')).toHaveLength(0);
+    await page.evaluate(() => {
+      (window as unknown as { groupFixture: Fixture }).groupFixture.rejectPreview = true;
+    });
+    await showFrame.click();
+    await expect(preview.getByRole('alert')).toContainText('owned preview rejection');
+    await expect(frame).toHaveCount(0);
+    await expect(apply).toBeEnabled();
+    await apply.click();
+    await expect(
+      panel.getByText(new RegExp(text('Group save confirmed', 'Сохранение группы подтверждено'))),
+    ).toBeVisible();
+    expect((await calls()).filter((c) => c.args.action === 'finish')).toHaveLength(1);
+    await page.reload();
+    await page.getByRole('button', { name: text('Settings', 'Настройки'), exact: true }).click();
+    await page
+      .getByText(text('Settings group backup', 'Резервная копия группы настроек'), { exact: true })
+      .click();
+    await panel
+      .getByRole('button', {
+        name: text('Read group result', 'Прочитать результат группы'),
+        exact: true,
+      })
+      .click();
+    await expect(
+      panel.getByText(new RegExp(text('Group save confirmed', 'Сохранение группы подтверждено'))),
+    ).toBeVisible();
+    expect((await calls()).filter((c) => c.args.action === 'finish')).toHaveLength(0);
+  });
+
+test('deferred source and image-only alias cannot be prepared with a video', async ({ page }) => {
+  await setup(page);
+  const panel = page.getByText('Резервная копия группы настроек', { exact: true }).locator('..');
+  await panel.getByRole('button', { name: 'Выбрать Windows ZIP экрана…', exact: true }).click();
+  const form = panel.getByRole('region', { name: 'Привязки Windows Screen' });
+  await form.getByLabel('Исходный контроллер Windows', { exact: true }).selectOption('1');
+  await form.getByRole('button', { name: 'Прочитать требования экрана', exact: true }).click();
+  await page.evaluate(() => {
+    const f = (window as unknown as { groupFixture: Fixture }).groupFixture;
+    f.job!.windows_screen_requirements!.deferred = ['empty_runtime_default_request'];
+  });
+  await expect(form.getByRole('alert')).toContainText('пока нельзя импортировать');
+  await expect(
+    form.getByRole('button', { name: 'Подготовить импорт экрана', exact: true }),
+  ).toBeDisabled();
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as { groupFixture: Fixture }).groupFixture.calls.filter(
+        (c) => c.args.action === 'finish',
+      ),
+    ),
+  ).toHaveLength(0);
 });
 
-test('deferred source and image-only alias cannot be prepared with a video',async({page})=>{
- await setup(page);const panel=page.getByText('Резервная копия группы настроек',{exact:true}).locator('..');
- await panel.getByRole('button',{name:'Выбрать Windows ZIP экрана…',exact:true}).click();
- const form=panel.getByRole('region',{name:'Привязки Windows Screen'});
- await form.getByLabel('Исходный контроллер Windows',{exact:true}).selectOption('1');
- await form.getByRole('button',{name:'Прочитать требования экрана',exact:true}).click();
- await page.evaluate(()=>{const f=(window as unknown as {groupFixture:Fixture}).groupFixture;f.job!.windows_screen_requirements!.deferred=['empty_runtime_default_request'];});
- await expect(form.getByRole('alert')).toContainText('пока нельзя импортировать');
- await expect(form.getByRole('button',{name:'Подготовить импорт экрана',exact:true})).toBeDisabled();
- expect(await page.evaluate(()=>(window as unknown as {groupFixture:Fixture}).groupFixture.calls.filter(c=>c.args.action==='finish'))).toHaveLength(0);
+test('mapping validates all choices without guessing and preserves special reference names as data', async ({
+  page,
+}) => {
+  await setup(page);
+  const result = await page.evaluate(async (modulePath) => {
+    const { screenOptions } = await import(/* @vite-ignore */ modulePath);
+    const req = {
+      record_index: 0,
+      backup_sha256: 'a'.repeat(64),
+      bindings: {
+        sensor_roles: ['CPUTemperature'],
+        fonts: ['HyperspaceRace_BoldItalic'],
+        resources: Object.fromEntries([['__proto__', true]]),
+      },
+      payloads: [
+        { entry: 'wmsq/art.png', bytes: 1, kind: 'image' },
+        { entry: 'wmsq/clip.mp4', bytes: 1, kind: 'video' },
+      ],
+      deferred: [],
+      payloads_decoded: false,
+      apply_supported: false,
+    };
+    const ids = {
+      CPUTemperature: 'explicit:unavailable',
+      CPULoad: '',
+      GPULoad: '',
+      GPUTemperature: '',
+      PumpRPM: '',
+      CoolantTemp: '',
+    };
+    const fonts = { HyperspaceRace_BoldItalic: 'sans' };
+    const resources = Object.fromEntries([['__proto__', 'archive:wmsq/art.png']]);
+    const before = JSON.stringify([req, ids, fonts, resources]);
+    const run = (f: Record<string, string> = fonts, r: Record<string, string> = resources) =>
+      screenOptions(req, '0', 'Owned source', ids, f, r, [], [], [], []);
+    const good = run(),
+      missingFont = run({}),
+      wrongKind = run(fonts, Object.fromEntries([['__proto__', 'archive:wmsq/clip.mp4']])),
+      missingReference = run(fonts, {});
+    return {
+      good,
+      missingFont,
+      wrongKind,
+      missingReference,
+      unchanged: before === JSON.stringify([req, ids, fonts, resources]),
+    };
+  }, '/src/lib/windows-screen.ts');
+  expect(result.good).not.toBeNull();
+  expect(result.missingFont).toBeNull();
+  expect(result.wrongKind).toBeNull();
+  expect(result.missingReference).toBeNull();
+  expect(result.unchanged).toBe(true);
+  const mapped = JSON.parse(result.good.resources_json);
+  expect(Object.hasOwn(mapped, '__proto__')).toBe(true);
+  expect(mapped.__proto__).toEqual({ kind: 'archive', entry: 'wmsq/art.png' });
 });
 
-test('mapping validates all choices without guessing and preserves special reference names as data',async({page})=>{
- await setup(page);
- const result=await page.evaluate(async modulePath=>{
-  const {screenOptions}=await import(/* @vite-ignore */ modulePath);
-  const req={record_index:0,backup_sha256:'a'.repeat(64),bindings:{sensor_roles:['CPUTemperature'],fonts:['HyperspaceRace_BoldItalic'],resources:Object.fromEntries([['__proto__',true]])},payloads:[{entry:'wmsq/art.png',bytes:1,kind:'image'},{entry:'wmsq/clip.mp4',bytes:1,kind:'video'}],deferred:[],payloads_decoded:false,apply_supported:false};
-  const ids={CPUTemperature:'explicit:unavailable',CPULoad:'',GPULoad:'',GPUTemperature:'',PumpRPM:'',CoolantTemp:''};
-  const fonts={HyperspaceRace_BoldItalic:'sans'};
-  const resources=Object.fromEntries([['__proto__','archive:wmsq/art.png']]);
-  const before=JSON.stringify([req,ids,fonts,resources]);
-  const run=(f:Record<string,string>=fonts,r:Record<string,string>=resources)=>screenOptions(req,'0','Owned source',ids,f,r,[],[],[],[]);
-  const good=run(),missingFont=run({}),wrongKind=run(fonts,Object.fromEntries([['__proto__','archive:wmsq/clip.mp4']])),missingReference=run(fonts,{});
-  return {good,missingFont,wrongKind,missingReference,unchanged:before===JSON.stringify([req,ids,fonts,resources])};
- },'/src/lib/windows-screen.ts');
- expect(result.good).not.toBeNull();expect(result.missingFont).toBeNull();expect(result.wrongKind).toBeNull();expect(result.missingReference).toBeNull();expect(result.unchanged).toBe(true);
- const mapped=JSON.parse(result.good.resources_json);expect(Object.hasOwn(mapped,'__proto__')).toBe(true);expect(mapped.__proto__).toEqual({kind:'archive',entry:'wmsq/art.png'});
-});
-
-test('cancelled preparation discards a delayed preview without applying or restoring its image',async({page})=>{
- await setup(page,'en-US');
- const panel=page.getByText('Settings group backup',{exact:true}).locator('..');
- await panel.getByRole('button',{name:'Choose Windows Screen ZIP…',exact:true}).click();
- await page.evaluate(()=>{const f=(window as unknown as {groupFixture:Fixture}).groupFixture;f.job!.phase='prepared';f.holdPreview=true;});
- const preview=panel.getByRole('region',{name:'Prepared screen preview'});
- await preview.getByRole('button',{name:'Show prepared frame',exact:true}).click();
- await expect.poll(()=>page.evaluate(()=>!!(window as unknown as {groupFixture:Fixture}).groupFixture.releasePreview)).toBe(true);
- await panel.getByRole('button',{name:'Cancel group transfer',exact:true}).click();
- await expect(preview).toHaveCount(0);
- await page.evaluate(()=>{const f=(window as unknown as {groupFixture:Fixture}).groupFixture;f.releasePreview!();});
- await expect(panel.locator('.group-preview img')).toHaveCount(0);
- expect(await page.evaluate(()=>(window as unknown as {groupFixture:Fixture}).groupFixture.calls.filter(c=>c.args.action==='finish'))).toHaveLength(0);
+test('cancelled preparation discards a delayed preview without applying or restoring its image', async ({
+  page,
+}) => {
+  await setup(page, 'en-US');
+  const panel = page.getByText('Settings group backup', { exact: true }).locator('..');
+  await panel.getByRole('button', { name: 'Choose Windows Screen ZIP…', exact: true }).click();
+  await page.evaluate(() => {
+    const f = (window as unknown as { groupFixture: Fixture }).groupFixture;
+    f.job!.phase = 'prepared';
+    f.holdPreview = true;
+  });
+  const preview = panel.getByRole('region', { name: 'Prepared screen preview' });
+  await preview.getByRole('button', { name: 'Show prepared frame', exact: true }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => !!(window as unknown as { groupFixture: Fixture }).groupFixture.releasePreview,
+      ),
+    )
+    .toBe(true);
+  await panel.getByRole('button', { name: 'Cancel group transfer', exact: true }).click();
+  await expect(preview).toHaveCount(0);
+  await page.evaluate(() => {
+    const f = (window as unknown as { groupFixture: Fixture }).groupFixture;
+    f.releasePreview!();
+  });
+  await expect(panel.locator('.group-preview img')).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as { groupFixture: Fixture }).groupFixture.calls.filter(
+        (c) => c.args.action === 'finish',
+      ),
+    ),
+  ).toHaveLength(0);
 });
