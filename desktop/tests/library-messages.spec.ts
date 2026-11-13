@@ -49,7 +49,7 @@ async function setup(page: Page, language: Language, operation: Operation) {
       };
       let images = [{ key: 'a'.repeat(32), name, revision: 1, is_default: false }],
         videos = [{ key: 'b'.repeat(32), name, fps: 24, frames: 24, encoded_bytes: 100 }];
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       window.libraryMessages = f;
       Object.assign(window, {
         __TAURI_INTERNALS__: {

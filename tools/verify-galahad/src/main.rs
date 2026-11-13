@@ -1,7 +1,7 @@
 //! Phase-0 test harness for Galahad II LCDV2.
 //!
 //! Not a product binary. This exists only to exercise commands defined
-//! in `lconnect-protocol` against a live device and print the results
+//! in `llcontrol-protocol` against a live device and print the results
 //! into `docs/development/protocol/galahad2-lcdv2.md`'s "Verification" sections.
 //!
 //! Once Phase 1 stands up the real daemon, this tool is retired.
@@ -111,7 +111,7 @@ struct SetPumpLightingArgs {
     mode: PumpModeArg,
     /// Primary colour as `#RRGGBB` (six hex digits, optional leading `#`).
     #[arg(long, default_value = "#FF0000", value_parser = parse_hex_color)]
-    color: lconnect_protocol::galahad2_lcdv2::lighting::Rgb,
+    color: llcontrol_protocol::galahad2_lcdv2::lighting::Rgb,
     /// Brightness percent, 0..=100. Mapped to wire bytes 0..=4 (percent / 25).
     #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
     brightness: u8,
@@ -143,7 +143,7 @@ struct SetFanLightingArgs {
     mode: FanModeArg,
     /// Primary colour as `#RRGGBB` (six hex digits, optional leading `#`).
     #[arg(long, default_value = "#FF0000", value_parser = parse_hex_color)]
-    color: lconnect_protocol::galahad2_lcdv2::lighting::Rgb,
+    color: llcontrol_protocol::galahad2_lcdv2::lighting::Rgb,
     /// Brightness percent, 0..=100. Mapped to wire bytes 0..=4 (percent / 25).
     #[arg(long, default_value_t = 50, value_parser = clap::value_parser!(u8).range(0..=100))]
     brightness: u8,
@@ -191,7 +191,7 @@ struct SetFanLightingArgs {
 struct SetLedColorsArgs {
     /// Primary colour as `#RRGGBB`.
     #[arg(long, value_parser = parse_hex_color)]
-    color: lconnect_protocol::galahad2_lcdv2::Rgb,
+    color: llcontrol_protocol::galahad2_lcdv2::Rgb,
 
     /// Number of LEDs to address. Default 16 (matches the LCDV2 pump-cap
     /// ring). Capped at 80 (well below `MAX_SCREEN_LEDS=329` /
@@ -225,7 +225,7 @@ struct SetLedColorsArgs {
 /// Flags for `upload-jpeg`.
 ///
 /// Drives `SendJpeg` (cmd 14) or `UploadJpeg` (cmd 15) end-to-end:
-/// `lconnect-image::prepare_jpeg_from_path` decodes any input format
+/// `llcontrol-image::prepare_jpeg_from_path` decodes any input format
 /// the `image` crate supports (PNG, JPEG, WebP, BMP, GIF), fits it to
 /// 480×480 per `--fit`, re-encodes as JPEG at `--quality`, and the
 /// chosen codec packetises the bytes for the device.
@@ -261,7 +261,7 @@ struct UploadJpegArgs {
     #[arg(long, default_value = "crop")]
     fit: FitModeArg,
 
-    /// JPEG quality, 1..=100. Default 90 (matches lconnect-image's default).
+    /// JPEG quality, 1..=100. Default 90 (matches llcontrol-image's default).
     /// Higher quality (95+) bloats packet count without much visible improvement
     /// on the 480×480 LCD; lower quality (≤70) loses fine detail in natural
     /// imagery. 90 is a sane mid-default.
@@ -270,7 +270,7 @@ struct UploadJpegArgs {
 
     /// Background colour as `#RRGGBB`, used only when `--fit letterbox`.
     #[arg(long, default_value = "#000000", value_parser = parse_hex_color)]
-    letterbox_bg: lconnect_protocol::galahad2_lcdv2::Rgb,
+    letterbox_bg: llcontrol_protocol::galahad2_lcdv2::Rgb,
 
     /// FOR TESTING ONLY — skip the user-consent prompt. Do not use in
     /// scripts that run unattended against production hardware.
@@ -333,7 +333,7 @@ impl FitModeArg {
 }
 
 /// Convert the CLI fit-mode arg + parsed letterbox background into the
-/// `lconnect-image::FitMode` the codec expects. The background colour is
+/// `llcontrol-image::FitMode` the codec expects. The background colour is
 /// only meaningful for `Letterbox`, but it's parsed unconditionally so we
 /// pair them at the conversion boundary.
 ///
@@ -343,14 +343,14 @@ impl FitModeArg {
 /// neither the trait nor the `Self` type is local.
 fn fit_mode_from_args(
     arg: FitModeArg,
-    bg: lconnect_protocol::galahad2_lcdv2::Rgb,
-) -> lconnect_image::FitMode {
+    bg: llcontrol_protocol::galahad2_lcdv2::Rgb,
+) -> llcontrol_image::FitMode {
     match arg {
-        FitModeArg::Crop => lconnect_image::FitMode::Crop,
-        FitModeArg::Letterbox => lconnect_image::FitMode::Letterbox {
+        FitModeArg::Crop => llcontrol_image::FitMode::Crop,
+        FitModeArg::Letterbox => llcontrol_image::FitMode::Letterbox {
             bg: [bg.r, bg.g, bg.b],
         },
-        FitModeArg::Stretch => lconnect_image::FitMode::Stretch,
+        FitModeArg::Stretch => llcontrol_image::FitMode::Stretch,
     }
 }
 
@@ -372,9 +372,9 @@ enum PumpSourceArg {
     Motherboard,
 }
 
-impl From<PumpSourceArg> for lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource {
+impl From<PumpSourceArg> for llcontrol_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource {
     fn from(v: PumpSourceArg) -> Self {
-        use lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource as P;
+        use llcontrol_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource as P;
         match v {
             PumpSourceArg::Mcu => P::Mcu,
             PumpSourceArg::Motherboard => P::Motherboard,
@@ -404,9 +404,9 @@ enum PumpModeArg {
     Bounce,
 }
 
-impl From<PumpModeArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingMode {
+impl From<PumpModeArg> for llcontrol_protocol::galahad2_lcdv2::lighting_enums::PumpLightingMode {
     fn from(v: PumpModeArg) -> Self {
-        use lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingMode as P;
+        use llcontrol_protocol::galahad2_lcdv2::lighting_enums::PumpLightingMode as P;
         match v {
             PumpModeArg::Rainbow => P::Rainbow,
             PumpModeArg::RainbowMorph => P::RainbowMorph,
@@ -440,9 +440,9 @@ enum FanModeArg {
     Meteor,
 }
 
-impl From<FanModeArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::FanLightingMode {
+impl From<FanModeArg> for llcontrol_protocol::galahad2_lcdv2::lighting_enums::FanLightingMode {
     fn from(v: FanModeArg) -> Self {
-        use lconnect_protocol::galahad2_lcdv2::lighting_enums::FanLightingMode as F;
+        use llcontrol_protocol::galahad2_lcdv2::lighting_enums::FanLightingMode as F;
         match v {
             FanModeArg::Rainbow => F::Rainbow,
             FanModeArg::RainbowMorph => F::RainbowMorph,
@@ -462,9 +462,9 @@ enum PumpScopeArg {
     All,
 }
 
-impl From<PumpScopeArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingScope {
+impl From<PumpScopeArg> for llcontrol_protocol::galahad2_lcdv2::lighting_enums::PumpLightingScope {
     fn from(v: PumpScopeArg) -> Self {
-        use lconnect_protocol::galahad2_lcdv2::lighting_enums::PumpLightingScope as S;
+        use llcontrol_protocol::galahad2_lcdv2::lighting_enums::PumpLightingScope as S;
         match v {
             PumpScopeArg::Inner => S::Inner,
             PumpScopeArg::Outer => S::Outer,
@@ -481,9 +481,9 @@ enum ArgbSourceArg {
     Application,
 }
 
-impl From<ArgbSourceArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource {
+impl From<ArgbSourceArg> for llcontrol_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource {
     fn from(v: ArgbSourceArg) -> Self {
-        use lconnect_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource as A;
+        use llcontrol_protocol::galahad2_lcdv2::lighting_enums::ArgbSignalSource as A;
         match v {
             ArgbSourceArg::Mcu => A::Mcu,
             ArgbSourceArg::Motherboard => A::Motherboard,
@@ -505,9 +505,9 @@ enum DirectionArg {
     Gather,
 }
 
-impl From<DirectionArg> for lconnect_protocol::galahad2_lcdv2::lighting_enums::LightingDirection {
+impl From<DirectionArg> for llcontrol_protocol::galahad2_lcdv2::lighting_enums::LightingDirection {
     fn from(v: DirectionArg) -> Self {
-        use lconnect_protocol::galahad2_lcdv2::lighting_enums::LightingDirection as D;
+        use llcontrol_protocol::galahad2_lcdv2::lighting_enums::LightingDirection as D;
         match v {
             DirectionArg::Right => D::RightOrClockwise,
             DirectionArg::Left => D::LeftOrCounterClockwise,
@@ -535,7 +535,7 @@ fn parse_cmd_byte_arg(s: &str) -> Result<u8, String> {
 }
 
 /// Parse a `#RRGGBB` (or bare `RRGGBB`) string into an `Rgb`.
-fn parse_hex_color(s: &str) -> Result<lconnect_protocol::galahad2_lcdv2::lighting::Rgb> {
+fn parse_hex_color(s: &str) -> Result<llcontrol_protocol::galahad2_lcdv2::lighting::Rgb> {
     let hex = s.strip_prefix('#').unwrap_or(s);
     if hex.len() != 6 {
         return Err(anyhow!(
@@ -545,7 +545,7 @@ fn parse_hex_color(s: &str) -> Result<lconnect_protocol::galahad2_lcdv2::lightin
     }
     let n = u32::from_str_radix(hex, 16)
         .map_err(|e| anyhow!("invalid --color {s:?}: not valid hex: {e}"))?;
-    Ok(lconnect_protocol::galahad2_lcdv2::lighting::Rgb {
+    Ok(llcontrol_protocol::galahad2_lcdv2::lighting::Rgb {
         r: ((n >> 16) & 0xFF) as u8,
         g: ((n >> 8) & 0xFF) as u8,
         b: (n & 0xFF) as u8,
@@ -600,8 +600,8 @@ fn read_until_command<const N: usize>(
 fn read_b_packet(
     device: &HidDevice,
     timeout_ms: i32,
-) -> Result<[u8; lconnect_protocol::galahad2_lcdv2::bpacket::INPUT_LEN]> {
-    use lconnect_protocol::galahad2_lcdv2::bpacket::INPUT_LEN;
+) -> Result<[u8; llcontrol_protocol::galahad2_lcdv2::bpacket::INPUT_LEN]> {
+    use llcontrol_protocol::galahad2_lcdv2::bpacket::INPUT_LEN;
     let mut buf = [0u8; INPUT_LEN];
     let _read = device
         .read_timeout(&mut buf, timeout_ms)
@@ -717,9 +717,9 @@ fn list_devices() -> Result<()> {
 }
 
 fn handshake() -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::commands::Command;
-    use lconnect_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
-    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+    use llcontrol_protocol::galahad2_lcdv2::commands::Command;
+    use llcontrol_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
+    use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
     let api = HidApi::new().context("HidApi::new failed")?;
     let device = api
@@ -767,9 +767,9 @@ fn handshake() -> Result<()> {
 }
 
 fn firmware() -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::commands::Command;
-    use lconnect_protocol::galahad2_lcdv2::firmware::FirmwareVersion;
-    use lconnect_protocol::galahad2_lcdv2::packets::{ACommandPacket, PACKET_LEN};
+    use llcontrol_protocol::galahad2_lcdv2::commands::Command;
+    use llcontrol_protocol::galahad2_lcdv2::firmware::FirmwareVersion;
+    use llcontrol_protocol::galahad2_lcdv2::packets::{ACommandPacket, PACKET_LEN};
 
     let api = HidApi::new().context("HidApi::new failed")?;
     let device = api
@@ -900,8 +900,8 @@ fn firmware() -> Result<()> {
 }
 
 fn fan(percent: u8) -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request;
-    use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+    use llcontrol_protocol::galahad2_lcdv2::fan_pwm::build_request;
+    use llcontrol_protocol::galahad2_lcdv2::pwm::Pwm;
 
     let pwm = Pwm::new(percent).map_err(|e| anyhow!("invalid percent: {e}"))?;
 
@@ -920,10 +920,10 @@ fn fan(percent: u8) -> Result<()> {
 
 fn pump(
     percent: u8,
-    source: lconnect_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource,
+    source: llcontrol_protocol::galahad2_lcdv2::pump_pwm::PumpPwmSource,
 ) -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::pump_pwm::build_request;
-    use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+    use llcontrol_protocol::galahad2_lcdv2::pump_pwm::build_request;
+    use llcontrol_protocol::galahad2_lcdv2::pwm::Pwm;
 
     let pwm = Pwm::new(percent).map_err(|e| anyhow!("invalid percent: {e}"))?;
 
@@ -948,8 +948,8 @@ fn pump(
 }
 
 fn reset_device(yes: bool) -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
-    use lconnect_protocol::galahad2_lcdv2::reset::{build_request, parse_response};
+    use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+    use llcontrol_protocol::galahad2_lcdv2::reset::{build_request, parse_response};
 
     if !yes {
         return Err(anyhow!(
@@ -979,11 +979,11 @@ fn reset_device(yes: bool) -> Result<()> {
 }
 
 fn get_pump_lighting() -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::commands::Command;
-    use lconnect_protocol::galahad2_lcdv2::get_lighting::{
+    use llcontrol_protocol::galahad2_lcdv2::commands::Command;
+    use llcontrol_protocol::galahad2_lcdv2::get_lighting::{
         build_get_pump_lighting_info_request, parse_pump_lighting_info_response,
     };
-    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+    use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
     let api = HidApi::new().context("HidApi::new failed")?;
     let device = api
@@ -1015,8 +1015,8 @@ fn get_pump_lighting() -> Result<()> {
 }
 
 fn set_pump_lighting(args: SetPumpLightingArgs) -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::lighting::PumpLightingSetting;
-    use lconnect_protocol::galahad2_lcdv2::set_lighting::build_set_pump_lighting_request;
+    use llcontrol_protocol::galahad2_lcdv2::lighting::PumpLightingSetting;
+    use llcontrol_protocol::galahad2_lcdv2::set_lighting::build_set_pump_lighting_request;
 
     let brightness_wire = args.brightness / 25;
     let speed_wire = args.speed / 25;
@@ -1061,11 +1061,11 @@ fn set_pump_lighting(args: SetPumpLightingArgs) -> Result<()> {
 }
 
 fn get_fan_lighting() -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::commands::Command;
-    use lconnect_protocol::galahad2_lcdv2::get_lighting::{
+    use llcontrol_protocol::galahad2_lcdv2::commands::Command;
+    use llcontrol_protocol::galahad2_lcdv2::get_lighting::{
         build_get_fan_lighting_info_request, parse_fan_lighting_info_response,
     };
-    use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+    use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
     let api = HidApi::new().context("HidApi::new failed")?;
     let device = api
@@ -1097,8 +1097,8 @@ fn get_fan_lighting() -> Result<()> {
 }
 
 fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::lighting::FanLightingSetting;
-    use lconnect_protocol::galahad2_lcdv2::set_lighting::build_set_fan_lighting_request;
+    use llcontrol_protocol::galahad2_lcdv2::lighting::FanLightingSetting;
+    use llcontrol_protocol::galahad2_lcdv2::set_lighting::build_set_fan_lighting_request;
 
     let brightness_wire = args.brightness / 25;
     let speed_wire = args.speed / 25;
@@ -1146,15 +1146,15 @@ fn set_fan_lighting(args: SetFanLightingArgs) -> Result<()> {
 }
 
 fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
-    use lconnect_protocol::galahad2_lcdv2::bpacket::{INPUT_LEN, OUTPUT_LEN};
-    use lconnect_protocol::galahad2_lcdv2::lcd::{
+    use llcontrol_protocol::galahad2_lcdv2::bpacket::{INPUT_LEN, OUTPUT_LEN};
+    use llcontrol_protocol::galahad2_lcdv2::lcd::{
         build_is_lcd_available_request, build_lcd_control_request, parse_is_lcd_available_response,
         Brightness, LCDControlMode, LCDControlSetting,
     };
-    use lconnect_protocol::galahad2_lcdv2::set_led_colors::{
+    use llcontrol_protocol::galahad2_lcdv2::set_led_colors::{
         build_set_fan_led_colors_request, build_set_screen_led_colors_request,
     };
-    use lconnect_protocol::galahad2_lcdv2::Rgb;
+    use llcontrol_protocol::galahad2_lcdv2::Rgb;
     use std::io::Write as _;
 
     let kind_str = match args.kind {
@@ -1300,12 +1300,12 @@ fn set_led_colors(args: SetLedColorsArgs) -> Result<()> {
 }
 
 fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
-    use lconnect_image::{prepare_jpeg_from_path, FitMode, Quality};
-    use lconnect_protocol::galahad2_lcdv2::bpacket::{INPUT_LEN, OUTPUT_LEN};
-    use lconnect_protocol::galahad2_lcdv2::jpeg::{
+    use llcontrol_image::{prepare_jpeg_from_path, FitMode, Quality};
+    use llcontrol_protocol::galahad2_lcdv2::bpacket::{INPUT_LEN, OUTPUT_LEN};
+    use llcontrol_protocol::galahad2_lcdv2::jpeg::{
         build_send_jpeg_request, build_upload_jpeg_request,
     };
-    use lconnect_protocol::galahad2_lcdv2::lcd::{
+    use llcontrol_protocol::galahad2_lcdv2::lcd::{
         build_is_lcd_available_request, build_lcd_control_request, parse_is_lcd_available_response,
         Brightness, LCDControlMode, LCDControlSetting,
     };
@@ -1330,7 +1330,7 @@ fn upload_jpeg(args: UploadJpegArgs) -> Result<()> {
         ));
     }
 
-    // 1. Convert input image. lconnect-image errors propagate via anyhow's
+    // 1. Convert input image. llcontrol-image errors propagate via anyhow's
     //    `Context` (its `Error` impls `std::error::Error` via thiserror).
     let fit: FitMode = fit_mode_from_args(args.fit, args.letterbox_bg);
     let quality = Quality::new(args.quality)

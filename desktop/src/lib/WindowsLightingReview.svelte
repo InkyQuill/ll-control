@@ -11,37 +11,35 @@
 <details class="windows-lighting-review">
   <summary
     >{t(
-      'Проверить RGB: вентиляторы {0}, помпа {1}',
+      'Review RGB: fans {0}, pump {1}',
       review.fan_modes.length,
       review.pump_modes.length,
     )}</summary
   >
   <p>
     {t(
-      'Topology: {0} мм · manual LED {1} · sync {2}',
+      'Topology: {0} mm · manual LEDs {1} · sync {2}',
       review.fan_topology.size,
       review.fan_topology.manual_led_count,
-      review.fan_topology.sync_to_pump ? t('Включено') : t('Выключено'),
+      review.fan_topology.sync_to_pump ? t('On') : t('Off'),
     )}
   </p>
-  <h3>{t('Вентиляторы')}</h3>
+  <h3>{t('Fans')}</h3>
   {#each review.fan_modes as mode (mode.mode)}<p>
-      <strong>{mode.mode}</strong> · {t('Яркость')}
-      {mode.brightness_percent}% · {t('Скорость')}
-      {mode.speed_percent}% · {t('Направление')}
+      <strong>{mode.mode}</strong> · {t('Brightness')}
+      {mode.brightness_percent}% · {t('Speed')}
+      {mode.speed_percent}% · {t('Direction')}
       {mode.direction}<br /><code>{palette([mode.color, ...(mode.additional_colors ?? [])])}</code>
     </p>{/each}
-  <h3>{t('Помпа')}</h3>
+  <h3>{t('Pump')}</h3>
   {#each review.pump_modes as mode (mode.mode)}
     {@const dynamic = review.dynamic_rgb_profiles.modes.find((p) => p.mode === mode.mode)}
     <details class="mode">
-      <summary
-        >{mode.mode} · {mode.dynamic_mode ? t('Динамический режим') : t('Обычный режим')}</summary
-      >
+      <summary>{mode.mode} · {mode.dynamic_mode ? t('Dynamic mode') : t('Regular mode')}</summary>
       <p>
-        {t('Обычные параметры')} · {t('Яркость')}
-        {mode.brightness_percent}% · {t('Скорость')}
-        {mode.speed_percent}% · {t('Направление')}
+        {t('Regular settings')} · {t('Brightness')}
+        {mode.brightness_percent}% · {t('Speed')}
+        {mode.speed_percent}% · {t('Direction')}
         {mode.direction}<br /><code>{palette([mode.color, ...(mode.additional_colors ?? [])])}</code
         >
       </p>
@@ -53,17 +51,16 @@
               : binding.unit === 'percent'
                 ? '%'
                 : 'RPM'}
-            {#if i === (dynamic?.bindings.length ?? 0) - 1}<strong
-                >· {t('Выбранный источник')}</strong
+            {#if i === (dynamic?.bindings.length ?? 0) - 1}<strong>· {t('Selected source')}</strong
               >{/if}
           </p>
           <p>
             {binding.low_value} → {binding.high_value} · {binding.brightness_percent ?? '—'}% · {binding.direction ??
-              '—'}<br />{t('Палитра Low')}: <code>{palette(binding.low_colors)}</code><br />{t(
-              'Палитра High',
+              '—'}<br />{t('Low palette')}: <code>{palette(binding.low_colors)}</code><br />{t(
+              'High palette',
             )}:
             <code>{palette(binding.high_colors)}</code>{#if binding.low_speed_percent !== null}<br
-              />{t('Скорость')}: {binding.low_speed_percent}% → {binding.high_speed_percent}%{/if}
+              />{t('Speed')}: {binding.low_speed_percent}% → {binding.high_speed_percent}%{/if}
           </p>
         </div>
       {/each}

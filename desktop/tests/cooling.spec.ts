@@ -67,7 +67,7 @@ test('cooling edits and presets stay local; Apply sends selected channel and pol
   });
   await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
-  await expect(page.getByText('Applied: 80%')).toBeVisible();
+  await expect(page.getByText('Применённый PWM: 80%')).toBeVisible();
   const numeric = page.getByRole('spinbutton', { name: 'PWM, %', exact: true });
   await expect(numeric).toHaveAttribute('aria-valuenow', '80');
   await expect(numeric).toHaveAttribute('aria-valuemin', '20');

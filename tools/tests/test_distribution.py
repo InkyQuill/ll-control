@@ -13,7 +13,7 @@ spec.loader.exec_module(dist)
 
 def messages():
     return [dict(reason="compiler-artifact", target={"name": name}, executable=f"/release/{name}",
-                 features=["custom-protocol"] if name == "lconnect-gui" else [],
+                 features=["custom-protocol"] if name == "llcontrol-gui" else [],
                  profile={"opt_level": "3", "test": False}) for name in sorted(dist.BINARIES)]
 
 
@@ -21,7 +21,7 @@ class DistributionTests(unittest.TestCase):
     def test_rejects_instrumented_and_development_gui(self):
         for features in [[], ["native-smoke"], ["native-smoke", "custom-protocol"]]:
             artifacts = messages()
-            next(m for m in artifacts if m["target"]["name"] == "lconnect-gui")["features"] = features
+            next(m for m in artifacts if m["target"]["name"] == "llcontrol-gui")["features"] = features
             with self.subTest(features=features), self.assertRaises(ValueError):
                 dist.production_artifacts(artifacts)
         self.assertEqual(set(dist.production_artifacts(messages())), dist.BINARIES)
@@ -40,7 +40,7 @@ class DistributionTests(unittest.TestCase):
             root = Path(temporary)
             payload = root / "payload"
             (payload / "usr/bin").mkdir(parents=True)
-            binary = payload / "usr/bin/lconnectctl"
+            binary = payload / "usr/bin/llcontrol"
             binary.write_bytes(b"test artifact\n")
             binary.chmod(0o755)
             first, second = root / "first.tar.gz", root / "second.tar.gz"
@@ -54,7 +54,7 @@ class DistributionTests(unittest.TestCase):
                     self.assertEqual(member.uid, 0)
                     self.assertEqual(member.mtime, 123456)
                     self.assertFalse(member.name.startswith("/"))
-            restored = root / "extract/payload/usr/bin/lconnectctl"
+            restored = root / "extract/payload/usr/bin/llcontrol"
             self.assertEqual(restored.read_bytes(), binary.read_bytes())
             self.assertEqual(restored.stat().st_mode & 0o777, 0o755)
 

@@ -85,7 +85,7 @@ are retained alongside passing runs, outside Git.
 Reproduce the added plain-image matrix:
 
 ```sh
-cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked
+cargo build -p llcontrol-gui --features native-smoke,custom-protocol --locked
 /usr/bin/python3 desktop/scripts/native-interface-language.py --collection-plain-errors
 ```
 
@@ -205,7 +205,7 @@ backend assertions supplement the native workflow; they do not substitute for
 the remaining current native cooling/default/reset and accessibility acceptance.
 
 Reproduce with `native-lighting-palette.py` after building the native-smoke GUI,
-and `cargo test -p lconnect-daemon --locked --test cooling --test cooling_ipc
+and `cargo test -p llcontrol-daemon --locked --test cooling --test cooling_ipc
 --test cooling_mode_save --test dynamic_rgb --test dynamic_rgb_ipc
 --test lighting_owner --test lighting_palette --test thermal`.
 
@@ -242,9 +242,9 @@ failures were driver assumptions; no production fix is claimed. Failed runs
 are retained locally alongside the pass.
 
 Reproduce: build the native-smoke GUI, then run
-`LCONNECT_NATIVE_ATSPI=1 LCONNECT_NATIVE_DIALOGS=1 /usr/bin/python3 desktop/scripts/native-keyboard.py`
+`LLCONTROL_NATIVE_ATSPI=1 LLCONTROL_NATIVE_DIALOGS=1 /usr/bin/python3 desktop/scripts/native-keyboard.py`
 and `/usr/bin/python3 desktop/scripts/native-control-reset.py`. The Rust suites
-above run with `cargo test -p lconnect-daemon --locked --test <suite>`.
+above run with `cargo test -p llcontrol-daemon --locked --test <suite>`.
 
 This is Russian, 1×, isolated X11 acceptance. It does not close EN/scale coverage,
 all core operation interruption matrices, real speech or Plasma Wayland.
@@ -289,7 +289,7 @@ blue at 1fps), while output preparation still produces 480×480 at 24fps.
 Run this costly boundary explicitly:
 
 ```sh
-cargo test -p lconnect-media --locked --test hour_boundary -- --ignored
+cargo test -p llcontrol-media --locked --test hour_boundary -- --ignored
 ```
 
 It is excluded from routine test execution with an explicit reason, but was
@@ -317,8 +317,8 @@ retained offline/profile/draft resources, stale sensor recovery, and LCD/PWM/RGB
 transport recovery. Mode initialization and Save reconcile lost acknowledgements
 without a second write; banks and active controls survive daemon restart.
 
-Reproduce with `LCONNECT_NATIVE_COOLING_MODES=1
-LCONNECT_NATIVE_COOLING_DEFAULTS=1 /usr/bin/python3 desktop/scripts/native-smoke.py`
+Reproduce with `LLCONTROL_NATIVE_COOLING_MODES=1
+LLCONTROL_NATIVE_COOLING_DEFAULTS=1 /usr/bin/python3 desktop/scripts/native-smoke.py`
 (the environment assignments belong on the same command line).
 
 All 14 `native-recording-faults.py` cases passed: stall, crash, cancel, close,
@@ -428,7 +428,7 @@ The original immediate-reply-loss cases for Reset and Windows still pass. This
 test is ignored in ordinary runs because it deliberately waits one minute; run:
 
 ```sh
-cargo test -p lconnect-gui --locked --lib control_reset_deadline -- --ignored
+cargo test -p llcontrol-gui --locked --lib control_reset_deadline -- --ignored
 ```
 
 The first run failed only its newly written error-text assertion: the test expected

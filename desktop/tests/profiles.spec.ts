@@ -221,7 +221,7 @@ test('pump and fan profile loads remain separate local cooling drafts', async ({
   });
   await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
-  await expect(page.getByText('Applied: 80%')).toBeVisible();
+  await expect(page.getByText('Применённый PWM: 80%')).toBeVisible();
   await page.getByRole('button', { name: 'Сохранённые профили', exact: true }).click();
   await page.getByRole('button', { name: 'Обновить список профилей' }).click();
   await expect(page.getByLabel('Слот профиля')).toContainText('Pump quiet');

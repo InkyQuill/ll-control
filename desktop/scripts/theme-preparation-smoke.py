@@ -10,7 +10,7 @@ import time
 import tomllib
 
 repo = Path(__file__).resolve().parents[2]
-root = Path(tempfile.mkdtemp(prefix='lconnect-preparation-'))
+root = Path(tempfile.mkdtemp(prefix='llcontrol-preparation-'))
 (root / 'fixture-marker').write_text('MockBackend only\n')
 assets = root / 'settings/theme-assets'
 assets.mkdir(parents=True)
@@ -19,7 +19,7 @@ key = '2' * 32
 shim = root / 'read-gate.so'
 subprocess.run(['cc', '-shared', '-fPIC', '-Wall', '-Wextra', '-Werror',
                 str(repo / 'desktop/scripts/theme-read-gate.c'), '-o', str(shim)], check=True)
-env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), LD_PRELOAD=str(shim),
+env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root), LD_PRELOAD=str(shim),
            XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root / 'config'),
            XDG_DATA_HOME=str(root / 'data'), XDG_CACHE_HOME=str(root / 'cache'))
 
@@ -28,7 +28,7 @@ class Session:
     def __enter__(self):
         self.connection = socket.socket(socket.AF_UNIX)
         self.connection.settimeout(5)
-        self.connection.connect(str(root / 'lconnectd.sock'))
+        self.connection.connect(str(root / 'llcontrold.sock'))
         self.stream = self.connection.makefile('rwb')
         self.sequence = 0
         self.responses = {}
@@ -90,7 +90,7 @@ results = []
 with (root / 'daemon.log').open('w') as log:
     process = subprocess.Popen([repo / 'target/debug/examples/desktop-mock'], env=env, stdout=log, stderr=subprocess.STDOUT)
     try:
-        until(lambda: process.poll() is not None or (root / 'lconnectd.sock').exists(), 'fixture startup')
+        until(lambda: process.poll() is not None or (root / 'llcontrold.sock').exists(), 'fixture startup')
         assert process.poll() is None, 'fixture exited'
         until(lambda: bool(rpc('list_devices', {})), 'mock device discovered')
         dev = rpc('list_devices', {})[0]['id']

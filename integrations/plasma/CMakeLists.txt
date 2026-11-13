@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(lconnect_mini_plasma VERSION 0.1.0 LANGUAGES CXX)
+project(llcontrol_mini_plasma VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,24 +20,24 @@ add_custom_command(OUTPUT "${MODEL_DIR}/mini.mjs"
  COMMAND ${CMAKE_COMMAND} -E copy "${MODEL_DIR}/mini.js" "${MODEL_DIR}/mini.mjs"
  DEPENDS "${MODEL_SOURCE}" VERBATIM)
 add_custom_target(shared_model ALL DEPENDS "${MODEL_DIR}/mini.mjs")
-qt_add_library(lconnect_mini_feed SHARED)
-qt_add_qml_module(lconnect_mini_feed URI net.inkyquill.lconnect VERSION 1.0
- OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qml/net/inkyquill/lconnect"
+qt_add_library(llcontrol_mini_feed SHARED)
+qt_add_qml_module(llcontrol_mini_feed URI net.inkyquill.llcontrol VERSION 1.0
+ OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/qml/net/inkyquill/llcontrol"
  SOURCES native/feed.h native/feed.cpp)
-target_include_directories(lconnect_mini_feed PRIVATE native)
-target_link_libraries(lconnect_mini_feed PUBLIC Qt6::Core Qt6::Qml)
-target_compile_options(lconnect_mini_feed PRIVATE -Wall -Wextra -Werror)
-set_target_properties(lconnect_mini_feed lconnect_mini_feedplugin PROPERTIES INSTALL_RPATH "$ORIGIN")
+target_include_directories(llcontrol_mini_feed PRIVATE native)
+target_link_libraries(llcontrol_mini_feed PUBLIC Qt6::Core Qt6::Qml)
+target_compile_options(llcontrol_mini_feed PRIVATE -Wall -Wextra -Werror)
+set_target_properties(llcontrol_mini_feed llcontrol_mini_feedplugin PROPERTIES INSTALL_RPATH "$ORIGIN")
 set(PACKAGE_DIR "${CMAKE_CURRENT_BINARY_DIR}/package")
 add_custom_target(widget_package ALL
  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/package" "${PACKAGE_DIR}"
  COMMAND ${CMAKE_COMMAND} -E make_directory "${PACKAGE_DIR}/contents/code"
  COMMAND ${CMAKE_COMMAND} -E copy "${MODEL_DIR}/mini.mjs" "${PACKAGE_DIR}/contents/code/mini.mjs"
  DEPENDS shared_model)
-set(QML_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml/net/inkyquill/lconnect" CACHE PATH "QML module destination")
-install(TARGETS lconnect_mini_feed lconnect_mini_feedplugin LIBRARY DESTINATION "${QML_INSTALL_DIR}")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/qml/net/inkyquill/lconnect/qmldir" "${CMAKE_CURRENT_BINARY_DIR}/qml/net/inkyquill/lconnect/lconnect_mini_feed.qmltypes" DESTINATION "${QML_INSTALL_DIR}")
-install(DIRECTORY "${PACKAGE_DIR}/" DESTINATION "${CMAKE_INSTALL_DATADIR}/plasma/plasmoids/net.inkyquill.lconnect.mini")
+set(QML_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml/net/inkyquill/llcontrol" CACHE PATH "QML module destination")
+install(TARGETS llcontrol_mini_feed llcontrol_mini_feedplugin LIBRARY DESTINATION "${QML_INSTALL_DIR}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/qml/net/inkyquill/llcontrol/qmldir" "${CMAKE_CURRENT_BINARY_DIR}/qml/net/inkyquill/llcontrol/llcontrol_mini_feed.qmltypes" DESTINATION "${QML_INSTALL_DIR}")
+install(DIRECTORY "${PACKAGE_DIR}/" DESTINATION "${CMAKE_INSTALL_DATADIR}/plasma/plasmoids/net.inkyquill.llcontrol.mini")
 if(BUILD_TESTING)
  find_package(Qt6 REQUIRED COMPONENTS Quick Test)
  find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -54,5 +54,5 @@ if(BUILD_TESTING)
  add_test(NAME feed COMMAND feed_test)
  set_tests_properties(feed PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 45)
  add_test(NAME shared_model COMMAND ${NODE_EXECUTABLE} --test "${CMAKE_CURRENT_SOURCE_DIR}/../common/tests/mini.test.mjs")
- set_tests_properties(shared_model PROPERTIES ENVIRONMENT "LCONNECT_MINI_MODEL=${MODEL_DIR}/mini.mjs")
+ set_tests_properties(shared_model PROPERTIES ENVIRONMENT "LLCONTROL_MINI_MODEL=${MODEL_DIR}/mini.mjs")
 endif()

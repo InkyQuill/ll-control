@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
-const M=await import(pathToFileURL(process.env.LCONNECT_MINI_MODEL));
+const M=await import(pathToFileURL(process.env.LLCONTROL_MINI_MODEL));
 function fixture(){
  const sensor=(id,unit,value,label=id)=>({id,unit,value,label,status:'valid',age_ms:0});
  return {version:1,available:true,data:{display:{temperature_unit:'fahrenheit',interface_language:'en-US'},sensors:[sensor('cpu:temperature','celsius',40,'Настройки'),sensor('gpu:A:power','watts',72),sensor('gpu:B:power','watts',99)],defaults:{candidates:[{role:'cpu_temperature',reading:sensor('cpu:temperature','celsius',40)},{role:'gpu_power',reading:sensor('gpu:A:power','watts',72)},{role:'gpu_power',reading:sensor('gpu:B:power','watts',99)}],values:[{role:'cpu_temperature',sensor_id:'cpu:temperature'},{role:'gpu_power',sensor_id:'gpu:A:power'}]}}};

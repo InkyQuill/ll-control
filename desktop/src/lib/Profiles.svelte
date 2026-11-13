@@ -53,9 +53,9 @@
   function errorText(failure: Failure | ValidationError): string {
     if (failure instanceof ValidationError) return t(failure.resource, ...failure.values);
     return failure.operation === 'refresh'
-      ? t('Не удалось загрузить список профилей: {0}', failure.detail)
+      ? t('Could not load the profile list: {0}', failure.detail)
       : t(
-          'Изменение профилей не подтверждено: {0}. Проверьте библиотеку перед повторной записью.',
+          'Profile changes were not confirmed: {0}. Check the library before writing again.',
           failure.detail,
         );
   }
@@ -116,7 +116,7 @@
         const content: ProfileContent =
           action === 'save_media' ? { kind: 'screen_media', value: mediaKey } : draft();
         if (profileGroup(content) !== group)
-          throw new ValidationError('Канал профиля изменился; повторите сохранение');
+          throw new ValidationError('The profile group changed; save again');
         change = { action: 'save', profile: { slot, name, content } };
       } else if (action === 'rename') change = { action, group, slot, name };
       else change = { action, group, slot };
@@ -126,7 +126,7 @@
       });
       if (started !== generation) return;
       library = result;
-      notice = 'Библиотека сохранена. Настройки устройства не изменены.';
+      notice = 'Library saved. Device settings were not changed.';
     } catch (e) {
       if (started === generation) {
         error = e instanceof ValidationError ? e : { operation: 'edit', detail: message(e) };
@@ -146,16 +146,18 @@
   }
 </script>
 
-<StudioPopover label={`${t('Сохранённые профили')}`} text wide>
-  <StudioPopover label={t('Справка')} icon="help"
-    ><p>{t('Загрузите профиль в редактор, затем примените его обычной кнопкой.')}</p></StudioPopover
+<StudioPopover label={`${t('Saved profiles')}`} text wide>
+  <StudioPopover label={t('Help')} icon="help"
+    ><p>
+      {t('Load a profile into the editor, then apply it with the regular Apply button.')}
+    </p></StudioPopover
   >
   <button bind:this={refreshButton} disabled={busy || disabled || !connected} onclick={refresh}
-    >{t('Обновить список профилей')}</button
+    >{t('Refresh profile list')}</button
   >
   {#if library}
     <label
-      >{t('Слот профиля')}<select
+      >{t('Profile slot')}<select
         bind:value={slot}
         disabled={unavailable}
         onchange={(event) => {
@@ -170,13 +172,13 @@
           <option value={index}
             >{index + 1} · {library.profiles.find(
               (p) => p.slot === index && profileGroup(p.content) === group,
-            )?.name ?? t('Пусто')}</option
+            )?.name ?? t('Empty')}</option
           >
         {/each}
       </select></label
     >
     <label
-      >{t('Имя профиля')}<input bind:value={name} maxlength="128" disabled={unavailable} /></label
+      >{t('Profile name')}<input bind:value={name} maxlength="128" disabled={unavailable} /></label
     >
     <div class="buttons">
       <button
@@ -185,74 +187,76 @@
           if (selected) {
             onload(structuredClone($state.snapshot(selected.content)));
             name = selected.name;
-            notice = 'Профиль загружен в редактор. Применение — отдельное действие.';
+            notice = 'Profile loaded into the editor. Applying is a separate action.';
           }
-        }}>{t('Загрузить профиль в редактор')}</button
+        }}>{t('Load profile into editor')}</button
       >
       <button disabled={unavailable || !name.trim()} onclick={() => edit('save')}
         >{selected
-          ? '' + t('Заменить профиль черновиком') + ''
-          : '' + t('Сохранить черновик в слот') + ''}</button
+          ? '' + t('Replace profile with draft') + ''
+          : '' + t('Save draft to slot') + ''}</button
       >
       {#if group === 'screen' && mediaKey}<button
           disabled={unavailable || !name.trim()}
           onclick={() => edit('save_media')}
           >{selected
-            ? '' + t('Заменить профиль выбранным роликом') + ''
-            : '' + t('Сохранить выбранный ролик в слот') + ''}</button
+            ? '' + t('Replace profile with selected video') + ''
+            : '' + t('Save selected video to slot') + ''}</button
         >{/if}
       <button disabled={unavailable || !selected || !name.trim()} onclick={() => edit('rename')}
-        >{t('Переименовать профиль')}</button
+        >{t('Rename profile')}</button
       >
       <button disabled={unavailable || !selected} onclick={() => edit('delete')}
-        >{t('Удалить профиль')}</button
+        >{t('Delete profile')}</button
       >
       <button
         disabled={unavailable || (group !== 'screen' && !resetSensor)}
-        onclick={() => edit('reset')}>{t('Сбросить слот к базовым настройкам')}</button
+        onclick={() => edit('reset')}>{t('Reset slot to defaults')}</button
       >
       <button
         bind:this={groupResetButton}
         disabled={unavailable || (group !== 'screen' && !resetSensor)}
         onclick={() => {
           confirmGroupReset = true;
-        }}>{t('Сбросить все слоты группы…')}</button
+        }}>{t('Reset all group slots…')}</button
       >
     </div>
     {#if confirmGroupReset}
-      <div role="group" aria-label={t('Подтверждение сброса группы')}>
+      <div role="group" aria-label={t('Confirm group reset')}>
         <p>
-          {t('Будут заменены имена и содержимое всех')}
+          {t('Names and contents will be replaced for all')}
           {group === 'screen' ? 8 : 4}
-          {t('слотов')}
+          {t('slots of the')}
           {group === 'screen'
-            ? '' + t('экрана') + ''
+            ? '' + t('screen') + ''
             : group === 'fan'
-              ? '' + t('вентиляторов') + ''
-              : '' + t('помпы') + ''}. {group === 'screen'
-            ? '' + t('В каждом слоте будет базовая тема с часами.') + ''
-            : t('В каждом слоте будет кривая Quiet с датчиком {0}.', resetSensor)}
-          {t('Активные настройки устройства, другие группы и файлы библиотеки сохранятся.')}
+              ? '' + t('fans') + ''
+              : '' + t('pump') + ''}. {group === 'screen'
+            ? '' + t('Each slot will contain a basic clock theme.') + ''
+            : t('Each slot will contain a Quiet curve using sensor {0}.', resetSensor)}
+          {t('Active device settings, other groups and library files are preserved.')}
         </p>
         <button
           disabled={unavailable || (group !== 'screen' && !resetSensor)}
-          onclick={() => edit('reset_group')}>{t('Подтвердить сброс всех слотов')}</button
+          onclick={() => edit('reset_group')}>{t('Confirm reset of all slots')}</button
         >
         <button
           disabled={busy}
           onclick={() => {
             confirmGroupReset = false;
             groupResetButton?.focus();
-          }}>{t('Отмена сброса группы')}</button
+          }}>{t('Cancel group reset')}</button
         >
       </div>
     {/if}
   {/if}
   {#if library}<p>
       {group === 'screen'
-        ? '' + t('Сброс заменит имя и содержимое слота базовой темой с часами.') + ''
-        : '' + t('Сброс заменит слот кривой Quiet с выбранным в редакторе датчиком.') + ''}
-      {t('Для устройства изменения вступят в силу только после загрузки и применения.')}
+        ? '' + t('Reset replaces the slot name and content with a basic clock theme.') + ''
+        : '' +
+          t('Reset replaces the slot with a Quiet curve using the sensor selected in the editor.') +
+          ''}
+      {t('Device settings change only after loading and applying the profile.')}
     </p>{/if}
   {#if library}<ProfileArchive
       {group}
@@ -274,7 +278,7 @@
               ?.name ?? name;
       }}
     />{/if}
-  {#if error}<p role="alert">{errorText(error)} {t('Обновите список перед повтором.')}</p>{/if}
+  {#if error}<p role="alert">{errorText(error)} {t('Refresh the list before retrying.')}</p>{/if}
   {#if notice}<p role="status">{t(notice)}</p>{/if}
 </StudioPopover>
 

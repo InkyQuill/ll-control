@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 async function setup(page: Page, language: 'en-US' | 'ru-RU' = 'ru-RU') {
   await page.addInitScript((language) => {
-    localStorage.setItem('lconnect.interface-language', language);
+    localStorage.setItem('llcontrol.interface-language', language);
     const text = (value: string) => ({ kind: 'text', value });
     const field = (key: string, value: unknown) => ({
       key,

@@ -82,28 +82,28 @@ export interface GroupStatus extends GroupTarget {
   readback: GroupReadback | null;
 }
 export const groupNames: Record<FullGroup, string> = {
-  screen: 'Экран',
-  fan_and_lighting: 'Вентиляторы и подсветка',
+  screen: 'Screen',
+  fan_and_lighting: 'Fans and lighting',
 };
 export const groupPhases: Record<GroupPhase, string> = {
-  choosing: 'Выбор файла',
-  bindings: 'Выбор исходного контроллера и датчиков',
-  uploading: 'Загрузка архива',
-  inspecting: 'Проверка содержимого',
-  prepared: 'Архив проверен, ожидает применения',
-  packing: 'Подготовка архива',
-  downloading: 'Сохранение файла',
-  applying: 'Применение группы',
-  recovering: 'Чтение результата',
-  cancelling: 'Отмена передачи',
-  cancelled: 'Передача отменена',
-  complete: 'Операция завершена',
-  failed: 'Операция не выполнена',
-  uncertain: 'Результат требует проверки',
+  choosing: 'Choosing file',
+  bindings: 'Choose source controller and sensors',
+  uploading: 'Uploading archive',
+  inspecting: 'Inspecting contents',
+  prepared: 'Archive checked; waiting for Apply',
+  packing: 'Preparing archive',
+  downloading: 'Saving file',
+  applying: 'Applying group',
+  recovering: 'Reading result',
+  cancelling: 'Cancelling transfer',
+  cancelled: 'Transfer cancelled',
+  complete: 'Operation completed',
+  failed: 'Operation failed',
+  uncertain: 'Result needs verification',
 };
 export const groupIdle = (phase: GroupPhase) =>
   ['bindings', 'prepared', 'cancelled', 'complete', 'failed', 'uncertain'].includes(phase);
-export const groupPendingKey = 'lconnect.group.pending';
+export const groupPendingKey = 'llcontrol.group.pending';
 export function readGroupPending(): GroupTarget | null {
   try {
     const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(groupPendingKey);
@@ -132,18 +132,18 @@ export function policySummary(
   p: CoolingPolicy | null,
   language: InterfaceLanguage = 'en-US',
 ): string {
-  if (!p) return translate('не задана', language);
+  if (!p) return translate('not configured', language);
   switch (p.mode) {
     case 'fixed':
       return `${p.percent}%`;
     case 'motherboard':
-      return translate('Материнская плата', language);
+      return translate('Motherboard', language);
     case 'fixed_rpm':
       return `${p.rpm} RPM`;
     case 'curve':
     case 'fan_curve':
-      return translate('Кривая PWM · {0} · точек: {1}', language, p.sensor_id, p.points.length);
+      return translate('PWM curve · {0} · points: {1}', language, p.sensor_id, p.points.length);
     case 'curve_rpm':
-      return translate('Кривая RPM · {0} · точек: {1}', language, p.sensor_id, p.points.length);
+      return translate('RPM curve · {0} · points: {1}', language, p.sensor_id, p.points.length);
   }
 }

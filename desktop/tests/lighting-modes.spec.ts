@@ -13,7 +13,7 @@ const rows = (
   JSON.parse(
     readFileSync(
       new URL(
-        '../../crates/lconnect-ipc/tests/fixtures/lighting-2.1.28-controls.json',
+        '../../crates/llcontrol-ipc/tests/fixtures/lighting-2.1.28-controls.json',
         import.meta.url,
       ),
       'utf8',

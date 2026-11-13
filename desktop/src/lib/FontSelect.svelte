@@ -80,10 +80,10 @@
 </script>
 
 <div class="font-heading">
-  <label for={id}>{t('Шрифт')}</label><StudioPopover label={t('Справка о шрифтах')} icon="help"
+  <label for={id}>{t('Font')}</label><StudioPopover label={t('About fonts')} icon="help"
     ><p>
       {t(
-        'Системный шрифт копируется в библиотеку темы. Поддерживаются TTF и OTF до 16 MiB; коллекции TTC недоступны.',
+        'A system font is copied into the theme library. TTF and OTF up to 16 MiB are supported; TTC collections are unavailable.',
       )}
     </p></StudioPopover
   >
@@ -105,16 +105,16 @@
   {#if style.font_asset && !fonts.some((f) => f.key === style.font_asset)}<option
       value={`asset:${style.font_asset}`}
       >{importedSystemFonts.get(style.font_asset) ??
-        `${t('Пользовательский (')}${style.font_asset.slice(0, 8)})`}</option
+        `${t('Custom (')}${style.font_asset.slice(0, 8)})`}</option
     >{/if}
-  {#if installed.length}<optgroup label={t('Системные шрифты')}
+  {#if installed.length}<optgroup label={t('System fonts')}
       >{#each installed as font (font.id)}<option value={`system:${font.id}`}>{font.name}</option
         >{/each}</optgroup
     >{/if}
 </select>
 
-{#if importing}<span role="status">{t('Загрузка шрифта')}</span>{/if}
-{#if failure}<p role="alert">{t('Не удалось загрузить шрифт:')} {failure}</p>{/if}
+{#if importing}<span role="status">{t('Font upload')}</span>{/if}
+{#if failure}<p role="alert">{t('Could not upload the font:')} {failure}</p>{/if}
 
 <style>
   .font-heading {

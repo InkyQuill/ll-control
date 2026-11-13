@@ -156,7 +156,7 @@
         status.group !== pending.group ||
         status.mode !== pending.mode)
     ) {
-      error = 'В приложении есть другая операция группы. Сначала завершите её восстановление.';
+      error = 'Another group operation exists in the application. Finish recovering it first.';
       return;
     }
     if (!pending)
@@ -317,37 +317,37 @@
 </script>
 
 <details ontoggle={(e) => (open = e.currentTarget.open)}>
-  <summary>{t('Резервная копия группы настроек')}</summary>
+  <summary>{t('Settings group backup')}</summary>
   <p>
     {t(
-      'Архив LL-Control (.lcg) сохраняет всю выбранную группу и её слоты. «Экран» включает изображения, видео и шрифты. Windows ZIP 2.1.28 можно импортировать отдельно для экрана и FanAndLighting.',
+      'An LL-Control archive (.lcg) saves the selected group and its slots. Screen includes images, videos and fonts. Windows ZIP 2.1.28 can be imported separately for Screen and FanAndLighting.',
     )}
   </p>
   <label
-    >{t('Группа настроек')}<select
-      aria-label={t('Группа настроек')}
+    >{t('Settings group')}<select
+      aria-label={t('Settings group')}
       bind:value={group}
       disabled={active || !!pending}
-      ><option value="screen">{t('Экран')}</option><option value="fan_and_lighting"
-        >{t('Вентиляторы и подсветка')}</option
+      ><option value="screen">{t('Screen')}</option><option value="fan_and_lighting"
+        >{t('Fans and lighting')}</option
       ></select
     ></label
   >
   <p>
-    {t('Устройство:')} <code>{pending?.dev || device || t('не выбрано')}</code> · {t(
+    {t('Device:')} <code>{pending?.dev || device || t('not selected')}</code> · {t(
       groupNames[group],
     )}
   </p>
   {#if group === 'fan_and_lighting'}
     <label
-      >{t('Температурный датчик CPU для сброса')}<select
-        aria-label={t('Температурный датчик CPU для сброса')}
+      >{t('CPU temperature sensor for reset')}<select
+        aria-label={t('CPU temperature sensor for reset')}
         bind:value={resetSensor}
         disabled={blocked}
       >
-        <option value="">{t('Выберите датчик температуры CPU')}</option>
+        <option value="">{t('Select a CPU temperature sensor')}</option>
         {#if resetSensor && !temperatureSensors.some((s) => s.id === resetSensor)}<option
-            value={resetSensor}>{resetSensor} {t('· недоступен')}</option
+            value={resetSensor}>{resetSensor} {t('· unavailable')}</option
           >{/if}
         {#each temperatureSensors as sensor (sensor.id)}<option value={sensor.id}
             >{sensor.label} · {sensor.id}</option
@@ -356,62 +356,61 @@
     >
     <p>
       {t(
-        'Полный сброс вернёт стандартные 8 режимов вентиляторов и 3 режима помпы, их имена и выбор Fan Standard / Pump Quiet RPM, Rainbow, topology 360 мм/24 LED и восемь named fan/pump-слотов. Screen, файлы и общая thermal policy сохранятся. При недоступном датчике действует fallback 100%.',
+        'Full reset restores the standard 8 fan and 3 pump modes, their names and Fan Standard / Pump Quiet RPM selection, Rainbow, 360 mm/24 LED topology, and eight named fan/pump slots. Screen, files and the global thermal policy are preserved. An unavailable sensor uses 100% fallback.',
       )}
     </p>
     <button disabled={blocked || !resetSensor} onclick={() => start('reset')}
-      >{t('Подготовить полный сброс охлаждения и подсветки…')}</button
+      >{t('Prepare full cooling and lighting reset…')}</button
     >
   {/if}
   <ExperimentalNotice
     feature="windows-import"
-    message="Импорт Windows поддерживает ограниченный набор форматов и не подтверждён для всех экспортов L-Connect 2.1.28. Используйте на свой риск."
+    message="Windows import supports a limited set of formats and is not verified for every L-Connect 2.1.28 export. Use at your own risk."
   />
   <div class="buttons">
     {#if group === 'fan_and_lighting'}<button disabled={blocked} onclick={() => start('windows')}
-        >{t('Выбрать Windows ZIP…')}</button
+        >{t('Choose Windows ZIP…')}</button
       >{:else}<button disabled={blocked} onclick={() => start('windows_screen')}
-        >{t('Выбрать Windows ZIP экрана…')}</button
-      >{/if}<button disabled={blocked} onclick={() => start('export')}
-      >{t('Экспортировать группу…')}</button
-    ><button disabled={blocked} onclick={() => start('import')}>{t('Выбрать архив группы…')}</button
+        >{t('Choose Windows Screen ZIP…')}</button
+      >{/if}<button disabled={blocked} onclick={() => start('export')}>{t('Export group…')}</button
+    ><button disabled={blocked} onclick={() => start('import')}>{t('Choose group archive…')}</button
     >
   </div>
   <p>
     {t(
-      'Существующие файлы при экспорте не заменяются. Выбор и проверка архива не применяют настройки.',
+      'Export does not replace existing files. Selecting and inspecting an archive does not apply settings.',
     )}
   </p>
   {#if job}
     <p role="status">
       {job.mode === 'reset' && job.phase === 'prepared'
-        ? '' + t('Сброс подготовлен, ожидает подтверждения') + ''
+        ? '' + t('Reset prepared; waiting for confirmation') + ''
         : t(groupPhases[job.phase])}{job.file_name ? ` · ${job.file_name}` : ''}
     </p>
     {#if active}<progress
-        aria-label={job.mode === 'reset' ? t('Операция сброса') : t('Передача группы')}
+        aria-label={job.mode === 'reset' ? t('Reset operation') : t('Group transfer')}
         max={job.total || 1}
         value={job.total ? job.transferred : undefined}
       ></progress>{#if !['reset', 'windows'].includes(job.mode)}<p>
           {job.transferred.toLocaleString(presentation.language)} / {job.total
             ? job.total.toLocaleString(presentation.language)
             : '…'}
-          {t('байт')}
+          {t('bytes')}
         </p>{/if}{/if}
     {#if job.mode === 'windows' && job.windows_source}
-      <section class="windows-bindings" aria-label={t('Привязки Windows FanAndLighting')}>
-        <h3>{t('Исходный контроллер и датчики')}</h3>
+      <section class="windows-bindings" aria-label={t('Windows FanAndLighting bindings')}>
+        <h3>{t('Source controller and sensors')}</h3>
         <p>
           {t(
-            'Применение выполняется к устройству, указанному выше. Выберите исходный контроллер в архиве и отдельный ID датчика для каждой роли. Недоступные ID сохраняются без автоматической замены.',
+            'Settings are applied to the device shown above. Choose a controller record from the archive and a separate sensor ID for each role. Unavailable IDs are retained without automatic substitution.',
           )}
         </p>
         <label
-          >{t('Исходный контроллер Windows')}<select
-            aria-label={t('Исходный контроллер Windows')}
+          >{t('Windows source controller')}<select
+            aria-label={t('Windows source controller')}
             bind:value={windowsRecord}
             disabled={!windowsEditable}
-            ><option value="">{t('Выберите record контроллера')}</option
+            ><option value="">{t('Choose a controller record')}</option
             >{#each job.windows_source.controllers as source (source.record_index)}<option
                 value={String(source.record_index)}
                 >{t(
@@ -437,7 +436,7 @@
                   disabled={!windowsEditable}
                   maxlength="1024"
                   spellcheck="false"
-                  placeholder={t('Выберите или введите ID датчика')}
+                  placeholder={t('Choose or enter a sensor ID')}
                 /></label
               >
               <datalist id={`windows-${job.id}-${role}`}
@@ -449,26 +448,26 @@
                   id={`windows-${job.id}-${role}-hint`}
                   role="alert"
                 >
-                  {t('ID повторяется, имеет неподходящие единицы или недопустимый формат.')}
+                  {t('The ID is duplicated, has incompatible units or uses an invalid format.')}
                 </p>{:else if windowsSourceUnverified(role, windowsIds, sensors)}<p
                   id={`windows-${job.id}-${role}-hint`}
                   class="source-note"
                 >
-                  {t('Источник недоступен или не подтверждён. ID сохранён без подмены.')}
+                  {t('Source unavailable or unverified. The ID is retained without substitution.')}
                 </p>{/if}
             </div>
           {/each}
         </div>
         <p>
           {t(
-            'Укажите шесть разных ID с нужными единицами. Без показаний температуры охлаждение использует 100%; сенсорная подсветка возвращается к обычным параметрам эффекта.',
+            'Use six distinct IDs with the indicated units. Without temperature readings, cooling falls back to 100%; sensor-driven lighting returns to the effect’s manual settings.',
           )}
         </p>
         <button disabled={!windowsEditable || !windowsDraft} onclick={prepareWindows}
-          >{t('Проверить настройки Windows')}</button
+          >{t('Review Windows settings')}</button
         >
         {#if job.phase === 'prepared' && !windowsCurrent}<p role="status">
-            {t('Привязки изменились. Повторите подготовку перед применением.')}
+            {t('Bindings changed. Prepare again before applying.')}
           </p>{/if}
       </section>
     {/if}
@@ -483,42 +482,42 @@
         />{/key}
     {/if}
     {#if job.summary}
-      <div aria-label={t('Содержимое группы')}>
-        <p>{t('Слотов:')} {job.summary.slots.length}</p>
+      <div aria-label={t('Group content')}>
+        <p>{t('Slots:')} {job.summary.slots.length}</p>
         {#each job.summary.slots as slot (`${slot.group}:${slot.slot}`)}<p>
             {slot.group} · {slot.slot + 1}: {slot.name}
           </p>{/each}
-        {#if job.summary.theme_name}<p>{t('Тема:')} {job.summary.theme_name}</p>{/if}
-        {#if job.summary.media_key}<p>{t('Источник: видео')}</p>{/if}
+        {#if job.summary.theme_name}<p>{t('Theme:')} {job.summary.theme_name}</p>{/if}
+        {#if job.summary.media_key}<p>{t('Source: video')}</p>{/if}
         {#if job.summary.lcd}<p>
             LCD: {job.summary.lcd.brightness_percent}% · {job.summary.lcd.rotation_degrees}° · {job
               .summary.lcd.mode}
           </p>{/if}
         {#if job.summary.fan_manual_percent !== null}<p>
-            {t('Вентиляторы:')}
+            {t('Fans:')}
             {job.summary.fan_manual_percent}%
           </p>{/if}
         {#if job.summary.pump_manual}<p>
-            {t('Помпа:')}
+            {t('Pump:')}
             {job.summary.pump_manual.percent}% · {job.summary.pump_manual.source}
           </p>{/if}
         {#if job.summary.cooling_modes}
           <details class="bank-summary">
             <summary
               >{t(
-                'Сохранённые режимы: вентиляторы {0}, помпа {1}',
+                'Stored modes: fans {0}, pump {1}',
                 job.summary.cooling_modes.fan.length,
                 job.summary.cooling_modes.pump.length,
               )}</summary
             >
             {#each job.summary.cooling_modes.fan as mode (mode.id)}<p>
-                {t('Вентиляторы')}: {coolingModeLabel(mode)} ({mode.id}) · {policySummary(
+                {t('Fans')}: {coolingModeLabel(mode)} ({mode.id}) · {policySummary(
                   mode.policy,
                   presentation.language,
                 )}
               </p>{/each}
             {#each job.summary.cooling_modes.pump as mode (mode.id)}<p>
-                {t('Помпа')}: {coolingModeLabel(mode)} ({mode.id}) · {policySummary(
+                {t('Pump')}: {coolingModeLabel(mode)} ({mode.id}) · {policySummary(
                   mode.policy,
                   presentation.language,
                 )}
@@ -527,31 +526,31 @@
         {/if}
         {#if job.summary.cooling?.fan_mode || job.summary.cooling?.pump_mode}<p>
             {t(
-              'ID выбранных режимов: вентиляторы {0}, помпа {1}',
+              'Selected mode IDs: fans {0}, pump {1}',
               job.summary.cooling?.fan_mode ?? '—',
               job.summary.cooling?.pump_mode ?? '—',
             )}
           </p>{/if}
         {#if job.summary.cooling}<p>
-            {t('Политика вентиляторов:')}
+            {t('Fan policy:')}
             {policySummary(job.summary.cooling.fan, presentation.language)}
           </p>
           <p>
-            {t('Политика помпы:')}
+            {t('Pump policy:')}
             {policySummary(job.summary.cooling.pump, presentation.language)}
           </p>{/if}
         {#if job.summary.dynamic_rgb}<p>
-            {t('Динамическая подсветка:')}
+            {t('Dynamic lighting:')}
             {job.summary.dynamic_rgb.sensor_id} · {job.summary.dynamic_rgb.low_value}–{job.summary
               .dynamic_rgb.high_value}
             {job.summary.dynamic_rgb.unit}
           </p>{/if}
         {#if job.summary.fan_led_mode}<p>
-            {t('Подсветка вентиляторов:')}
+            {t('Fan lighting:')}
             {job.summary.fan_led_mode}
           </p>{/if}
         {#if job.summary.pump_led_mode}<p>
-            {t('Подсветка помпы:')}
+            {t('Pump lighting:')}
             {job.summary.pump_led_mode}
           </p>{/if}
       </div>
@@ -559,11 +558,11 @@
     {#if job.windows_lighting}<WindowsLightingReview review={job.windows_lighting} />{/if}
     {#if job.mode === 'windows' && job.phase === 'prepared'}<p>
         {t(
-          'Импорт заменит режимы охлаждения и подсветки. Сохранённые Linux-профили, настройки экрана, файлы и температурные оповещения останутся. Применение начнётся после подтверждения.',
+          'Import replaces cooling and lighting modes. Saved Linux profiles, display settings, files and thermal alerts are preserved. Application starts after confirmation.',
         )}
       </p>
       <button disabled={!applicable || !windowsCurrent} onclick={() => act('finish')}
-        >{t('Импортировать и применить')}</button
+        >{t('Import and apply')}</button
       >{/if}
     {#if job.mode === 'windows_screen' && job.phase === 'prepared'}<WindowsScreenPreview
         target={job}
@@ -573,60 +572,60 @@
       />{/if}
     {#if job.mode === 'windows_screen' && job.phase === 'prepared'}<p>
         {t(
-          'Импорт заменит текущую сцену LCD, редактор, яркость, поворот и галереи. Сохранённые Linux-профили и настройки охлаждения останутся. Изображение на устройстве проверяется отдельно.',
+          'Import replaces the current LCD scene, editor, brightness, rotation and galleries. Saved Linux profiles and cooling settings are preserved. Physical output is verified separately.',
         )}
       </p>
       <button disabled={!applicable || screenPreviewBusy} onclick={() => act('finish')}
-        >{t('Импортировать экран и применить')}</button
+        >{t('Import screen and apply')}</button
       >{/if}
     {#if job.phase === 'prepared' && !['windows', 'windows_screen'].includes(job.mode)}<p>
-        {job.mode === 'reset' ? '' + t('Сброс') + '' : '' + t('Восстановление') + ''}
+        {job.mode === 'reset' ? '' + t('Reset') + '' : '' + t('Restore') + ''}
         {t(
-          'заменит сохранённые настройки всей группы и её слоты и сразу применит их к указанному устройству. Другая группа сохранится. Открытые черновики редакторов сохранятся.',
+          'will replace the saved settings and slots of the entire group and immediately apply them to the specified device. The other group and open editor drafts are preserved.',
         )}
       </p>
       <button disabled={!applicable} onclick={() => act('finish')}
         >{job.mode === 'reset'
-          ? '' + t('Подтвердить полный сброс и применить') + ''
-          : '' + t('Восстановить и применить группу') + ''}</button
+          ? '' + t('Confirm full reset and apply') + ''
+          : '' + t('Restore and apply group') + ''}</button
       >{/if}
     {#if job.mode === 'reset' && job.phase === 'uncertain' && job.snapshot && job.sensor_id}<p>
         {t(
-          'Ответ на сброс не подтверждён. Повтор использует тот же ID, датчик и исходную версию настроек; новый сброс автоматически не запускается.',
+          'The reset response is unconfirmed. Retry uses the same ID, sensor and original settings revision; a new reset is never started automatically.',
         )}
       </p>
       <button disabled={!applicable} onclick={() => act('finish')}
-        >{t('Повторить запрос сброса с тем же ID')}</button
+        >{t('Retry reset with the same ID')}</button
       >{/if}
     {#if job.mode === 'windows' && job.phase === 'uncertain' && job.snapshot && job.windows_options}<p
       >
         {t(
-          'Ответ на импорт не подтверждён. Повтор использует подготовленные настройки и тот же ID операции; правки формы в этот запрос не попадут.',
+          'The import reply is unconfirmed. Retry uses the prepared settings and the same operation ID; form edits are not included.',
         )}
       </p>
       <button disabled={!applicable} onclick={() => act('finish')}
-        >{t('Повторить импорт с тем же ID')}</button
+        >{t('Retry import with the same ID')}</button
       >{/if}
     {#if job.phase === 'applying'}<p>
         {t(
-          'Применение уже началось. Дождитесь результата; после потери связи прочитайте его по ID операции.',
+          'Applying has already started. Wait for the result; if disconnected, read it back using the operation ID.',
         )}
       </p>{/if}
     {#if job.phase === 'complete' && job.mode === 'export'}<p role="status">
-        {t('Архив группы сохранён в файл.')}
+        {t('Group archive saved to a file.')}
       </p>{/if}
     {#if job.readback}
       <p role="status">
-        {t('Сохранение группы подтверждено.')}
+        {t('Group save confirmed.')}
         {job.readback.selected_content_current
-          ? '' + t('Сохранённое содержимое группы соответствует этой операции.') + ''
-          : '' + t('После операции настройки уже изменились.') + ''}
+          ? '' + t('The saved group content matches this operation.') + ''
+          : '' + t('Settings have changed since this operation.') + ''}
       </p>
       {#if job.readback.runtime.recovery_required}<p role="alert">
-          {t('Runtime требует восстановления. Перезапустите daemon и прочитайте результат заново.')}
+          {t('Runtime recovery is required. Restart the daemon and read the result again.')}
         </p>{/if}
       {#if job.readback.runtime.last_error}<p role="alert">
-          {t('Настройки сохранены, при применении возникла ошибка:')}
+          {t('Settings were saved, but applying failed:')}
           {job.readback.runtime.last_error}
         </p>{/if}
       <button
@@ -635,7 +634,7 @@
           !job.readback.selected_content_current ||
           !job.readback.runtime.revision ||
           !!job.readback.runtime.recovery_required}
-        onclick={() => act('reapply')}>{t('Повторить применение сохранённой группы')}</button
+        onclick={() => act('reapply')}>{t('Reapply saved group')}</button
       >
     {/if}
     {#if job.message || job.message_code}<p
@@ -644,19 +643,19 @@
         {archiveMessage(job, presentation.language)}
       </p>
       {#if archiveDiagnostic(job, presentation.language)}<details>
-          <summary>{t('Техническая диагностика')}</summary>
+          <summary>{t('Technical diagnostics')}</summary>
           <pre>{archiveDiagnostic(job, presentation.language)}</pre>
         </details>{/if}{/if}
     {#if cancellable}<button onclick={() => act('cancel')}
         >{job.mode === 'windows'
-          ? t('Отменить Windows подготовку')
+          ? t('Cancel Windows preparation')
           : job.mode === 'reset'
-            ? '' + t('Отменить подготовку сброса') + ''
-            : '' + t('Отменить передачу группы') + ''}</button
+            ? '' + t('Cancel reset preparation') + ''
+            : '' + t('Cancel group transfer') + ''}</button
       >{/if}
   {/if}
   <label
-    >{t('ID операции группы')}<input
+    >{t('Group operation ID')}<input
       bind:value={recoveryId}
       maxlength="32"
       spellcheck="false"
@@ -664,44 +663,44 @@
     /></label
   >
   <label
-    >{t('Устройство для чтения результата')}<input
+    >{t('Device for result readback')}<input
       bind:value={recoveryDev}
       placeholder={device}
       disabled={active || !!pending}
     /></label
   >
   <label
-    >{t('Тип операции')}<select
-      aria-label={t('Тип операции')}
+    >{t('Operation type')}<select
+      aria-label={t('Operation type')}
       bind:value={recoveryMode}
       disabled={active || !!pending}
-      ><option value="import">{t('Импорт')}</option><option value="export">{t('Экспорт')}</option
-      ><option value="reset">{t('Полный сброс Fan + Lighting')}</option><option value="windows"
-        >{t('Импорт Windows FanAndLighting')}</option
-      ><option value="windows_screen">{t('Импорт Windows Screen')}</option></select
+      ><option value="import">{t('Import')}</option><option value="export">{t('Export')}</option
+      ><option value="reset">{t('Full Fan + Lighting reset')}</option><option value="windows"
+        >{t('Windows FanAndLighting import')}</option
+      ><option value="windows_screen">{t('Import Windows Screen')}</option></select
     ></label
   >
   <div class="buttons">
     <button disabled={active || !connected || !recoveryValid} onclick={() => act('recover')}
-      >{t('Прочитать результат группы')}</button
+      >{t('Read group result')}</button
     >
     {#if pending || job}<button
         disabled={active || job?.phase === 'prepared'}
-        onclick={() => act('dismiss')}>{t('Закрыть сведения о группе')}</button
+        onclick={() => act('dismiss')}>{t('Close group details')}</button
       >{/if}
     {#if pending && !job && !['reset', 'windows'].includes(pending.mode)}<button
         disabled={active || !connected}
-        onclick={() => act('cancel')}>{t('Отменить сохранённую передачу')}</button
+        onclick={() => act('cancel')}>{t('Cancel saved transfer')}</button
       >{/if}
   </div>
   {#if pending}<p>
-      {t('ID сохранён для восстановления:')} <code>{pending.id}</code>{t(
-        '. Закрытие сведений не отменяет уже принятую операцию.',
+      {t('ID saved for recovery:')} <code>{pending.id}</code>{t(
+        '. Closing these details does not cancel an accepted operation.',
       )}
     </p>{/if}
   {#if error}<p role="alert">{archiveMessage(error, presentation.language)}</p>
     {#if archiveDiagnostic(error, presentation.language)}<details>
-        <summary>{t('Техническая диагностика')}</summary>
+        <summary>{t('Technical diagnostics')}</summary>
         <pre>{archiveDiagnostic(error, presentation.language)}</pre>
       </details>{/if}{/if}
 </details>

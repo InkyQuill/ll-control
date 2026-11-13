@@ -16,13 +16,13 @@ HID — MockBackend; native AT/window switching/zoom этим не закрыт�
 
 Исторический результат: **PASS** — Display, Sensors, Cooling, Lighting и Settings.
 [Исторический результат с profile error recovery](evidence/2026-10-10-native-profile-missing.json).
-Worktree `lconnect-linux-m1`, ветка `codex/m1-lcdv2-dynamic-display`,
+Worktree `ll-control-m1`, ветка `codex/m1-lcdv2-dynamic-display`,
 base `bcaf7a2538a10176c89dd1fddddafbe29826b56e` + незакоммиченные изменения.
 Это исторический dirty-tree checkpoint, не чистый commit и не hardware acceptance.
-Временные логи `/tmp/lconnect-native-1onwrhek` могут быть удалены.
+Временные логи `/tmp/llcontrol-native-1onwrhek` могут быть удалены.
 Повтор после защиты Cooling/Lighting drafts также прошёл:
 [evidence](evidence/2026-10-10-control-drafts-native.json),
-fixture `/tmp/lconnect-native-bo6ac51o`. Это тот же happy-path scope, не native reconnect.
+fixture `/tmp/llcontrol-native-bo6ac51o`. Это тот же happy-path scope, не native reconnect.
 
 Повтор после Settings/Profiles/Cleanup guards: [PASS](evidence/2026-10-10-library-races-native.json).
 Объём native сценариев прежний; новые races проверены browser fixtures.
@@ -82,8 +82,8 @@ USB disconnect/sleep/recovery, native error/reconnect matrix, внешнее у�
 ```sh
 pnpm --dir desktop install --frozen-lockfile &&
 pnpm --dir desktop build &&
-cargo build -p lconnect-daemon --example desktop-mock --locked &&
-cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked &&
+cargo build -p llcontrol-daemon --example desktop-mock --locked &&
+cargo build -p llcontrol-gui --features native-smoke,custom-protocol --locked &&
 python3 desktop/scripts/native-smoke.py
 ```
 
@@ -137,7 +137,7 @@ success, сохранённый draft, фактический readback=67, од�
 ## Global GPU source editor — 2026-10-10
 
 [Evidence](evidence/2026-10-10-native-sensor-defaults.json), fixture root
-`/tmp/lconnect-native-w5q7feah`. Isolated Xvfb/WebKitGTK и Unix IPC; только
+`/tmp/llcontrol-native-w5q7feah`. Isolated Xvfb/WebKitGTK и Unix IPC; только
 MockBackend и synthetic GPU A/B (15/35%), реальный GPU/HID не открывался.
 
 DOM выбирает GPU B и её load; GPU A отсутствует среди options. До Apply
@@ -220,7 +220,7 @@ Native-only binary embeds licensed DejaVuSans fixture bytes. JS создаёт F
 font_asset в сохранённой теме, profile equality и final daemon restart.
 Флаг `native_font_import` обязателен в Python harness. GUI close/reconnect
 продолжают прежние сценарии с managed font в теме.
-[Evidence](evidence/2026-10-10-font-gui.json), `/tmp/lconnect-native-3yxrpniu`.
+[Evidence](evidence/2026-10-10-font-gui.json), `/tmp/llcontrol-native-3yxrpniu`.
 Native cancel/lost-Finish и выбор fonts отдельных sensor parts остаются
 отдельными проверками; browser cancel/unmount/lost-Finish проверены.
 

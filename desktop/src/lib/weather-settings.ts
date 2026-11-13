@@ -18,7 +18,7 @@ export function weatherRangeValid(binding: EffectSensor | null | undefined): boo
 export function assertWeatherDraft(theme: Theme): void {
   const fireworks = theme.layers.find((layer) => layer.kind === 'fireworks');
   if (fireworks?.effect.dynamic && !fireworks.effect.sensor)
-    throw new ValidationError('Выберите источник эффекта перед сохранением или Apply.');
+    throw new ValidationError('Select an effect source before saving or applying.');
   if (
     fireworks &&
     (!Number.isInteger(fireworks.effect.intensity) ||
@@ -26,7 +26,7 @@ export function assertWeatherDraft(theme: Theme): void {
       fireworks.effect.intensity > 3 ||
       !weatherRangeValid(fireworks.effect.sensor?.binding))
   )
-    throw new ValidationError('Проверьте интенсивность и пороги Fireworks.');
+    throw new ValidationError('Check the Fireworks intensity and thresholds.');
   const snow3d = theme.layers.find((layer) => layer.kind === 'snow3d');
   if (
     snow3d &&
@@ -34,10 +34,10 @@ export function assertWeatherDraft(theme: Theme): void {
       snow3d.effect.intensity < 1 ||
       snow3d.effect.intensity > 3)
   )
-    throw new ValidationError('Проверьте интенсивность Snow3D: 1–3.');
+    throw new ValidationError('Check the Snow3D intensity: 1–3.');
   const meteor = theme.layers.find((layer) => layer.kind === 'meteor');
   if (meteor?.effect.dynamic && !meteor.effect.sensor)
-    throw new ValidationError('Выберите источник эффекта перед сохранением или Apply.');
+    throw new ValidationError('Select an effect source before saving or applying.');
   if (
     meteor &&
     (!Number.isInteger(meteor.effect.speed) ||
@@ -45,13 +45,13 @@ export function assertWeatherDraft(theme: Theme): void {
       meteor.effect.speed > 3 ||
       !weatherRangeValid(meteor.effect.sensor?.binding))
   )
-    throw new ValidationError('Проверьте скорость и пороги MeteorShower.');
+    throw new ValidationError('Check the MeteorShower speed and thresholds.');
   const weather = theme.layers.find((layer) => layer.kind === 'weather');
   if (weather?.effect.dynamic && !weather.effect.sensor)
-    throw new ValidationError('Выберите источник эффекта перед сохранением или Apply.');
+    throw new ValidationError('Select an effect source before saving or applying.');
   if (weather && !weatherRangeValid(weather.effect.sensor)) {
     throw new ValidationError(
-      'Проверьте пороги эффекта: 0–100 для °C/% и 0–3600 для RPM; нижний не должен превышать верхний.',
+      'Check the effect thresholds: 0–100 for °C/% and 0–3600 for RPM; the lower threshold must not exceed the upper threshold.',
     );
   }
 }

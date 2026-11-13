@@ -26,7 +26,7 @@ def wait(predicate, why, seconds=30):
 def rpc(root, method, params=None):
     with socket.socket(socket.AF_UNIX) as connection:
         connection.settimeout(10)
-        connection.connect(str(root / 'lconnectd.sock'))
+        connection.connect(str(root / 'llcontrold.sock'))
         with connection.makefile('rwb') as stream:
             stream.write((json.dumps(dict(jsonrpc='2.0', id=1, method=method, params=params or {})) + '\n').encode())
             stream.flush()
@@ -41,9 +41,9 @@ def case(root, language):
     root.mkdir(mode=0o700)
     (root / 'fixture-marker').write_text('MockBackend/native image editor only\n')
     (root / 'native-tmp').mkdir()
-    inherited = {k: v for k, v in os.environ.items() if not k.startswith('LCONNECT_NATIVE_')}
-    env = dict(inherited, LCONNECT_SMOKE_ROOT=str(root), LCONNECT_NATIVE_IMAGE_EDITOR='1',
-               LCONNECT_NATIVE_MEDIA='1', LCONNECT_MOCK_EXPORT_FRAMES='1',
+    inherited = {k: v for k, v in os.environ.items() if not k.startswith('LLCONTROL_NATIVE_')}
+    env = dict(inherited, LLCONTROL_SMOKE_ROOT=str(root), LLCONTROL_NATIVE_IMAGE_EDITOR='1',
+               LLCONTROL_NATIVE_MEDIA='1', LLCONTROL_MOCK_EXPORT_FRAMES='1',
                XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root / 'config'),
                XDG_DATA_HOME=str(root / 'data'), XDG_CACHE_HOME=str(root / 'cache'),
                XDG_CONFIG_DIRS=str(root / 'system-config'), TMPDIR=str(root / 'native-tmp'),
@@ -70,12 +70,12 @@ def case(root, language):
         wait(lambda: (root / 'a11y.sock').exists(), 'private accessibility bus')
         launch(['openbox'], 'wm')
         fixture = launch([REPO / 'target/debug/examples/desktop-mock'], 'fixture')
-        wait(lambda: (root / 'stats.json').exists() and (root / 'lconnectd.sock').exists()
+        wait(lambda: (root / 'stats.json').exists() and (root / 'llcontrold.sock').exists()
              or fixture.poll() is not None, 'private fixture')
         assert fixture.poll() is None
         settings = rpc(root, 'get_display_settings'); settings['interface_language'] = language
         rpc(root, 'set_display_settings', dict(settings=settings))
-        gui = launch([REPO / 'target/debug/lconnect-gui'], 'gui')
+        gui = launch([REPO / 'target/debug/llcontrol-gui'], 'gui')
         deadline = time.monotonic() + 100
         acknowledged = closed = False
         receipt = None
@@ -101,8 +101,8 @@ def case(root, language):
                         query = r"""
 import gi, json, os, sys
 from pathlib import Path
-assert os.environ['AT_SPI_BUS_ADDRESS'] == 'unix:path=' + os.environ['LCONNECT_SMOKE_ROOT'] + '/a11y.sock'
-assert (Path(os.environ['LCONNECT_SMOKE_ROOT']) / 'fixture-marker').is_file()
+assert os.environ['AT_SPI_BUS_ADDRESS'] == 'unix:path=' + os.environ['LLCONTROL_SMOKE_ROOT'] + '/a11y.sock'
+assert (Path(os.environ['LLCONTROL_SMOKE_ROOT']) / 'fixture-marker').is_file()
 gi.require_version('Atspi', '2.0')
 from gi.repository import Atspi
 Atspi.set_timeout(500, 500); Atspi.init()
@@ -221,9 +221,9 @@ def main():
     parser.add_argument('--inside', type=Path)
     args = parser.parse_args()
     if args.inside is None:
-        root = Path(tempfile.mkdtemp(prefix='lconnect-image-editor-'))
+        root = Path(tempfile.mkdtemp(prefix='llcontrol-image-editor-'))
         runtime = root / 'session'; runtime.mkdir(mode=0o700)
-        env = dict(os.environ, LCONNECT_IMAGE_EDITOR_ISOLATED='1', XDG_RUNTIME_DIR=str(runtime),
+        env = dict(os.environ, LLCONTROL_IMAGE_EDITOR_ISOLATED='1', XDG_RUNTIME_DIR=str(runtime),
                    XDG_CONFIG_HOME=str(root / 'config'), XDG_DATA_HOME=str(root / 'data'),
                    XDG_CACHE_HOME=str(root / 'cache'), DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
         for key in ['DISPLAY', 'WAYLAND_DISPLAY', 'AT_SPI_BUS_ADDRESS', 'DBUS_SESSION_BUS_ADDRESS']:
@@ -237,7 +237,7 @@ def main():
                 subprocess.run(['fusermount3', '-uz', '--', str(target)], check=True, timeout=10)
         print('Native image editor artifacts:', root)
         raise SystemExit(code)
-    assert os.environ.get('LCONNECT_IMAGE_EDITOR_ISOLATED') == '1'
+    assert os.environ.get('LLCONTROL_IMAGE_EDITOR_ISOLATED') == '1'
     outcomes = [case(args.inside / language, language) for language in ['en-US', 'ru-RU']]
     (args.inside / 'acceptance.json').write_text(json.dumps(dict(ok=True, cases=outcomes), indent=2) + '\n')
     print('PASS native gallery image editor EN/RU', flush=True)

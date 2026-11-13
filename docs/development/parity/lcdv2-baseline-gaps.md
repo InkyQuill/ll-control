@@ -65,17 +65,17 @@ physical recovery/lifecycle остаются открытыми. Не перео
 | PAR-12 / M5,M6 / desktop/delivery | systemd/udev/xtask и production Arch payload с двумя Mini stores реализованы; private install/upgrade/remove и packaged GUI приняты; packaged Mini model/Qt/GJS/CLI/preferences и private Plasma host проверены; реальные desktop/install/release gates остаются | Packaging/CI/desktop/settings, manifest metadata | Install→autostart→upgrade→uninstall, tray/units/localization/diagnostics и воспроизводимые artifacts |
 
 Пути `daemon/`, `ipc/` и `actor/` в таблице сокращают соответствующие
-`crates/lconnect-daemon/` и `crates/lconnect-ipc/`.
+`crates/llcontrol-daemon/` и `crates/llcontrol-ipc/`.
 Текущее покрытие и checkpoints: [сводка реализации](implementation-status.md).
 
 ## Research gates, не готовые требования реализации
 
-- **LCD-016 startup/offline:** cmd15 codec есть, activation/runtime и применимый Windows caller не установлены. Найти caller/guard; затем добавить сценарий или обоснованно исключить. Не считать USB ACK доказательством offline content.
+- **LCD-016 startup/offline:** cmd15 codec есть, activation/runtime и применимый Windows caller не установлены. Названный caller в изученной версии не найден; текущий поддерживаемый scope исключает загрузку до новых доказательств ([аудит](lcdv2-applicability-2.1.28.md)). Не считать USB ACK доказательством offline content.
 - **Editor:** image controls/ranges и geometry установлены; point filters прошли software проверки, Windows raster/native остаются. Video cut/edit/autofill/capture/record применимы, их time/format/audio/speed semantics требуют дальнейшей трассировки. [Контракт](ga2lcd-editor.md).
 - **RGB-003/004:** manual LED-loop range8…50 извлечён из versioned XAML/Core Constants; sync/SKU/retention реализованы и mock/native-tested. Физический LED coverage и dynamic mode/source graph остаются. RGB-004 sources/cadence/HSV и color-count/speed catalog уже извлечены: [исследование](sensor-driven-rgb.md).
 - **COOL-004:** pump source реализован; глобальный UI caller MB sync ещё исследовать. Fan MB sync/start-stop исключены product guards.
 - **LCD-017:** отдельный Screen Animation Editor исключён для LCDV2 product guard; не смешивать с обычным GA2LCD Editor.
-- **Legacy FW<1.5:** codec есть, аппаратного B/H.264 playback evidence нет. Текущая проверенная конфигурация — FW1.6/C512.
+- **Legacy FW<1.5:** codec есть, аппаратного B/H.264 playback evidence нет. Поддерживаемая проверенная конфигурация — FW1.6/C512; FW<1.5 экспериментален и не квалифицирован ([аудит](lcdv2-applicability-2.1.28.md)).
 
 Profiles/slot reset/cleanup реализованы с описанной session retention.
 Карточки видео приняты программно: [checkpoint](evidence/2026-10-12-media-gallery.json).

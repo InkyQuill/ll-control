@@ -12,14 +12,14 @@ import time
 import tomllib
 
 repo = Path(__file__).resolve().parents[2]
-root = Path(tempfile.mkdtemp(prefix="lconnect-native-"))
+root = Path(tempfile.mkdtemp(prefix="llcontrol-native-"))
 (root / "fixture-marker").write_text("MockBackend only\n")
 # A valid asset from a prior session, intentionally absent from every theme/profile.
 font_orphan = root / "settings/theme-fonts/99999999999999999999999999999999.font"
 font_orphan.parent.mkdir(parents=True)
-font_orphan.write_bytes((repo / "crates/lconnect-image/assets/DejaVuSans.ttf").read_bytes())
+font_orphan.write_bytes((repo / "crates/llcontrol-image/assets/DejaVuSans.ttf").read_bytes())
 font_keys = {"offline": "d" * 32, "profile": "e" * 32}
-font_bytes = (repo / "crates/lconnect-image/assets/DejaVuSans.ttf").read_bytes()
+font_bytes = (repo / "crates/llcontrol-image/assets/DejaVuSans.ttf").read_bytes()
 for key in font_keys.values():
     (font_orphan.parent / (key + ".font")).write_bytes(font_bytes)
 # Prior-lifetime assets: profile-only, offline-device-only, orphan.
@@ -40,7 +40,7 @@ def retained_image_theme(key):
 with (root / "settings/devices/offline.toml").open("a") as settings:
     settings.write('[[theme.layers]]\nkind = "text"\ntext = "Offline font"\n[theme.layers.style]\nfont_asset = "' + font_keys["offline"] + '"\nx = 240\ny = 240\nsize = 32\ncolor = [255, 255, 255]\nalign = "center"\n')
 assert tomllib.loads((root / "settings/devices/offline.toml").read_text())["theme"]["layers"][0]["asset"] == image_keys["offline"]
-env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
+env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
            XDG_CONFIG_HOME=str(root / "config"), XDG_CACHE_HOME=str(root / "cache"),
            XDG_DATA_HOME=str(root / "data"), GDK_BACKEND="x11",
            WEBKIT_DISABLE_DMABUF_RENDERER="1")
@@ -64,7 +64,7 @@ def start():
     global fixture
     (root / "stop").unlink(missing_ok=True)
     (root / "stats.json").unlink(missing_ok=True)
-    (root / "lconnectd.sock").unlink(missing_ok=True)
+    (root / "llcontrold.sock").unlink(missing_ok=True)
     log = (root / f"daemon-{len(logs)}.log").open("w")
     logs.append(log)
     fixture = subprocess.Popen([repo / "target/debug/examples/desktop-mock"],
@@ -72,7 +72,7 @@ def start():
     for _ in range(100):
         if fixture.poll() is not None:
             raise RuntimeError("Mock fixture exited")
-        if (root / "lconnectd.sock").exists() and (root / "stats.json").exists():
+        if (root / "llcontrold.sock").exists() and (root / "stats.json").exists():
             return
         time.sleep(.1)
     raise TimeoutError("mock socket")
@@ -96,7 +96,7 @@ def stop():
 def rpc(method, params):
     with socket.socket(socket.AF_UNIX) as conn:
         conn.settimeout(10)
-        conn.connect(str(root / "lconnectd.sock"))
+        conn.connect(str(root / "llcontrold.sock"))
         stream = conn.makefile("rwb")
         stream.write((json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}) + "\n").encode())
         stream.flush()
@@ -138,11 +138,11 @@ try:
     gui_runtime = root / "gui-runtime"
     gui_runtime.mkdir(mode=0o700)
     (gui_runtime / "fixture-marker").write_text("MockBackend proxy only\n")
-    proxy = proxy_module.FaultProxy(gui_runtime / "lconnectd.sock", root / "lconnectd.sock", cleanup_profile_fault=cleanup_profile_fault, cooling_modes=os.environ.get("LCONNECT_NATIVE_COOLING_MODES") == "1", cooling_defaults=os.environ.get("LCONNECT_NATIVE_COOLING_DEFAULTS") == "1")
-    gui_env = dict(env, XDG_RUNTIME_DIR=str(gui_runtime), LCONNECT_SMOKE_ROOT=str(gui_runtime))
+    proxy = proxy_module.FaultProxy(gui_runtime / "llcontrold.sock", root / "llcontrold.sock", cleanup_profile_fault=cleanup_profile_fault, cooling_modes=os.environ.get("LLCONTROL_NATIVE_COOLING_MODES") == "1", cooling_defaults=os.environ.get("LLCONTROL_NATIVE_COOLING_DEFAULTS") == "1")
+    gui_env = dict(env, XDG_RUNTIME_DIR=str(gui_runtime), LLCONTROL_SMOKE_ROOT=str(gui_runtime))
     with (root / "gui.log").open("w") as log:
         proc = subprocess.Popen(["xvfb-run", "-a", "dbus-run-session", "--",
-                                 str(repo / "target/debug/lconnect-gui")],
+                                 str(repo / "target/debug/llcontrol-gui")],
                                 env=gui_env, stdout=log, stderr=subprocess.STDOUT,
                                 start_new_session=True)
         try:
@@ -166,7 +166,7 @@ try:
                     raise subprocess.TimeoutExpired(proc.args, 180)
                 with profile_cleanup_lock:
                     library = rpc("list_profiles", {})
-                if os.environ.get("LCONNECT_NATIVE_COOLING_MODES") == "1" and not cooling_mode_restarted and any(p['name'] == 'Cooling mode restart request' for p in library['profiles']):
+                if os.environ.get("LLCONTROL_NATIVE_COOLING_MODES") == "1" and not cooling_mode_restarted and any(p['name'] == 'Cooling mode restart request' for p in library['profiles']):
                     stop()
                     saved_modes = [tomllib.loads(p.read_text()).get('cooling', {}) for p in (root / 'settings/devices').glob('*.toml')]
                     assert any(c.get('pump_mode') == 'FixRPM' and c.get('pump') == {'mode':'fixed_rpm','rpm':2400} for c in saved_modes), 'mode identity/policy not durable before restart'
@@ -445,10 +445,10 @@ try:
         time.sleep(.1)
     dev = devices[0]["id"]
     assert rpc("get_lcd_state", {"dev": dev})["source"] == "Theme"
-    if env.get("LCONNECT_NATIVE_COOLING_MODES") == "1":
+    if env.get("LLCONTROL_NATIVE_COOLING_MODES") == "1":
         assert result["native_cooling_modes"], "native bank selection/Apply was not exercised"
         assert cooling_mode_restarted, "stored identity restart was not exercised"
-        if env.get("LCONNECT_NATIVE_COOLING_DEFAULTS") == "1":
+        if env.get("LLCONTROL_NATIVE_COOLING_DEFAULTS") == "1":
             assert result["native_cooling_defaults"] and proxy.cooling_default_requests == 1 and proxy.cooling_default_dropped == 1, "initializer must recover real lost ACK without replay or fixture seeding"
         assert proxy.cooling_mode_requests == 1 and proxy.cooling_mode_dropped == 1, "native Save must reconcile lost ACK without a second write"
         expected_modes = {k: v for k, v in result["cooling_mode_banks"].items() if k != "persistence"}

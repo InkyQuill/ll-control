@@ -6,11 +6,11 @@ Missing/stale slot остаётся на своём месте и показыв
 
 | Требование | Доказательство |
 |---|---|
-| До/на границе interval, wrap, большой elapsed | `lconnect-image/tests/theme.rs::sensor_cycle_switches_on_boundaries_keeps_missing_slot_and_wraps` сравнивает каждый кадр с выбранным single-sensor layer |
+| До/на границе interval, wrap, большой elapsed | `llcontrol-image/tests/theme.rs::sensor_cycle_switches_on_boundaries_keeps_missing_slot_and_wraps` сравнивает каждый кадр с выбранным single-sensor layer |
 | Раздельные стили value/label/unit | Renderer test `sensor_parts_render_independent_colors_and_preserve_missing_value` и runtime test ниже; renderer сравнивает с явными Text layers |
-| Настоящий cache stale>3s, recovery, missing без пропуска slot | `lconnect-daemon/tests/theme_runtime.rs::cycle_cache_staleness_and_reordered_bindings_keep_label_value_unit_together`: distinct CPU°F/PowerW JPEG, single-sensor oracle, восстановление прежних bytes |
+| Настоящий cache stale>3s, recovery, missing без пропуска slot | `llcontrol-daemon/tests/theme_runtime.rs::cycle_cache_staleness_and_reordered_bindings_keep_label_value_unit_together`: distinct CPU°F/PowerW JPEG, single-sensor oracle, восстановление прежних bytes |
 | Перестановка и сокращение списка | Тот же runtime test: reverse order, затем один Power binding; его JPEG сохраняется на большом elapsed |
-| После отключения IPC-клиента переключение продолжается | `lconnect-daemon/tests/theme_ipc.rs::cycle_continues_after_ipc_disconnect_and_replays_after_manager_restart`: после drop client/abort connection server в новой истории MockBackend появляются обе полные JPEG packet sequences |
+| После отключения IPC-клиента переключение продолжается | `llcontrol-daemon/tests/theme_ipc.rs::cycle_continues_after_ipc_disconnect_and_replays_after_manager_restart`: после drop client/abort connection server в новой истории MockBackend появляются обе полные JPEG packet sequences |
 | Persistence и restart | Тот же IPC test: orderly shutdown → новый manager → readback неизменной Cycle theme → обе полные packet sequences без подключения клиента |
 | Редактирование списка клавиатурой | [Cycle focus regression](evidence/2026-10-11-cycle-keyboard.json) проверяет удаление и сохранение keyboard focus |
 

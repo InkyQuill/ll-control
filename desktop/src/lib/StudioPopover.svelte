@@ -90,8 +90,8 @@
     <button
       type="button"
       class="icon-action"
-      aria-label={t('Закрыть')}
-      title={t('Закрыть')}
+      aria-label={t('Close')}
+      title={t('Close')}
       popovertarget={id}
       popovertargetaction="hide"><StudioIcon name="close" /></button
     >

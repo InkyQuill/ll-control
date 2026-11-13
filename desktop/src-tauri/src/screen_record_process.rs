@@ -186,7 +186,7 @@ impl Recorder {
                 "screen_record_process::tests::worker_entry",
                 "--nocapture",
             ])
-            .env("LCONNECT_TEST_RECORD_WORKER", "1");
+            .env("LLCONTROL_TEST_RECORD_WORKER", "1");
         command
             .stdin(Stdio::null())
             .stdout(Stdio::null())

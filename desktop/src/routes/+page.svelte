@@ -89,18 +89,18 @@
   }
   let profileMediaKey = $state(''),
     loadedMediaKey = $state('');
-  let theme = $state<Theme>(initialTheme(t('Мой экран'))),
+  let theme = $state<Theme>(initialTheme(t('My screen'))),
     lcd = $state<LcdState | null>(null);
   function lcdSourceLabel(source: string | null | undefined): string {
     switch (source) {
       case 'Idle':
-        return t('Нет программного потока');
+        return t('No software stream');
       case 'Jpeg':
-        return t('Изображение');
+        return t('Image');
       case 'DiagnosticClip':
-        return t('Видео');
+        return t('Video');
       case 'Theme':
-        return t('Тема LCD');
+        return t('LCD theme');
       default:
         return source ?? '—';
     }
@@ -137,7 +137,7 @@
         if (style.font_asset && !fonts.has(style.font_asset))
           fonts.set(style.font_asset, {
             key: style.font_asset,
-            name: t('Пользовательский ({0})', style.font_asset.slice(0, 8)),
+            name: t('Custom ({0})', style.font_asset.slice(0, 8)),
           });
       }
     }
@@ -164,42 +164,42 @@
     switch (value.context) {
       case 'load-imported':
         return t(
-          'Не удалось загрузить импортированный редактор: {0}. Черновик сохранён; повторите загрузку явно.',
+          'Could not load the imported editor: {0}. Your draft was preserved; retry loading explicitly.',
           diagnosticText(value.detail),
         );
       case 'load':
         return t(
-          'Не удалось загрузить активную тему: {0}. Черновик сохранён; повторите загрузку явно.',
+          'Could not load the active theme: {0}. Your draft is preserved; retry loading explicitly.',
           diagnosticText(value.detail),
         );
       case 'apply':
         return t(
-          'Применение темы не подтверждено: {0}. Проверьте текущее состояние LCD перед повторным Apply.',
+          'Theme application was not confirmed: {0}. Check the current LCD state before applying again.',
           diagnosticText(value.detail),
         );
       case 'localui':
         return t(
-          'Возврат LocalUI не подтверждён: {0}. Проверьте текущее состояние LCD перед повтором.',
+          'LocalUI restoration was not confirmed: {0}. Check the current LCD state before retrying.',
           diagnosticText(value.detail),
         );
       case 'media':
         return t(
-          'Выбор ролика не подтверждён: {0}. Проверьте текущее состояние LCD перед повтором.',
+          'Video selection was not confirmed: {0}. Check the current LCD state before retrying.',
           diagnosticText(value.detail),
         );
       case 'image-import':
         return t(
-          'Импорт изображения не подтверждён: {0}. Проверьте каталог перед повторной загрузкой.',
+          'Image import was not confirmed: {0}. Check the catalog before uploading again.',
           diagnosticText(value.detail),
         );
       case 'image-membership':
         return t(
-          'Файл сохранён в каталоге, но добавление в коллекцию не подтверждено: {0}. Проверьте коллекции перед повтором.',
+          'The file was saved to the catalog, but adding it to the collection was not confirmed: {0}. Check the collections before retrying.',
           diagnosticText(value.detail),
         );
       case 'image-replacement':
         return t(
-          'Замена не подтверждена: {0}. Проверьте каталог и коллекции перед повтором.',
+          'Replacement was not confirmed: {0}. Check the catalog and collections before retrying.',
           diagnosticText(value.detail),
         );
     }
@@ -291,20 +291,20 @@
         );
         if (selection !== selectionRevision) return;
         if (draft !== JSON.stringify(theme)) {
-          notice = 'Черновик изменился. Загруженная тема не заменила ваши правки.';
+          notice = 'The draft changed. The loaded theme did not replace your edits.';
           return;
         }
         if (!saved) {
           error = imported
-            ? 'Нет импортированного basic-редактора для загрузки.'
-            : 'На устройстве нет активной темы';
+            ? 'No imported basic editor is available to load.'
+            : 'There is no active theme on the device';
           return;
         }
         theme = saved;
         selectedLayer = -1;
         loadedMediaKey = '';
         if (imported)
-          notice = 'Импортированный редактор загружен в черновик. Применение — отдельное действие.';
+          notice = 'Imported editor loaded into the draft. Applying is a separate action.';
       },
       () => selection === selectionRevision,
       imported ? 'load-imported' : 'load',
@@ -320,7 +320,7 @@
         if (selection !== selectionRevision) return;
         lcdRevision++;
         lcd = result;
-        notice = 'Ролик выбран. Сохранение настроек поставлено в очередь.';
+        notice = 'Video selected. Settings are queued for saving.';
       },
       () => selection === selectionRevision,
       'media',
@@ -360,7 +360,7 @@
             } catch {
               /* Keep the pending draft when readback is unavailable. */
             }
-            throw new ValidationError('Тема отправлена, но настройки экрана не подтверждены: {0}', [
+            throw new ValidationError('Theme sent, but display settings are unconfirmed: {0}', [
               message(cause),
             ]);
           }
@@ -368,7 +368,7 @@
         if (selection !== selectionRevision) return;
         lcdRevision++;
         lcd = result;
-        notice = 'Тема отправлена. Сохранение настроек поставлено в очередь.';
+        notice = 'Theme sent. Settings are queued for saving.';
       },
       () => selection === selectionRevision,
       'apply',
@@ -385,7 +385,7 @@
         lcdRevision++;
         await refresh();
         if (selection === selectionRevision)
-          notice = 'Запрошен LocalUI. Автовосстановление темы и ролика отключено.';
+          notice = 'LocalUI requested. Automatic theme and video restoration is disabled.';
       },
       () => selection === selectionRevision,
       'localui',
@@ -670,8 +670,7 @@
         }
       }
       canvasDraft = job.editor ? JSON.stringify(job.theme) : '';
-      if (!job.live && !job.editor)
-        notice = 'Preview обновлён. На устройство ничего не отправлено.';
+      if (!job.live && !job.editor) notice = 'Preview updated. Nothing was sent to the device.';
     } catch (e) {
       if (previewJob?.generation === job.generation) {
         previewError = message(e);
@@ -760,10 +759,10 @@
         if (
           document.activeElement === input ||
           document.activeElement === document.body ||
-          document.activeElement?.getAttribute('aria-label') === t('Добавить слой')
+          document.activeElement?.getAttribute('aria-label') === t('Add layer')
         )
           addOpen = false;
-        notice = 'Изображение добавлено в черновик темы.';
+        notice = 'Image added to the theme draft.';
       },
       () => selection === selectionRevision,
       'image-import',
@@ -779,7 +778,7 @@
         (input.disabled && document.activeElement === input) ||
         (!addOpen &&
           (document.activeElement === input ||
-            document.activeElement?.getAttribute('aria-label') === t('Добавить слой'))))
+            document.activeElement?.getAttribute('aria-label') === t('Add layer'))))
     ) {
       const target =
         !addOpen || input.disabled
@@ -793,7 +792,7 @@
   }
   async function publishEditedImage(png: number[], name: string) {
     if (busy || !deviceAvailable || theme.layers.length >= 32)
-      throw new ValidationError('Вывод недоступен или достигнут лимит слоёв.');
+      throw new ValidationError('Output is unavailable or the layer limit has been reached.');
     const target = device,
       selection = selectionRevision;
     actionBusy = true;
@@ -807,9 +806,9 @@
         throw new ImportedImageMembershipError(e instanceof ValidationError ? e : message(e));
       }
       if (selection !== selectionRevision)
-        return 'Результат сохранён в галерее. Выбор устройства или соединение изменились; черновик не изменён.';
+        return 'Result saved to the gallery. The device selection or connection changed; the draft was preserved.';
       if (theme.layers.length >= 32)
-        return 'Результат сохранён в галерее. Достигнут лимит 32 слоёв; черновик не изменён.';
+        return 'Result saved to the gallery. The 32-layer limit was reached; the draft was preserved.';
       prependLayer({
         kind: 'image',
         asset,
@@ -820,7 +819,7 @@
         fit: 'crop',
         opacity: 255,
       });
-      return 'Результат сохранён и добавлен в черновик. Для вывода нажмите «Применить к LCD».';
+      return 'Result saved and added to the draft. Select Apply to LCD to display it.';
     } finally {
       collectionEpoch++;
       actionBusy = false;
@@ -832,7 +831,7 @@
     png: number[],
     name: string,
   ): Promise<string> {
-    if (busy || !deviceAvailable) throw new ValidationError('Устройство недоступно.');
+    if (busy || !deviceAvailable) throw new ValidationError('The device is unavailable.');
     const target = device,
       selection = selectionRevision;
     actionBusy = true;
@@ -860,7 +859,7 @@
           }
       }
       const result =
-        'Запись коллекции заменена. Прежний файл и сохранённые темы сохранены; изменения LCD требуют применения темы.';
+        'Collection entry replaced. The previous file and saved themes were preserved; apply the theme to change the LCD.';
       if (selection === selectionRevision) notice = result;
       return result;
     } catch (e) {
@@ -949,39 +948,39 @@
     selectedLayer = index + 1;
   }
   const labels: Record<Layer['kind'], string> = $derived({
-    divider: t('Разделитель'),
-    fireworks: t('Фейерверк'),
-    snow3d: t('Объёмный снег'),
-    meteor: t('Метеоры'),
-    weather: t('Эффект погоды'),
-    sensor_cycle: t('Смена датчиков'),
-    text: t('Текст'),
-    clock: t('Часы'),
-    sensor: t('Датчик'),
-    image: t('Изображение'),
+    divider: t('Divider'),
+    fireworks: t('Firework'),
+    snow3d: t('Volumetric snow'),
+    meteor: t('Meteors'),
+    weather: t('Weather effect'),
+    sensor_cycle: t('Sensor cycle'),
+    text: t('Text'),
+    clock: t('Clock'),
+    sensor: t('Sensor'),
+    image: t('Image'),
   });
 </script>
 
 <svelte:head><title>LL-Control</title></svelte:head>
-<a class="skip-link" href="#main-content">{t('Перейти к содержимому')}</a>
+<a class="skip-link" href="#main-content">{t('Skip to content')}</a>
 {#snippet capabilityLinks()}
   {#if capabilities.display || (!selectedDevice && !devices.length)}<button
       class="device-section"
       class:active={tab === 'display'}
       aria-current={tab === 'display' ? 'page' : undefined}
-      onclick={() => (tab = 'display')}>{t('Экран помпы')}</button
+      onclick={() => (tab = 'display')}>{t('Pump screen')}</button
     >{/if}
   {#if capabilities.cooling}<button
       class="device-section"
       class:active={tab === 'cooling'}
       aria-current={tab === 'cooling' ? 'page' : undefined}
-      onclick={() => (tab = 'cooling')}>{t('Охлаждение')}</button
+      onclick={() => (tab = 'cooling')}>{t('Cooling')}</button
     >{/if}
   {#if capabilities.lighting}<button
       class="device-section"
       class:active={tab === 'lighting'}
       aria-current={tab === 'lighting' ? 'page' : undefined}
-      onclick={() => (tab = 'lighting')}>{t('Подсветка')}</button
+      onclick={() => (tab = 'lighting')}>{t('Lighting')}</button
     >{/if}
 {/snippet}
 <div class="shell">
@@ -989,13 +988,13 @@
     <div class="brand">
       <img src="/ll-control.svg" width="32" height="32" alt="" /><span>LL-Control</span>
     </div>
-    <nav aria-label={t('Разделы')}>
+    <nav aria-label={t('Sections')}>
       <button
         class:active={tab === 'overview'}
         aria-current={tab === 'overview' ? 'page' : undefined}
-        onclick={() => (tab = 'overview')}>{t('Обзор')}</button
+        onclick={() => (tab = 'overview')}>{t('Overview')}</button
       >
-      <p class="nav-label">{t('Ваши устройства')}</p>
+      <p class="nav-label">{t('Your devices')}</p>
       {#each devices as d (d.id)}
         <button
           class="device-nav"
@@ -1007,36 +1006,36 @@
         {#if device === d.id}{@render capabilityLinks()}{/if}
       {/each}
       {#if device && !devices.some((d) => d.id === device)}<p class="disconnected-device">
-          {selectedDevice?.display_name ?? device} · {t('Недоступен')}
+          {selectedDevice?.display_name ?? device} · {t('Unavailable')}
         </p>{/if}
       {#if !devices.some((d) => d.id === device)}{@render capabilityLinks()}{/if}
       <div class="global-nav">
         <button
           class:active={tab === 'spec'}
           aria-current={tab === 'spec' ? 'page' : undefined}
-          onclick={() => (tab = 'spec')}>{t('Сведения о системе')}</button
+          onclick={() => (tab = 'spec')}>{t('System information')}</button
         >
         <button
           class:active={tab === 'sensors'}
           aria-current={tab === 'sensors' ? 'page' : undefined}
-          onclick={() => (tab = 'sensors')}>{t('Датчики')}</button
+          onclick={() => (tab = 'sensors')}>{t('Sensors')}</button
         >
         <button
           class:active={tab === 'settings'}
           aria-current={tab === 'settings' ? 'page' : undefined}
-          onclick={() => (tab = 'settings')}>{t('Настройки')}</button
+          onclick={() => (tab = 'settings')}>{t('Settings')}</button
         >
       </div>
     </nav>
     <div id="connection-status" class="connection" aria-live="polite" aria-atomic="true">
       <span class="connection-dot" class:online={connected} aria-hidden="true"
       ></span>{#key connected}<p>
-          {connected ? t('Daemon подключён') : t('Нет связи с daemon')}
+          {connected ? t('Daemon connected') : t('Daemon disconnected')}
         </p>{/key}
     </div>
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
-        {t('Настройки применяются только кнопкой. Закрытие окна не останавливает экран.')}
+        {t('Settings are applied explicitly. Closing the window does not stop the screen.')}
       </p></StudioPopover
     >
   </aside>
@@ -1045,36 +1044,36 @@
       <div>
         <h1>
           {tab === 'overview'
-            ? t('Ваши устройства')
+            ? t('Your devices')
             : tab === 'display'
-              ? t('Экран помпы')
+              ? t('Pump screen')
               : tab === 'cooling'
-                ? t('Охлаждение')
+                ? t('Cooling')
                 : tab === 'lighting'
-                  ? t('Подсветка')
+                  ? t('Lighting')
                   : tab === 'settings'
-                    ? t('Настройки')
+                    ? t('Settings')
                     : tab === 'spec'
-                      ? t('Сведения о системе')
-                      : t('Датчики')}
+                      ? t('System information')
+                      : t('Sensors')}
         </h1>
         <p class="page-description">
           {['display', 'cooling', 'lighting'].includes(tab)
-            ? (selectedDevice?.display_name ?? t('Нет устройства'))
+            ? (selectedDevice?.display_name ?? t('No device'))
             : tab === 'overview'
-              ? t('Настройте свет, охлаждение и оформление своего компьютера.')
+              ? t('Make the lighting, cooling and look of your PC your own.')
               : t('LL-Control')}
         </p>
       </div>
       {#if tab !== 'overview'}<label class="device-picker"
-          >{t('Устройство')}<select
-            aria-label={t('Устройство')}
+          >{t('Device')}<select
+            aria-label={t('Device')}
             value={device}
             onchange={(e) => selectDevice(e.currentTarget.value)}
             disabled={busy || !connected || !devices.length}
-            ><option value="">{t('Нет устройства')}</option
+            ><option value="">{t('No device')}</option
             >{#if device && !devices.some((d) => d.id === device)}<option value={device}
-                >{t('Выбранное устройство недоступно')}</option
+                >{t('Selected device unavailable')}</option
               >{/if}{#each devices as d (d.id)}<option value={d.id}>{d.display_name}</option
               >{/each}</select
           ></label
@@ -1082,7 +1081,7 @@
     </header>
     <div hidden={tab !== 'settings' || !capabilities.display}>
       {#await import('$lib/FullGroupArchive.svelte')}
-        <p role="status">{t('Загрузка…')}</p>
+        <p role="status">{t('Loading…')}</p>
       {:then { default: FullGroupArchive }}
         <FullGroupArchive
           {device}
@@ -1110,26 +1109,28 @@
     </div>
     <div id="persistence-status" aria-live="polite" aria-atomic="true">
       {#if lcd?.persistence && !lcd.persistence.last_error}
-        {#if lcd.persistence.pending}<p class="notice">{t('Настройки ожидают записи на диск.')}</p>
+        {#if lcd.persistence.pending}<p class="notice">
+            {t('Settings are waiting to be written to disk.')}
+          </p>
         {:else if lcd.persistence.saved}<p class="notice">
-            {t('Последняя запись настроек завершена.')}
+            {t('The last settings write completed.')}
           </p>
         {/if}
       {/if}
     </div>
     {#if lcd?.persistence?.last_error}<p role="alert">
-        {t('Не удалось сохранить настройки:')}
-        {lcd.persistence.last_error}{t('. Daemon повторит запись.')}
+        {t('Could not save settings:')}
+        {lcd.persistence.last_error}{t('. The daemon will retry the write.')}
       </p>{/if}
     {#if connectionError}<div class="error" role="alert">
-        {t('Не удалось подключиться к daemon: {0}', connectionError)}<button
-          onclick={() => refresh()}>{t('Повторить подключение')}</button
+        {t('Could not connect to the daemon: {0}', connectionError)}<button
+          onclick={() => refresh()}>{t('Reconnect')}</button
         >
       </div>{/if}
     {#if error}<div class="error" role="alert">{errorText(error)}</div>{/if}
     {#if connected && device && !deviceAvailable}<p role="status">
         {t(
-          'Выбранное устройство недоступно. Черновик сохранён; выберите устройство явно или дождитесь подключения.',
+          'The selected device is unavailable. Your draft was preserved; select a device explicitly or wait for it to reconnect.',
         )}
       </p>{/if}
     {#if notice}<p class="notice" role="status">{t(notice)}</p>{/if}
@@ -1143,7 +1144,7 @@
     {#if tab === 'overview'}
       <DeviceOverview {devices} {connected} disabled={busy} onopen={openDevice} />
     {:else if ['display', 'cooling', 'lighting'].includes(tab) && selectedDevice && !capabilities[tab === 'display' ? 'display' : tab === 'cooling' ? 'cooling' : 'lighting']}
-      <p>{t('Для этого семейства пока нет доступных редакторов.')}</p>
+      <p>{t('No editors are available for this device family yet.')}</p>
     {:else if tab === 'spec'}
       <SystemSpec {connected} />
     {:else if tab === 'settings'}
@@ -1160,7 +1161,7 @@
     {:else if tab === 'cooling'}
       <Cooling {device} {sensors} connected={deviceAvailable} />
     {:else if tab === 'sensors'}
-      <section class="sensors" aria-label={t('Показания датчиков')}>
+      <section class="sensors" aria-label={t('Sensor readings')}>
         {#each sensors as sensor (sensor.id)}
           <article>
             <h2>{sensor.label}</h2>
@@ -1170,12 +1171,12 @@
           </article>
         {/each}
       </section>
-      {#if !sensors.length}<p>{t('Показания появятся после подключения daemon.')}</p>{/if}
+      {#if !sensors.length}<p>{t('Readings will appear when the daemon connects.')}</p>{/if}
     {:else}
       <div class="workspace">
         <div class="document-head">
           <div class="row">
-            <label>{t('Название')}<input bind:value={theme.name} maxlength="128" /></label>
+            <label>{t('Name')}<input bind:value={theme.name} maxlength="128" /></label>
           </div>
           <div class="profiles-disclosure">
             <Profiles
@@ -1193,7 +1194,7 @@
                 if (content.kind === 'screen_media') {
                   lcdPanel = 'composition';
                   loadedMediaKey = content.value;
-                  notice = 'Ролик из профиля загружен. Применение — отдельное действие.';
+                  notice = 'Profile video loaded. Applying it is a separate action.';
                 } else if (content.kind === 'screen') {
                   loadedMediaKey = '';
                   theme = content.value;
@@ -1205,29 +1206,25 @@
               }}
             />
           </div>
-          <div class="editor-tabs" aria-label={t('Рабочая область LCD')}>
+          <div class="editor-tabs" aria-label={t('LCD workspace')}>
             <button aria-pressed={lcdPanel === 'presets'} onclick={() => (lcdPanel = 'presets')}
-              >{t('Готовые темы')}</button
+              >{t('Theme presets')}</button
             ><button
               aria-pressed={lcdPanel === 'composition'}
-              onclick={() => (lcdPanel = 'composition')}>{t('Композиция')}</button
+              onclick={() => (lcdPanel = 'composition')}>{t('Composition')}</button
             ><button aria-pressed={lcdPanel === 'library'} onclick={() => (lcdPanel = 'library')}
-              >{t('Библиотека')}</button
+              >{t('Library')}</button
             >
           </div>
         </div>
-        <section
-          class="visual"
-          class:canvas-mode={canvasEditing}
-          aria-label={t('Предпросмотр LCD')}
-        >
+        <section class="visual" class:canvas-mode={canvasEditing} aria-label={t('LCD preview')}>
           <div class="canvas-toolbar">
             <button class="primary" disabled={busy || !deviceAvailable} onclick={applyTheme}
-              >{t('Применить к LCD')}</button
+              >{t('Apply to LCD')}</button
             >
-            <div class="orientation-control" title={t('Ориентация экрана')}>
+            <div class="orientation-control" title={t('Screen orientation')}>
               <StudioIcon name="rotate" /><select
-                aria-label={t('Ориентация экрана')}
+                aria-label={t('Screen orientation')}
                 value={canvasRotation}
                 onchange={(event) =>
                   stageDisplay({
@@ -1255,35 +1252,33 @@
                 onorder={move}
               />{:else if preview}<img
                 src={preview}
-                alt={t(
-                  'Подготовленная композиция LCD — preview, не подтверждение вывода на устройство',
-                )}
+                alt={t('Prepared LCD composition — preview does not confirm output on the device')}
               />{:else}<div class="empty">
                 <span
                   >{capabilities.display?.width ?? 480} × {capabilities.display?.height ??
                     480}</span
                 >
-                <p>{t('Создайте тему')}<br />{t('и обновите preview')}</p>
+                <p>{t('Create a theme')}<br />{t('and refresh the preview')}</p>
               </div>{/if}</LcdPreview
           >
           <div class="status">
-            <span>{t('Источник:')} {lcdSourceLabel(lcd?.source)}</span>{#if lcd?.last_error}<span
+            <span>{t('Source:')} {lcdSourceLabel(lcd?.source)}</span>{#if lcd?.last_error}<span
                 role="alert">{lcd.last_error}</span
-              >{:else}<StudioPopover label={t('Предпросмотр LCD')} icon="help"
-                ><p>{t('Preview не подтверждает физический вывод')}</p></StudioPopover
+              >{:else}<StudioPopover label={t('LCD preview')} icon="help"
+                ><p>{t('Preview does not confirm physical output')}</p></StudioPopover
               >{/if}
           </div>
           <div class="canvas-actions">
             {#if canvasEditing}
-              <StudioPopover label={t('Управление холстом')} icon="help">
+              <StudioPopover label={t('Canvas controls')} icon="help">
                 <p>
                   {t(
-                    'Стрелки — перемещение; Shift + стрелки — размер; Ctrl + стрелки — шаг 10; Alt + стрелки — порядок. Escape — отмена жеста.',
+                    'Arrows move; Shift + arrows resize; Ctrl + arrows use a 10px step; Alt + arrows reorder. Escape cancels a gesture.',
                   )}
                 </p>
                 <p>
                   {t(
-                    'Размер текста меняет шрифт и текстовую рамку. Изображения масштабируются пропорционально. Фон и эффекты неподвижны.',
+                    'Text resize scales the font and text box. Images scale proportionally. Backgrounds and effects stay fixed.',
                   )}
                 </p></StudioPopover
               >
@@ -1292,29 +1287,29 @@
               disabled={!undoDrafts.length}
               onclick={() => restoreDraft()}
               class="icon-action"
-              aria-label={t('Отменить правку')}
-              title={t('Отменить правку')}><StudioIcon name="undo" /></button
+              aria-label={t('Undo edit')}
+              title={t('Undo edit')}><StudioIcon name="undo" /></button
             ><button
               disabled={!redoDrafts.length}
               onclick={() => restoreDraft(true)}
               class="icon-action"
-              aria-label={t('Повторить правку')}
-              title={t('Повторить правку')}><StudioIcon name="redo" /></button
+              aria-label={t('Redo edit')}
+              title={t('Redo edit')}><StudioIcon name="redo" /></button
             >
             <button
               class="icon-action"
               aria-pressed={!livePreview}
-              aria-label={livePreview ? t('Приостановить анимацию') : t('Продолжить анимацию')}
-              title={livePreview ? t('Приостановить анимацию') : t('Продолжить анимацию')}
+              aria-label={livePreview ? t('Pause animation') : t('Resume animation')}
+              title={livePreview ? t('Pause animation') : t('Resume animation')}
               onclick={toggleAnimation}><StudioIcon name={livePreview ? 'pause' : 'play'} /></button
             >
             {#if previewError}<p role="alert">
-                {t('Не удалось создать preview: {0}', previewError)}
+                {t('Could not render the preview: {0}', previewError)}
               </p>{/if}
 
-            <StudioPopover label={t('Настройки экрана')} icon="settings"
+            <StudioPopover label={t('Display settings')} icon="settings"
               ><label
-                >{t('Яркость экрана, %')}<input
+                >{t('Screen brightness, %')}<input
                   type="range"
                   min="0"
                   max="100"
@@ -1323,44 +1318,56 @@
                     stageDisplay({ brightness_percent: Number(event.currentTarget.value) })}
                 /><output>{displayBrightness}%</output></label
               >
-              <p>{t('Настройки экрана изменятся после применения.')}</p></StudioPopover
+              <p>{t('Display settings will change on Apply.')}</p></StudioPopover
             >
             {#if Object.keys(pendingDisplay[device] ?? {}).length}<p class="status">
-                {t('Настройки экрана изменятся после применения.')}
+                {t('Display settings will change on Apply.')}
               </p>{/if}
-            <StudioPopover label={t('Загрузить или остановить')} icon="download"
+            <StudioPopover label={t('Load or stop')} icon="download"
               ><div class="document-actions">
                 <button disabled={busy || !deviceAvailable} onclick={() => loadTheme()}
-                  >{t('Загрузить активную тему')}</button
+                  >{t('Load active theme')}</button
                 >
                 <button disabled={busy || !deviceAvailable} onclick={() => loadTheme(true)}
-                  >{t('Загрузить импортированный редактор')}</button
+                  >{t('Load imported editor')}</button
                 >
                 <button disabled={busy || !deviceAvailable} onclick={clearTheme}
-                  >{t('Вернуть LocalUI')}</button
+                  >{t('Restore LocalUI')}</button
                 >
               </div></StudioPopover
             >
           </div>
         </section>
-        <section class="editor" aria-label={t('Редактор темы')} bind:this={editorElement}>
+        <section class="editor" aria-label={t('Theme editor')} bind:this={editorElement}>
           <div data-studio-panel="presets" hidden={lcdPanel !== 'presets'}>
             <section class="preset-picker">
-              <h2>{t('Готовые темы — редактируемые раскладки')}</h2>
-              <label
-                >{t('Раскладка')}<select
-                  aria-label={t('Раскладка')}
-                  bind:value={presetId}
-                  onchange={() => (presetBindings = [])}
-                  >{#each presets as preset (preset.id)}<option value={preset.id}
-                      >{preset.name} · {t(preset.description)}</option
-                    >{/each}</select
-                ></label
-              >
+              <h2>{t('Theme presets — editable layouts')}</h2>
+              <div class="preset-gallery" aria-label={t('Theme presets')}>
+                {#each presets as preset (preset.id)}
+                  <button
+                    type="button"
+                    class:chosen={presetId === preset.id}
+                    aria-pressed={presetId === preset.id}
+                    onclick={() => {
+                      if (presetId === preset.id) return;
+                      presetId = preset.id;
+                      presetBindings = [];
+                    }}
+                  >
+                    <span class="preset-thumbnail {preset.id}" aria-hidden="true">
+                      {#each Array.from({ length: Math.max(preset.sensors, 1) }, (_, index) => index) as index (index)}<span
+                        ></span>{/each}
+                      <i class="thumbnail-clock"></i>
+                    </span>
+                    <strong>{preset.name}</strong>
+                    <small>{t(preset.description)}</small>
+                  </button>
+                {/each}
+              </div>
               {#if presetRequired}<p>
-                  {t('Выберите')}
+                  {t('Select')}
                   {presetRequired}
-                  {t('датчиков. Порядок выбора задаёт расположение.')}
+                  {t('sensors. Selection order determines their positions.')}
                 </p>
                 <div class="preset-sensors">
                   {#each sensors as sensor (sensor.id)}<label
@@ -1385,19 +1392,19 @@
                       presetId,
                       presetBindings.map((id) => {
                         const sensor = sensors.find((s) => s.id === id);
-                        if (!sensor) throw new ValidationError('Датчик исчез из каталога');
+                        if (!sensor) throw new ValidationError('Sensor missing from the catalog');
                         return sensor;
                       }),
                     );
                     selectedLayer = -1;
                     lcdPanel = 'composition';
                     notice =
-                      'Раскладка заменила локальный черновик. Настройте её и нажмите Apply для отправки.';
+                      'The layout replaced the local draft. Customize it and select Apply to send it.';
                     error = '';
                   } catch (e) {
                     error = message(e);
                   }
-                }}>{t('Создать черновик из раскладки')}</button
+                }}>{t('Create a draft from this layout')}</button
               >
             </section>
           </div>
@@ -1415,7 +1422,7 @@
               keep={fontChoices.map((font) => font.key)}
             />
             {#await import('$lib/ScreenCollections.svelte')}
-              <p role="status">{t('Загрузка…')}</p>
+              <p role="status">{t('Loading…')}</p>
             {:then { default: ScreenCollections }}
               <ScreenCollections
                 refreshEpoch={resetEpoch}
@@ -1444,7 +1451,7 @@
                   };
                   loadedMediaKey = '';
                   notice =
-                    'Изображение выбрано фоном черновика. Слои сохранены; примените тему для вывода на LCD.';
+                    'Image selected as the draft background. Layers were preserved; apply the theme to show it on the LCD.';
                   return;
                 }
                 if (theme.layers.length >= 32) return;
@@ -1460,7 +1467,7 @@
                     opacity: 255,
                     watermark_position: { horizontal: 50, vertical: 50 },
                   });
-                  notice = 'Водяной знак добавлен в черновик темы.';
+                  notice = 'Watermark added to the theme draft.';
                 } else {
                   prependLayer({
                     kind: 'image',
@@ -1472,13 +1479,13 @@
                     fit: 'crop',
                     opacity: 255,
                   });
-                  notice = 'Сохранённое изображение добавлено в черновик темы.';
+                  notice = 'Saved image added to the theme draft.';
                 }
               }}
             />
             <AssetCleanup {connected} disabled={busy} keep={draftImageKeys} />
             {#await import('$lib/MediaLibrary.svelte')}
-              <p role="status">{t('Загрузка…')}</p>
+              <p role="status">{t('Loading…')}</p>
             {:then { default: MediaLibrary }}
               <MediaLibrary
                 keep={draftVideoKeys}
@@ -1498,7 +1505,7 @@
                   };
                   loadedMediaKey = '';
                   notice =
-                    'Видео добавлено в черновик фоном. Слои сохранены; примените тему для запуска на LCD.';
+                    'Video added as the draft background. Layers were preserved; apply the theme to play it on the LCD.';
                 }}
                 onchoice={(key) => (profileMediaKey = key)}
                 ondeleted={(key) => {
@@ -1508,7 +1515,7 @@
             {/await}
           </div>
           <div data-studio-panel="composition" hidden={lcdPanel !== 'composition'}>
-            <StudioPopover label={t('Добавить слой')} icon="plus" bind:open={addOpen}>
+            <StudioPopover label={t('Add layer')} icon="plus" bind:open={addOpen}>
               <div class="toolbar">
                 <button
                   disabled={busy || theme.layers.length >= 32}
@@ -1523,13 +1530,12 @@
                       color: [144, 177, 201],
                       opacity: 100,
                       shadow: { x: 0, y: 0, blur: 5, color: [0, 0, 0], opacity: 100 },
-                    })}>{t('+ Разделитель')}</button
+                    })}>{t('+ Divider')}</button
                 ><button
                   data-add-text
                   disabled={theme.layers.length >= 32}
-                  onclick={() =>
-                    addLayer({ kind: 'text', text: t('Новый текст'), style: style(180) })}
-                  >{t('+ Текст')}</button
+                  onclick={() => addLayer({ kind: 'text', text: t('New text'), style: style(180) })}
+                  >{t('+ Text')}</button
                 ><button
                   disabled={theme.layers.length >= 32}
                   onclick={() =>
@@ -1538,9 +1544,9 @@
                       twenty_four_hour: true,
                       show_seconds: true,
                       style: style(300),
-                    })}>{t('+ Часы')}</button
+                    })}>{t('+ Clock')}</button
                 ><label class="file"
-                  >{t('+ Изображение')}<input
+                  >{t('+ Image')}<input
                     type="file"
                     accept="image/png,image/jpeg,image/webp,image/bmp"
                     onchange={importImage}
@@ -1550,21 +1556,21 @@
               </div>
               <div class="row">
                 <label
-                  >{t('Привязать датчик')}<select bind:value={selectedSensor}
-                    ><option value="">{t('Выберите источник')}</option
+                  >{t('Bind sensor')}<select bind:value={selectedSensor}
+                    ><option value="">{t('Select a source')}</option
                     >{#each sensors as s (s.id)}<option value={s.id}>{s.label} · {s.unit}</option
                       >{/each}</select
                   ></label
                 ><button disabled={!selectedSensor || theme.layers.length >= 32} onclick={addSensor}
-                  >{t('Добавить')}</button
+                  >{t('Add')}</button
                 >
               </div>
             </StudioPopover>
             <div class="pane-tabs">
               <button aria-pressed={!propertiesOpen} onclick={() => (propertiesOpen = false)}
-                >{t('Слои')}</button
+                >{t('Layers')}</button
               ><button aria-pressed={propertiesOpen} onclick={() => (propertiesOpen = true)}
-                >{t('Свойства')}</button
+                >{t('Properties')}</button
               >
             </div>
             <LayerStack
@@ -1590,13 +1596,13 @@
                 hidden={!propertiesOpen}
                 class="layer inspector"
                 data-layer-index={selectedLayer}
-                aria-label={t('Свойства выбранного слоя')}
+                aria-label={t('Selected layer properties')}
               >
                 <div class="inspector-heading">
                   <h2 tabindex="-1">{labels[theme.layers[selectedLayer].kind]}</h2>
-                  <StudioPopover label={t('Переименовать слой')} icon="edit"
+                  <StudioPopover label={t('Rename layer')} icon="edit"
                     ><label
-                      >{t('Имя слоя')}<input
+                      >{t('Layer name')}<input
                         value={theme.layers[selectedLayer].editor?.name ?? ''}
                         maxlength="128"
                         oninput={(event) =>
@@ -1618,24 +1624,24 @@
               </article>
             {:else}
               <div hidden={!propertiesOpen}>
-                {#if loadedMediaKey}<section aria-label={t('Ролик из профиля')}>
-                    <MediaThumbnail clipKey={loadedMediaKey} name={t('Ролик из профиля')} /><button
+                {#if loadedMediaKey}<section aria-label={t('Profile video')}>
+                    <MediaThumbnail clipKey={loadedMediaKey} name={t('Profile video')} /><button
                       disabled={busy || !deviceAvailable}
-                      onclick={() => selectMedia(loadedMediaKey)}
-                      >{t('Применить ролик из профиля')}</button
+                      onclick={() => selectMedia(loadedMediaKey)}>{t('Apply profile video')}</button
                     ><button onclick={() => (loadedMediaKey = '')}
-                      >{t('Закрыть ролик из профиля')}</button
+                      >{t('Close profile video')}</button
                     >
                   </section>{/if}<BasicEditor
                   bind:theme
+                  {sensors}
                   disabled={busy}
                   onchange={() => (loadedMediaKey = '')}
                 />{#await import('$lib/WeatherEditor.svelte')}
-                  <p role="status">{t('Загрузка…')}</p>
+                  <p role="status">{t('Loading…')}</p>
                 {:then { default: WeatherEditor }}
                   <WeatherEditor bind:theme {sensors} disabled={busy} />
                 {/await}{#await import('$lib/PaletteEditor.svelte')}
-                  <p role="status">{t('Загрузка…')}</p>
+                  <p role="status">{t('Loading…')}</p>
                 {:then { default: PaletteEditor }}
                   <PaletteEditor bind:theme {sensors} disabled={busy} />
                 {/await}<BackgroundEditor bind:theme />
@@ -1656,7 +1662,7 @@
     {/if}
     <div hidden={tab !== 'display' || !capabilities.display}>
       {#await import('$lib/ScreenReset.svelte')}
-        <p role="status">{t('Загрузка…')}</p>
+        <p role="status">{t('Loading…')}</p>
       {:then { default: ScreenReset }}
         <ScreenReset
           {device}
@@ -1792,6 +1798,7 @@
   }
   .brand img {
     flex: none;
+    filter: brightness(0) invert(1);
   }
   nav,
   .global-nav {
@@ -2105,5 +2112,74 @@
     .visual {
       padding: 18px;
     }
+  }
+
+  .preset-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .preset-gallery button {
+    display: grid;
+    gap: 0.4rem;
+    text-align: left;
+    padding: 0.7rem;
+  }
+  .preset-gallery button.chosen {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .preset-gallery small {
+    color: var(--text-muted);
+  }
+  .preset-thumbnail {
+    aspect-ratio: 1;
+    max-height: 7rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    place-content: center;
+    gap: 0.35rem;
+    padding: 1rem;
+    background: #0c121e;
+    border-radius: 0.5rem;
+  }
+  .preset-thumbnail span {
+    display: block;
+    height: 0.5rem;
+    border-radius: 1rem;
+    background: #90b1c9;
+  }
+  .preset-thumbnail {
+    position: relative;
+  }
+  .preset-thumbnail.focus span {
+    grid-column: 1 / -1;
+    height: 1rem;
+  }
+  .preset-thumbnail.duo {
+    grid-template-columns: 1fr;
+  }
+  .preset-thumbnail.triple {
+    grid-template-columns: 1fr;
+  }
+  .preset-thumbnail.cycle span:not(:first-child) {
+    opacity: 0.25;
+  }
+  .preset-thumbnail.clock span {
+    grid-column: 1 / -1;
+    height: 1rem;
+  }
+  .thumbnail-clock {
+    position: absolute;
+    bottom: 12%;
+    left: 35%;
+    width: 30%;
+    height: 0.25rem;
+    background: #90b1c9;
+    border-radius: 1rem;
+  }
+  .preset-thumbnail.clock .thumbnail-clock {
+    bottom: 25%;
   }
 </style>

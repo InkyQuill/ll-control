@@ -1,6 +1,6 @@
 //! Tests for Pwm newtype (used by SetFanPWM and SetPumpPWM).
 
-use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+use llcontrol_protocol::galahad2_lcdv2::pwm::Pwm;
 
 #[test]
 fn pwm_accepts_zero() {
@@ -21,7 +21,7 @@ fn pwm_rejects_above_100() {
         let err = Pwm::new(v).unwrap_err();
         assert!(matches!(
             err,
-            lconnect_protocol::Error::InvalidPwmPercent(actual) if actual == v
+            llcontrol_protocol::Error::InvalidPwmPercent(actual) if actual == v
         ));
     }
 }

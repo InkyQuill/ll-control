@@ -9,8 +9,8 @@ import gi
 gi.require_version('Atspi', '2.0')
 from gi.repository import Atspi
 
-root = Path(os.environ['LCONNECT_SMOKE_ROOT'])
-assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1'
+root = Path(os.environ['LLCONTROL_SMOKE_ROOT'])
+assert os.environ.get('LLCONTROL_KEYBOARD_ISOLATED') == '1'
 assert (root / 'fixture-marker').is_file()
 assert os.environ.get('AT_SPI_BUS_ADDRESS') == f'unix:path={root}/a11y.sock'
 Atspi.set_timeout(500, 500)
@@ -22,7 +22,7 @@ with (root / 'accessibility-events.jsonl').open('w') as output:
             node = event.any_data if event.type == 'object:children-changed:add' and isinstance(event.any_data, Atspi.Accessible) else event.source
             node.clear_cache()
             application = node.get_application()
-            if not application or application.get_name() != 'lconnect-gui':
+            if not application or application.get_name() != 'llcontrol-gui':
                 return
             attributes = node.get_attributes() or {}
             live = attributes.get('live') or attributes.get('container-live')

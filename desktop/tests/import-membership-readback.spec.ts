@@ -128,8 +128,8 @@ for (const kind of ['image', 'video'] as const)
           result.mode === 'error'
             ? 'readback unavailable'
             : result.mode === 'pending'
-              ? 'Коллекции ожидают сохранения. Повторите чтение.'
-              : 'Добавление требует проверки состава коллекций.',
+              ? 'Collections are awaiting persistence. Read them again.'
+              : 'Adding the asset requires checking collection membership.',
         );
       if (!early)
         expect(result.requested, result.mode).toEqual({

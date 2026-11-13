@@ -1,7 +1,7 @@
 //! Tests for IsLCDAvailable (cmd 23). Source: Galahad2VisionDevice.cs:175-186.
 
-use lconnect_protocol::galahad2_lcdv2::bpacket::OUTPUT_LEN;
-use lconnect_protocol::galahad2_lcdv2::lcd::{
+use llcontrol_protocol::galahad2_lcdv2::bpacket::OUTPUT_LEN;
+use llcontrol_protocol::galahad2_lcdv2::lcd::{
     build_is_lcd_available_request, parse_is_lcd_available_response,
 };
 
@@ -57,7 +57,7 @@ fn parse_response_too_short_rejected() {
     let err = parse_is_lcd_available_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 }
 
@@ -69,7 +69,7 @@ fn parse_response_wrong_command_echo_rejected() {
     let err = parse_is_lcd_available_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 23,
             got: 99
         }

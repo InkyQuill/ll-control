@@ -38,9 +38,9 @@ Read FPS, абсолютный путь к MangoHud CSV и Save FPS settings. Н
 CLI использует тот же IPC и optimistic revision:
 
 ```sh
-lconnectctl fps show --json
-lconnectctl fps set --revision 0 --enabled true --log-path /absolute/path/to/game.csv
-lconnectctl fps set --revision 1 --enabled false --log-path /absolute/path/to/game.csv
+llcontrol fps show --json
+llcontrol fps set --revision 0 --enabled true --log-path /absolute/path/to/game.csv
+llcontrol fps set --revision 1 --enabled false --log-path /absolute/path/to/game.csv
 ```
 
 Set заменяет весь record; без --log-path очищает путь. Используйте revision из show.
@@ -51,7 +51,7 @@ replacement и bounded retained worker защищают от конкурент�
 состояние; polling не затирает draft. Изменение отзывает только FPS samples, в том
 числе запоздалую публикацию старого collector; CPU/GPU readings сохраняются.
 
-Legacy LCONNECT_MANGOHUD_PER_FRAME_LOG=/absolute/path/to/game.csv остаётся startup
+Legacy LLCONTROL_MANGOHUD_PER_FRAME_LOG=/absolute/path/to/game.csv остаётся startup
 fallback только при отсутствии сохранённого record. Сохранённое disabled имеет
 приоритет после restart. Некорректный сохранённый файл не включает fallback.
 Путь absolute, UTF-8 ≤384bytes, без control characters; metadata/JSON read bounded,

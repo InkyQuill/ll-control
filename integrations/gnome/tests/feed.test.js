@@ -3,7 +3,7 @@ import GLib from 'gi://GLib';
 import System from 'system';
 const loop = new GLib.MainLoop(null, false);
 let currentFeed=null,exitStatus=0;
-const root = GLib.getenv('LCONNECT_MINI_TEST_ROOT');
+const root = GLib.getenv('LLCONTROL_MINI_TEST_ROOT');
 const assert = (value, message) => {if (!value) throw new Error(message);};
 const sleep = ms => new Promise(resolve => GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {resolve(); return GLib.SOURCE_REMOVE;}));
 async function until(test, message, milliseconds = 4000) {
@@ -11,7 +11,7 @@ async function until(test, message, milliseconds = 4000) {
     while (!test()) {if (GLib.get_monotonic_time() > end) throw new Error(message); await sleep(20);}
 }
 function script(body) {
-    const path = `${root}/bin/lconnectctl`;
+    const path = `${root}/bin/llcontrol`;
     GLib.file_set_contents(path, `#!/usr/bin/python3\nimport sys,time,json,os\nassert sys.argv[1:]==['mini','watch']\n${body}\n`);
     Gio.File.new_for_path(path).set_attribute_uint32('unix::mode', 0o700, Gio.FileQueryInfoFlags.NONE, null);
 }
@@ -50,7 +50,7 @@ async function main() {
     await until(() => feed.frame.data?.sample === 2, 'late fresh stream recovery');await feed.shutdown();
     print('PASS monotonic age expiry/late sample recovery');
 
-    Gio.File.new_for_path(`${root}/bin/lconnectctl`).delete(null);
+    Gio.File.new_for_path(`${root}/bin/llcontrol`).delete(null);
     feed = (currentFeed = new Feed());feed.start(() => {});await sleep(1100);assert(!feed.frame.available && feed.helperPid === null, 'missing CLI fabricated data');await feed.shutdown();
     print('PASS missing helper stays unavailable and stops retries');
 }

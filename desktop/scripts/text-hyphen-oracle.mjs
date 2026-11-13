@@ -48,7 +48,7 @@ try {
       };
     },
     readFileSync(
-      new URL('../../crates/lconnect-image/assets/DejaVuSans.ttf', import.meta.url),
+      new URL('../../crates/llcontrol-image/assets/DejaVuSans.ttf', import.meta.url),
     ).toString('base64'),
   );
   console.log(JSON.stringify(result, null, 2));

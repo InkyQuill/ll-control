@@ -11,7 +11,7 @@ async function setup(
 ) {
   await page.addInitScript(
     ({ png, fail, delay, hold, language }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const calls: { command: string; args: Record<string, unknown> }[] = [];
       const control = {
         settings: {
@@ -765,7 +765,9 @@ for (const language of ['en-US', 'ru-RU'] as const) {
       .toBe(true);
     await cancel.click();
     await expect(page.getByRole('alert')).toContainText(
-      'Unsupported screenshot cancellation receipt',
+      en
+        ? 'Unsupported screenshot cancellation response.'
+        : 'Неподдерживаемый ответ отмены захвата экрана.',
     );
     await expect(capture).toBeDisabled();
     await page.evaluate(() => (window.cancelRecovery.receipt = 'closed'));

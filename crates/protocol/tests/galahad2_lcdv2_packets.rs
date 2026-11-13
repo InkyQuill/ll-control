@@ -1,6 +1,6 @@
 //! Golden-byte tests for ACommandPacket.
 
-use lconnect_protocol::galahad2_lcdv2::packets::ACommandPacket;
+use llcontrol_protocol::galahad2_lcdv2::packets::ACommandPacket;
 
 #[test]
 fn empty_request_is_64_bytes_of_header_only() {
@@ -74,7 +74,7 @@ fn parse_response_rejects_wrong_report_id() {
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedReportId {
+        llcontrol_protocol::Error::UnexpectedReportId {
             expected: 0x01,
             got: 0xFF
         }
@@ -90,7 +90,7 @@ fn parse_response_rejects_wrong_command_echo() {
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 0x81,
             got: 0x86
         }
@@ -103,7 +103,7 @@ fn parse_response_rejects_short_buffer() {
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 }
 
@@ -116,7 +116,7 @@ fn parse_response_rejects_oversize_length_field() {
     let err = ACommandPacket::parse_response(&buf, 0x81).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidLength {
+        llcontrol_protocol::Error::InvalidLength {
             length: 0xFF,
             max: 58
         }
@@ -134,7 +134,7 @@ fn parse_response_rejects_truncated_data_section() {
     assert!(
         matches!(
             err,
-            lconnect_protocol::Error::BufferTooShort { need: 11, got: 6 }
+            llcontrol_protocol::Error::BufferTooShort { need: 11, got: 6 }
         ),
         "got {err:?}"
     );
@@ -143,7 +143,7 @@ fn parse_response_rejects_truncated_data_section() {
 #[test]
 fn command_codes_match_decompiled_enum() {
     // From Products/Galahad2Vision/Commands.cs lines 7–29.
-    use lconnect_protocol::galahad2_lcdv2::commands::Command;
+    use llcontrol_protocol::galahad2_lcdv2::commands::Command;
     assert_eq!(Command::GetHandshakeInfo as u8, 129);
     assert_eq!(Command::GetFirmwareVersion as u8, 134);
     assert_eq!(Command::SetPumpPWM as u8, 138);

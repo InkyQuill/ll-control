@@ -152,7 +152,7 @@ async fn private_portal_success_cancel_rejection_and_timeout_close() {
 fn valid_screenshot_bytes_are_preserved_and_portal_file_is_not_deleted() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("capture space.png");
-    let png = include_bytes!("../../../crates/lconnect-image/assets/defaults/midnight.png");
+    let png = include_bytes!("../../../crates/llcontrol-image/assets/defaults/midnight.png");
     std::fs::write(&path, png).unwrap();
     assert_eq!(
         read_image(url::Url::from_file_path(&path).unwrap().as_str()).unwrap(),

@@ -3,10 +3,10 @@
 //! Source: Galahad2VisionDevice.cs:188-193 + LCDControlSetting.cs:7-73 +
 //! LCDControlMode.cs + ScreenRotation.cs.
 
-use lconnect_protocol::galahad2_lcdv2::lcd::{
+use llcontrol_protocol::galahad2_lcdv2::lcd::{
     build_lcd_control_request, Brightness, LCDControlMode, LCDControlSetting, ScreenRotation,
 };
-use lconnect_protocol::galahad2_lcdv2::lighting::Rgb;
+use llcontrol_protocol::galahad2_lcdv2::lighting::Rgb;
 
 #[test]
 fn lcd_control_mode_discriminants() {
@@ -92,12 +92,12 @@ fn brightness_new_rejects_over_100() {
     let err = Brightness::new(101).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidBrightness(101)
+        llcontrol_protocol::Error::InvalidBrightness(101)
     ));
     let err = Brightness::new(255).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidBrightness(255)
+        llcontrol_protocol::Error::InvalidBrightness(255)
     ));
 }
 

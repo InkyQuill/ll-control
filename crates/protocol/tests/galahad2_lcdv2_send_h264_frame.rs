@@ -3,7 +3,7 @@
 //! `writeBCommand(13, frameBytes)` directly. See the module-level rustdoc
 //! on `crate::galahad2_lcdv2::h264` for live-verification status.
 
-use lconnect_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
+use llcontrol_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
 
 #[test]
 fn build_send_h264_frame_short_payload_fits_in_one_packet() {
@@ -73,27 +73,27 @@ fn build_send_h264_frame_rejects_empty() {
     let err = build_send_h264_frame_request(&[]).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidH264FrameSize {
+        llcontrol_protocol::Error::InvalidH264FrameSize {
             size: 0,
-            max: lconnect_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES
+            max: llcontrol_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES
         }
     ));
 }
 
 #[test]
 fn build_send_h264_frame_rejects_over_max() {
-    let too_big = vec![0xFF_u8; lconnect_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES + 1];
+    let too_big = vec![0xFF_u8; llcontrol_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES + 1];
     let err = build_send_h264_frame_request(&too_big).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::InvalidH264FrameSize { .. }
+        llcontrol_protocol::Error::InvalidH264FrameSize { .. }
     ));
 }
 
 #[test]
 fn build_send_h264_frame_accepts_at_max() {
     // MAX_H264_FRAME_BYTES (256 KiB = 262144 bytes) → ceil(262144 / 1013) = 259 packets.
-    let at_max = vec![0xAA_u8; lconnect_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES];
+    let at_max = vec![0xAA_u8; llcontrol_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES];
     let pkts = build_send_h264_frame_request(&at_max).expect("at-max is valid");
     assert_eq!(
         pkts.len(),
@@ -105,13 +105,13 @@ fn build_send_h264_frame_accepts_at_max() {
     assert_eq!(first[1], 13, "Command = SendH264Frame");
     assert_eq!(
         u32::from_be_bytes([first[2], first[3], first[4], first[5]]) as usize,
-        lconnect_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES,
+        llcontrol_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES,
         "DataSize = MAX_H264_FRAME_BYTES on every packet"
     );
     let last = pkts[258];
     assert_eq!(
         u32::from_be_bytes([last[2], last[3], last[4], last[5]]) as usize,
-        lconnect_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES,
+        llcontrol_protocol::galahad2_lcdv2::h264::MAX_H264_FRAME_BYTES,
         "DataSize replicated on the last packet"
     );
     assert_eq!(&last[6..9], &[0, 1, 2], "PN=258 = 0x010002 (24-bit BE)");
@@ -125,7 +125,7 @@ fn build_send_h264_frame_accepts_at_max() {
 
 #[test]
 fn send_h264_frame_and_send_jpeg_differ_only_by_cmd_byte() {
-    use lconnect_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
+    use llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request;
     // 4-byte H.264 NAL unit start code.
     // Use &payload[..] (explicit slice borrow) rather than &payload —
     // both forms work due to deref coercion, but the slice form makes
@@ -150,7 +150,7 @@ fn parse_send_h264_frame_response_accepts_minimal_512_byte_input() {
     let mut buf = [0u8; 512];
     buf[0] = 0x02;
     buf[1] = 13;
-    let parsed = lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf)
+    let parsed = llcontrol_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf)
         .expect("valid empty response");
     assert_eq!(parsed.command(), 13);
     assert_eq!(parsed.length(), 0);
@@ -163,10 +163,10 @@ fn parse_send_h264_frame_response_rejects_wrong_command_echo() {
     buf[0] = 0x02;
     buf[1] = 99; // not 13
     let err =
-        lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf).unwrap_err();
+        llcontrol_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::UnexpectedCommand {
+        llcontrol_protocol::Error::UnexpectedCommand {
             expected: 13,
             got: 99
         }
@@ -177,10 +177,10 @@ fn parse_send_h264_frame_response_rejects_wrong_command_echo() {
 fn parse_send_h264_frame_response_rejects_too_short() {
     let buf = [0x02_u8, 13];
     let err =
-        lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf).unwrap_err();
+        llcontrol_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 }
 
@@ -192,7 +192,7 @@ fn parse_send_h264_frame_response_rejects_too_short() {
 // H.264 frame pipeline exists (Phase 4+).
 // ---------------------------------------------------------------------------
 
-use lconnect_protocol::galahad2_lcdv2::h264::{
+use llcontrol_protocol::galahad2_lcdv2::h264::{
     build_send_h264_frame_512_request, MAX_H264_FRAME_BYTES,
 };
 
@@ -202,7 +202,7 @@ fn send_h264_frame_512_empty_rejects() {
     assert!(r.is_err(), "empty frame must error: {r:?}");
     assert!(matches!(
         r.unwrap_err(),
-        lconnect_protocol::Error::InvalidH264FrameSize {
+        llcontrol_protocol::Error::InvalidH264FrameSize {
             size: 0,
             max: MAX_H264_FRAME_BYTES
         }
@@ -216,7 +216,7 @@ fn send_h264_frame_512_oversize_rejects() {
     assert!(r.is_err(), "oversize frame must error: {r:?}");
     assert!(matches!(
         r.unwrap_err(),
-        lconnect_protocol::Error::InvalidH264FrameSize { .. }
+        llcontrol_protocol::Error::InvalidH264FrameSize { .. }
     ));
 }
 
@@ -239,7 +239,7 @@ fn send_h264_frame_512_small_one_packet() {
 
 #[test]
 fn send_h264_frame_512_at_payload_max_one_packet() {
-    use lconnect_protocol::galahad2_lcdv2::cpacket::PAYLOAD_MAX;
+    use llcontrol_protocol::galahad2_lcdv2::cpacket::PAYLOAD_MAX;
     let frame = vec![0xAB; PAYLOAD_MAX]; // 501 bytes
     let packets = build_send_h264_frame_512_request(&frame).unwrap();
     assert_eq!(packets.len(), 1, "exactly PAYLOAD_MAX fits in one packet");
@@ -255,7 +255,7 @@ fn send_h264_frame_512_at_payload_max_one_packet() {
 
 #[test]
 fn send_h264_frame_512_multipacket() {
-    use lconnect_protocol::galahad2_lcdv2::cpacket::PAYLOAD_MAX;
+    use llcontrol_protocol::galahad2_lcdv2::cpacket::PAYLOAD_MAX;
     let frame = vec![0xAB; PAYLOAD_MAX * 2 + 50];
     let packets = build_send_h264_frame_512_request(&frame).unwrap();
     assert_eq!(packets.len(), 3);
@@ -269,7 +269,7 @@ fn send_h264_frame_512_multipacket() {
 
 #[test]
 fn send_h264_frame_b_and_c_class_diverge() {
-    use lconnect_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
+    use llcontrol_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
     // Same payload, different framing classes -> different ReportID + chunk
     // sizes (B-class is 1024 bytes per packet, C-class is 512).
     let frame = vec![0xAB; 100];

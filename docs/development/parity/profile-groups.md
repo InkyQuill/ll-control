@@ -436,12 +436,12 @@ Ready file закрывается в blocking worker; Release удаляет з�
 каждой стадии подготовки остаются отдельной приёмкой.
 
 ```sh
-lconnectctl profiles group snapshot screen --device DEVICE
-lconnectctl profiles group export screen backup-screen.lcg --device DEVICE
-lconnectctl profiles group export fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
-lconnectctl profiles group status screen SESSION_ID --device DEVICE
-lconnectctl profiles group cancel screen SESSION_ID --device DEVICE
-lconnectctl profiles group release screen SESSION_ID --device DEVICE
+llcontrol profiles group snapshot screen --device DEVICE
+llcontrol profiles group export screen backup-screen.lcg --device DEVICE
+llcontrol profiles group export fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
+llcontrol profiles group status screen SESSION_ID --device DEVICE
+llcontrol profiles group cancel screen SESSION_ID --device DEVICE
+llcontrol profiles group release screen SESSION_ID --device DEVICE
 ```
 
 Без `--device` CLI выбирает устройство только при единственном доступном target.
@@ -502,8 +502,8 @@ MAX архивов для upload pool; export pool имеет свой бюдж�
 Поздний Release старого объекта session не удаляет новый объект с тем же ID.
 
 ```sh
-lconnectctl profiles group inspect screen backup-screen.lcg --device DEVICE
-lconnectctl profiles group inspect fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
+llcontrol profiles group inspect screen backup-screen.lcg --device DEVICE
+llcontrol profiles group inspect fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
 ```
 
 CLI проверяет magic/size до подключения, передаёт файл частями, сверяет каждое
@@ -558,9 +558,9 @@ Screen runtime использует atomic GroupState с intent revision и фа
 recovery flag. Состояние ordinary LCD State и его generation не заменяют token.
 
 ```sh
-lconnectctl profiles group import screen backup-screen.lcg --device DEVICE
-lconnectctl profiles group import fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
-lconnectctl profiles group readback screen OPERATION_ID --device DEVICE
+llcontrol profiles group import screen backup-screen.lcg --device DEVICE
+llcontrol profiles group import fan-and-lighting backup-cooling-rgb.lcg --device DEVICE
+llcontrol profiles group readback screen OPERATION_ID --device DEVICE
 ```
 
 CLI импортирует обе группы после bounded upload/Inspect. ID печатается до передачи
@@ -624,9 +624,9 @@ Known Apply failure сохраняет desired profile и выдаёт last_erro
 следующий явный retry требует свежий token.
 
 ```sh
-lconnectctl profiles group readback screen OPERATION_ID --device DEVICE
-lconnectctl profiles group reapply screen OPERATION_ID --device DEVICE
-lconnectctl profiles group reapply fan-and-lighting OPERATION_ID --device DEVICE
+llcontrol profiles group readback screen OPERATION_ID --device DEVICE
+llcontrol profiles group reapply screen OPERATION_ID --device DEVICE
+llcontrol profiles group reapply fan-and-lighting OPERATION_ID --device DEVICE
 ```
 
 CLI без `--expected` сначала читает current receipt/runtime и требует current

@@ -1,7 +1,7 @@
 # Releasing ll-control
 
 The product has one version and one GitHub release, with tags such as `v0.1.0`.
-The Arch compatibility package remains named `lconnect-linux`. The package builder
+The Arch compatibility package remains named `ll-control`. The package builder
 reads `[workspace.package].version` from `Cargo.toml`; it generates the versioned
 payload archive, manifest and PKGBUILD from that value.
 

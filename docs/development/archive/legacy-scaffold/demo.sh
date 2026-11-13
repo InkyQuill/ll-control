@@ -6,7 +6,7 @@ echo "║     LL-Control - Real-time Sensor Demonstration        ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-cd /home/inky/Development/lian-li/lconnect-linux
+cd /home/inky/Development/lian-li/ll-control
 
 echo "Reading sensor data 5 times (1 second interval)..."
 echo ""
@@ -35,5 +35,5 @@ echo ""
 echo "✅ Test complete!"
 echo ""
 echo "Ready to run GUI:"
-echo "  ./target/release/lconnect_linux"
+echo "  ./target/release/llcontrol_linux"
 echo ""

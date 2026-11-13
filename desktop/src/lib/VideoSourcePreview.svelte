@@ -65,19 +65,21 @@
   function recordingNoticeText() {
     switch (recordNotice) {
       case 'playback-failed':
-        return t('Не удалось начать воспроизведение. Фрагмент не добавлен.');
+        return t('Could not start playback. No segment was added.');
       case 'limit':
-        return t('Достигнут конец видео или лимит выбранных фрагментов.');
+        return t('Reached the end of the video or the selected-segment limit.');
       case 'added':
-        return t('Фрагмент добавлен.');
+        return t('Segment added.');
       case 'empty':
-        return t('Пустой фрагмент не добавлен.');
+        return t('Empty segment was not added.');
       case 'stopped':
-        return t('Запись остановлена.');
+        return t('Recording stopped.');
       case 'source-failed':
-        return t('Источник недоступен; незавершённый фрагмент не добавлен.');
+        return t('Source unavailable; the unfinished segment was not added.');
       case 'seeked':
-        return t('Позиция изменилась во время записи; незавершённый фрагмент не добавлен.');
+        return t(
+          'The playback position changed during recording; the unfinished segment was not added.',
+        );
       default:
         return '';
     }
@@ -354,11 +356,11 @@
   }
 </script>
 
-<section aria-label={t('Просмотр исходного видео')}>
+<section aria-label={t('Source video preview')}>
   <p>
-    {t('Исходник:')}
+    {t('Source file:')}
     {external?.name ?? file?.name}{t(
-      '. Просмотр без звука; размещение на LCD применяется при импорте.',
+      '. Preview is silent; LCD placement is applied during import.',
     )}
   </p>
   {#if url}
@@ -370,7 +372,7 @@
       muted
       playsinline
       preload="auto"
-      aria-label={t('Исходное видео')}
+      aria-label={t('Source video')}
       onloadedmetadata={metadata}
       onloadeddata={update}
       ontimeupdate={update}
@@ -392,7 +394,7 @@
   {/if}
   {#if playable}
     <label
-      >{t('Позиция в исходном видео')}
+      >{t('Source video position')}
       <input
         type="range"
         min="0"
@@ -403,7 +405,7 @@
         oninput={seek}
       />
     </label>
-    <p>{t('Позиция:')} {position.toFixed(3)} {t('с /')} {duration.toFixed(3)} {t('с.')}</p>
+    <p>{t('Position:')} {position.toFixed(3)} {t('s /')} {duration.toFixed(3)} {t('s.')}</p>
   {/if}
   {#if recordEnabled}
     <button
@@ -411,28 +413,28 @@
         (!recording &&
           (!canRecord || !playable || seeking || remainingMs <= 0 || position >= duration))}
       onclick={() => (recording ? finishRecord() : startRecord())}
-      >{recording ? '' + t('Пауза записи') + '' : '' + t('Записать фрагмент') + ''}</button
+      >{recording ? '' + t('Pause recording') + '' : '' + t('Record segment') + ''}</button
     >
-    {#if recording}<p role="status">{t('Идёт запись фрагмента.')}</p>
+    {#if recording}<p role="status">{t('Recording a segment.')}</p>
       <p>
-        {t('Записано:')}
+        {t('Recorded:')}
         {(Math.max(0, Math.min(position * 1000, recording.limit) - recording.start) / 1000).toFixed(
           3,
         )}
-        {t('с.')}
+        {t('s.')}
       </p>{/if}
     {#if recordNotice}<p role="status">{recordingNoticeText()}</p>{/if}
   {/if}
   {#if crop && playable && hasFrame}
     <p>
       {t(
-        'Потяните от одного угла области к другому. Стрелки перемещают область; точные размеры доступны в полях фрагмента.',
+        'Drag from one corner of the region to the other. Arrow keys move the region; exact dimensions are available in the segment fields.',
       )}
     </p>
     <button
       class="crop-source"
       disabled={disabled || !!recording}
-      aria-label={t('Выбор области видео')}
+      aria-label={t('Video region selection')}
       onpointerdown={beginCrop}
       onpointerup={finishCrop}
       onpointercancel={() => (drag = null)}
@@ -446,19 +448,19 @@
   {#if crop || adjustments}
     <p>
       {t(
-        'Кадр после цветокоррекции, обрезки и размещения. Это локальный просмотр; итоговый ролик подготавливается при импорте.',
+        'Frame after color correction, cropping and placement. This is a local preview; the final video is prepared during import.',
       )}
     </p>
-    <canvas bind:this={croppedCanvas} width="480" height="480" aria-label={t('Кадр после обрезки')}
+    <canvas bind:this={croppedCanvas} width="480" height="480" aria-label={t('Cropped frame')}
     ></canvas>
   {/if}
   {#if paintError}<p role="status">
-      {t('Цветовой preview недоступен. Проверьте готовый ролик после подготовки.')}
+      {t('Color preview is unavailable. Check the prepared video after conversion.')}
     </p>{/if}
   {#if failed}
     <p role="status">
       {t(
-        'Просмотр этого файла недоступен. Можно указать время вручную; при импорте файл проверяется отдельно.',
+        'This file cannot be previewed. You can enter times manually; the file is checked separately during import.',
       )}
     </p>
   {/if}

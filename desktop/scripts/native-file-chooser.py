@@ -12,8 +12,8 @@ import gi
 gi.require_version('Atspi', '2.0')
 from gi.repository import Atspi, GLib
 
-root = Path(os.environ['LCONNECT_SMOKE_ROOT'])
-assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED') == '1'
+root = Path(os.environ['LLCONTROL_SMOKE_ROOT'])
+assert os.environ.get('LLCONTROL_KEYBOARD_ISOLATED') == '1'
 assert (root / 'fixture-marker').is_file()
 assert os.environ['AT_SPI_BUS_ADDRESS'] == f'unix:path={root}/a11y.sock'
 kind = sys.argv[3] if len(sys.argv) > 3 else 'image'
@@ -38,7 +38,7 @@ def collect(node, rows, depth=0):
     if 'Text' in node.get_interfaces():
         interface = node.get_text_iface()
         row['text'] = Atspi.Text.get_text(interface, 0, min(Atspi.Text.get_character_count(interface), 1024))
-    if mode == 'chooser' and os.environ.get('LCONNECT_NATIVE_TEXT_SCALE'):
+    if mode == 'chooser' and os.environ.get('LLCONTROL_NATIVE_TEXT_SCALE'):
         if 'Component' in node.get_interfaces():
             rect = node.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
             row['rect'] = {key: getattr(rect, key) for key in ('x', 'y', 'width', 'height')}
@@ -74,7 +74,7 @@ while time.monotonic() < deadline:
         app.clear_cache()
         application_name=app.get_name()
         applications.append(application_name)
-        if application_name != 'lconnect-gui':
+        if application_name != 'llcontrol-gui':
             continue
         if mode == 'imported':
             if kind == 'font' and len(list((root / 'settings/theme-fonts').glob('*.font'))) != expected_images:
@@ -123,7 +123,7 @@ while time.monotonic() < deadline:
             open_ready = any(row['name'] == 'Open' and row['role'] == 'button' and row['enabled'] for row in rows)
             if path_ready and open_ready:
                 result = {'path': expected, 'focused_path_verified': path_ready, 'open_enabled': open_ready}
-                if os.environ.get('LCONNECT_NATIVE_TEXT_SCALE'):
+                if os.environ.get('LLCONTROL_NATIVE_TEXT_SCALE'):
                     controls = [next(row for row in rows if row.get('text') == expected and row['focused']),
                                 next(row for row in rows if row['name'] == 'Open' and row['role'] == 'button')]
                     for control in controls:

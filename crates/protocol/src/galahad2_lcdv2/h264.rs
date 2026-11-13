@@ -4,7 +4,7 @@
 //! Like cmd 14 (`SendJpeg`), this is a transient single-frame command: the
 //! firmware decodes and displays the frame, with auto-revert behaviour
 //! similar to cmd 14 (cmd 13's hold-time is not yet live-verified). Use
-//! the `lconnect-image` workspace crate or an external H.264 encoder to
+//! the `llcontrol-image` workspace crate or an external H.264 encoder to
 //! produce frame bytes; this codec is a faithful pass-through.
 //!
 //! ## SendH264Frame vs SendH264Frame512
@@ -88,7 +88,7 @@ pub const MAX_H264_FRAME_BYTES: usize = 256 * 1024;
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
+/// use llcontrol_protocol::galahad2_lcdv2::h264::build_send_h264_frame_request;
 ///
 /// // 4-byte H.264 NAL unit start code (real callers supply a full frame).
 /// let payload = [0x00, 0x00, 0x00, 0x01];
@@ -150,7 +150,7 @@ pub fn build_send_h264_frame_request(frame_bytes: &[u8]) -> crate::Result<Vec<[u
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response;
+/// use llcontrol_protocol::galahad2_lcdv2::h264::parse_send_h264_frame_response;
 ///
 /// // Synthesised 512-byte response: ReportID=2, cmd=13, DataSize=0, Length=0.
 /// let mut buf = [0u8; 512];
@@ -206,7 +206,7 @@ pub fn parse_send_h264_frame_response(
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::h264::build_send_h264_frame_512_request;
+/// use llcontrol_protocol::galahad2_lcdv2::h264::build_send_h264_frame_512_request;
 ///
 /// let payload = [0x00, 0x00, 0x00, 0x01];
 /// let packets = build_send_h264_frame_512_request(&payload).expect("valid size");

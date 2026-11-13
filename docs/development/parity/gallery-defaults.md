@@ -73,10 +73,10 @@ bounded reader, actor/replay и GUI import реализованы; diagnostic bu
 
 ## Встроенные изображения — 2026-10-12
 
-`lconnect-image::defaults` содержит два собственных PNG480×480: прозрачную
+`llcontrol-image::defaults` содержит два собственных PNG480×480: прозрачную
 «Орбиту» (`builtin-orbit-mark-v1`) и фон «Полночь» (`builtin-midnight-v1`).
 Исходный генератор и provenance находятся в `tools/generate-lcd-defaults.py`
-и `crates/lconnect-image/assets/defaults/README.md`. Это собственное оформление,
+и `crates/llcontrol-image/assets/defaults/README.md`. Это собственное оформление,
 не копия Windows assets; визуальная идентичность не заявляется.
 
 Каталог встроен в бинарник: доступен до создания пользовательской директории,
@@ -118,7 +118,7 @@ Store list возвращает builtin первым, acquire_source читае�
 
 Генератор, лицензия и ограничения воспроизводимости кодека:
 `tools/generate-lcd-default-video.py`,
-`crates/lconnect-daemon/assets/defaults/README.md`. Исходные Windows assets не
+`crates/llcontrol-daemon/assets/defaults/README.md`. Исходные Windows assets не
 копировались; оформление и длительность не объявляются визуально идентичными
 оригинальному default. [Checkpoint](evidence/2026-10-12-builtin-video.json).
 
@@ -158,7 +158,7 @@ Windows-коллекций. Полный reset/recovery, native accessibility, l
 Сброс screen создаёт все8slots; fan/pump — все4 с явным температурным датчиком.
 Одна проверка revision, один store lock и один atomic write заменяют всю группу.
 Соседние группы и media-файлы сохраняются; stale revision требует readback.
-CLI: `lconnectctl profiles reset-group screen`; в desktop — «Сбросить все слоты
+CLI: `llcontrol profiles reset-group screen`; в desktop — «Сбросить все слоты
 группы…» с подтверждением. Операция не выполняет device Apply.
 
 Это prerequisite, **не полный Screen reset**. Следующая реализация должна учесть

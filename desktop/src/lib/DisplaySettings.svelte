@@ -42,7 +42,7 @@
         const next = await rpc<DisplaySettings>('get_display_settings');
         if (cancelled || epoch !== generation || reading !== request) return;
         if (!valid(next))
-          throw new ValidationError('Daemon не вернул поддерживаемые настройки единиц');
+          throw new ValidationError('The daemon did not return supported display preferences');
         publishDisplaySettings(next);
         fresh = true;
         error = null;
@@ -77,12 +77,11 @@
     try {
       const saved = await rpc<DisplaySettings>('set_display_settings', { settings });
       if (epoch !== generation) return;
-      if (!valid(saved)) throw new ValidationError('Неподдерживаемый ответ сохранения');
+      if (!valid(saved)) throw new ValidationError('Unsupported save response');
       publishDisplaySettings(saved);
       draft = { ...saved };
       fresh = true;
-      notice =
-        'Параметры отображения сохранены. Исходные показания и пороги управления остаются в °C.';
+      notice = 'Display preferences saved. Source readings and control thresholds remain in °C.';
     } catch (e) {
       if (epoch === generation) {
         fresh = false;
@@ -95,36 +94,34 @@
   }
 </script>
 
-<section aria-label={t('Единицы и язык')}>
-  <h2>{t('Единицы и язык')}</h2>
+<section aria-label={t('Units and language')}>
+  <h2>{t('Units and language')}</h2>
   <p>
     {t(
-      'Для показаний, температурных полей и LCD-слоёв с выбором «Общие настройки». Явные °C/°F в сохранённых LCD-темах сохраняются.',
+      'For readings, temperature fields and LCD layers set to “Global settings”. Explicit °C/°F choices in saved LCD themes are preserved.',
     )}
   </p>
   {#if draft}<label
-      >{t('Единицы температуры')}<select
+      >{t('Temperature units')}<select
         bind:value={draft.temperature_unit}
         disabled={!connected || busy}
-        ><option value="celsius">{t('Цельсий (°C)')}</option><option value="fahrenheit"
-          >{t('Фаренгейт (°F)')}</option
+        ><option value="celsius">{t('Celsius (°C)')}</option><option value="fahrenheit"
+          >{t('Fahrenheit (°F)')}</option
         ></select
       ></label
     >{/if}
   {#if draft}<label
-      >{t('Язык интерфейса')}<select
+      >{t('Interface language')}<select
         value={draft.interface_language ?? 'ru-RU'}
         onchange={(event) => {
           if (draft) draft.interface_language = event.currentTarget.value as 'ru-RU' | 'en-US';
         }}
         disabled={!connected || busy}
-        ><option value="ru-RU">{t('Русский')}</option><option value="en-US"
-          >English (partial)</option
-        ></select
+        ><option value="ru-RU">{t('Russian')}</option><option value="en-US">English</option></select
       ></label
     >{/if}
   {#if !connected}<p role="status">
-      {t('Подключите daemon для загрузки и сохранения единиц.')}
+      {t('Connect to the daemon to load and save display preferences.')}
     </p>{/if}
   {#if error}<p role="alert">
       {error instanceof ValidationError ? t(error.resource, ...error.values) : error}
@@ -135,10 +132,10 @@
         : writeError}
     </p>{/if}
   {#if mustReload}<p role="alert">
-      {t('Проверьте сохранённое состояние перед повторной записью.')}
+      {t('Read back the saved settings before writing again.')}
     </p>{/if}
   {#if conflict}<p role="alert">
-      {t('Параметры отображения изменились в другом окне. Загрузите сохранённое состояние.')}
+      {t('Display preferences changed in another window. Reload the saved settings.')}
     </p>{/if}
   <div class="actions">
     <button
@@ -150,10 +147,10 @@
           writeError = null;
           mustReload = false;
         }
-      }}>{t('Загрузить сохранённые параметры')}</button
+      }}>{t('Reload saved preferences')}</button
     ><button
       disabled={!connected || !fresh || busy || !draft || conflict || mustReload}
-      onclick={save}>{t('Сохранить параметры отображения')}</button
+      onclick={save}>{t('Save display preferences')}</button
     >
   </div>
   {#if notice}<p role="status">{t(notice)}</p>{/if}

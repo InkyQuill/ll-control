@@ -11,7 +11,7 @@ export default defineConfig({
       origins: [
         {
           origin: 'http://127.0.0.1:1420',
-          localStorage: [{ name: 'lconnect.interface-language', value: 'ru-RU' }],
+          localStorage: [{ name: 'llcontrol.interface-language', value: 'ru-RU' }],
         },
       ],
     },

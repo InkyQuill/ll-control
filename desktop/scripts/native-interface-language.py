@@ -4,12 +4,12 @@ import importlib.util,json,os,signal,socket,subprocess,sys,tempfile,time
 from pathlib import Path
 repo=Path(__file__).resolve().parents[2]
 if '--inside-xvfb' not in sys.argv:
- root=Path(tempfile.mkdtemp(prefix='lconnect-native-interface-language-'))
- env=dict(os.environ,LCONNECT_LANGUAGE_ISOLATED='1',LCONNECT_LANGUAGE_ROOT=str(root),
+ root=Path(tempfile.mkdtemp(prefix='llcontrol-native-interface-language-'))
+ env=dict(os.environ,LLCONTROL_LANGUAGE_ISOLATED='1',LLCONTROL_LANGUAGE_ROOT=str(root),
           XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),
           XDG_DATA_HOME=str(root/'data'),DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={root}/no-system-bus')
  for key in list(env):
-  if key in ['DISPLAY','WAYLAND_DISPLAY','DBUS_SESSION_BUS_ADDRESS','AT_SPI_BUS_ADDRESS'] or key.startswith('LCONNECT_NATIVE_'):env.pop(key,None)
+  if key in ['DISPLAY','WAYLAND_DISPLAY','DBUS_SESSION_BUS_ADDRESS','AT_SPI_BUS_ADDRESS'] or key.startswith('LLCONTROL_NATIVE_'):env.pop(key,None)
  try:
   code=subprocess.call(['xvfb-run','-a','-s','-screen 0 1600x1200x24','dbus-run-session','--',sys.executable,__file__,'--inside-xvfb',*sys.argv[1:]],env=env)
  finally:
@@ -19,10 +19,10 @@ if '--inside-xvfb' not in sys.argv:
    cleanup=subprocess.run(['fusermount3','-uz','--',str(target)],capture_output=True)
    if cleanup.returncode and mounted():raise RuntimeError(f'Private document mount remains: {target}')
  raise SystemExit(code)
-assert os.environ.get('LCONNECT_LANGUAGE_ISOLATED')=='1'
-root=Path(os.environ['LCONNECT_LANGUAGE_ROOT']);assert os.environ['XDG_RUNTIME_DIR']==str(root)
+assert os.environ.get('LLCONTROL_LANGUAGE_ISOLATED')=='1'
+root=Path(os.environ['LLCONTROL_LANGUAGE_ROOT']);assert os.environ['XDG_RUNTIME_DIR']==str(root)
 (root/'fixture-marker').write_text('MockBackend only\n')
-env=dict(os.environ,LCONNECT_SMOKE_ROOT=str(root),LCONNECT_NATIVE_SPEC='1',LCONNECT_NATIVE_UNITS='1',LCONNECT_NATIVE_LANGUAGE='1',XDG_CONFIG_DIRS=str(root/'system-config'),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',GIO_USE_VFS='local',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='1');env.pop('WAYLAND_DISPLAY',None)
+env=dict(os.environ,LLCONTROL_SMOKE_ROOT=str(root),LLCONTROL_NATIVE_SPEC='1',LLCONTROL_NATIVE_UNITS='1',LLCONTROL_NATIVE_LANGUAGE='1',XDG_CONFIG_DIRS=str(root/'system-config'),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',GIO_USE_VFS='local',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='1');env.pop('WAYLAND_DISPLAY',None)
 processes=[];logs=[];fixture=None;proxy=None
 
 def launch(cmd,name,process_env=env):
@@ -36,15 +36,15 @@ def wait(test,why,seconds=20):
 
 def rpc(method,params=None,endpoint=None):
  with socket.socket(socket.AF_UNIX) as conn:
-  conn.settimeout(20);conn.connect(str(endpoint or root/'lconnectd.sock'));stream=conn.makefile('rwb');stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
+  conn.settimeout(20);conn.connect(str(endpoint or root/'llcontrold.sock'));stream=conn.makefile('rwb');stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
   while True:
    reply=json.loads(stream.readline())
    if reply.get('id')==1:assert 'error' not in reply,reply;return reply['result']
 
 def start_fixture(with_device=False):
  global fixture
- (root/'stop').unlink(missing_ok=True);(root/'lconnectd.sock').unlink(missing_ok=True);(root/'stats.json').unlink(missing_ok=True)
- fixture=launch([repo/'target/debug/examples/desktop-mock'],f'fixture-{len(processes)}',dict(env,LCONNECT_NATIVE_SPEC='0' if with_device else '1'));wait(lambda:((root/'lconnectd.sock').exists() and (root/'stats.json').exists()) or fixture.poll() is not None,'mock socket');assert fixture.poll() is None;wait(lambda:len(rpc('list_devices'))==(1 if with_device else 0),'fixture device count')
+ (root/'stop').unlink(missing_ok=True);(root/'llcontrold.sock').unlink(missing_ok=True);(root/'stats.json').unlink(missing_ok=True)
+ fixture=launch([repo/'target/debug/examples/desktop-mock'],f'fixture-{len(processes)}',dict(env,LLCONTROL_NATIVE_SPEC='0' if with_device else '1'));wait(lambda:((root/'llcontrold.sock').exists() and (root/'stats.json').exists()) or fixture.poll() is not None,'mock socket');assert fixture.poll() is None;wait(lambda:len(rpc('list_devices'))==(1 if with_device else 0),'fixture device count')
 
 def stop_fixture():
  (root/'stop').touch();fixture.wait(timeout=15);assert fixture.returncode==0
@@ -86,7 +86,7 @@ try:
   if image_errors or collection_errors:
    dev=rpc('list_devices')[0]['id']
    if replacement_errors:
-    rpc('import_theme_asset',{'bytes':list((repo/'crates/lconnect-image/assets/defaults/midnight.png').read_bytes()),'name':'R2 original {0} <CPU>.png'})
+    rpc('import_theme_asset',{'bytes':list((repo/'crates/llcontrol-image/assets/defaults/midnight.png').read_bytes()),'name':'R2 original {0} <CPU>.png'})
    if video_errors:
     builtin=next(clip for clip in rpc('list_prepared_clips') if clip['is_default'])
     unit=rpc('load_media_first_frame',{'key':builtin['key']});key='a'*32
@@ -95,14 +95,14 @@ try:
     assert rpc('media_upload',{'request':{'action':'finish','id':key}})['phase']=='published'
    rpc('migrate_screen_collections',{'dev':dev})
    original_collections=rpc('get_screen_collections',{'dev':dev})['collections']
-  backend=root/'backend.sock';(root/'lconnectd.sock').rename(backend)
+  backend=root/'backend.sock';(root/'llcontrold.sock').rename(backend)
   spec=importlib.util.spec_from_file_location('lcd_fault_proxy',repo/'desktop/scripts/native-fault-proxy.py')
   proxy_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(proxy_module)
   phase='collection-video-import-errors' if video_import_errors else 'collection-video-errors' if video_errors else 'collection-replacement-errors' if replacement_errors else 'collection-plain-errors' if plain_errors else 'collection-readback-errors' if collection_errors else 'cooling-errors' if cooling_errors else 'library-errors' if library_errors else 'image-errors' if image_errors else 'lcd-errors'
   transport_errors='--collection-transport-errors' in sys.argv
   if transport_errors:phase+='-transport'
-  proxy=proxy_module.FaultProxy(root/'lconnectd.sock',backend,collection_transport=transport_errors,lcd_messages=not (image_errors or library_errors or cooling_errors or collection_errors),collection_readbacks=collection_errors,image_messages=image_errors,library_messages=library_errors,cooling_messages=cooling_errors)
-  gui=launch([repo/'target/debug/lconnect-gui'],f'gui-{phase}',dict(env,LCONNECT_NATIVE_DESKTOP_PHASE=phase))
+  proxy=proxy_module.FaultProxy(root/'llcontrold.sock',backend,collection_transport=transport_errors,lcd_messages=not (image_errors or library_errors or cooling_errors or collection_errors),collection_readbacks=collection_errors,image_messages=image_errors,library_messages=library_errors,cooling_messages=cooling_errors)
+  gui=launch([repo/'target/debug/llcontrol-gui'],f'gui-{phase}',dict(env,LLCONTROL_NATIVE_DESKTOP_PHASE=phase))
   result=result_for(gui);close_gui(gui,f'gui-{phase}')
   if collection_errors:
    count=len(proxy.collection_modes)*2
@@ -141,14 +141,14 @@ try:
   print(f'PASS native {phase}/EN-RU/publication boundaries/Unix IPC/MockBackend:',root)
   raise SystemExit(0)
  launch(['openbox'],'wm');start_fixture()
- gui=launch([repo/'target/debug/lconnect-gui'],'gui')
+ gui=launch([repo/'target/debug/llcontrol-gui'],'gui')
  first=result_for(gui);close_gui(gui,'gui');(root/'result.json').unlink()
  stop_fixture();start_fixture()
- gui=launch([repo/'target/debug/lconnect-gui'],'gui-recovery',dict(env,LCONNECT_NATIVE_DESKTOP_PHASE='2'))
+ gui=launch([repo/'target/debug/llcontrol-gui'],'gui-recovery',dict(env,LLCONTROL_NATIVE_DESKTOP_PHASE='2'))
  second=result_for(gui);close_gui(gui,'gui-recovery')
  stats=json.loads((root/'stats.json').read_text());assert stats['hid_write_count']==0 and stats['devices_known']==0,stats
  stop_fixture();start_fixture(with_device=True);(root/'result.json').unlink()
- gui=launch([repo/'target/debug/lconnect-gui'],'gui-image',dict(env,LCONNECT_NATIVE_DESKTOP_PHASE='image'))
+ gui=launch([repo/'target/debug/llcontrol-gui'],'gui-image',dict(env,LLCONTROL_NATIVE_DESKTOP_PHASE='image'))
  image=result_for(gui);assert image['imageEditorPreview'] and image['imageMembershipReadback']['adjacentMembershipPreserved'] and not image['noDevices'];close_gui(gui,'gui-image')
  image_stats=json.loads((root/'stats.json').read_text());assert image_stats['devices_known']==1 and image_stats['jpeg_starts']==0,image_stats
  (root/'acceptance.json').write_text(json.dumps(dict(initial=first,recovery=second,image_editor=image,normal_close=True,daemon_restart=True,no_device_phase_zero_hid_writes=True,image_phase_mock_hid_writes=image_stats['hid_write_count']),ensure_ascii=False,indent=2)+'\n')

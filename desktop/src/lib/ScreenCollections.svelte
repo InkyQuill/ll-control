@@ -193,67 +193,67 @@
   }
 </script>
 
-<StudioPopover label={`${t('Коллекции LCD')}`} bind:open text wide>
-  <StudioPopover label={t('Справка')} icon="help"
+<StudioPopover label={`${t('LCD collections')}`} bind:open text wide>
+  <StudioPopover label={t('Help')} icon="help"
     ><p>
       {t(
-        'Состав списков для этого устройства. Удаление из списка сохраняет файл в каталоге и не изменяет текущую тему.',
+        'Lists for this device. Removing an item from a list keeps its file in the catalog and does not change the current theme.',
       )}
     </p></StudioPopover
   >
   <button
     bind:this={refreshButton}
     disabled={!connected || busy || loading}
-    onclick={() => refresh()}>{t('Обновить коллекции')}</button
+    onclick={() => refresh()}>{t('Refresh collections')}</button
   >
-  {#if loading}<p role="status">{t('Чтение коллекций…')}</p>{/if}
-  {#if error}<p role="alert">{t('Не удалось проверить коллекции:')} <span>{error}</span></p>{/if}
+  {#if loading}<p role="status">{t('Reading collections…')}</p>{/if}
+  {#if error}<p role="alert">{t('Could not check the collections:')} <span>{error}</span></p>{/if}
   {#if notice}<p role="status">
-      {#if notice.kind === 'unconfirmed'}{t('Результат записи требует проверки:')}
+      {#if notice.kind === 'unconfirmed'}{t('The write result needs checking:')}
         <span>{notice.diagnostic}</span>{:else}{notice.kind === 'migrated'
-          ? t('Каталог перенесён в коллекции.')
-          : t('Состав коллекций сохранён.')}{/if}
+          ? t('Catalog migrated to collections.')
+          : t('Collection membership saved.')}{/if}
     </p>{/if}
   {#if currentState?.persistence.pending}<p role="alert">
-      {t('Состав ожидает записи.')}
+      {t('Collection changes are waiting to be written.')}
       {currentState.persistence.last_error ?? ''}
-      {t('Обновите коллекции для проверки.')}
+      {t('Refresh collections to check their state.')}
     </p>{/if}
   {#if currentState && !draft}
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'Используется общий каталог. Перенос сохранит доступные изображения и видео в отдельных списках.',
+          'The shared catalog is in use. Migration retains available images and videos in separate lists.',
         )}
       </p></StudioPopover
     >
     <button disabled={locked} onclick={() => save(true)}
-      >{t('Перенести каталог в коллекции')}</button
+      >{t('Migrate catalog to collections')}</button
     >
   {:else if draft}
     <label
-      >{t('Коллекция')}<select bind:value={context} onchange={() => (choice = '')}
-        ><option value="image">{t('Изображения')}</option><option value="background"
-          >{t('Фоны')}</option
-        ><option value="watermark">{t('Водяные знаки')}</option></select
+      >{t('Collection')}<select bind:value={context} onchange={() => (choice = '')}
+        ><option value="image">{t('Images')}</option><option value="background"
+          >{t('Backgrounds')}</option
+        ><option value="watermark">{t('Watermarks')}</option></select
       ></label
     >
     <ul>
       {#each members as asset (identity(asset))}<li>
           <span>{name(asset)}</span><button
             disabled={locked || protectedMember(asset)}
-            aria-label={t('Убрать из коллекции: {0}', name(asset))}
-            onclick={() => remove(asset)}>{t('Убрать из списка')}</button
-          >{#if protectedMember(asset)}<span>{t('Встроенный элемент')}</span>{/if}
+            aria-label={t('Remove from collection: {0}', name(asset))}
+            onclick={() => remove(asset)}>{t('Remove from list')}</button
+          >{#if protectedMember(asset)}<span>{t('Built-in item')}</span>{/if}
         </li>{/each}
     </ul>
     <label
-      >{t('Добавить из каталога')}<select bind:value={choice} disabled={locked}
-        ><option value="">{t('Выберите файл')}</option
+      >{t('Add from catalog')}<select bind:value={choice} disabled={locked}
+        ><option value="">{t('Select a file')}</option
         >{#each candidates as asset (identity(asset))}<option value={identity(asset)}
             >{name(asset)} · {asset.kind === 'video'
-              ? '' + t('Видео') + ''
-              : '' + t('Изображение') + ''}</option
+              ? '' + t('Video') + ''
+              : '' + t('Image') + ''}</option
           >{/each}</select
       ></label
     >
@@ -262,11 +262,11 @@
       onclick={() => {
         const asset = candidates.find((item) => identity(item) === choice);
         if (asset) replaceMembers([...members, { kind: asset.kind, key: asset.key }]);
-      }}>{t('Добавить в список')}</button
+      }}>{t('Add to list')}</button
     >
-    <button disabled={locked || !changed} onclick={() => save()}>{t('Сохранить коллекции')}</button>
+    <button disabled={locked || !changed} onclick={() => save()}>{t('Save collections')}</button>
     {#if changed}<p role="status">
-        {t('Состав изменён в черновике. Сохраните или обновите коллекции для отмены.')}
+        {t('The collection draft changed. Save it, or refresh collections to discard the changes.')}
       </p>{/if}
   {/if}
 </StudioPopover>

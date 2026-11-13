@@ -10,12 +10,12 @@ read-only командами и сами ничего не импортирую�
 
 ```sh
 # Проверка source + target proposal без изменения настроек
-lconnectctl --json profiles windows-control source.zip --record 1 --bindings bindings.json
+llcontrol --json profiles windows-control source.zip --record 1 --bindings bindings.json
 # Явный commit и Apply; напечатанные ID/token сохранить для recovery
-lconnectctl --json profiles windows-control source.zip --record 1 --bindings bindings.json --apply
+llcontrol --json profiles windows-control source.zip --record 1 --bindings bindings.json --apply
 ```
 
-Формат bindings — [шесть явных ID/unit roles](../../../crates/lconnect-profile/README.md#typed-linux-lighting-preparation).
+Формат bindings — [шесть явных ID/unit roles](../../../crates/llcontrol-profile/README.md#typed-linux-lighting-preparation).
 `--device` выбирает target; при нескольких устройствах он обязателен.
 `--hysteresis-c` по умолчанию0, `--fallback-percent`100. Windows hardware Metadata
 не используется как target. Версия, группа и record выбираются явно, чужие
@@ -49,9 +49,9 @@ commit. Потеря caller/соединения после admission не от�
 При неизвестном результате сначала используйте existing readback:
 
 ```sh
-lconnectctl --json profiles group readback fan-and-lighting OPERATION_ID
+llcontrol --json profiles group readback fan-and-lighting OPERATION_ID
 # Только явный retry с теми же исходными source/bindings/параметрами:
-lconnectctl --json profiles windows-control source.zip --record 1 --bindings bindings.json --apply --id OPERATION_ID --expected ORIGINAL_TOKEN
+llcontrol --json profiles windows-control source.zip --record 1 --bindings bindings.json --apply --id OPERATION_ID --expected ORIGINAL_TOKEN
 ```
 
 CLI печатает ID/token до admission. Retry требует оба параметра и `--apply`;
@@ -111,7 +111,7 @@ collections package предшествует этому workflow; нужна о�
 ## Screen source banks and payload inventory — 2026-10-17
 
 ```sh
-lconnectctl --json profiles windows-screen source.zip --record INDEX
+llcontrol --json profiles windows-screen source.zip --record INDEX
 ```
 
 Команда работает offline без daemon/HID. Явный record должен принадлежать LCDV2
@@ -157,7 +157,7 @@ actual Windows UI, media decode и Apply этим checkpoint не подтвер
 ### Basic runtime → native proposal
 
 ```sh
-lconnectctl --json profiles windows-screen source.zip --record INDEX --bindings screen-bindings.json
+llcontrol --json profiles windows-screen source.zip --record INDEX --bindings screen-bindings.json
 ```
 
 [Пример mapping](../examples/windows-screen-bindings.json) требует явное имя темы,
@@ -212,7 +212,7 @@ unavailable не превращается в0. Отсутствующие manage
 ### Basic editor banks → native proposals
 
 ```sh
-lconnectctl --json profiles windows-screen source.zip --record INDEX --bindings screen-bindings.json --editor-banks
+llcontrol --json profiles windows-screen source.zip --record INDEX --bindings screen-bindings.json --editor-banks
 ```
 
 Этот режим независим от `ScreenConfigJson`: он готовит существующие ImageVideo/
@@ -301,14 +301,14 @@ WPF или genuine Windows export; CLR property-order/ICC/raster qualification
 ### Verified static image preparation
 
 ```sh
-lconnectctl --json profiles windows-screen source.zip --record INDEX --prepare-images
+llcontrol --json profiles windows-screen source.zip --record INDEX --prepare-images
 ```
 
 Подготовка независима от bindings/runtime/editor selection. Source envelope и
 backup fingerprint проверяются заново, затем каждый выбранный `wmsq/` member
 читается в encoded budget и сверяется с size/SHA-256 из inventory, включая CRC.
 Windows file paths не открываются. PNG/JPEG uploads, thumbnails и unused images
-декодируются существующим bounded `lconnect-image` pipeline и нормализуются в PNG
+декодируются существующим bounded `llcontrol-image` pipeline и нормализуются в PNG
 с сохранением alpha/aspect ratio и применением orientation. Signature должна
 совпадать с extension. GIF/video/unknown entries перечисляются в deferred; disguised
 GIF и APNG отклоняются вместо неявного преобразования в первый кадр.
@@ -334,12 +334,12 @@ source changes/budget/unknown entries, deferred animation и actual offline CLI
 ### Verified GIF/MP4 preparation
 
 ```sh
-lconnectctl --json profiles windows-screen source.zip --record INDEX --prepare-media
+llcontrol --json profiles windows-screen source.zip --record INDEX --prepare-media
 ```
 
 Payload size/CRC/SHA-256 и backup fingerprint проверяются до decoder. Временный
 input получает фиксированное имя внутри private directory; JSON Windows paths
-не открываются. Используется общий `lconnect-media` pipeline, вынесенный из
+не открываются. Используется общий `llcontrol-media` pipeline, вынесенный из
 Desktop без изменения defaults: Stretch480×480/24fps, без audio, bounded H.264
 units и полная проверка подготовленного clip. GIF готовится как конечный набор
 moving frames, а не первый кадр; playback loop остаётся отдельной runtime policy.
@@ -370,7 +370,7 @@ commit ещё не закрыты.
 ### Owned Screen resource plan
 
 ```sh
-lconnectctl --json profiles windows-screen source.zip --record INDEX \
+llcontrol --json profiles windows-screen source.zip --record INDEX \
   --bindings linux-bindings.json --resource-map resource-map.json
 ```
 
@@ -782,11 +782,11 @@ Versioned reference: `reference-decompiled/2.1.28-2026-09-08/L-Connect 3/LConnec
 
 ## Windows ZIP: локальная проверка — 2026-10-17
 
-`lconnect-profile` реализует device-free container/metadata inspection для
+`llcontrol-profile` реализует device-free container/metadata inspection для
 Windows2.1.28.0. В рабочей release CLI доступно:
 
 ```sh
-target/release/lconnectctl --json profiles windows-inspect exported.zip
+target/release/llcontrol --json profiles windows-inspect exported.zip
 ```
 
 Daemon не нужен. Команда не распаковывает файлы, не публикует assets и не меняет
@@ -795,7 +795,7 @@ Daemon не нужен. Команда не распаковывает файл�
 небезопасные/дублирующиеся paths, encryption/special members, JSON duplicate keys,
 malformed base64 и превышение бюджетов отклоняются. Стандартные Stored/Deflated
 поддержаны; archive comments/trailing data/SFX исключены из исходно наблюдаемого
-формата. Бюджеты и границы — в [README codec](../../../crates/lconnect-profile/README.md).
+формата. Бюджеты и границы — в [README codec](../../../crates/llcontrol-profile/README.md).
 
 `backup` содержит JSON с Version/CreatedAt/Type/Datas. Enum Type0=FanAndLighting,
 1=Screen; MainType0=Controller; применимый SubType16846849=Galahad2LCDV2.
@@ -840,7 +840,7 @@ vendor code/assets не использованы. Это BCL serialization/conta
 
 ### Windows lighting bank inspection — 2026-10-17
 
-`lconnectctl --json profiles windows-lighting FILE --record INDEX` работает
+`llcontrol --json profiles windows-lighting FILE --record INDEX` работает
 локально, без daemon. Использует тот же bounded ZIP2.1.28 reader и explicit
 record selection, что и cooling preparation. Перенос private Windows Metadata
 в report или Linux target не выполняется. Все root fields вне7 lighting fields
@@ -877,7 +877,7 @@ bindings/units; CoolantTemp нельзя автоматически считат
 
 `profiles windows-lighting FILE --record INDEX --bindings BINDINGS.json`
 добавляет typed Linux preparation к source report. Формат bindings описан в
-[README библиотеки](../../../crates/lconnect-profile/README.md#typed-linux-lighting-preparation).
+[README библиотеки](../../../crates/llcontrol-profile/README.md#typed-linux-lighting-preparation).
 Все6 source roles требуют явных разных ID и unit; duplicate keys, wrong/unknown
 roles, control-containing IDs и oversized maps отклоняются до выдачи результата.
 Host availability не проверяется, source Metadata не становится Linux target.
@@ -932,7 +932,7 @@ FanAndLighting mapper/commit они не заменяют.
 ### Windows cooling policy preparation — 2026-10-17
 
 ```sh
-target/release/lconnectctl --json profiles windows-cooling exported.zip --record INDEX --cpu-sensor SENSOR_ID
+target/release/llcontrol --json profiles windows-cooling exported.zip --record INDEX --cpu-sensor SENSOR_ID
 ```
 
 Требуются явные zero-based record index и Linux source binding; доступность и
@@ -957,7 +957,7 @@ settings, но исключает Windows device Metadata.
 RGB/Screen fields только перечисляются как unconverted, assets не валидируются.
 Непредставимые текущей Linux policy curves не исправляются молча: duplicate или
 endpoint knots, decreasing speeds, StartStop, non-CPU reference и oversized names
-отклоняются. Точные bounds и CLI defaults — в [README](../../../crates/lconnect-profile/README.md#cooling-policies-from-a-selected-record).
+отклоняются. Точные bounds и CLI defaults — в [README](../../../crates/llcontrol-profile/README.md#cooling-policies-from-a-selected-record).
 Chart metadata хранится без семантической квалификации. Для расширения Windows interoperability
 ещё нужны расширение curve representation, Screen/assets mapping, GUI и genuine
 Windows exports. Fresh-store banks и target-bound FanAndLighting commit уже

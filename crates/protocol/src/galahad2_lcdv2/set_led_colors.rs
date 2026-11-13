@@ -69,8 +69,8 @@ pub const MAX_SCREEN_LEDS: usize = 329;
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::lighting::Rgb;
-/// use lconnect_protocol::galahad2_lcdv2::set_led_colors::fan_led_payload;
+/// use llcontrol_protocol::galahad2_lcdv2::lighting::Rgb;
+/// use llcontrol_protocol::galahad2_lcdv2::set_led_colors::fan_led_payload;
 ///
 /// // One red LED → flag byte + RGB triple
 /// assert_eq!(fan_led_payload(&[Rgb::RED]), vec![0x01, 0xFF, 0x00, 0x00]);
@@ -96,8 +96,8 @@ pub fn fan_led_payload(colors: &[Rgb]) -> Vec<u8> {
 /// # Examples
 ///
 /// ```
-/// use lconnect_protocol::galahad2_lcdv2::lighting::Rgb;
-/// use lconnect_protocol::galahad2_lcdv2::set_led_colors::screen_led_payload;
+/// use llcontrol_protocol::galahad2_lcdv2::lighting::Rgb;
+/// use llcontrol_protocol::galahad2_lcdv2::set_led_colors::screen_led_payload;
 ///
 /// // One blue LED → flag byte + 24-byte zero pad + RGB triple at offset 25
 /// let payload = screen_led_payload(&[Rgb::BLUE]);

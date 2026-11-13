@@ -233,14 +233,14 @@ English dictionary находятся в Linux repository.
   Отсутствующее поле в legacy record сохраняет русский интерфейс; новые записи
   всегда содержат явный ru-RU или en-US. Новый store без файла использует English. Неизвестный language отвергается, исходный файл сохраняется.
   CAS revision и durability/ownership общие с [единицами](display-settings.md).
-- CLI `lconnectctl display-settings set --language english` меняет только язык.
+- CLI `llcontrol display-settings set --language english` меняет только язык.
   `--temperature-unit` меняет только единицу; обе опции допускаются вместе.
   Одна успешная запись даёт одну revision, stale draft не переигрывается.
 - GUI «Настройки → Единицы и язык» сохраняет общий draft явно. Последний
   подтверждённый RPC snapshot обновляет язык и document `lang` без remount.
   Выбор в черновике не меняет UI до Save. Reload после conflict остаётся явным.
 - Последний подтверждённый язык кешируется как один enum tag в localStorage
-  `lconnect.interface-language`: GUI может открыть основную навигацию на нём,
+  `llcontrol.interface-language`: GUI может открыть основную навигацию на нём,
   когда daemon недоступен. Пустой/неизвестный/недоступный cache даёт en-US;
   допустимый ru-RU сохраняет выбранный русский. Cache не
   заменяет серверную revision и не записывает предпочтения в daemon. Сохранение

@@ -2,7 +2,7 @@
 
 Target: Linux x86_64 / Arch-family build host. Baseline application version0.1.0;
 LCDV2 parity remains incomplete. GitHub is the selected CI platform; there is
-a private GitHub repository at `InkyQuill/lconnect-linux` and an observed CI run.
+a private GitHub repository at `InkyQuill/ll-control` and an observed CI run.
 There is no published release. Run39063333105 failed because the browser runner
 lacked FFmpeg; the workflow now installs that test dependency. A successful run
 on the new source is still required before release qualification.
@@ -39,16 +39,16 @@ CLOEXEC. Unsupported kernels fail recording startup; this requirement does not
 prevent ordinary GUI/daemon use. Real capture portals/plugins remain separate
 acceptance gates.
 
-The payload includes `/usr/bin/lconnectd`, `lconnectctl`, `lconnect-gui`, a desktop
-launcher/icon, systemd **user** unit with `/usr/bin/lconnectd`, the LCDV2-only udev
+The payload includes `/usr/bin/llcontrold`, `llcontrol`, `llcontrol-gui`, a desktop
+launcher/icon, systemd **user** unit with `/usr/bin/llcontrold`, the LCDV2-only udev
 rule, GPL3-or-later and bundled font notices. Both Mini integrations are included
 automatically in the system-wide shell stores:
 
 | Integration | Installed location |
 |---|---|
-| Plasma applet | `/usr/share/plasma/plasmoids/net.inkyquill.lconnect.mini` |
-| Compiled QML module/plugin | `/usr/lib/qt6/qml/net/inkyquill/lconnect` |
-| GNOME extension and compiled local schema | `/usr/share/gnome-shell/extensions/lconnect-mini@inkyquill.net` |
+| Plasma applet | `/usr/share/plasma/plasmoids/net.inkyquill.llcontrol.mini` |
+| Compiled QML module/plugin | `/usr/lib/qt6/qml/net/inkyquill/llcontrol` |
+| GNOME extension and compiled local schema | `/usr/share/gnome-shell/extensions/llcontrol-mini@inkyquill.net` |
 
 There is no install scriptlet, desktop detection, service activation, extension
 enable, panel modification or direct user-home install. Each installed shell

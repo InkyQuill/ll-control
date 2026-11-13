@@ -78,7 +78,7 @@ test.beforeEach(async ({ page }) => {
 
 test('late cooling Apply response cannot appear on another device', async ({ page }) => {
   await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
-  await expect(page.getByText('Applied: 60%')).toBeVisible();
+  await expect(page.getByText('Применённый PWM: 60%')).toBeVisible();
   await page.evaluate(() => {
     (window as unknown as { controlFixture: { holdCooling: boolean } }).controlFixture.holdCooling =
       true;
@@ -92,7 +92,7 @@ test('late cooling Apply response cannot appear on another device', async ({ pag
     ).controlFixture.finishCooling();
   });
   await expect(page.getByRole('button', { name: 'Применить охлаждение' })).toBeEnabled();
-  await expect(page.getByText('Applied: 60%')).toBeVisible();
+  await expect(page.getByText('Применённый PWM: 60%')).toBeVisible();
   await expect(page.getByText('Политика принята daemon.', { exact: false })).toHaveCount(0);
 });
 

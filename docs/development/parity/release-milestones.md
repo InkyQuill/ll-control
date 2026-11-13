@@ -197,7 +197,7 @@ reopen the relevant gate; absent optional effects/updater/Mini do not.
 ## R4 — Faithful Windows import and base editor compatibility
 
 **Expected to have; post-release. Type:** reference research + implementation + qualification.
-**Depends on:** stable R2. **Owner areas:** `lconnect-profile`, image/text renderer,
+**Depends on:** stable R2. **Owner areas:** `llcontrol-profile`, image/text renderer,
 Windows import UI, stored editor and archive owner.
 
 - [ ] Use genuine Windows exports and reference renders, with exact baseline,
@@ -230,7 +230,7 @@ on Linux-authored templates. [Windows contract](windows-profiles.md),
 
 **Expected to have; explicitly requested. Type:** new research/implementation.
 **Depends on:** R4 schema/resource identities; extends again in R8.
-**Owner areas:** `lconnect-profile`, archive/export storage, CLI/Tauri/desktop.
+**Owner areas:** `llcontrol-profile`, archive/export storage, CLI/Tauri/desktop.
 
 - [ ] Trace Windows import reader as well as exporter: ZIP layout, metadata/version,
   serializers, current/editor banks, resource URI rules and required defaults.
@@ -360,9 +360,12 @@ All-Windows-language support is either qualified or an explicit scope adaptation
 
 **Final gate. Depends on:** R4–R8, relevant R9, and prior core acceptance.
 
-- [ ] Resolve LCD-016 offline/startup-content applicability by tracing callers/guards;
-  implement and qualify only if applicable. Resolve global pump motherboard-sync
-  caller and legacy FW support declaration with corresponding source/device evidence.
+- [x] Trace the Windows 2.1.28 motherboard-sync caller and document the per-device
+  Linux pump policy. Declare observed playback support on FW 1.6 and record the
+  unqualified legacy path. See the [versioned source audit](lcdv2-applicability-2.1.28.md).
+- [ ] Confirm LCD-016 offline/startup-content applicability if a Windows caller,
+  capture or physical demonstration becomes available. The audited product API
+  exposes streaming only. Offline upload remains outside current support.
 - [ ] Reconcile every LCD/COOL/RGB/SYS/FW row and platform requirement: implemented
   and qualified, explicitly not applicable, or documented agreed adaptation.
   Unresolved applicability and missing evidence are open, never silently waived.

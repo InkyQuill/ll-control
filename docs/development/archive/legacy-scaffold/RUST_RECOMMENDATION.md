@@ -143,7 +143,7 @@ sudo pacman -S systemd
 cargo build --release
 
 # Получаете один static binary
-./target/release/lconnect_linux
+./target/release/llcontrol_linux
 
 # ~5MB, без зависимостей!
 ```
@@ -151,7 +151,7 @@ cargo build --release
 #### 3. **Дистрибуция**
 ```bash
 # Просто скопируйте binary
-cp target/release/lconnect_linux /usr/local/bin/
+cp target/release/llcontrol_linux /usr/local/bin/
 
 # Или создайте DEB/RPM
 cargo install cargo-deb
@@ -163,7 +163,7 @@ cargo deb
 ## Структура проекта
 
 ```
-lconnect-linux/
+ll-control/
 ├── Cargo.toml                 # Зависимости
 ├── src/
 │   ├── main.rs                # Entry point
@@ -286,12 +286,12 @@ pip install hidapi pyqt6
 
 **Рекомендация:** Начните с **Rust + egui**.
 
-Этот boilerplate проект уже создан в `lconnect-linux/`!
+Этот boilerplate проект уже создан в `ll-control/`!
 
 ```bash
-cd lconnect-linux
+cd ll-control
 cargo build --release
-./target/release/lconnect_linux
+./target/release/llcontrol_linux
 ```
 
 Good luck! 🦀

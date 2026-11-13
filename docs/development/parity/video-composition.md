@@ -9,7 +9,7 @@ performance gates перечислены в разделе приёмки ниж
 
 ## Реализованный контракт
 
-`lconnect_image::theme::render_theme_over_frame` принимает owned RGB480×480.
+`llcontrol_image::theme::render_theme_over_frame` принимает owned RGB480×480.
 Pixels видео заменяют solid/gradient background темы; ordered layers рисуются
 тем же кодом, что и в обычном renderer. Text, sensor, clock, image/watermark,
 alpha, shadow, managed fonts и validation не дублируются отдельной реализацией.
@@ -200,7 +200,7 @@ preview без LCD writes/state change, delete после preview, missing depen
 Запускать отдельно, без других тестов, в release mode:
 
 ```sh
-cargo test -p lconnect-daemon --release --lib composition_paced_acceptance --locked -- --ignored --nocapture
+cargo test -p llcontrol-daemon --release --lib composition_paced_acceptance --locked -- --ignored --nocapture
 ```
 
 30-second workload: 720 H.264 frames, consumer deadlines24fps, повтор

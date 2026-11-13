@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 static int reject(const char *path) {
-    const char *root = getenv("LCONNECT_SMOKE_ROOT");
+    const char *root = getenv("LLCONTROL_SMOKE_ROOT");
     char marker[4096], target[4096];
     if (!root || root[0] != '/') return 0;
     int n = snprintf(marker, sizeof marker, "%s/fail-unlink", root);

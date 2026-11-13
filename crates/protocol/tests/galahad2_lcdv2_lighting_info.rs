@@ -7,10 +7,10 @@
 //! else (silently dropped) to clear the escape; after the terminator,
 //! two trailer bytes give MaxSpeed and MaxBrightness.
 
-use lconnect_protocol::galahad2_lcdv2::lighting::{
+use llcontrol_protocol::galahad2_lcdv2::lighting::{
     parse_fan_lighting_info, parse_pump_lighting_info,
 };
-use lconnect_protocol::galahad2_lcdv2::lighting_enums::{FanLightingMode, PumpLightingMode};
+use llcontrol_protocol::galahad2_lcdv2::lighting_enums::{FanLightingMode, PumpLightingMode};
 
 #[test]
 fn parse_fan_info_simple_modes_list() {
@@ -79,7 +79,7 @@ fn parse_fan_info_empty_input_rejected() {
     let err = parse_fan_lighting_info(&[]).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 }
 
@@ -90,7 +90,7 @@ fn parse_fan_info_no_trailer_rejected() {
     let err = parse_fan_lighting_info(&data).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { need: 2, got: 1 }
+        llcontrol_protocol::Error::BufferTooShort { need: 2, got: 1 }
     ));
 }
 
@@ -104,7 +104,7 @@ fn parse_fan_info_no_terminator_rejected() {
     // the actual buffer length so the diagnostic isn't misleading.
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { need: 2, got: 4 }
+        llcontrol_protocol::Error::BufferTooShort { need: 2, got: 4 }
     ));
 }
 
@@ -134,7 +134,7 @@ fn parse_fan_info_a5_then_a5_drops_second_escape() {
     let err = parse_fan_lighting_info(&data).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { .. }
+        llcontrol_protocol::Error::BufferTooShort { .. }
     ));
 
     // And verify that a proper terminator after the escape-of-escape works:

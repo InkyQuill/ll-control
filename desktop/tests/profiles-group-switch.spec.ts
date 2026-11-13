@@ -73,7 +73,7 @@ for (const fail of [false, true]) {
     });
     await page.goto('/?view=display');
     await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
-    await expect(page.getByText('Applied: 80%')).toBeVisible();
+    await expect(page.getByText('Применённый PWM: 80%')).toBeVisible();
     await page.getByLabel('PWM, %', { exact: true }).fill('70');
     const open = async () => {
       await page.getByRole('button', { name: 'Сохранённые профили', exact: true }).click();

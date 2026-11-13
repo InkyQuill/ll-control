@@ -35,14 +35,14 @@ xe возвращает used=0, i915 — unallocated=total. Старый i915 т
 
 ## Выполнение и привязки
 
-`lconnectd --query-intel-memory` — внутренний одноразовый helper mode.
+`llcontrold --query-intel-memory` — внутренний одноразовый helper mode.
 Он выбирается **до** Tokio runtime, config, persistence, HID и IPC initialization.
 Обычный daemon запускает собственный executable с этим фиксированным аргументом,
 без shell, в общем sensor collector вне HID/IPC. Отдельный executable устанавливать
 не требуется. Fixtures используют явно переданный script; `LinuxSensors::new`
 и `Default` не включают self-exec сами — это делает production main.
 
-Новый crate `lconnect-intel-memory` отделяет узкий unsafe ioctl boundary;
+Новый crate `llcontrol-intel-memory` отделяет узкий unsafe ioctl boundary;
 в daemon остаётся `forbid(unsafe_code)`, остальные модули нового crate запрещают unsafe.
 Запросы только VERSION и memory query. Render node открывается O_RDONLY/
 O_NOFOLLOW/O_NONBLOCK; fstat проверяет character device и ожидаемый major/minor,

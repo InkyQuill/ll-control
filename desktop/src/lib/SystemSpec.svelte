@@ -7,42 +7,42 @@
   const kinds: { kind: SpecKind; label: string }[] = [
     { kind: 'cpu', label: 'CPU' },
     { kind: 'gpu', label: 'GPU' },
-    { kind: 'memory', label: 'Память' },
-    { kind: 'monitors', label: 'Мониторы' },
-    { kind: 'motherboard', label: 'Материнская плата' },
-    { kind: 'storage', label: 'Накопители' },
+    { kind: 'memory', label: 'Memory' },
+    { kind: 'monitors', label: 'Monitors' },
+    { kind: 'motherboard', label: 'Motherboard' },
+    { kind: 'storage', label: 'Storage' },
   ];
   const labels: Record<string, string> = {
-    model: 'Модель',
-    vendor: 'Производитель',
-    manufacturer: 'Производитель',
-    socket: 'Сокет / пакет',
-    logical_threads: 'Логические потоки',
-    physical_cores: 'Физические ядра',
+    model: 'Model',
+    vendor: 'Manufacturer',
+    manufacturer: 'Manufacturer',
+    socket: 'Socket / package',
+    logical_threads: 'Logical threads',
+    physical_cores: 'Physical cores',
     vendor_id: 'PCI Vendor ID',
     device_id: 'PCI Device ID',
-    driver: 'Драйвер',
-    revision: 'Ревизия',
-    os_visible_capacity: 'Память, доступная ОС',
-    reported_modules: 'Доступные записи модулей',
-    part_number: 'Номер модели модуля',
-    locator: 'Расположение',
-    bank: 'Банк',
-    memory_type: 'Тип памяти',
-    capacity: 'Ёмкость',
-    rated_transfer_rate: 'Паспортная скорость',
-    configured_transfer_rate: 'Настроенная скорость',
-    connector: 'Разъём',
-    product_id: 'Код продукта',
-    physical_size: 'Физический размер',
-    detailed_timing: 'Первый подробный видеорежим EDID',
-    version: 'Версия',
-    bios_vendor: 'Производитель BIOS',
-    bios_version: 'Версия BIOS',
-    bios_date: 'Дата BIOS',
-    device: 'Устройство',
-    firmware: 'Прошивка',
-    media: 'Тип носителя',
+    driver: 'Driver',
+    revision: 'Revision',
+    os_visible_capacity: 'OS-visible memory',
+    reported_modules: 'Accessible module records',
+    part_number: 'Module part number',
+    locator: 'Location',
+    bank: 'Bank',
+    memory_type: 'Memory type',
+    capacity: 'Capacity',
+    rated_transfer_rate: 'Rated transfer rate',
+    configured_transfer_rate: 'Configured transfer rate',
+    connector: 'Connector',
+    product_id: 'Product ID',
+    physical_size: 'Physical size',
+    detailed_timing: 'First EDID detailed timing',
+    version: 'Version',
+    bios_vendor: 'BIOS vendor',
+    bios_version: 'BIOS version',
+    bios_date: 'BIOS date',
+    device: 'Device',
+    firmware: 'Firmware',
+    media: 'Media type',
   };
   let snapshot = $state<SystemSpec | null>(null),
     kind = $state<SpecKind>('cpu'),
@@ -109,28 +109,28 @@
   });
 </script>
 
-<section aria-label={t('Сведения о системе')} aria-busy={busy}>
+<section aria-label={t('System information')} aria-busy={busy}>
   <div class="heading">
-    <h2>{t('Сведения о системе')}</h2>
+    <h2>{t('System information')}</h2>
     <button disabled={!connected || busy} onclick={() => load(true)}
-      >{t('Обновить сведения')}</button
+      >{t('Refresh information')}</button
     >
   </div>
-  <p>{t('Статические характеристики оборудования. Подключение помпы не требуется.')}</p>
+  <p>{t('Static hardware information. No pump connection is required.')}</p>
   {#if !connected}<p role="status">
-      {t('Нет подключения к daemon. Сохранённые сведения могут быть устаревшими.')}
+      {t('The daemon is disconnected. Retained system information may be out of date.')}
     </p>{/if}
   {#if error}<p role="alert">
-      {t('Не удалось получить сведения:')}
+      {t('Could not read system information:')}
       {error.kind === 'unsupported'
-        ? t('Неподдерживаемый ответ сведений о системе')
-        : error.diagnostic}{t('. Повторите обновление.')}
+        ? t('Unsupported system information response')
+        : error.diagnostic}{t('. Retry the refresh.')}
     </p>{/if}
   {#if snapshot && !fresh && connected}<p role="status">
-      {t('Показаны предыдущие сведения; актуальность не подтверждена.')}
+      {t('Showing previous information; its freshness is unconfirmed.')}
     </p>{/if}
-  {#if busy}<p role="status">{t('Читаем сведения об оборудовании…')}</p>{/if}
-  <div class="groups" role="group" aria-label={t('Категории оборудования')}>
+  {#if busy}<p role="status">{t('Reading hardware information…')}</p>{/if}
+  <div class="groups" role="group" aria-label={t('Hardware categories')}>
     {#each kinds as category (category.kind)}<button
         aria-pressed={kind === category.kind}
         onclick={() => {
@@ -141,13 +141,15 @@
   </div>
   {#if snapshot}
     <p class="updated">
-      {t('Получено:')}
+      {t('Collected:')}
       {new Date(snapshot.collected_at_unix_ms).toLocaleString(presentation.language)}
     </p>
-    {#if !group?.items.length}<p role="status">{t('Сведения в этой категории недоступны.')}</p>
+    {#if !group?.items.length}<p role="status">
+        {t('Information in this category is unavailable.')}
+      </p>
     {:else}
       <label
-        >{t('Компонент')}<select
+        >{t('Component')}<select
           value={item?.id}
           onchange={(event) => (selectedId = event.currentTarget.value)}
           >{#each group.items as entry (entry.id)}<option value={entry.id}>{entry.title}</option
@@ -159,18 +161,21 @@
           {#each item.fields as field (field.key)}<div>
               <dt>{Object.hasOwn(labels, field.key) ? t(labels[field.key]) : field.key}</dt>
               <dd>
-                <span>{field.value === null ? '' + t('Недоступно') + '' : format(field.value)}</span
-                ><small>{t('Источник:')} {field.source}</small>
+                <span
+                  >{field.value === null ? '' + t('Not available') + '' : format(field.value)}</span
+                ><small>{t('Source:')} {field.source}</small>
               </dd>
             </div>{/each}
         </dl>{/if}
       {#if kind === 'memory'}<p>
           {t(
-            'Доступная ОС память отличается от суммы установленных модулей. Характеристики модулей показываются только при доступности SMBIOS.',
+            'OS-visible memory differs from the total installed capacity. Module details are shown only when SMBIOS is accessible.',
           )}
         </p>{/if}
     {/if}
-  {:else if !busy && connected && !error}<p>{t('Сведения ещё не загружены.')}</p>{/if}
+  {:else if !busy && connected && !error}<p>
+      {t('System information has not been loaded yet.')}
+    </p>{/if}
 </section>
 
 <style>

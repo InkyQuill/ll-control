@@ -6,12 +6,12 @@ repo=Path(__file__).resolve().parents[2]
 if '--inside-xvfb' not in sys.argv:
  language=sys.argv[sys.argv.index('--language')+1] if '--language' in sys.argv else 'ru-RU'
  assert language in {'en-US','ru-RU'}
- env=dict(os.environ,LCONNECT_SPEC_ISOLATED='1',LCONNECT_SPEC_LANGUAGE=language);env.pop('DISPLAY',None);env.pop('WAYLAND_DISPLAY',None)
+ env=dict(os.environ,LLCONTROL_SPEC_ISOLATED='1',LLCONTROL_SPEC_LANGUAGE=language);env.pop('DISPLAY',None);env.pop('WAYLAND_DISPLAY',None)
  raise SystemExit(subprocess.call(['xvfb-run','-a','-s','-screen 0 1600x1200x24','dbus-run-session','--',sys.executable,__file__,'--inside-xvfb'],env=env))
-assert os.environ.get('LCONNECT_SPEC_ISOLATED')=='1'
-language=os.environ['LCONNECT_SPEC_LANGUAGE']
-root=Path(tempfile.mkdtemp(prefix='lconnect-native-system-spec-'));(root/'fixture-marker').write_text('MockBackend only\n')
-env=dict(os.environ,LCONNECT_SMOKE_ROOT=str(root),LCONNECT_NATIVE_SPEC='1',XDG_CONFIG_DIRS=str(root/'system-config'),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',GIO_USE_VFS='local',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='1');env.pop('WAYLAND_DISPLAY',None)
+assert os.environ.get('LLCONTROL_SPEC_ISOLATED')=='1'
+language=os.environ['LLCONTROL_SPEC_LANGUAGE']
+root=Path(tempfile.mkdtemp(prefix='llcontrol-native-system-spec-'));(root/'fixture-marker').write_text('MockBackend only\n')
+env=dict(os.environ,LLCONTROL_SMOKE_ROOT=str(root),LLCONTROL_NATIVE_SPEC='1',XDG_CONFIG_DIRS=str(root/'system-config'),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',GIO_USE_VFS='local',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='1');env.pop('WAYLAND_DISPLAY',None)
 processes=[];logs=[];fixture=None
 
 def launch(cmd,name,process_env=env):
@@ -25,15 +25,15 @@ def wait(test,why,seconds=20):
 
 def rpc(method,params=None):
  with socket.socket(socket.AF_UNIX) as conn:
-  conn.settimeout(20);conn.connect(str(root/'lconnectd.sock'));stream=conn.makefile('rwb');stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
+  conn.settimeout(20);conn.connect(str(root/'llcontrold.sock'));stream=conn.makefile('rwb');stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
   while True:
    reply=json.loads(stream.readline())
    if reply.get('id')==1:assert 'error' not in reply,reply;return reply['result']
 
 def start_fixture():
  global fixture
- (root/'stop').unlink(missing_ok=True);(root/'lconnectd.sock').unlink(missing_ok=True);(root/'stats.json').unlink(missing_ok=True)
- fixture=launch([repo/'target/debug/examples/desktop-mock'],f'fixture-{len(processes)}');wait(lambda:((root/'lconnectd.sock').exists() and (root/'stats.json').exists()) or fixture.poll() is not None,'mock socket');assert fixture.poll() is None;wait(lambda:len(rpc('list_devices'))==0,'no mock device')
+ (root/'stop').unlink(missing_ok=True);(root/'llcontrold.sock').unlink(missing_ok=True);(root/'stats.json').unlink(missing_ok=True)
+ fixture=launch([repo/'target/debug/examples/desktop-mock'],f'fixture-{len(processes)}');wait(lambda:((root/'llcontrold.sock').exists() and (root/'stats.json').exists()) or fixture.poll() is not None,'mock socket');assert fixture.poll() is None;wait(lambda:len(rpc('list_devices'))==0,'no mock device')
 
 def stop_fixture():
  (root/'stop').touch();fixture.wait(timeout=15);assert fixture.returncode==0
@@ -64,7 +64,7 @@ write('sys/block/sda/device/model','Fixture SSD');write('sys/block/sda/size','20
 try:
  launch(['openbox'],'wm');start_fixture()
  settings=rpc('get_display_settings');settings['interface_language']=language;rpc('set_display_settings',{'settings':settings})
- gui=launch([repo/'target/debug/lconnect-gui'],'gui')
+ gui=launch([repo/'target/debug/llcontrol-gui'],'gui')
  result=result_for(gui);assert result['language']==language and result['fractional_bytes'] and result['collection_date_locale'];close_gui(gui,'gui')
  (root/'acceptance.json').write_text(json.dumps(dict(result,normal_close=True),ensure_ascii=False,indent=2)+'\n')
  print('PASS native System Spec/WebKitGTK/Unix IPC/no attached devices/private inventory:',root)

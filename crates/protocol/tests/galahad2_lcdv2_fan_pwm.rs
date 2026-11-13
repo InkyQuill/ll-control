@@ -3,9 +3,9 @@
 //! Source: Galahad2VisionDevice.cs:271-281
 //! (`writeACommand(139, new byte[] { 0, pwm })`).
 
-use lconnect_protocol::galahad2_lcdv2::fan_pwm::build_request;
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
-use lconnect_protocol::galahad2_lcdv2::pwm::Pwm;
+use llcontrol_protocol::galahad2_lcdv2::fan_pwm::build_request;
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::pwm::Pwm;
 
 #[test]
 fn build_request_at_50_percent_emits_correct_packet() {

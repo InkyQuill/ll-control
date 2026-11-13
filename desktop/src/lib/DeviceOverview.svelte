@@ -17,58 +17,58 @@
   } = $props();
 </script>
 
-<section class="devices" aria-label={t('Ваши устройства')}>
+<section class="devices" aria-label={t('Your devices')}>
   {#each devices as device (device.id)}
     {@const capabilities = deviceCapabilities(device)}
     <article class="device-card">
       <div class="device-art"><DeviceGlyph display={capabilities.display} /></div>
       <div class="device-description">
         <h2>{device.display_name}</h2>
-        <p>{connected ? t('Устройство подключено') : t('Ожидание подключения')}</p>
+        <p>{connected ? t('Device connected') : t('Waiting for connection')}</p>
         {#if device.vid != null && device.pid != null}<p class="device-identity">
             USB {device.vid.toString(16).padStart(4, '0')}:{device.pid
               .toString(16)
               .padStart(4, '0')}{#if device.serial}
-              · {t('Серийный номер')}: {device.serial}{/if}
+              · {t('Serial number')}: {device.serial}{/if}
           </p>{/if}
         {#if device.family === 'galahad2-lcdv2'}<p>
             {t(
-              'Управление помпой, её экраном и подключёнными к LCDV2 вентиляторами. Отдельные контроллеры UNI FAN TL пока не поддерживаются.',
+              'Controls the pump, its display, and fans connected to the LCDV2. Separate UNI FAN TL controllers are not supported yet.',
             )}
           </p>{/if}
         <ExperimentalNotice
           feature="device"
-          label="Проверка не завершена"
-          message="Поддержка этого устройства не прошла полную аппаратную проверку. Используйте элементы управления на свой риск."
+          label="Verification incomplete"
+          message="This device has not completed full hardware verification. Use its controls at your own risk."
         />
         <div class="device-actions">
           {#if capabilities.lighting}<button
               disabled={disabled || !connected}
-              onclick={() => onopen(device.id, 'lighting')}>{t('Подсветка')}</button
+              onclick={() => onopen(device.id, 'lighting')}>{t('Lighting')}</button
             >{/if}
           {#if capabilities.cooling}<button
               disabled={disabled || !connected}
-              onclick={() => onopen(device.id, 'cooling')}>{t('Охлаждение')}</button
+              onclick={() => onopen(device.id, 'cooling')}>{t('Cooling')}</button
             >{/if}
           {#if capabilities.display}<button
               disabled={disabled || !connected}
-              onclick={() => onopen(device.id, 'display')}>{t('Экран помпы')}</button
+              onclick={() => onopen(device.id, 'display')}>{t('Pump screen')}</button
             >{/if}
           {#if !capabilities.display && !capabilities.lighting && !capabilities.cooling}<p>
-              {t('Для этого семейства пока нет доступных редакторов.')}
+              {t('No editors are available for this device family yet.')}
             </p>{/if}
         </div>
       </div>
     </article>
   {:else}
     <div class="empty-devices">
-      <h2>{t('Здесь появятся ваши устройства')}</h2>
+      <h2>{t('Your devices will appear here')}</h2>
       <p>
         {connected
           ? t(
-              'Подключите поддерживаемое устройство Lian Li. Сведения о системе и настройки доступны без устройства.',
+              'Connect a supported Lian Li device. System information and settings are available without a device.',
             )
-          : t('Ожидаем подключение к службе. Ваши сохранённые настройки остаются на компьютере.')}
+          : t('Waiting for the service. Your saved settings remain on this computer.')}
       </p>
     </div>
   {/each}

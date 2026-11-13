@@ -44,7 +44,7 @@
   });
   function imageFailed(event: Event) {
     if (!source || (event.currentTarget as HTMLImageElement).getAttribute('src') !== source) return;
-    error = new ValidationError('Не удалось показать миниатюру. Повторите запрос.');
+    error = new ValidationError('Could not display the thumbnail. Retry the request.');
     source = '';
   }
 </script>
@@ -52,22 +52,22 @@
 <figure class:compact>
   {#if source}{#key source}<img
         src={source}
-        alt={t('Первый кадр: {0}', name)}
+        alt={t('First frame: {0}', name)}
         width="144"
         height="144"
         onerror={imageFailed}
       />{/key}{/if}
-  {#if loading}<p role="status">{t('Подготовка миниатюры…')}</p>{/if}
+  {#if loading}<p role="status">{t('Preparing thumbnail…')}</p>{/if}
   {#if error}<p role="status">
-      {t('Миниатюра недоступна:')}
+      {t('Thumbnail unavailable:')}
       {#if error instanceof ValidationError}{t(error.resource, ...error.values)}{:else}<span
           >{error}</span
         >{/if}
     </p>{/if}
   {#if !compact || error}<button disabled={loading} onclick={() => retry++}
-      >{compact ? t('Повторить миниатюру: {0}', name) : '' + t('Обновить миниатюру') + ''}</button
+      >{compact ? t('Retry thumbnail: {0}', name) : '' + t('Refresh thumbnail') + ''}</button
     >{/if}
-  <figcaption>{t('Первый кадр ролика. Предпросмотр не запускает LCD.')}</figcaption>
+  <figcaption>{t('First video frame. Preview does not start the LCD.')}</figcaption>
 </figure>
 
 <style>

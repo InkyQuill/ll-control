@@ -939,7 +939,7 @@ AwaitingReconnect успехом прошивки.
 
 ### Saved recovery inspection в IPC/CLI — 2026-10-16
 
-`get_firmware_recovery({})` и `lconnectctl [--json] firmware-recovery` читают сохранённый
+`get_firmware_recovery({})` и `llcontrol [--json] firmware-recovery` читают сохранённый
 journal и settings guards без DeviceId/подключённого устройства, в том числе при
 закрытом ordinary admission. RPC принимает только пустой object; path/device/
 clear параметры и arrays отвергаются. Два независимых inspection permits ограничивают

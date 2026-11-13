@@ -50,12 +50,14 @@ for (const preset of ['duo', 'triple', 'cycle'] as const) {
       await page.goto('/?view=display');
       await expect(page.getByText('Daemon подключён')).toBeVisible();
       await page.getByRole('button', { name: 'Готовые темы', exact: true }).click();
-      await page.getByRole('combobox', { name: 'Раскладка', exact: true }).selectOption(preset);
+      await page.getByRole('button', { name: new RegExp('^' + preset, 'i') }).click();
       const create = page.getByRole('button', { name: 'Создать черновик из раскладки' });
       await expect(create).toBeDisabled();
       await page.getByRole('checkbox', { name: 'GPU · celsius' }).check();
       await page.getByRole('checkbox', { name: 'CPU · celsius' }).check();
       if (preset !== 'duo') await page.getByRole('checkbox', { name: 'COOLANT · celsius' }).check();
+      await page.getByRole('button', { name: new RegExp('^' + preset, 'i') }).click();
+      await expect(create).toBeEnabled();
       await create.click();
       await expect(page.getByLabel('Название', { exact: true })).toHaveValue(
         preset[0].toUpperCase() + preset.slice(1),
@@ -150,7 +152,7 @@ test('Clock preset exposes independent date, time and period colors', async ({ p
   });
   await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Готовые темы', exact: true }).click();
-  await page.getByLabel('Раскладка', { exact: true }).selectOption('clock');
+  await page.getByRole('button', { name: /^Clock/ }).click();
   await page.getByRole('button', { name: 'Создать черновик из раскладки' }).click();
   for (
     let index = 0;

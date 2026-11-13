@@ -2,7 +2,7 @@
 //! names and metadata; archive payloads never become a JavaScript Blob.
 use crate::archive_messages::ArchiveNotice;
 use anyhow::{ensure, Context, Result};
-use lconnect_ipc::{
+use llcontrol_ipc::{
     client::IpcClient, ProfileArchivePhase as RemotePhase, ProfileArchiveReply as Reply,
     ProfileArchiveRequest as Request, ProfileGroup, MAX_PROFILE_ARCHIVE_BYTES as MAX_BYTES,
     PROFILE_ARCHIVE_CHUNK_BYTES as CHUNK,
@@ -106,7 +106,7 @@ impl Archives {
         &self,
         socket: PathBuf,
         request: Start,
-        language: lconnect_ipc::InterfaceLanguage,
+        language: llcontrol_ipc::InterfaceLanguage,
     ) -> Result<Status> {
         let choice = request.clone();
         self.start_with(socket, request, move |cancel| {
@@ -320,12 +320,13 @@ impl Archives {
                     s.slot = reply.state.slot;
                     s.total = reply.state.size;
                     s.transferred = reply.state.received;
-                    s.mode =
-                        if reply.state.direction == lconnect_ipc::ProfileArchiveDirection::Import {
-                            Mode::Import
-                        } else {
-                            Mode::Export
-                        };
+                    s.mode = if reply.state.direction
+                        == llcontrol_ipc::ProfileArchiveDirection::Import
+                    {
+                        Mode::Import
+                    } else {
+                        Mode::Export
+                    };
                 })?;
                 // Export Ready after losing its local file is not a saved output.
                 if reply.state.phase == RemotePhase::Ready {

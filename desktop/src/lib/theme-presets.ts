@@ -1,15 +1,15 @@
 import type { Theme, Sensor, Style, Layer } from './api';
 import { ValidationError } from './validation-error';
 export const presets = [
-  { id: 'focus', name: 'Focus', description: 'Один крупный показатель и часы', sensors: 1 },
-  { id: 'duo', name: 'Duo', description: 'Два показателя на одном экране', sensors: 2 },
-  { id: 'triple', name: 'Triple', description: 'Три показателя на одном экране', sensors: 3 },
-  { id: 'cycle', name: 'Cycle', description: 'Три показателя по очереди', sensors: 3 },
-  { id: 'quad', name: 'Quad', description: 'Четыре показателя в сетке', sensors: 4 },
+  { id: 'focus', name: 'Focus', description: 'One large reading and a clock', sensors: 1 },
+  { id: 'duo', name: 'Duo', description: 'Two readings on one screen', sensors: 2 },
+  { id: 'triple', name: 'Triple', description: 'Three readings on one screen', sensors: 3 },
+  { id: 'cycle', name: 'Cycle', description: 'Three alternating readings', sensors: 3 },
+  { id: 'quad', name: 'Quad', description: 'Four readings in a grid', sensors: 4 },
   {
     id: 'clock',
     name: 'Clock',
-    description: 'Дата, время и AM/PM с отдельными цветами',
+    description: 'Date, time and AM/PM with separate colors',
     sensors: 0,
   },
 ] as const;
@@ -17,7 +17,7 @@ export type PresetId = (typeof presets)[number]['id'];
 export function presetTheme(id: PresetId, bindings: Sensor[]): Theme {
   const preset = presets.find((p) => p.id === id)!;
   if (bindings.length !== preset.sensors)
-    throw new ValidationError('Для {0} выберите {1} датчиков', [preset.name, preset.sensors]);
+    throw new ValidationError('Sensors required for {0}: {1}', [preset.name, preset.sensors]);
   const textStyle = (x: number, y: number, size: number, muted = false): Style => ({
     line_box: true,
     x,

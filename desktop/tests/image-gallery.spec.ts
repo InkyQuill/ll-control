@@ -254,7 +254,7 @@ test('image selection follows each collection and failed readback hides stale en
 test('unnamed image fallback labels use English without changing asset metadata', async ({
   page,
 }) => {
-  await page.evaluate(() => localStorage.setItem('lconnect.interface-language', 'en-US'));
+  await page.evaluate(() => localStorage.setItem('llcontrol.interface-language', 'en-US'));
   await page.reload();
   await page.getByRole('button', { name: 'Library', exact: true }).click();
   await page.getByRole('button', { name: 'Image library', exact: true }).click();

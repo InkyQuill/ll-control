@@ -23,11 +23,11 @@ test('unknown keys that name inherited object properties remain literal UI fallb
 });
 test('catalog resources interpolate filenames as literal values', () => {
   const name = 'constructor {0} <clip>';
-  assert.equal(translate('Первый кадр: {0}', 'en-US', name), 'First frame: ' + name);
-  assert.equal(translate('Первый кадр: {0}', 'ru-RU', name), 'Первый кадр: ' + name);
+  assert.equal(translate('First frame: {0}', 'en-US', name), 'First frame: ' + name);
+  assert.equal(translate('First frame: {0}', 'ru-RU', name), 'Первый кадр: ' + name);
 });
 test('strict catalog audit requires own dictionary entries and reports original TypeScript lines', () => {
-  const root = mkdtempSync(join(tmpdir(), 'lconnect-locale-contract-'));
+  const root = mkdtempSync(join(tmpdir(), 'llcontrol-locale-contract-'));
   try {
     const scripts = join(root, 'desktop/scripts'),
       lib = join(root, 'desktop/src/lib'),
@@ -56,7 +56,7 @@ test('strict catalog audit requires own dictionary entries and reports original 
           )
           .join('\n'),
     );
-    const dictionary = join(lib, 'locales/en-US.json'),
+    const dictionary = join(lib, 'locales/ru-RU.json'),
       report = join(root, 'report.json');
     writeFileSync(dictionary, '{}');
     const run = () =>
@@ -145,7 +145,7 @@ test('every effect draft validation path has localized EN/RU resources', async (
     const cases = [
       [
         theme({ kind: 'fireworks', effect: { dynamic: true, sensor: null, intensity: 1 } }),
-        'Выберите источник эффекта перед сохранением или Apply.',
+        'Выберите источник эффекта перед сохранением или применением.',
         'Select an effect source before saving or applying.',
       ],
       [
@@ -168,7 +168,7 @@ test('every effect draft validation path has localized EN/RU resources', async (
       ],
       [
         theme({ kind: 'meteor', effect: { dynamic: true, sensor: null, speed: 2 } }),
-        'Выберите источник эффекта перед сохранением или Apply.',
+        'Выберите источник эффекта перед сохранением или применением.',
         'Select an effect source before saving or applying.',
       ],
       [
@@ -186,7 +186,7 @@ test('every effect draft validation path has localized EN/RU resources', async (
       ],
       [
         theme({ kind: 'weather', effect: { dynamic: true, sensor: null, intensity: 1 } }),
-        'Выберите источник эффекта перед сохранением или Apply.',
+        'Выберите источник эффекта перед сохранением или применением.',
         'Select an effect source before saving or applying.',
       ],
       [
@@ -228,4 +228,47 @@ test('new-effect layer limit is localized in both interface languages', async ()
       'A free layer is required for the new effect.',
     )(error);
   });
+});
+
+test('English is the literal source language and Russian is a separate catalog', () => {
+  assert.equal(translate('First frame: {0}', 'en-US', 'clip'), 'First frame: clip');
+  assert.equal(
+    translate('Unknown English resource {0}', 'ru-RU', 'clip'),
+    'Unknown English resource clip',
+  );
+  const catalog = JSON.parse(
+    readFileSync(new URL('../src/lib/locales/ru-RU.json', import.meta.url)),
+  );
+  for (const key of Object.keys(catalog)) assert.doesNotMatch(key, /[А-Яа-яЁё]/);
+});
+
+test('recording validation and Windows record labels have Russian resources', () => {
+  for (const source of [
+    'Invalid recording ID',
+    'Recording editor is closed',
+    'Invalid source preview size',
+    'Invalid recording review ID',
+    'Recording review is closed',
+    'Recording is not ready to save',
+    'Preview dimensions exceed preparation budget',
+    'Canvas unavailable',
+    'Unexpected preview dimensions',
+  ]) {
+    assert.equal(translate(source, 'en-US'), source);
+    assert.match(translate(source, 'ru-RU'), /[А-Яа-яЁё]/);
+  }
+  assert.equal(translate('Record {0} · {1}', 'ru-RU', 2, 'abc123'), 'Запись 2 · abc123');
+});
+
+test('preset sensor requirements avoid count-dependent grammar and retain literal names', () => {
+  for (const count of [1, 2, 5]) {
+    assert.equal(
+      translate('Sensors required for {0}: {1}', 'en-US', 'Focus {1}', count),
+      `Sensors required for Focus {1}: ${count}`,
+    );
+    assert.equal(
+      translate('Sensors required for {0}: {1}', 'ru-RU', 'Focus {1}', count),
+      `Необходимое число датчиков для Focus {1}: ${count}`,
+    );
+  }
 });

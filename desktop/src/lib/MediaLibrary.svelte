@@ -26,15 +26,15 @@
     if (typeof value === 'string') return t(value);
     switch (value.context) {
       case 'edit':
-        return t('Не удалось открыть редактор ролика: {0}', diagnosticText(value.detail));
+        return t('Could not open the video editor: {0}', diagnosticText(value.detail));
       case 'membership':
         return t(
-          'Ролик сохранён в каталоге, но добавление в коллекцию не подтверждено: {0}. Проверьте коллекции.',
+          'The video was saved to the catalog, but adding it to the collection was not confirmed: {0}. Check the collections.',
           diagnosticText(value.detail),
         );
       case 'replacement':
         return t(
-          'Новый ролик сохранён в каталоге, но замена в коллекции не подтверждена: {0}. Обновите коллекции; автоматического повтора не будет.',
+          'The new video was saved to the catalog, but replacement in the collection was not confirmed: {0}. Refresh the collections; it will not be retried automatically.',
           diagnosticText(value.detail),
         );
     }
@@ -88,7 +88,7 @@
       return;
     const target = device,
       key = choice,
-      name = clips.find((c) => c.key === key)?.name ?? t('Ролик'),
+      name = clips.find((c) => c.key === key)?.name ?? t('Clip'),
       epoch = generation;
     editBusy = true;
     importNotice = '';
@@ -143,7 +143,8 @@
         await refresh(epoch);
         if (epoch === generation) {
           choice = key;
-          importNotice = 'Ролик заменён в коллекции. Исходный файл сохранён для других ссылок.';
+          importNotice =
+            'Video replaced in the collection. The original file was retained for other references.';
         }
       }
     } catch (e) {
@@ -271,7 +272,7 @@
     deleteNotice = '';
     try {
       await rpc<void>('delete_prepared_clip', { key });
-      if (epoch === generation) deleteNotice = 'Ролик удалён.';
+      if (epoch === generation) deleteNotice = 'Video deleted.';
     } catch (e) {
       if (epoch === generation)
         deleteNotice = { detail: e instanceof ValidationError ? e : message(e) };
@@ -323,15 +324,17 @@
   });
 </script>
 
-<StudioPopover label={`${t('Библиотека роликов')}`} bind:open text wide>
-  <StudioPopover label={t('Справка')} icon="help"
+<StudioPopover label={`${t('Video library')}`} bind:open text wide>
+  <StudioPopover label={t('Help')} icon="help"
     ><p>
       {t(
-        'Выбранный ролик повторяется и восстанавливается после перезапуска. Применение темы или возврат LocalUI снимает выбор.',
+        'The selected video loops and resumes after restart. Applying a theme or restoring LocalUI clears this selection.',
       )}
     </p></StudioPopover
   >
-  {#if !connected}<p role="status">{t('Библиотека недоступна без связи с daemon.')}</p>
+  {#if !connected}<p role="status">
+      {t('The library is unavailable while the daemon is disconnected.')}
+    </p>
   {:else}
     {#if open && !editing && !captureDevice}<MediaImport
         onbusy={(value) => (importBusy = value)}
@@ -355,7 +358,7 @@
     {/if}
     {#if open && captureDevice}
       {#key captureDevice}{#await import('./ScreenRecorder.svelte')}
-          <p role="status">{t('Загрузка…')}</p>
+          <p role="status">{t('Loading…')}</p>
         {:then { default: ScreenRecorder }}
           <ScreenRecorder
             device={captureDevice}
@@ -368,27 +371,27 @@
     {:else if open && !editing}
       <ExperimentalNotice
         feature="recording"
-        message="Захват и запись экрана не проверены во всех поддерживаемых сеансах. Используйте на свой риск."
+        message="Screen capture and recording are not verified in every supported session. Use at your own risk."
       />
       <button
         disabled={disabled || importBusy || editBusy || !available}
-        onclick={() => (captureDevice = device)}>{t('Записать экран…')}</button
+        onclick={() => (captureDevice = device)}>{t('Record screen…')}</button
       >
     {/if}
     <button bind:this={refreshButton} disabled={disabled || loading} onclick={() => refresh()}
-      >{t('Обновить ролики')}</button
+      >{t('Refresh videos')}</button
     >
-    {#if loading && !clips.length}<p role="status">{t('Загрузка роликов…')}</p>{/if}
-    {#if error}<p role="alert">{t('Не удалось загрузить ролики:')} {diagnosticText(error)}</p>
-    {:else if !loading && !clips.length}<p>{t('Сохранённых роликов пока нет.')}</p>{/if}
+    {#if loading && !clips.length}<p role="status">{t('Loading videos…')}</p>{/if}
+    {#if error}<p role="alert">{t('Could not load videos:')} {diagnosticText(error)}</p>
+    {:else if !loading && !clips.length}<p>{t('No saved videos yet.')}</p>{/if}
     <label
       ><input type="checkbox" bind:checked={catalogMode} />{t(
-        'Показать все файлы видео для управления',
+        'Show all video files for management',
       )}</label
     >
     {#if clips.length}
       <label
-        >{t('Сохранённый ролик')}
+        >{t('Saved video')}
         <select
           bind:this={clipSelect}
           bind:value={choice}
@@ -398,12 +401,11 @@
           }}
         >
           {#each clips as clip (clip.key)}<option value={clip.key}
-              >{clip.name} · {(clip.frames / clip.fps).toFixed(1)} {t('с')}</option
+              >{clip.name} · {(clip.frames / clip.fps).toFixed(1)} {t('s')}</option
             >{/each}
         </select>
       </label>
-      <label><input type="checkbox" bind:checked={gallery} />{t('Показать карточки роликов')}</label
-      >
+      <label><input type="checkbox" bind:checked={gallery} />{t('Show video cards')}</label>
       {#if open && gallery}<MediaGallery
           {clips}
           {choice}
@@ -415,18 +417,18 @@
         />{/if}
       {#if open && choice && !gallery}<MediaThumbnail
           clipKey={choice}
-          name={clips.find((clip) => clip.key === choice)?.name ?? t('Ролик')}
+          name={clips.find((clip) => clip.key === choice)?.name ?? t('Clip')}
         />{/if}
-      {#if !selectable}<StudioPopover label={t('Справка')} icon="help"
+      {#if !selectable}<StudioPopover label={t('Help')} icon="help"
           ><p>
             {t(
-              'Файл вне фоновой коллекции. Добавьте его через «Коллекции LCD» для воспроизведения.',
+              'This file is outside the background collection. Add it through LCD collections to play it.',
             )}
           </p></StudioPopover
         >{/if}
       {#if onbackground}<button
           disabled={!selectable || disabled || deleting || loading || !choice || !!error}
-          onclick={() => onbackground?.(choice)}>{t('Использовать фоном темы')}</button
+          onclick={() => onbackground?.(choice)}>{t('Use as theme background')}</button
         >{/if}
       <button
         disabled={!selectable ||
@@ -437,7 +439,7 @@
           !ready ||
           !choice ||
           !!error}
-        onclick={() => onselect(choice)}>{t('Выбрать ролик для LCD')}</button
+        onclick={() => onselect(choice)}>{t('Select video for LCD')}</button
       >
       <button
         bind:this={editButton}
@@ -452,9 +454,9 @@
           !selectable ||
           !choice ||
           builtinChoice}
-        onclick={beginEdit}>{t('Редактировать выбранный ролик')}</button
+        onclick={beginEdit}>{t('Edit selected video')}</button
       >
-      {#if builtinChoice}<p>{t('Встроенный ролик нельзя удалить или редактировать.')}</p>{/if}
+      {#if builtinChoice}<p>{t('Built-in videos cannot be deleted or edited.')}</p>{/if}
       <button
         disabled={disabled ||
           deleting ||
@@ -468,25 +470,25 @@
           if (keep.includes(choice)) return;
           confirmDelete = choice;
           deleteNotice = '';
-        }}>{t('Удалить ролик…')}</button
+        }}>{t('Delete video…')}</button
       >
       {#if confirmDelete && confirmDelete === choice}
         <p>
-          {t('Удалить «')}{clips.find((clip) => clip.key === confirmDelete)?.name}{t(
-            '» из библиотеки? Исходный файл останется на диске.',
+          {t('Delete «')}{clips.find((clip) => clip.key === confirmDelete)?.name}{t(
+            '» from the library? The original file will remain on disk.',
           )}
         </p>
         <button
           disabled={disabled || deleting || loading || !ready || retainedChoice}
-          onclick={removeClip}>{t('Подтвердить удаление ролика')}</button
+          onclick={removeClip}>{t('Confirm video deletion')}</button
         >
-        <button onclick={() => (confirmDelete = '')}>{t('Отмена удаления')}</button>
+        <button onclick={() => (confirmDelete = '')}>{t('Cancel deletion')}</button>
       {/if}
       {#if retainedChoice}<p>
-          {t('Ролик используется в черновике страницы LCD. Замените его фон перед удалением.')}
+          {t('The video is used by an LCD page draft. Replace its background before deleting.')}
         </p>{/if}
       {#if choice === selected}<p>
-          {t('Сначала остановите ролик, чтобы снять сохранённый выбор.')}
+          {t('Stop the video first to clear the saved selection.')}
         </p>{/if}
     {/if}
     {#if importNotice}<p role="alert">{importNoticeText(importNotice)}</p>{/if}
@@ -494,20 +496,20 @@
         {typeof deleteNotice === 'string'
           ? t(deleteNotice)
           : t(
-              'Удаление не подтверждено: {0}. Проверьте обновлённый список перед повтором.',
+              'Deletion was not confirmed: {0}. Check the updated list before retrying.',
               diagnosticText(deleteNotice.detail),
             )}
       </p>{/if}
     {#if ready && available}<p role="status" aria-live="polite" aria-atomic="true">
         {selected
-          ? t('Сохранённый выбор: {0}', selectedName ?? t('ролик недоступен в библиотеке'))
-          : '' + t('Ролик для автовосстановления не выбран.') + ''}
+          ? t('Saved selection: {0}', selectedName ?? t('video is unavailable in the library'))
+          : '' + t('No video selected for automatic restore.') + ''}
       </p>{/if}
     <button disabled={!available || disabled} onclick={onstop}
-      >{t('Остановить ролик и вернуть LocalUI')}</button
+      >{t('Stop video and restore LocalUI')}</button
     >
-    {#if !available}<StudioPopover label={t('Справка')} icon="help"
-        ><p>{t('Выберите доступное устройство для воспроизведения.')}</p></StudioPopover
+    {#if !available}<StudioPopover label={t('Help')} icon="help"
+        ><p>{t('Select an available device for playback.')}</p></StudioPopover
       >{/if}
   {/if}
 </StudioPopover>

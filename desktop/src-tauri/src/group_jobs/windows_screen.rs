@@ -6,7 +6,7 @@ use super::*;
 #[serde(untagged)]
 pub enum WindowsPreparation {
     Control(WindowsOptions),
-    Screen(lconnect_ipc::WindowsScreenSource),
+    Screen(llcontrol_ipc::WindowsScreenSource),
     Inspect(ScreenRequirementsOptions),
 }
 #[derive(Debug, Deserialize)]
@@ -86,12 +86,12 @@ impl Groups {
                     .lock()
                     .map_err(|_| anyhow::anyhow!("Windows Screen grant unavailable"))?;
                 file.seek(SeekFrom::Start(0))?;
-                let source = lconnect_profile::screen::inspect_windows_screen(&mut *file, record)?;
+                let source = llcontrol_profile::screen::inspect_windows_screen(&mut *file, record)?;
                 ensure!(
                     source.archive.backup_sha256 == input.fingerprint,
                     "Windows Screen source changed"
                 );
-                Ok(lconnect_profile::screen_requirements::inspect(&source)?)
+                Ok(llcontrol_profile::screen_requirements::inspect(&source)?)
             })
             .await?;
             if *cancel.borrow() {
@@ -109,7 +109,7 @@ impl Groups {
         &self,
         socket: PathBuf,
         request: Start,
-        options: lconnect_ipc::WindowsScreenSource,
+        options: llcontrol_ipc::WindowsScreenSource,
     ) -> Result<Status> {
         valid_id(&request.id)?;
         ensure!(
@@ -118,8 +118,8 @@ impl Groups {
                 && request.sensor_id.is_none(),
             "Invalid Windows Screen preparation target"
         );
-        lconnect_profile::linux_screen::parse_bindings(options.bindings_json.as_bytes())?;
-        lconnect_profile::screen_plan::parse_resource_map(options.resources_json.as_bytes())?;
+        llcontrol_profile::linux_screen::parse_bindings(options.bindings_json.as_bytes())?;
+        llcontrol_profile::screen_plan::parse_resource_map(options.resources_json.as_bytes())?;
         let (mut status, input) = {
             let state = self.lock()?;
             let job = state
@@ -157,9 +157,9 @@ impl Groups {
                         .lock()
                         .map_err(|_| anyhow::anyhow!("Windows Screen grant unavailable"))?;
                     grant.seek(SeekFrom::Start(0))?;
-                    let source = lconnect_profile::inspect_windows(&mut *grant)?;
+                    let source = llcontrol_profile::inspect_windows(&mut *grant)?;
                     ensure!(
-                        source.group == lconnect_profile::Group::Screen
+                        source.group == llcontrol_profile::Group::Screen
                             && source.backup_sha256 == input.fingerprint,
                         "Windows Screen source changed"
                     );

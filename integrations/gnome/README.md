@@ -12,9 +12,9 @@ fresh default; confirmed Russian is cached for offline use. Other languages and
 Sway/other environments remain deferred.
 
 The extension and preferences use the same pure TypeScript model as Plasma,
-compiled to `mini.mjs`. The fixed `lconnectctl mini watch` helper reads the existing
+compiled to `mini.mjs`. The fixed `llcontrol mini watch` helper reads the existing
 daemon cache; it does not collect hardware data or require the main GUI. Install
-`lconnectctl` in the session PATH separately. No arbitrary command setting exists.
+`llcontrol` in the session PATH separately. No arbitrary command setting exists.
 Missing CLI/daemon, malformed frames, lost sources and stale readings show
 unavailable; FPS uses an explicitly selected opt-in daemon MangoHud per-frame source.
 
@@ -24,10 +24,10 @@ Requires Python 3, Node, the project's installed `desktop/node_modules/typescrip
 and `glib-compile-schemas`:
 
 ```sh
-python3 integrations/gnome/build.py --output /tmp/lconnect-mini-gnome-build --shell-version 51
+python3 integrations/gnome/build.py --output /tmp/llcontrol-mini-gnome-build --shell-version 51
 ```
 
-The output is `/tmp/lconnect-mini-gnome-build/lconnect-mini@inkyquill.net`.
+The output is `/tmp/llcontrol-mini-gnome-build/llcontrol-mini@inkyquill.net`.
 The builder compiles the shared model strictly, compiles schemas and syntax-checks
 JavaScript. It neither installs nor enables the extension. Each explicit
 `--shell-version` is a candidate for later qualification, **not a tested support
@@ -38,10 +38,10 @@ as part of build/test.
 ## Isolated checks
 
 ```sh
-LCONNECT_MINI_MODEL=/tmp/lconnect-mini-gnome-build/lconnect-mini@inkyquill.net/mini.mjs node --test integrations/common/tests/mini.test.mjs
-python3 integrations/gnome/tests/run-feed.py /tmp/lconnect-mini-gnome-build/lconnect-mini@inkyquill.net --gjs /path/to/gjs
-python3 integrations/gnome/tests/run-ipc.py /tmp/lconnect-mini-gnome-build/lconnect-mini@inkyquill.net --gjs /path/to/gjs --cli target/debug/lconnectctl
-python3 integrations/gnome/tests/run-preferences.py /tmp/lconnect-mini-gnome-build/lconnect-mini@inkyquill.net --gjs /path/to/gjs
+LLCONTROL_MINI_MODEL=/tmp/llcontrol-mini-gnome-build/llcontrol-mini@inkyquill.net/mini.mjs node --test integrations/common/tests/mini.test.mjs
+python3 integrations/gnome/tests/run-feed.py /tmp/llcontrol-mini-gnome-build/llcontrol-mini@inkyquill.net --gjs /path/to/gjs
+python3 integrations/gnome/tests/run-ipc.py /tmp/llcontrol-mini-gnome-build/llcontrol-mini@inkyquill.net --gjs /path/to/gjs --cli target/debug/llcontrol
+python3 integrations/gnome/tests/run-preferences.py /tmp/llcontrol-mini-gnome-build/llcontrol-mini@inkyquill.net --gjs /path/to/gjs
 ```
 
 The feed test runs actual GJS/Gio against a synthetic fixed-name CLI. It checks

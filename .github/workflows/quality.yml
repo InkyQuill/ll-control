@@ -46,7 +46,7 @@ jobs:
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
-          cargo build --locked -p lconnect-daemon -p lconnect-cli -p lconnect-gui --bins --no-default-features --features lconnect-gui/custom-protocol
+          cargo build --locked -p llcontrol-daemon -p llcontrol-cli -p llcontrol-gui --bins --no-default-features --features llcontrol-gui/custom-protocol
           df -h .
           cargo clean
           cargo test --locked --workspace --all-features

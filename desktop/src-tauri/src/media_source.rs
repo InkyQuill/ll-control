@@ -4,7 +4,7 @@ use crate::{
     media_prepare::{inspect_file, PreparedFile, PreviewFile, SourceMetadata},
 };
 use anyhow::{bail, ensure, Context, Result};
-use lconnect_ipc::client::IpcClient;
+use llcontrol_ipc::client::IpcClient;
 use serde::Serialize;
 use std::{
     future::Future,

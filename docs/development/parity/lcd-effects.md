@@ -13,7 +13,7 @@ RGB-режимы и sensor-driven подсветка остаются в осн�
 
 ## Что добавлено
 
-`lconnect-ipc::effects` хранит Rain/Snow, static intensity1…3, явную sensor
+`llcontrol-ipc::effects` хранит Rain/Snow, static intensity1…3, явную sensor
 identity/unit, integer low/high и Linux scene seed. Native scale извлечён из
 Windows exports и JavaScript установленного baseline; vendor assets/code в
 репозиторий не перенесены.
@@ -29,7 +29,7 @@ Snow dynamic high не равен static high. Пороговый диапазо
 интенсивность. Это явная Linux policy; Windows при отсутствии sensorData может
 сохранять прежнее состояние. Проверка совместимости этого случая ещё открыта.
 
-`lconnect-image::effects` рисует собственные капли с преломлением background
+`llcontrol-image::effects` рисует собственные капли с преломлением background
 и снежинки в480×480RGB. Stateless preview использует seed/session milliseconds;
 live dynamic путь использует `WeatherScene`, накапливающий движение
 по предыдущей скорости. Пересечение sensor band не меняет текущие позиции.
@@ -121,7 +121,7 @@ daemon. Native background-video/fault matrix остаётся открытой.
 Offline preview без device/daemon запуска:
 
 ```sh
-cargo run -p lconnect-image --example weather-preview -- /tmp/lconnect-weather-preview.png
+cargo run -p llcontrol-image --example weather-preview -- /tmp/llcontrol-weather-preview.png
 ```
 
 Строки Rain/Snow, колонки low@0ms, high@0ms, high@42ms. Результаты текущего
@@ -135,8 +135,8 @@ Per-source ranges и native managed-image/slot checkpoint:
 
 ```sh
 (cd desktop && npm run build)
-cargo build -p lconnect-gui --features native-smoke,custom-protocol --locked
-cargo build -p lconnect-daemon --example desktop-mock --locked
+cargo build -p llcontrol-gui --features native-smoke,custom-protocol --locked
+cargo build -p llcontrol-daemon --example desktop-mock --locked
 python3 desktop/scripts/native-weather.py
 ```
 
@@ -195,7 +195,7 @@ low speed/colors на равенстве, high выше; это явное ис�
 - [ ] Native background-video, extended faults/unavailable recovery.
 - [ ] Windows visual/defaults comparison и поздняя аппаратная проверка.
 
-Offline preview: `cargo run -p lconnect-image --example meteor-preview -- /tmp/meteor.png`.
+Offline preview: `cargo run -p llcontrol-image --example meteor-preview -- /tmp/meteor.png`.
 Foundation evidence: [2026-10-13](evidence/2026-10-13-meteor-foundation.json).
 
 Integration evidence: [2026-10-13](evidence/2026-10-13-meteor-integration.json).
@@ -281,5 +281,5 @@ native equivalence. Preview создаёт отдельную сцену. Эфф
 - [ ] Native background-video/extended faults и Windows visual/timing/recovery qualification.
 - [ ] Hardware later, per user's deferral.
 
-Offline preview: `cargo run -p lconnect-image --example fireworks-preview -- /tmp/fireworks.png`.
+Offline preview: `cargo run -p llcontrol-image --example fireworks-preview -- /tmp/fireworks.png`.
 [Foundation evidence](evidence/2026-10-13-fireworks-foundation.json).

@@ -49,7 +49,7 @@ export interface PendingArchive {
   group: ProfileGroup;
   slot: number;
 }
-export const pendingArchiveKey = 'lconnect.archive.pending';
+export const pendingArchiveKey = 'llcontrol.archive.pending';
 export function pendingArchive(value: string | null): PendingArchive | null {
   if (!value) return null;
   try {
@@ -67,25 +67,25 @@ export function pendingArchive(value: string | null): PendingArchive | null {
   }
 }
 export const profileGroupNames: Record<ProfileGroup, string> = {
-  screen: 'Экран',
-  fan: 'Вентиляторы',
-  pump: 'Помпа',
+  screen: 'Screen',
+  fan: 'Fans',
+  pump: 'Pump',
 };
 export const archiveTerminal = (phase: ArchivePhase) =>
   ['cancelled', 'complete', 'failed', 'uncertain'].includes(phase);
 export const archivePhase: Record<ArchivePhase, string> = {
-  choosing: 'Выбор файла',
-  preparing: 'Подготовка файла',
-  packing: 'Подготовка архива',
-  uploading: 'Загрузка архива',
-  downloading: 'Сохранение архива',
-  committing: 'Завершение сохранения',
-  recovering: 'Чтение результата',
-  cancelling: 'Отмена передачи',
-  cancelled: 'Операция отменена',
-  complete: 'Операция завершена',
-  failed: 'Операция не выполнена',
-  uncertain: 'Результат требует проверки',
+  choosing: 'Choosing file',
+  preparing: 'Preparing file',
+  packing: 'Preparing archive',
+  uploading: 'Uploading archive',
+  downloading: 'Saving archive',
+  committing: 'Committing changes',
+  recovering: 'Reading result',
+  cancelling: 'Cancelling transfer',
+  cancelled: 'Operation cancelled',
+  complete: 'Operation completed',
+  failed: 'Operation failed',
+  uncertain: 'Result needs verification',
 };
 
 export function readPendingArchive(): PendingArchive | null {

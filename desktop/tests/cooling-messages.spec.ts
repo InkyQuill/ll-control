@@ -46,7 +46,7 @@ const contexts = {
 async function setup(page: Page, language: Language, operation: Operation) {
   await page.addInitScript(
     ({ language, operation }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const f: Fixture = {
         language,
         revision: 0,

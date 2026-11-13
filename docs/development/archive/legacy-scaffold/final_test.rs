@@ -118,7 +118,7 @@ fn main() -> anyhow::Result<()> {
     println!("─────────────────────────────────────────────────────────────");
     println!();
     println!("Next steps:");
-    println!("  • Run GUI:  ./target/release/lconnect_linux");
+    println!("  • Run GUI:  ./target/release/llcontrol_linux");
     println!("  • Control fans/pump with sliders");
     println!("  • Try sending images to LCD");
     println!();

@@ -69,8 +69,8 @@ defaults. Состояние хранится отдельно в `display-setti
 устройства. CLI:
 
 ```sh
-lconnectctl display-settings get
-lconnectctl --json display-settings set --temperature-unit fahrenheit
+llcontrol display-settings get
+llcontrol --json display-settings set --temperature-unit fahrenheit
 ```
 
 GUI: «Настройки → Единицы и язык». Черновик не меняется при polling;

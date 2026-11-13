@@ -19,10 +19,10 @@ args = parser.parse_args()
 stop = threading.Event()
 errors, calls, workers = [], [], []
 
-with tempfile.TemporaryDirectory(prefix='lconnect-mini-gjs-ipc-') as tmp:
+with tempfile.TemporaryDirectory(prefix='llcontrol-mini-gjs-ipc-') as tmp:
     root = Path(tmp)
     (root / 'bin').mkdir()
-    (root / 'bin/lconnectctl').symlink_to(args.cli.resolve(strict=True))
+    (root / 'bin/llcontrol').symlink_to(args.cli.resolve(strict=True))
     listener = socket.socket(socket.AF_UNIX)
     listener.bind(str(root / 'peer.sock'))
     listener.listen()
@@ -85,9 +85,9 @@ with tempfile.TemporaryDirectory(prefix='lconnect-mini-gjs-ipc-') as tmp:
 
     server = threading.Thread(target=accept, daemon=True)
     server.start()
-    env = dict(os.environ, LCONNECT_MINI_TEST_ROOT=str(root),
+    env = dict(os.environ, LLCONTROL_MINI_TEST_ROOT=str(root),
                PATH=str(root / 'bin') + ':' + os.environ.get('PATH', ''),
-               LCONNECTCTL_SOCKET=str(root / 'peer.sock'), XDG_RUNTIME_DIR=str(root),
+               LLCONTROL_SOCKET=str(root / 'peer.sock'), XDG_RUNTIME_DIR=str(root),
                XDG_CONFIG_HOME=str(root / 'config'), XDG_DATA_HOME=str(root / 'data'),
                XDG_CACHE_HOME=str(root / 'cache'))
     process = subprocess.Popen([args.gjs, '-m', str(Path(__file__).with_name('ipc.test.js')),

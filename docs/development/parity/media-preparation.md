@@ -62,7 +62,7 @@ select-clip сохраняет выбор отдельно (см. ниже).
 ## Проверки и следующий шаг
 
 ```sh
-cargo build -p lconnect-cli --locked
+cargo build -p llcontrol-cli --locked
 python3 -m unittest discover -s tools/tests -v
 ```
 
@@ -114,10 +114,10 @@ controls, delete с учётом references, thumbnails и named profile slots �
 После подготовки manifest:
 
 ```sh
-lconnectctl lcd import-clip /tmp/animation.json --name 'Мой ролик'
-lconnectctl lcd clips
-lconnectctl lcd play-saved-clip KEY --loops 2 --device DEVICE_ID
-lconnectctl lcd clear --device DEVICE_ID
+llcontrol lcd import-clip /tmp/animation.json --name 'Мой ролик'
+llcontrol lcd clips
+llcontrol lcd play-saved-clip KEY --loops 2 --device DEVICE_ID
+llcontrol lcd clear --device DEVICE_ID
 ```
 
 Import выводит key и metadata; import/list не требуют подключённого LCD.
@@ -141,9 +141,9 @@ Hardware/production daemon не запускались.
 ## Сохранённый выбор и непрерывный повтор — 2026-10-11
 
 ```sh
-lconnectctl lcd select-clip KEY --device DEVICE_ID
-lconnectctl lcd selected-clip --device DEVICE_ID
-lconnectctl lcd clear --device DEVICE_ID
+llcontrol lcd select-clip KEY --device DEVICE_ID
+llcontrol lcd selected-clip --device DEVICE_ID
+llcontrol lcd clear --device DEVICE_ID
 ```
 
 `select-clip` выбирает asset для непрерывного повтора и сохраняет media_clip key
@@ -211,7 +211,7 @@ WebKit/keyboard/AT-SPI и аппаратный вывод этого измен�
 
 ## Native preparation backend — 2026-10-11
 
-`crates/lconnect-media/src/media_prepare.rs` реализует общую подготовку GIF/MP4 внутри
+`crates/llcontrol-media/src/media_prepare.rs` реализует общую подготовку GIF/MP4 внутри
 Rust desktop crate. Backend подключён к GUI import в следующем checkpoint.
 Python CLI helper остаётся доступным.
 
@@ -362,7 +362,7 @@ reference scan. Выбор/replay получает pin атомарно с load;
 в settings queue. Clear снимает in-memory reference, но durable scan продолжает
 защищать прежний ключ до записи. Нечитаемый settings файл запрещает удаление.
 
-`lconnectctl lcd delete-clip KEY` удаляет только managed record. GUI подтверждает
+`llcontrol lcd delete-clip KEY` удаляет только managed record. GUI подтверждает
 имя выбранного ролика; изменение выбора отменяет подтверждение. После результата
 список перечитывается, потерянный ответ не приводит к автоматическому повтору.
 Focus возвращается в список или кнопку обновления. Исходный файл не затрагивается.
@@ -508,7 +508,7 @@ RPC сами по себе этот пользовательский лимит 
 
 ## File-backed preparation — 2026-10-12
 
-`crates/lconnect-media/src/media_prepare.rs::prepare_file` готовит persistent media
+`crates/llcontrol-media/src/media_prepare.rs::prepare_file` готовит persistent media
 в owned temporary H.264 file. В памяти остаются ограниченный packet report/index
 и один AU; `read_unit` выполняется на blocking worker. Бюджеты: вход256MiB,
 encoded256MiB,86400frames/1hour, AU128KiB, packet report16MiB. Probe исходника

@@ -72,10 +72,10 @@
   });
 </script>
 
-<section aria-label={t('Редактор сохранённого ролика')}>
-  <h3 bind:this={heading} tabindex="-1">{t('Редактирование «')}{name}»</h3>
+<section aria-label={t('Saved video editor')}>
+  <h3 bind:this={heading} tabindex="-1">{t('Editing «')}{name}»</h3>
   {#if source?.phase === 'ready'}
-    <fieldset disabled={saving} aria-label={t('Изменения ролика')}>
+    <fieldset disabled={saving} aria-label={t('Video edits')}>
       <MediaImport
         {device}
         existing={{ id, name, url: sourceUrl, metadata: source.metadata }}
@@ -87,11 +87,11 @@
     </fieldset>
   {:else}<p role="status">
       {source?.phase === 'failed'
-        ? '' + t('Исходник не загружен.') + ''
+        ? '' + t('The source has not been loaded.') + ''
         : source?.phase === 'cancelled'
-          ? '' + t('Загрузка отменена.') + ''
-          : '' + t('Подготовка исходника для редактирования…') + ''}
+          ? '' + t('Loading cancelled.') + ''
+          : '' + t('Preparing the source for editing…') + ''}
     </p>{/if}
   {#if error || source?.message}<p role="alert">{error || source?.message}</p>{/if}
-  <button disabled={busy || saving} onclick={onclose}>{t('Закрыть редактор ролика')}</button>
+  <button disabled={busy || saving} onclick={onclose}>{t('Close video editor')}</button>
 </section>

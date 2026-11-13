@@ -9,9 +9,9 @@ import tempfile
 import time
 
 repo = Path(__file__).resolve().parents[2]
-root = Path(tempfile.mkdtemp(prefix='lconnect-render-load-'))
+root = Path(tempfile.mkdtemp(prefix='llcontrol-render-load-'))
 (root / 'fixture-marker').write_text('MockBackend only\n')
-env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
+env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
            XDG_CONFIG_HOME=str(root / 'config'), XDG_DATA_HOME=str(root / 'data'),
            XDG_CACHE_HOME=str(root / 'cache'))
 env.pop('LD_PRELOAD', None)
@@ -21,7 +21,7 @@ class Session:
     def __enter__(self):
         self.socket = socket.socket(socket.AF_UNIX)
         self.socket.settimeout(45)
-        self.socket.connect(str(root / 'lconnectd.sock'))
+        self.socket.connect(str(root / 'llcontrold.sock'))
         self.stream = self.socket.makefile('rwb')
         self.seq = 0
         self.responses = {}
@@ -87,7 +87,7 @@ with (root / 'daemon.log').open('w') as log:
     process = subprocess.Popen([repo / 'target/debug/examples/desktop-mock'], env=env,
                                stdout=log, stderr=subprocess.STDOUT)
     try:
-        until(lambda: process.poll() is not None or (root / 'lconnectd.sock').exists(), 'startup', 5)
+        until(lambda: process.poll() is not None or (root / 'llcontrold.sock').exists(), 'startup', 5)
         assert process.poll() is None
         with Session() as session:
             until(lambda: bool(session.call('list_devices', {})), 'discovery', 5)

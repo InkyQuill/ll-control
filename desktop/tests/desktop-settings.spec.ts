@@ -27,7 +27,7 @@ interface Fixture {
 }
 async function setup(page: Page, language: 'en-US' | 'ru-RU' = 'ru-RU') {
   await page.addInitScript((language) => {
-    localStorage.setItem('lconnect.interface-language', language);
+    localStorage.setItem('llcontrol.interface-language', language);
     const state = {
       revision: 0,
       preferences: { closeToTray: true, startMinimized: false, autostart: false },

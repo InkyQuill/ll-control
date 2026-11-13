@@ -61,8 +61,8 @@ Daemon использует отдельный optional NV-CONTROL запрос 
 успешного nvidia-smi discovery. Включение требует **обеих** переменных в окружении
 процесса daemon:
 
-- `LCONNECT_NVIDIA_VOLTAGE_DISPLAY`: выбранная X-сессия, например `:0`.
-- `LCONNECT_NVIDIA_VOLTAGE_XAUTHORITY`: абсолютный путь к файлу авторизации,
+- `LLCONTROL_NVIDIA_VOLTAGE_DISPLAY`: выбранная X-сессия, например `:0`.
+- `LLCONTROL_NVIDIA_VOLTAGE_XAUTHORITY`: абсолютный путь к файлу авторизации,
   который уже доступен пользователю daemon.
 
 Автоматического поиска/copy credentials и изменения systemd/environment нет.

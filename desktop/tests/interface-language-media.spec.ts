@@ -4,7 +4,7 @@ const png =
 async function setup(page: Page, language: 'en-US' | 'ru-RU' = 'en-US', failure = '') {
   await page.addInitScript(
     ({ png, language, failure }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const bytes = Array.from(atob(png), (c) => c.charCodeAt(0));
       const assets = [{ key: 'a'.repeat(32), name: 'Фон', revision: 1, is_default: false }];
       type Collections = {

@@ -10,16 +10,16 @@ import tempfile
 import time
 
 REPO = Path(__file__).resolve().parents[2]
-root = Path(tempfile.mkdtemp(prefix='lconnect-storage-fault-'))
+root = Path(tempfile.mkdtemp(prefix='llcontrol-storage-fault-'))
 (root / 'fixture-marker').write_text('MockBackend storage faults only\n')
 library = root / 'storage-fault.so'
 subprocess.run(['cc', '-shared', '-fPIC', '-Wall', '-Wextra', '-Werror',
                 REPO / 'desktop/scripts/storage-fault.c', '-o', library], check=True)
-env = dict(os.environ, LCONNECT_SMOKE_ROOT=str(root), LD_PRELOAD=str(library),
+env = dict(os.environ, LLCONTROL_SMOKE_ROOT=str(root), LD_PRELOAD=str(library),
            XDG_RUNTIME_DIR=str(root), XDG_CONFIG_HOME=str(root/'config'),
            XDG_DATA_HOME=str(root/'data'), XDG_CACHE_HOME=str(root/'cache'))
 for key in list(env):
-    if key.startswith('LCONNECT_NATIVE_'):
+    if key.startswith('LLCONTROL_NATIVE_'):
         env.pop(key)
 process = None
 logs = []
@@ -37,7 +37,7 @@ def wait(predicate, why, seconds=12):
 def rpc(method, params=None):
     with socket.socket(socket.AF_UNIX) as connection:
         connection.settimeout(10)
-        connection.connect(str(root/'lconnectd.sock'))
+        connection.connect(str(root/'llcontrold.sock'))
         with connection.makefile('rwb') as stream:
             stream.write((json.dumps(dict(jsonrpc='2.0', id=1, method=method,
                                          params=params or {}))+'\n').encode())
@@ -56,12 +56,12 @@ def call(method, params=None):
 
 def start():
     global process
-    for name in ['stop', 'lconnectd.sock', 'stats.json']:
+    for name in ['stop', 'llcontrold.sock', 'stats.json']:
         (root/name).unlink(missing_ok=True)
     log = (root/f'daemon-{len(logs)}.log').open('w'); logs.append(log)
     process = subprocess.Popen([REPO/'target/debug/examples/desktop-mock'], env=env,
                                stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-    wait(lambda: (root/'lconnectd.sock').exists() or process.poll() is not None, 'socket')
+    wait(lambda: (root/'llcontrold.sock').exists() or process.poll() is not None, 'socket')
     assert process.poll() is None
     wait(lambda: len(call('list_devices')) == 1, 'mock attachment')
     return call('list_devices')[0]['id']

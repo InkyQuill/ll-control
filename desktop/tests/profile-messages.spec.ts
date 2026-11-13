@@ -7,7 +7,7 @@ for (const initial of ['en-US', 'ru-RU'] as const) {
     }) => {
       await page.addInitScript(
         ({ initial, operation }) => {
-          localStorage.setItem('lconnect.interface-language', initial);
+          localStorage.setItem('llcontrol.interface-language', initial);
           const f = {
             language: initial as 'en-US' | 'ru-RU',
             settingsRevision: 0,

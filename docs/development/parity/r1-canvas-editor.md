@@ -60,15 +60,15 @@ main value, including managed fonts, wrapping, anchors, opacity and shadows.
 - `desktop/tests/canvas-geometry.spec.ts`: native coordinate conversion, group
   clamping and bounded resizing with retained imported fields, including Windows
   watermark percentage centers.
-- `crates/lconnect-image/tests/theme.rs`: measured geometry against fitted assets
+- `crates/llcontrol-image/tests/theme.rs`: measured geometry against fitted assets
   and rendered sensor parts; the ordinary renderer retains identical pixels.
-- `crates/lconnect-daemon/tests/theme_ipc.rs`: timed editor preview through IPC,
+- `crates/llcontrol-daemon/tests/theme_ipc.rs`: timed editor preview through IPC,
   unchanged active state and preserved existing theme lifecycle behavior.
 - `media_composition` preview test: measured video preview shares the original
   decoder, sensor values and cycle position, and releases its source pin.
 
 For native input acceptance, build the frontend, the `desktop-mock` daemon
-example, and `lconnect-gui` with `native-smoke,custom-protocol`. From the repo root:
+example, and `llcontrol-gui` with `native-smoke,custom-protocol`. From the repo root:
 
 ```sh
 /usr/bin/python3 desktop/scripts/native-canvas.py

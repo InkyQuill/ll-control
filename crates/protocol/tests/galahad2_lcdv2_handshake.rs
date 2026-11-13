@@ -2,8 +2,8 @@
 //!
 //! Source: Products/Galahad2Vision/HandshakeInfo.cs:58-76.
 
-use lconnect_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
-use lconnect_protocol::galahad2_lcdv2::packets::PACKET_LEN;
+use llcontrol_protocol::galahad2_lcdv2::handshake::{build_request, HandshakeInfo};
+use llcontrol_protocol::galahad2_lcdv2::packets::PACKET_LEN;
 
 #[test]
 fn build_request_emits_a_64_byte_command_129_packet() {
@@ -73,7 +73,7 @@ fn parse_response_rejects_too_short_data() {
     let err = HandshakeInfo::from_response(&buf).unwrap_err();
     assert!(matches!(
         err,
-        lconnect_protocol::Error::BufferTooShort { need: 7, got: 6 }
+        llcontrol_protocol::Error::BufferTooShort { need: 7, got: 6 }
     ));
 }
 

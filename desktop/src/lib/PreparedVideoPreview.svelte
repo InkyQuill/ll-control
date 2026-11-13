@@ -27,10 +27,10 @@
   });
 </script>
 
-<section aria-label={t('Проверка готового ролика')}>
+<section aria-label={t('Prepared video review')}>
   <p>
     {t(
-      'Готовый ролик после обрезки и склейки. Проверьте результат и подтвердите сохранение в библиотеку.',
+      'The prepared video after cropping and joining. Review the result and confirm saving it to the library.',
     )}
   </p>
   {#if url}
@@ -42,13 +42,13 @@
       playsinline
       controls={!disabled}
       preload="metadata"
-      aria-label={t('Готовый ролик')}
+      aria-label={t('Prepared video')}
       onerror={() => (failed = true)}
     ></video>
   {/if}
   {#if failed}<p role="status">
       {t(
-        'Не удалось воспроизвести готовый ролик в этом окне. Можно сохранить подготовленный файл или отменить импорт.',
+        'The prepared video could not be played in this window. You can save the prepared file or cancel import.',
       )}
     </p>{/if}
 </section>

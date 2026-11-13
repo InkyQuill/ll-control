@@ -1,15 +1,16 @@
 <script lang="ts">
   import StudioPopover from './StudioPopover.svelte';
-  import type { BasicBackground, BasicOverlay, Theme } from './api';
-  import { basicOverlays, selectBasicEditor } from './basic-editor';
+  import type { BasicBackground, BasicOverlay, Sensor, Theme } from './api';
+  import { basicOverlays, createBasicEditor, selectBasicEditor } from './basic-editor';
   import { lcdPageKind } from './lcd-pages';
   import { t } from './i18n.svelte';
   import { ValidationError } from './validation-error';
   let {
     theme = $bindable(),
     disabled = false,
+    sensors = [],
     onchange = () => {},
-  }: { theme: Theme; disabled?: boolean; onchange?: () => void } = $props();
+  }: { theme: Theme; sensors?: Sensor[]; disabled?: boolean; onchange?: () => void } = $props();
   const editor = $derived(lcdPageKind(theme) === 'basic' ? theme.basic_editor : null);
   const selected = $derived(
     editor?.banks.find((bank) => bank.background === editor.selected_background),
@@ -25,18 +26,34 @@
   let failure = $state.raw<{ owner: Theme; error: ValidationError } | null>(null);
   const error = $derived(failure?.owner === theme ? failure.error : null);
   const backgrounds = $derived({
-    image_video: t('Изображение или видео'),
-    background_color: t('Цвет и градиенты'),
+    image_video: t('Image or video'),
+    background_color: t('Color and gradients'),
   });
   const overlays = $derived({
-    none: t('Без текста'),
-    slider_sensor: t('Один датчик'),
-    duo_sensor: t('Два датчика'),
-    three_sensor: t('Три датчика'),
-    four_sensor: t('Четыре датчика'),
-    time: t('Часы'),
-    custom: t('Свой текст'),
+    none: t('No text'),
+    slider_sensor: t('Single sensor'),
+    duo_sensor: t('Two sensors'),
+    three_sensor: t('Three sensors'),
+    four_sensor: t('Four sensors'),
+    time: t('Clock'),
+    custom: t('Custom text'),
   });
+  function create() {
+    if (disabled) return;
+    try {
+      theme = createBasicEditor($state.snapshot(theme), $state.snapshot(sensors));
+      failure = null;
+      onchange();
+    } catch (error) {
+      failure = {
+        owner: theme,
+        error:
+          error instanceof ValidationError
+            ? error
+            : new ValidationError('Could not create variants for this theme.'),
+      };
+    }
+  }
   function select(background: BasicBackground, overlay: BasicOverlay) {
     if (disabled) return false;
     try {
@@ -51,7 +68,7 @@
           error instanceof ValidationError
             ? error
             : new ValidationError(
-                'Не удалось переключить вариант. Черновик сохранён; загрузите тему заново.',
+                'Could not switch presets. Your draft is preserved; reload the theme.',
               ),
       };
       return false;
@@ -59,11 +76,19 @@
   }
 </script>
 
-{#if editor && selected}
+{#if !editor && lcdPageKind(theme) === 'basic'}
   <fieldset class="basic-presets" {disabled}>
-    <legend>{t('Варианты фона и текста')}</legend>
+    <legend>{t('Background and text presets')}</legend>
+    <p>{t('Create independent variants from the current draft and edit each one separately.')}</p>
+    <p>{t('Sensor variants use available sensors; add missing readings in the editor.')}</p>
+    <button type="button" onclick={create}>{t('Create variants')}</button>
+    {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}
+  </fieldset>
+{:else if editor && selected}
+  <fieldset class="basic-presets" {disabled}>
+    <legend>{t('Background and text presets')}</legend>
     <label
-      >{t('Вариант фона')}
+      >{t('Background preset')}
       <select
         value={editor.selected_background}
         onchange={(event) => {
@@ -78,7 +103,7 @@
       </select>
     </label>
     <label
-      >{t('Вариант текста')}
+      >{t('Text preset')}
       <select
         value={selected.selected_overlay}
         onchange={(event) => {
@@ -92,9 +117,9 @@
           >{/each}
       </select>
     </label>
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
-        {t('Каждый вариант сохраняет свои правки. Изменения остаются в черновике до применения.')}
+        {t('Each preset keeps its edits. Changes stay in the draft until you apply them.')}
       </p></StudioPopover
     >
     {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}

@@ -228,7 +228,7 @@ async fn request(
     mut cancel: watch::Receiver<bool>,
     cleanup: &mut Option<PendingClose>,
 ) -> anyhow::Result<Option<String>> {
-    let token = format!("lconnect_{}", uuid::Uuid::new_v4().simple());
+    let token = format!("llcontrol_{}", uuid::Uuid::new_v4().simple());
     let sender = connection
         .unique_name()
         .context("Missing portal client identity")?
@@ -355,7 +355,7 @@ fn read_image(uri: &str) -> anyhow::Result<Vec<u8>> {
         .custom_flags(libc::O_NONBLOCK | libc::O_NOFOLLOW)
         .open(path)?;
     let metadata = file.metadata()?;
-    let max = lconnect_image::assets::MAX_ASSET_BYTES;
+    let max = llcontrol_image::assets::MAX_ASSET_BYTES;
     ensure!(
         metadata.is_file() && metadata.len() > 0 && metadata.len() <= max as u64,
         "Screenshot must be a regular image within 16 MiB"
@@ -364,7 +364,7 @@ fn read_image(uri: &str) -> anyhow::Result<Vec<u8>> {
     file.take(max as u64 + 1).read_to_end(&mut bytes)?;
     ensure!(bytes.len() <= max, "Screenshot exceeds 16 MiB");
     // Validate dimensions/decoder budgets before bytes cross the IPC boundary.
-    lconnect_image::assets::decode_asset(&bytes)?;
+    llcontrol_image::assets::decode_asset(&bytes)?;
     Ok(bytes)
 }
 
@@ -389,7 +389,7 @@ mod tests {
         let path = dir.path().join("large.png");
         std::fs::File::create(&path)
             .unwrap()
-            .set_len(lconnect_image::assets::MAX_ASSET_BYTES as u64 + 1)
+            .set_len(llcontrol_image::assets::MAX_ASSET_BYTES as u64 + 1)
             .unwrap();
         assert!(read_image(url::Url::from_file_path(path).unwrap().as_str()).is_err());
     }

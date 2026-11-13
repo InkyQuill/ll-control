@@ -6,7 +6,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'crates/lconnect-daemon/assets/defaults'
+OUT = ROOT / 'crates/llcontrol-daemon/assets/defaults'
 OUT.mkdir(parents=True, exist_ok=True)
 path = OUT / 'aurora-v1.h264'
 cmd = ['ffmpeg','-nostdin','-v','error','-y','-f','rawvideo','-pix_fmt','rgb24','-s','120x120','-r','24','-i','pipe:0','-vf','scale=480:480:flags=lanczos','-an','-c:v','libx264','-threads','1','-preset','ultrafast','-tune','zerolatency','-profile:v','baseline','-level:v','3.0','-pix_fmt','yuv420p','-crf','23','-g','24','-keyint_min','24','-sc_threshold','0','-bf','0','-x264-params','aud=1:repeat-headers=1','-f','h264',str(path)]

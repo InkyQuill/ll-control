@@ -13,7 +13,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 const MAX_BYTES: u64 = 64 * 1024;
-const ENTRY: &str = "net.inkyquill.lconnect.desktop";
+const ENTRY: &str = "net.inkyquill.llcontrol.desktop";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

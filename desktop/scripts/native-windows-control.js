@@ -44,7 +44,7 @@
     await wait(async () => (await rpc('list_devices')).length === 1, 'private mock device');
     const dev = (await rpc('list_devices'))[0].id;
     if (window.__nativeWindowsRecover) {
-      const pending = JSON.parse(localStorage.getItem('lconnect.group.pending'));
+      const pending = JSON.parse(localStorage.getItem('llcontrol.group.pending'));
       assert(
         pending?.mode === 'windows' && pending.dev === dev,
         'Windows operation ID survives desktop restart',

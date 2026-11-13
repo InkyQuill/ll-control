@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 async function setup(page: Page, language: 'en-US' | 'ru-RU' = 'ru-RU', offline = false) {
   await page.addInitScript(
     ({ language, offline }) => {
-      localStorage.setItem('lconnect.interface-language', language);
+      localStorage.setItem('llcontrol.interface-language', language);
       const state = {
         version: 1,
         revision: 0,
@@ -198,7 +198,7 @@ test('confirmed language cache keeps offline navigation accessible without trans
   page,
 }) => {
   await page.addInitScript(() => {
-    localStorage.setItem('lconnect.interface-language', 'en-US');
+    localStorage.setItem('llcontrol.interface-language', 'en-US');
     Object.assign(window, {
       __TAURI_INTERNALS__: {
         invoke: async (command: string) => {
@@ -220,7 +220,7 @@ test('confirmed language cache keeps offline navigation accessible without trans
   ).toBeVisible();
   await page.getByRole('button', { name: 'Pump screen', exact: true }).click();
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Настройки');
-  expect(await page.evaluate(() => localStorage.getItem('lconnect.interface-language'))).toBe(
+  expect(await page.evaluate(() => localStorage.getItem('llcontrol.interface-language'))).toBe(
     'en-US',
   );
 });
@@ -229,10 +229,10 @@ for (const cache of ['missing', 'invalid', 'denied', 'ru-RU'] as const) {
     page,
   }) => {
     await page.addInitScript((cache) => {
-      localStorage.removeItem('lconnect.interface-language');
-      if (cache === 'ru-RU') localStorage.setItem('lconnect.interface-language', 'ru-RU');
+      localStorage.removeItem('llcontrol.interface-language');
+      if (cache === 'ru-RU') localStorage.setItem('llcontrol.interface-language', 'ru-RU');
       if (cache === 'invalid')
-        localStorage.setItem('lconnect.interface-language', 'unknown-locale');
+        localStorage.setItem('llcontrol.interface-language', 'unknown-locale');
       if (cache === 'denied')
         Object.defineProperty(Storage.prototype, 'getItem', {
           value() {
@@ -272,17 +272,13 @@ for (const language of ['en-US', 'ru-RU'] as const) {
     await page
       .getByRole('button', { name: english ? 'Theme presets' : 'Готовые темы', exact: true })
       .click();
-    const layout = page.getByRole('combobox', {
-      name: english ? 'Layout' : 'Раскладка',
-      exact: true,
-    });
-    await expect(layout.locator('option[value="focus"]')).toHaveText(
-      english ? 'Focus · One large reading and a clock' : 'Focus · Один крупный показатель и часы',
+    await expect(page.getByRole('button', { name: /^Focus/ })).toContainText(
+      english ? 'One large reading and a clock' : 'Один крупный показатель и часы',
     );
-    await expect(layout.locator('option[value="clock"]')).toHaveText(
+    await expect(page.getByRole('button', { name: /^Clock/ })).toContainText(
       english
-        ? 'Clock · Date, time and AM/PM with separate colors'
-        : 'Clock · Дата, время и AM/PM с отдельными цветами',
+        ? 'Date, time and AM/PM with separate colors'
+        : 'Дата, время и AM/PM с отдельными цветами',
     );
     await page
       .getByRole('button', { name: english ? 'Composition' : 'Композиция', exact: true })

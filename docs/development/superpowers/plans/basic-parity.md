@@ -1,6 +1,6 @@
 # Базовый parity: оставшаяся работа
 
-Сверено 2026-10-17 в `lconnect-linux`, ветка `master`. Baseline: Windows L-Connect 3
+Сверено 2026-10-17 в `ll-control`, ветка `master`. Baseline: Windows L-Connect 3
 2.1.28.0, Galahad II LCDV2 0416:7395. Здесь только незавершённое;
 [результаты](../../parity/implementation-status.md) и
 [чеклист](../../parity/basic-parity-checklist.md) разделяют историю результатов и оставшуюся приёмку.

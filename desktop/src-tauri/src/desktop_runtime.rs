@@ -2,7 +2,7 @@
 use crate::desktop_settings::{Preferences, Readback, Store};
 use crate::tray_appearance::{self, Appearance};
 use anyhow::{Context, Result};
-use lconnect_ipc::InterfaceLanguage;
+use llcontrol_ipc::InterfaceLanguage;
 use serde::Serialize;
 use std::{
     sync::{
@@ -16,7 +16,7 @@ use tauri::{
     tray::TrayIconBuilder,
     Manager,
 };
-const TRAY_ID: &str = "lconnect-main";
+const TRAY_ID: &str = "llcontrol-main";
 const JOBS: u32 = 2;
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]

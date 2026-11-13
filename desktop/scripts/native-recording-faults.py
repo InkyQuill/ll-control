@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-GUI = REPO / "target/debug/lconnect-gui"
+GUI = REPO / "target/debug/llcontrol-gui"
 WORKER_FLAG = b"--internal-screen-record-worker"
 
 
@@ -53,7 +53,7 @@ def workers(parent):
 def rpc(root, method, params=None):
     with socket.socket(socket.AF_UNIX) as connection:
         connection.settimeout(5)
-        connection.connect(str(root / "lconnectd.sock"))
+        connection.connect(str(root / "llcontrold.sock"))
         with connection.makefile("rwb") as stream:
             stream.write((json.dumps(dict(jsonrpc="2.0", id=1, method=method, params=params or {})) + "\n").encode())
             stream.flush()
@@ -82,10 +82,10 @@ def case_run(root, mode, language):
     temporary.mkdir()
     # Other acceptance selectors take precedence in the native-smoke builder.
     # A caller's prior test must not choose a different injected workflow.
-    inherited = {key: value for key, value in os.environ.items() if not key.startswith("LCONNECT_NATIVE_")}
-    env = dict(inherited, LCONNECT_SMOKE_ROOT=str(case), LCONNECT_NATIVE_RECORDING="1",
-               LCONNECT_NATIVE_RECORDING_FAULTS="1", LCONNECT_NATIVE_MEDIA="1",
-               LCONNECT_NATIVE_DESKTOP_PHASE=mode, XDG_RUNTIME_DIR=str(case),
+    inherited = {key: value for key, value in os.environ.items() if not key.startswith("LLCONTROL_NATIVE_")}
+    env = dict(inherited, LLCONTROL_SMOKE_ROOT=str(case), LLCONTROL_NATIVE_RECORDING="1",
+               LLCONTROL_NATIVE_RECORDING_FAULTS="1", LLCONTROL_NATIVE_MEDIA="1",
+               LLCONTROL_NATIVE_DESKTOP_PHASE=mode, XDG_RUNTIME_DIR=str(case),
                XDG_CONFIG_HOME=str(case / "config"), XDG_DATA_HOME=str(case / "data"),
                XDG_CACHE_HOME=str(case / "cache"), TMPDIR=str(temporary), GDK_BACKEND="x11",
                GIO_USE_VFS="local", WEBKIT_DISABLE_DMABUF_RENDERER="1", LC_ALL="C.UTF-8", NO_AT_BRIDGE="1")
@@ -110,7 +110,7 @@ def case_run(root, mode, language):
     try:
         launch(["openbox"], "wm")
         fixture = launch([REPO / "target/debug/examples/desktop-mock"], "fixture")
-        wait(lambda: (case / "lconnectd.sock").exists() and (case / "stats.json").exists()
+        wait(lambda: (case / "llcontrold.sock").exists() and (case / "stats.json").exists()
              or fixture.poll() is not None, "private mock daemon")
         assert fixture.poll() is None
         settings = rpc(case, "get_display_settings")
@@ -218,10 +218,10 @@ def main():
     parser.add_argument("--inside", type=Path)
     args = parser.parse_args()
     if args.inside is None:
-        root = Path(tempfile.mkdtemp(prefix="lconnect-recording-faults-"))
+        root = Path(tempfile.mkdtemp(prefix="llcontrol-recording-faults-"))
         runtime = root / "session"
         runtime.mkdir(mode=0o700)
-        env = dict(os.environ, LCONNECT_RECORDING_FAULTS_ISOLATED="1", XDG_RUNTIME_DIR=str(runtime),
+        env = dict(os.environ, LLCONTROL_RECORDING_FAULTS_ISOLATED="1", XDG_RUNTIME_DIR=str(runtime),
                    XDG_CONFIG_HOME=str(root / "config"), XDG_DATA_HOME=str(root / "data"),
                    XDG_CACHE_HOME=str(root / "cache"), DBUS_SYSTEM_BUS_ADDRESS=f"unix:path={root}/no-system-bus")
         for name in ["DISPLAY", "WAYLAND_DISPLAY", "AT_SPI_BUS_ADDRESS", "DBUS_SESSION_BUS_ADDRESS"]:
@@ -235,7 +235,7 @@ def main():
                 run(["fusermount3", "-uz", "--", target])
         print("Native recording fault artifacts:", root)
         raise SystemExit(result)
-    assert os.environ.get("LCONNECT_RECORDING_FAULTS_ISOLATED") == "1"
+    assert os.environ.get("LLCONTROL_RECORDING_FAULTS_ISOLATED") == "1"
     results = []
     for mode in args.mode or ["stall", "crash", "cancel", "close", "cleanup", "cleanup-review", "cleanup-review-lost"]:
         for language in args.language or ["en-US", "ru-RU"]:

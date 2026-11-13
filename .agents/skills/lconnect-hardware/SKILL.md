@@ -15,7 +15,7 @@ Finish the authorized scenario and collect the evidence needed to judge it. Reus
 
 - Identify the physical SKU and read actual firmware; record commit, kernel, tool versions, and time. Current project coverage targets `0416:7395`; do not assume historical firmware 1.6 still applies.
 - Inspect existing process/device ownership. The daemon and direct `verify-galahad` writer must not operate concurrently. Starting the daemon can replay configuration and is a device mutation.
-- Preserve the current configuration under `$XDG_CONFIG_HOME/lconnectd/`, falling back to `~/.config/lconnectd/`. Record LCD settings and the original displayed asset where obtainable. A TOML backup alone may not restore image bytes. If restoration data is absent, resolve the intended fallback before changing the display.
+- Preserve the current configuration under `$XDG_CONFIG_HOME/llcontrold/`, falling back to `~/.config/llcontrold/`. Record LCD settings and the original displayed asset where obtainable. A TOML backup alone may not restore image bytes. If restoration data is absent, resolve the intended fallback before changing the display.
 - Verify actual socket paths and CLI flags from code/help. Do not perpetuate a documented temporary socket override after the default is fixed.
 
 ## Execute within the scenario

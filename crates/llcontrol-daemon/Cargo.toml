@@ -1,0 +1,47 @@
+[package]
+name = "llcontrol-daemon"
+version.workspace = true
+edition.workspace = true
+rust-version = "1.88"
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "llcontrold"
+path = "src/main.rs"
+
+[dependencies]
+sha2 = "0.10.9"
+tempfile = "3"
+rustix = { version = "=1.1.6", features = ["fs"] }
+llcontrol-protocol = { path = "../protocol" }
+llcontrol-intel-memory = { path = "../llcontrol-intel-memory" }
+llcontrol-image    = { path = "../llcontrol-image" }
+llcontrol-hid      = { path = "../llcontrol-hid" }
+llcontrol-profile  = { path = "../llcontrol-profile" }
+llcontrol-ipc      = { path = "../llcontrol-ipc" }
+
+tokio = { workspace = true, features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-journald = "0.3"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+toml = "0.8"
+thiserror.workspace = true
+async-trait = "0.1"
+futures = "0.3"
+anyhow.workspace = true
+bytes = "1"
+xdg = "2"
+rand = "0.8"
+chrono = { version = "0.4.42", default-features = false, features = ["clock"] }
+perf-event = "0.4.9"
+zbus = { version = "4.4.0", default-features = false, features = ["tokio"] }
+
+[dev-dependencies]
+base64 = "0.22.1"
+zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2"] }
+tokio = { workspace = true, features = ["test-util"] }

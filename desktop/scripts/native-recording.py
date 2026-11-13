@@ -10,9 +10,9 @@ if '--inside-xvfb' not in sys.argv:
     language=sys.argv[sys.argv.index('--language')+1] if '--language' in sys.argv else 'ru-RU'
     assert language in {'ru-RU','en-US'}, 'supported language required'
     assert '--full-limit' not in sys.argv or language=='ru-RU', 'full-limit workflow currently supports ru-RU only'
-    session=Path(tempfile.mkdtemp(prefix='lconnect-recording-session-'));session.chmod(0o700)
-    inherited={key:value for key,value in os.environ.items() if not key.startswith('LCONNECT_NATIVE_')}
-    env=dict(inherited,LCONNECT_KEYBOARD_ISOLATED='1',LCONNECT_RECORDING_LANGUAGE=language,LCONNECT_NATIVE_RECORDING_LIMIT='1' if '--full-limit' in sys.argv else '0',XDG_RUNTIME_DIR=str(session),XDG_CONFIG_HOME=str(session/'config'),XDG_DATA_HOME=str(session/'data'),XDG_CACHE_HOME=str(session/'cache'),DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={session}/no-system-bus')
+    session=Path(tempfile.mkdtemp(prefix='llcontrol-recording-session-'));session.chmod(0o700)
+    inherited={key:value for key,value in os.environ.items() if not key.startswith('LLCONTROL_NATIVE_')}
+    env=dict(inherited,LLCONTROL_KEYBOARD_ISOLATED='1',LLCONTROL_RECORDING_LANGUAGE=language,LLCONTROL_NATIVE_RECORDING_LIMIT='1' if '--full-limit' in sys.argv else '0',XDG_RUNTIME_DIR=str(session),XDG_CONFIG_HOME=str(session/'config'),XDG_DATA_HOME=str(session/'data'),XDG_CACHE_HOME=str(session/'cache'),DBUS_SYSTEM_BUS_ADDRESS=f'unix:path={session}/no-system-bus')
     for key in ['DISPLAY','WAYLAND_DISPLAY','AT_SPI_BUS_ADDRESS','DBUS_SESSION_BUS_ADDRESS']:env.pop(key,None)
     try:result=subprocess.call(['xvfb-run','-a','-s','-screen 0 1600x1200x24','dbus-run-session','--',sys.executable,__file__,'--inside-xvfb'],env=env)
     finally:
@@ -20,10 +20,10 @@ if '--inside-xvfb' not in sys.argv:
         if any(row.split()[4]==str(target) for row in Path('/proc/self/mountinfo').read_text().splitlines()):
             subprocess.run(['fusermount3','-uz','--',str(target)],check=True,timeout=5)
     raise SystemExit(result)
-assert os.environ.get('LCONNECT_KEYBOARD_ISOLATED')=='1'
-language=os.environ['LCONNECT_RECORDING_LANGUAGE']
-root=Path(tempfile.mkdtemp(prefix='lconnect-native-recording-'));(root/'fixture-marker').write_text('MockBackend and synthetic recording only\n')
-env=dict(os.environ,LCONNECT_SMOKE_ROOT=str(root),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='0',AT_SPI_BUS_ADDRESS=f'unix:path={root}/a11y.sock')
+assert os.environ.get('LLCONTROL_KEYBOARD_ISOLATED')=='1'
+language=os.environ['LLCONTROL_RECORDING_LANGUAGE']
+root=Path(tempfile.mkdtemp(prefix='llcontrol-native-recording-'));(root/'fixture-marker').write_text('MockBackend and synthetic recording only\n')
+env=dict(os.environ,LLCONTROL_SMOKE_ROOT=str(root),XDG_RUNTIME_DIR=str(root),XDG_CONFIG_HOME=str(root/'config'),XDG_CACHE_HOME=str(root/'cache'),XDG_DATA_HOME=str(root/'data'),GDK_BACKEND='x11',WEBKIT_DISABLE_DMABUF_RENDERER='1',LC_ALL='C.UTF-8',NO_AT_BRIDGE='0',AT_SPI_BUS_ADDRESS=f'unix:path={root}/a11y.sock')
 env.pop('WAYLAND_DISPLAY',None)
 (root/'native-tmp').mkdir();env['TMPDIR']=str(root/'native-tmp')
 processes=[];logs=[]
@@ -37,7 +37,7 @@ def wait(predicate,why,seconds=15):
         time.sleep(.02)
 def rpc(method,params=None):
     with socket.socket(socket.AF_UNIX) as conn:
-        conn.settimeout(10);conn.connect(str(root/'lconnectd.sock'));stream=conn.makefile('rwb')
+        conn.settimeout(10);conn.connect(str(root/'llcontrold.sock'));stream=conn.makefile('rwb')
         stream.write((json.dumps({'jsonrpc':'2.0','id':1,'method':method,'params':params or {}})+'\n').encode());stream.flush()
         while True:
             result=json.loads(stream.readline())
@@ -49,10 +49,10 @@ try:
     wait(lambda:(root/'a11y.sock').exists(),'private accessibility bus')
     launch(['openbox'],'wm')
     fixture=launch([repo/'target/debug/examples/desktop-mock'],'fixture')
-    wait(lambda:(root/'lconnectd.sock').exists() or fixture.poll() is not None,'private daemon');assert fixture.poll() is None
+    wait(lambda:(root/'llcontrold.sock').exists() or fixture.poll() is not None,'private daemon');assert fixture.poll() is None
     display=rpc('get_display_settings');display['interface_language']=language;rpc('set_display_settings',{'settings':display})
-    gui=launch([repo/'target/debug/lconnect-gui'],'gui',dict(env,LCONNECT_NATIVE_RECORDING='1'))
-    full_limit=env.get('LCONNECT_NATIVE_RECORDING_LIMIT')=='1'
+    gui=launch([repo/'target/debug/llcontrol-gui'],'gui',dict(env,LLCONTROL_NATIVE_RECORDING='1'))
+    full_limit=env.get('LLCONTROL_NATIVE_RECORDING_LIMIT')=='1'
     deadline=time.monotonic()+(300 if full_limit else 90);close_sent=False;key_sequence=0;pointer_moves=[]
     while gui.poll() is None:
         if time.monotonic()>deadline:raise TimeoutError('native recording workflow')
@@ -66,8 +66,8 @@ try:
                 query="""
 import gi,json,os,sys
 from pathlib import Path
-assert os.environ['AT_SPI_BUS_ADDRESS']=='unix:path='+os.environ['LCONNECT_SMOKE_ROOT']+'/a11y.sock'
-assert (Path(os.environ['LCONNECT_SMOKE_ROOT'])/'fixture-marker').is_file()
+assert os.environ['AT_SPI_BUS_ADDRESS']=='unix:path='+os.environ['LLCONTROL_SMOKE_ROOT']+'/a11y.sock'
+assert (Path(os.environ['LLCONTROL_SMOKE_ROOT'])/'fixture-marker').is_file()
 gi.require_version('Atspi','2.0')
 from gi.repository import Atspi
 Atspi.set_timeout(500,500);Atspi.init()
