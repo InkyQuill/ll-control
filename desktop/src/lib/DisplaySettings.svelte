@@ -117,9 +117,7 @@
           if (draft) draft.interface_language = event.currentTarget.value as 'ru-RU' | 'en-US';
         }}
         disabled={!connected || busy}
-        ><option value="ru-RU">{t('Russian')}</option><option value="en-US"
-          >English (partial)</option
-        ></select
+        ><option value="ru-RU">{t('Russian')}</option><option value="en-US">English</option></select
       ></label
     >{/if}
   {#if !connected}<p role="status">

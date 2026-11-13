@@ -735,7 +735,7 @@
     {#if recordMode}
       <fieldset disabled={active || recording || !ready}>
         <legend>{t('Next recording region, % of source')}</legend>
-        {#each [{ key: 'x', label: 'Left' }, { key: 'y', label: 'Above' }, { key: 'width', label: 'Width' }, { key: 'height', label: 'Height' }] as field (field.key)}
+        {#each [{ key: 'x', label: 'Left' }, { key: 'y', label: 'Top' }, { key: 'width', label: 'Width' }, { key: 'height', label: 'Height' }] as field (field.key)}
           <label
             >{t(field.label)}{t(', % — recording')}<input
               type="number"
@@ -818,7 +818,7 @@
             {#if segment.crop}
               <fieldset aria-label={t('Segment region {0}', i + 1)}>
                 <legend>{t('Segment region')} {i + 1}{t(', % of source')}</legend>
-                {#each [{ key: 'x', label: 'Left' }, { key: 'y', label: 'Above' }, { key: 'width', label: 'Width' }, { key: 'height', label: 'Height' }] as field (field.key)}
+                {#each [{ key: 'x', label: 'Left' }, { key: 'y', label: 'Top' }, { key: 'width', label: 'Width' }, { key: 'height', label: 'Height' }] as field (field.key)}
                   <label
                     >{t(field.label)}{t(', % — segment')}
                     {i + 1}<input
