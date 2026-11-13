@@ -1,11 +1,4 @@
-//! Integration test for the lcd_keeper actor against the in-process
-//! `MockBackend`. Verifies that:
-//!   1. `LcdCommand::Set(jpeg)` pushes the cmd-14 (SendJpeg) packet
-//!      stream immediately, and
-//!   2. After one refresh interval, the stored frame is re-pushed.
-//!
-//! Cmd 14 is a B-class write: 1024-byte packets with REPORT_ID at
-//! offset 0 and the cmd byte at offset 1.
+//! Host-side LCD keeper stream ownership, admission and lifecycle regressions.
 
 use bytes::Bytes;
 use llcontrol_daemon::actor::{hid_io, lcd_keeper, LcdCommand};
@@ -15,9 +8,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot, watch};
 
-const SEND_JPEG_CMD: u8 = 14;
-const B_REPORT_ID: u8 = 0x02;
-const B_PACKET_LEN: usize = 1024;
+fn jpeg(byte: u8) -> Bytes {
+    Bytes::from_static(if byte % 2 == 0 {
+        include_bytes!("fixtures/lcd-480.jpg")
+    } else {
+        include_bytes!("fixtures/lcd-480-alternate.jpg")
+    })
+}
 
 fn lcdv2_info() -> DeviceInfo {
     DeviceInfo::new(
@@ -27,82 +24,6 @@ fn lcdv2_info() -> DeviceInfo {
         None,
         PathBuf::from("/mock/hidraw0"),
     )
-}
-
-#[tokio::test]
-async fn lcd_keeper_pushes_on_set_and_repushes_on_interval() {
-    let mock = MockBackend::new();
-    mock.add_device(lcdv2_info());
-    let mock_for_assert = mock.clone();
-
-    let backend: Arc<dyn HidBackend> = Arc::new(mock);
-    let (_sd_tx, sd_rx) = watch::channel(false);
-
-    let hid_tx = hid_io::spawn(
-        backend,
-        lcdv2_info(),
-        std::sync::Arc::new(llcontrol_daemon::stats::Stats::new()),
-        sd_rx.clone(),
-    )
-    .expect("spawn hid_io");
-
-    let (frame_tx, frame_rx) = mpsc::channel::<LcdCommand>(8);
-    // 100ms refresh: at ~250ms we expect the immediate Set push plus at
-    // least one interval re-push.
-    let (settings_tx, _settings_rx) = mpsc::channel(16);
-    let _handle = lcd_keeper::spawn(
-        hid_tx,
-        100,
-        Default::default(),
-        settings_tx,
-        frame_rx,
-        sd_rx,
-    );
-
-    // A short payload that fits in a single 1024-byte B-packet; the
-    // codec accepts arbitrary bytes (no JPEG-structure validation), so
-    // a synthetic SOI fragment is enough -- mirrors the protocol
-    // crate's existing send_jpeg integration tests.
-    let jpeg: Bytes = Bytes::from_static(&[0xFF, 0xD8, 0xFF, 0xE0]);
-    let (reply, response) = oneshot::channel();
-    frame_tx
-        .send(LcdCommand::SetImage { jpeg, reply })
-        .await
-        .expect("frame_tx send");
-
-    response.await.unwrap().unwrap();
-
-    // Hold the sender open across the interval tick so frame_rx does
-    // not close and terminate the keeper before the re-push fires.
-    tokio::time::sleep(Duration::from_millis(250)).await;
-    drop(frame_tx);
-
-    let history = mock_for_assert.write_history(&lcdv2_info());
-
-    let cmd14_writes: Vec<&Vec<u8>> = history
-        .iter()
-        .filter(|w| w.len() == B_PACKET_LEN && w[0] == B_REPORT_ID && w[1] == SEND_JPEG_CMD)
-        .collect();
-
-    assert!(
-        cmd14_writes.len() >= 2,
-        "expected >=2 cmd-14 packets (immediate Set push + >=1 interval re-push), \
-         got {} (total writes: {})",
-        cmd14_writes.len(),
-        history.len(),
-    );
-
-    // Spot-check the payload was preserved at offset 11 (B-packet
-    // header is 11 bytes: ReportID, Cmd, DataSize[4], PacketNumber[3],
-    // Length[2]).
-    let first = cmd14_writes[0];
-    assert_eq!(
-        &first[11..15],
-        &[0xFF, 0xD8, 0xFF, 0xE0],
-        "payload at offset 11"
-    );
-    assert_eq!(&first[2..6], &[0, 0, 0, 4], "DataSize = 4");
-    assert_eq!(&first[9..11], &[0, 4], "Length = 4");
 }
 
 struct Harness {
@@ -149,7 +70,7 @@ impl Harness {
         let (reply, rx) = oneshot::channel();
         self.tx
             .send(LcdCommand::SetImage {
-                jpeg: Bytes::from(vec![byte; 1100]),
+                jpeg: jpeg(byte),
                 reply,
             })
             .await
@@ -205,15 +126,41 @@ impl Harness {
         Vec<Vec<u8>>,
         oneshot::Sender<llcontrol_hid::Result<llcontrol_daemon::actor::FrameOutcome>>,
     ) {
+        let command = loop {
+            let command = self.hid.recv().await.unwrap();
+            match command {
+                llcontrol_daemon::actor::HidCommand::Firmware { reply } if !diagnostic => {
+                    let packet =
+                        llcontrol_protocol::galahad2_lcdv2::packets::ACommandPacket::new_request(
+                            134,
+                            b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6",
+                        );
+                    reply
+                        .send(Ok(llcontrol_daemon::actor::FirmwareResponses {
+                            version: *packet.as_bytes(),
+                            datetime: None,
+                        }))
+                        .unwrap();
+                }
+                llcontrol_daemon::actor::HidCommand::Write { bytes, reply } if !diagnostic => {
+                    assert_eq!(bytes[1], 12);
+                    assert_eq!(bytes[11], 4);
+                    assert!(bytes[12] <= 100);
+                    assert_eq!(&bytes[13..19], &[0, 0, 0, 0, 0, 24]);
+                    reply.send(Ok(())).unwrap();
+                }
+                command => break command,
+            }
+        };
         let llcontrol_daemon::actor::HidCommand::FrameBatch {
             packets,
             read_policy,
             reply,
-        } = self.hid.recv().await.unwrap()
+        } = command
         else {
             panic!("expected indivisible frame")
         };
-        if diagnostic {
+        {
             assert!(packets
                 .iter()
                 .all(|p| p[0] == 3 && p[1] == 13 && p.len() == 512));
@@ -441,7 +388,9 @@ async fn image_replacement_waits_for_old_batch_and_replies_after_new_batch() {
     assert_eq!(second.await.unwrap().unwrap().generation, 2);
     tokio::time::advance(Duration::from_secs(15)).await;
     let (current, gate) = h.frame(false).await;
-    assert_eq!(b, current);
+    assert!(current
+        .iter()
+        .all(|packet| packet[0] == 3 && packet[1] == 13));
     complete(gate);
 }
 
@@ -458,7 +407,7 @@ async fn clip_clear_and_jpeg_replace_cancel_remaining_gop_at_boundary() {
             LcdCommand::Clear { reply }
         } else {
             LcdCommand::SetImage {
-                jpeg: Bytes::from_static(&[42]),
+                jpeg: jpeg(42),
                 reply,
             }
         })
@@ -477,14 +426,20 @@ async fn clip_clear_and_jpeg_replace_cancel_remaining_gop_at_boundary() {
             reply.send(Ok(())).unwrap();
         } else {
             let (packets, reply) = h.frame(false).await;
-            assert_eq!(packets[0][1], 14);
+            assert_eq!(packets[0][1], 13);
             complete(reply);
         }
         result.await.unwrap().unwrap();
         tokio::time::advance(Duration::from_millis(100)).await;
         h.state().await;
-        assert!(h.hid.try_recv().is_err());
-        assert_eq!(h.stats().await.sent_frames, 1);
+        if clear {
+            assert!(h.hid.try_recv().is_err());
+            assert_eq!(h.stats().await.sent_frames, 1);
+        } else {
+            complete(h.frame(true).await.1);
+            h.state().await;
+            assert!(h.stats().await.sent_frames >= 2);
+        }
     }
 }
 
@@ -897,7 +852,7 @@ async fn image_replacement_discards_prefetched_media_and_releases_its_pin() {
     complete(gate);
     let initial = started.await.unwrap().unwrap();
     let (packets, complete_image) = h.frame(false).await;
-    assert!(packets.iter().all(|p| p[1] == 14));
+    assert!(packets.iter().all(|p| p[1] == 13));
     complete(complete_image);
     let image = replaced.await.unwrap().unwrap();
     assert_eq!(image.source, llcontrol_ipc::LcdSourceKind::Jpeg);
@@ -906,7 +861,7 @@ async fn image_replacement_discards_prefetched_media_and_releases_its_pin() {
     store.delete_unreferenced(&saved.key, || Ok(false)).unwrap();
     tokio::time::advance(Duration::from_secs(16)).await;
     let (packets, refresh) = h.frame(false).await;
-    assert!(packets.iter().all(|p| p[1] == 14));
+    assert!(packets.iter().all(|p| p[1] == 13));
     complete(refresh);
     h.state().await;
     assert!(h.hid.try_recv().is_err());
@@ -1073,11 +1028,29 @@ async fn shutdown_drains_queued_composition_after_inflight_hid_batch() {
     let (reply, image) = oneshot::channel();
     commands
         .send(LcdCommand::SetImage {
-            jpeg: Bytes::from_static(&[255, 216, 255, 217]),
+            jpeg: jpeg(42),
             reply,
         })
         .await
         .unwrap();
+    let HidCommand::Firmware { reply } = requests.recv().await.unwrap() else {
+        panic!("expected firmware gate");
+    };
+    let packet = llcontrol_protocol::galahad2_lcdv2::packets::ACommandPacket::new_request(
+        134,
+        b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6",
+    );
+    reply
+        .send(Ok(llcontrol_daemon::actor::FirmwareResponses {
+            version: *packet.as_bytes(),
+            datetime: None,
+        }))
+        .unwrap();
+    let HidCommand::Write { bytes, reply } = requests.recv().await.unwrap() else {
+        panic!("expected stream setup");
+    };
+    assert_eq!(&bytes[11..19], &[4, 100, 0, 0, 0, 0, 0, 24]);
+    reply.send(Ok(())).unwrap();
     let HidCommand::FrameBatch { reply: held, .. } = requests.recv().await.unwrap() else {
         panic!("expected image batch")
     };
@@ -1164,57 +1137,73 @@ async fn delayed_datetime_before_version_does_not_block_h264_startup_gate() {
 }
 
 #[tokio::test(start_paused = true)]
-async fn jpeg_settings_patch_preserves_active_image_instead_of_selecting_local_ui() {
+async fn jpeg_rotation_is_applied_in_host_frames_without_stopping_stream() {
     let mut h = Harness::new();
     let image = h.image(42).await;
-    complete(h.frame(false).await.1);
+    let (original, first) = h.frame(false).await;
+    complete(first);
     image.await.unwrap().unwrap();
+    let before = h.stats().await;
     let (reply, response) = oneshot::channel();
     h.tx.send(LcdCommand::Patch {
         patch: llcontrol_ipc::LcdConfigPatch {
             mode: None,
-            brightness_percent: Some(40),
+            brightness_percent: None,
             rotation_degrees: Some(90),
         },
         reply,
     })
     .await
     .unwrap();
-    let llcontrol_daemon::actor::HidCommand::Write { bytes, reply } = h.hid.recv().await.unwrap()
-    else {
-        panic!("expected settings transaction");
-    };
-    assert_eq!(
-        &bytes[11..14],
-        &[4, 40, 1],
-        "JPEG settings must not select LocalUI"
-    );
-    reply.send(Ok(())).unwrap();
     let state = response.await.unwrap().unwrap();
     assert_eq!(state.source, llcontrol_ipc::LcdSourceKind::Jpeg);
-    assert_eq!(state.requested.mode, "LocalUI");
-    assert_eq!(
-        state.applied.unwrap(),
-        llcontrol_ipc::LcdConfig::new("LCDSetting", 40, 90)
+    assert_eq!(state.requested.rotation_degrees, 90);
+    assert_eq!(state.applied.unwrap().rotation_degrees, 90);
+    assert!(
+        h.hid.try_recv().is_err(),
+        "rotation must not send hardware settings"
     );
-    tokio::time::advance(Duration::from_secs(15)).await;
-    let (packets, reply) = h.frame(false).await;
-    assert_eq!(packets[0][11], 42, "the active image remains the source");
-    complete(reply);
+    tokio::time::advance(Duration::from_millis(42)).await;
+    let (rotated, next) = h.frame(true).await;
+    assert_ne!(
+        original, rotated,
+        "host rotation must change encoded pixels"
+    );
+    complete(next);
+    let after = h.stats().await;
+    assert!(after.sent_frames > before.sent_frames);
+    assert_eq!(after.failed_transactions, 0);
+}
 
-    let replacement = h.image(43).await;
-    let llcontrol_daemon::actor::HidCommand::Write { bytes, reply } = h.hid.recv().await.unwrap()
-    else {
-        panic!("expected JPEG orientation restoration");
-    };
-    assert_eq!(
-        &bytes[11..14],
-        &[4, 40, 1],
-        "replacement must not flash LocalUI"
-    );
-    reply.send(Ok(())).unwrap();
-    let (packets, reply) = h.frame(false).await;
-    assert_eq!(packets[0][11], 43);
-    complete(reply);
-    replacement.await.unwrap().unwrap();
+#[tokio::test(start_paused = true)]
+async fn still_image_streams_continuously_at_24_fps() {
+    let mut h = Harness::new();
+    let image = h.image(42).await;
+    let (_, first) = h.frame(false).await;
+    complete(first);
+    image.await.unwrap().unwrap();
+    for _ in 0..4 {
+        tokio::time::advance(Duration::from_millis(40)).await;
+        h.state().await;
+        assert!(
+            h.hid.try_recv().is_err(),
+            "frame sent before 24fps deadline"
+        );
+        tokio::time::advance(Duration::from_millis(2)).await;
+        complete(h.frame(true).await.1);
+        h.state().await;
+    }
+    assert_eq!(h.stats().await.sent_frames, 5);
+}
+
+#[tokio::test(start_paused = true)]
+async fn unsupported_firmware_refuses_still_image_before_setup() {
+    for version in ["1.4", "unknown"] {
+        let mut h = Harness::new();
+        let image = h.image(42).await;
+        h.firmware(version).await;
+        assert!(image.await.unwrap().is_err());
+        assert!(h.hid.try_recv().is_err());
+        assert_eq!(h.state().await.generation, 0);
+    }
 }
