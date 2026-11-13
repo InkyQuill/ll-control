@@ -1,11 +1,7 @@
 {
   "version": 1,
   "name": "Owned basic editors",
-  "background": [
-    12,
-    18,
-    30
-  ],
+  "background": [12, 18, 30],
   "layers": [
     {
       "kind": "text",
@@ -14,11 +10,7 @@
         "x": 240,
         "y": 200,
         "size": 40,
-        "color": [
-          235,
-          240,
-          255
-        ],
+        "color": [235, 240, 255],
         "align": "center",
         "font": "sans"
       }
@@ -40,11 +32,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [],
               "background_image": {
                 "asset": "builtin-midnight-v1",
@@ -57,11 +45,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor_cycle",
@@ -79,11 +63,7 @@
                     "x": 240,
                     "y": 200,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -100,11 +80,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor",
@@ -117,11 +93,7 @@
                     "x": 240,
                     "y": 140,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -137,11 +109,7 @@
                     "x": 240,
                     "y": 240,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -158,11 +126,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor",
@@ -175,11 +139,7 @@
                     "x": 240,
                     "y": 140,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -195,11 +155,7 @@
                     "x": 240,
                     "y": 240,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -215,11 +171,7 @@
                     "x": 240,
                     "y": 340,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -231,21 +183,13 @@
                   "y": 240,
                   "length": 412,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 },
@@ -256,21 +200,13 @@
                   "y": 262,
                   "length": 166,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 }
@@ -286,11 +222,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor",
@@ -303,11 +235,7 @@
                     "x": 150,
                     "y": 150,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -323,11 +251,7 @@
                     "x": 330,
                     "y": 150,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -343,11 +267,7 @@
                     "x": 150,
                     "y": 300,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -363,11 +283,7 @@
                     "x": 330,
                     "y": 300,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -379,21 +295,13 @@
                   "y": 53,
                   "length": 169,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 },
@@ -404,21 +312,13 @@
                   "y": 242,
                   "length": 412,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 },
@@ -429,21 +329,13 @@
                   "y": 264,
                   "length": 166,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 }
@@ -459,11 +351,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "clock",
@@ -473,11 +361,7 @@
                     "x": 240,
                     "y": 200,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -494,11 +378,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "text",
@@ -507,11 +387,7 @@
                     "x": 240,
                     "y": 200,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -534,56 +410,28 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [],
               "background_fill": {
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }
@@ -595,11 +443,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor_cycle",
@@ -617,11 +461,7 @@
                     "x": 240,
                     "y": 200,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -631,46 +471,22 @@
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }
@@ -682,11 +498,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor",
@@ -699,11 +511,7 @@
                     "x": 240,
                     "y": 140,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -719,11 +527,7 @@
                     "x": 240,
                     "y": 240,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -733,46 +537,22 @@
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }
@@ -784,11 +564,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor",
@@ -801,11 +577,7 @@
                     "x": 240,
                     "y": 140,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -821,11 +593,7 @@
                     "x": 240,
                     "y": 240,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -841,11 +609,7 @@
                     "x": 240,
                     "y": 340,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -857,21 +621,13 @@
                   "y": 240,
                   "length": 412,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 },
@@ -882,21 +638,13 @@
                   "y": 262,
                   "length": 166,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 }
@@ -905,46 +653,22 @@
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }
@@ -956,11 +680,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "sensor",
@@ -973,11 +693,7 @@
                     "x": 150,
                     "y": 150,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -993,11 +709,7 @@
                     "x": 330,
                     "y": 150,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -1013,11 +725,7 @@
                     "x": 150,
                     "y": 300,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -1033,11 +741,7 @@
                     "x": 330,
                     "y": 300,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -1049,21 +753,13 @@
                   "y": 53,
                   "length": 169,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 },
@@ -1074,21 +770,13 @@
                   "y": 242,
                   "length": 412,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 },
@@ -1099,21 +787,13 @@
                   "y": 264,
                   "length": 166,
                   "thickness": 2,
-                  "color": [
-                    144,
-                    177,
-                    201
-                  ],
+                  "color": [144, 177, 201],
                   "opacity": 100,
                   "shadow": {
                     "x": 0,
                     "y": 0,
                     "blur": 5,
-                    "color": [
-                      0,
-                      0,
-                      0
-                    ],
+                    "color": [0, 0, 0],
                     "opacity": 100
                   }
                 }
@@ -1122,46 +802,22 @@
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }
@@ -1173,11 +829,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "clock",
@@ -1187,11 +839,7 @@
                     "x": 240,
                     "y": 200,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -1201,46 +849,22 @@
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }
@@ -1252,11 +876,7 @@
             "theme": {
               "version": 1,
               "name": "Owned basic editors",
-              "background": [
-                12,
-                18,
-                30
-              ],
+              "background": [12, 18, 30],
               "layers": [
                 {
                   "kind": "text",
@@ -1265,11 +885,7 @@
                     "x": 240,
                     "y": 200,
                     "size": 40,
-                    "color": [
-                      235,
-                      240,
-                      255
-                    ],
+                    "color": [235, 240, 255],
                     "align": "center",
                     "font": "sans"
                   }
@@ -1279,46 +895,22 @@
                 "mode": "horizontal",
                 "horizontal": {
                   "colors": [
-                    [
-                      40,
-                      50,
-                      60
-                    ],
-                    [
-                      70,
-                      80,
-                      90
-                    ]
+                    [40, 50, 60],
+                    [70, 80, 90]
                   ],
                   "flip": false
                 },
                 "vertical": {
                   "colors": [
-                    [
-                      10,
-                      20,
-                      30
-                    ],
-                    [
-                      40,
-                      50,
-                      60
-                    ]
+                    [10, 20, 30],
+                    [40, 50, 60]
                   ],
                   "flip": true
                 },
                 "radial": {
                   "colors": [
-                    [
-                      90,
-                      80,
-                      70
-                    ],
-                    [
-                      60,
-                      50,
-                      40
-                    ]
+                    [90, 80, 70],
+                    [60, 50, 40]
                   ],
                   "flip": false
                 }

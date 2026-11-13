@@ -1,69 +1,148 @@
-import {addControls} from './editor-controls';
+import { addControls } from './editor-controls';
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    type Collections = {version:number;revision:number;images:string[];watermarks:string[];backgrounds:{kind:string;key:string}[]};
-    const fixture = {online:true,collections:null as Collections|null,failMembership:false,writes:0, admitted: false, finish: (_fail: boolean) => {} };
-    Object.assign(window, { imageImport: fixture, __TAURI_INTERNALS__: {
-      invoke: async (command: string, args: { method: string; params:{collections:Collections;expected_revision:number} }) => {
-        if (command === 'desktop_set_language') return null;
-        if (command === 'import_image') {
-          fixture.admitted = true;
-          return new Promise<string>((resolve, reject) => {
-            fixture.finish = fail => {
-              if (fail) reject({ message: 'Invalid image fixture' });
-              else resolve('a'.repeat(32));
-            };
-          });
-        }
-        switch (args.method) {
-        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
-          case 'get_screen_collections': return {collections:fixture.collections,persistence:{pending:false,saved:false,last_error:null}};
-          case 'set_screen_collections': fixture.writes++; if(fixture.failMembership) throw new Error('Collection conflict'); fixture.collections=args.params.collections; return fixture.collections;
-          case 'list_devices': if(!fixture.online)throw new Error('offline');return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
-          case 'list_sensors': return [];
-          case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };
-          default: throw new Error(`Unexpected operation: ${args.method}`);
-        }
-      }
-    } });
+    type Collections = {
+      version: number;
+      revision: number;
+      images: string[];
+      watermarks: string[];
+      backgrounds: { kind: string; key: string }[];
+    };
+    const fixture = {
+      online: true,
+      collections: null as Collections | null,
+      failMembership: false,
+      writes: 0,
+      admitted: false,
+      finish: (_fail: boolean) => {},
+    };
+    Object.assign(window, {
+      imageImport: fixture,
+      __TAURI_INTERNALS__: {
+        invoke: async (
+          command: string,
+          args: { method: string; params: { collections: Collections; expected_revision: number } },
+        ) => {
+          if (command === 'desktop_set_language') return null;
+          if (command === 'import_image') {
+            fixture.admitted = true;
+            return new Promise<string>((resolve, reject) => {
+              fixture.finish = (fail) => {
+                if (fail) reject({ message: 'Invalid image fixture' });
+                else resolve('a'.repeat(32));
+              };
+            });
+          }
+          switch (args.method) {
+            case 'preview_lcd_editor':
+              return { jpeg: [], layers: [] };
+            case 'get_screen_collections':
+              return {
+                collections: fixture.collections,
+                persistence: { pending: false, saved: false, last_error: null },
+              };
+            case 'set_screen_collections':
+              fixture.writes++;
+              if (fixture.failMembership) throw new Error('Collection conflict');
+              fixture.collections = args.params.collections;
+              return fixture.collections;
+            case 'list_devices':
+              if (!fixture.online) throw new Error('offline');
+              return [{ id: 'lcd:test', display_name: 'LCDV2', family: 'galahad2-lcdv2' }];
+            case 'list_sensors':
+              return [];
+            case 'get_lcd_state':
+              return { source: 'Idle', requested: {}, last_error: null };
+            default:
+              throw new Error(`Unexpected operation: ${args.method}`);
+          }
+        },
+      },
+    });
   });
   await page.goto('/?view=display');
-  await expect(page.getByText('Daemon подключён')).toBeVisible();await addControls(page);
+  await expect(page.getByText('Daemon подключён')).toBeVisible();
+  await addControls(page);
 });
 
-test('late image import failure after reconnect cannot overwrite the new connection state',async({page})=>{
-  await page.getByLabel('Название',{exact:true}).fill('New session draft');
-  const count=await page.locator('.layer-row[data-layer-index]').count();
-  await page.locator('.file input[type=file]').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('fixture')});
-  await expect.poll(()=>page.evaluate(()=>(window as unknown as {imageImport:{admitted:boolean}}).imageImport.admitted)).toBe(true);
-  await page.evaluate(()=>(window as unknown as {imageImport:{online:boolean}}).imageImport.online=false);
-  await expect(page.getByText('Нет связи с daemon',{exact:true})).toBeVisible();
-  await page.evaluate(()=>(window as unknown as {imageImport:{online:boolean}}).imageImport.online=true);
-  await page.getByRole('button',{name:'Повторить подключение',exact:true}).click();await expect(page.getByText('Daemon подключён',{exact:true})).toBeVisible();
-  await page.evaluate(()=>(window as unknown as {imageImport:{finish(fail:boolean):void}}).imageImport.finish(true));
-  await expect(page.locator('.file input[type=file]')).toBeEnabled();await expect(page.getByRole('alert').filter({hasText:'Invalid image fixture'})).toHaveCount(0);
-  await expect(page.getByLabel('Название',{exact:true})).toHaveValue('New session draft');await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(count);
+test('late image import failure after reconnect cannot overwrite the new connection state', async ({
+  page,
+}) => {
+  await page.getByLabel('Название', { exact: true }).fill('New session draft');
+  const count = await page.locator('.layer-row[data-layer-index]').count();
+  await page
+    .locator('.file input[type=file]')
+    .setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: Buffer.from('fixture') });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { imageImport: { admitted: boolean } }).imageImport.admitted,
+      ),
+    )
+    .toBe(true);
+  await page.evaluate(
+    () => ((window as unknown as { imageImport: { online: boolean } }).imageImport.online = false),
+  );
+  await expect(page.getByText('Нет связи с daemon', { exact: true })).toBeVisible();
+  await page.evaluate(
+    () => ((window as unknown as { imageImport: { online: boolean } }).imageImport.online = true),
+  );
+  await page.getByRole('button', { name: 'Повторить подключение', exact: true }).click();
+  await expect(page.getByText('Daemon подключён', { exact: true })).toBeVisible();
+  await page.evaluate(() =>
+    (window as unknown as { imageImport: { finish(fail: boolean): void } }).imageImport.finish(
+      true,
+    ),
+  );
+  await expect(page.locator('.file input[type=file]')).toBeEnabled();
+  await expect(page.getByRole('alert').filter({ hasText: 'Invalid image fixture' })).toHaveCount(0);
+  await expect(page.getByLabel('Название', { exact: true })).toHaveValue('New session draft');
+  await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(count);
 });
 
 for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-page'] as const) {
-  test(`image import ${outcome}: keyboard focus survives without stealing a new target`, async ({ page }) => {
+  test(`image import ${outcome}: keyboard focus survives without stealing a new target`, async ({
+    page,
+  }) => {
     const input = page.locator('.file input[type=file]');
     const other = page.getByRole('button', { name: '+ Текст', exact: true });
     if (outcome === 'layer-limit') {
-      while (await page.locator('.layer-row[data-layer-index]').count() < 31) {await addControls(page);await other.click();}
+      while ((await page.locator('.layer-row[data-layer-index]').count()) < 31) {
+        await addControls(page);
+        await other.click();
+      }
       await addControls(page);
     }
     await input.focus();
-    await input.setInputFiles({ name: 'fixture.png', mimeType: 'image/png', buffer: Buffer.from('fixture') });
+    await input.setInputFiles({
+      name: 'fixture.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fixture'),
+    });
     await expect(input).toBeDisabled();
-    await expect.poll(() => page.evaluate(() => (window as unknown as { imageImport: { admitted: boolean } }).imageImport.admitted)).toBe(true);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { imageImport: { admitted: boolean } }).imageImport.admitted,
+        ),
+      )
+      .toBe(true);
     if (outcome === 'move-focus') await other.focus();
-    if (outcome === 'leave-page') await page.getByRole('button', { name: 'Настройки', exact: true }).click();
-    await page.evaluate(fail => (window as unknown as { imageImport: { finish(fail: boolean): void } }).imageImport.finish(fail), outcome === 'error');
+    if (outcome === 'leave-page')
+      await page.getByRole('button', { name: 'Настройки', exact: true }).click();
+    await page.evaluate(
+      (fail) =>
+        (window as unknown as { imageImport: { finish(fail: boolean): void } }).imageImport.finish(
+          fail,
+        ),
+      outcome === 'error',
+    );
     if (outcome === 'leave-page') {
-      await expect(page.getByRole('status').filter({hasText:'Изображение добавлено'})).toBeVisible();
+      await expect(
+        page.getByRole('status').filter({ hasText: 'Изображение добавлено' }),
+      ).toBeVisible();
       await expect(input).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Настройки', exact: true })).toBeFocused();
       return;
@@ -71,35 +150,78 @@ for (const outcome of ['success', 'error', 'move-focus', 'layer-limit', 'leave-p
     if (outcome === 'layer-limit') {
       await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(32);
       await expect(input).toBeDisabled();
-    }
-    else await expect(input).toBeEnabled();
+    } else await expect(input).toBeEnabled();
     await expect(input).toHaveValue('');
-    if (outcome === 'error') await expect(page.getByRole('alert')).toContainText('Invalid image fixture');
-    else await expect(page.getByRole('status').filter({hasText:'Изображение добавлено'})).toBeVisible();
-    const target = outcome === 'layer-limit' ? page.locator('.inspector h2[tabindex]') : outcome === 'success' ? page.getByRole('button',{name:'Добавить слой',exact:true}) : outcome === 'move-focus' ? other : input;
+    if (outcome === 'error')
+      await expect(page.getByRole('alert')).toContainText('Invalid image fixture');
+    else
+      await expect(
+        page.getByRole('status').filter({ hasText: 'Изображение добавлено' }),
+      ).toBeVisible();
+    const target =
+      outcome === 'layer-limit'
+        ? page.locator('.inspector h2[tabindex]')
+        : outcome === 'success'
+          ? page.getByRole('button', { name: 'Добавить слой', exact: true })
+          : outcome === 'move-focus'
+            ? other
+            : input;
     await expect(target).toBeFocused();
     if (outcome === 'error') {
       await page.keyboard.press('Tab');
-      await expect(page.getByRole('combobox', { name: 'Привязать датчик', exact: true })).toBeFocused();
+      await expect(
+        page.getByRole('combobox', { name: 'Привязать датчик', exact: true }),
+      ).toBeFocused();
     }
   });
 }
 
-for (const fail of [false,true]) test(`import into saved image collection, membership failure=${fail}`,async({page})=>{
-  await page.evaluate(fail=>{
-    const f=(window as unknown as {imageImport:{collections:unknown;failMembership:boolean}}).imageImport;
-    f.collections={version:1,revision:3,images:[],watermarks:[],backgrounds:[]}; f.failMembership=fail;
-  },fail);
-  const before=await page.locator('.layer-row[data-layer-index]').count();
-  await page.locator('.file input[type=file]').setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('fixture')});
-  await expect.poll(()=>page.evaluate(()=>(window as unknown as {imageImport:{admitted:boolean}}).imageImport.admitted)).toBe(true);
-  await page.evaluate(()=>(window as unknown as {imageImport:{finish(fail:boolean):void}}).imageImport.finish(false));
-  if(fail){
-    await expect(page.getByRole('alert')).toContainText('Файл сохранён в каталоге');
-    await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before);
-  }else{
-    await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before+1);
-    expect(await page.evaluate(()=>(window as unknown as {imageImport:{collections:{revision:number;images:string[]}}}).imageImport.collections)).toMatchObject({revision:4,images:['a'.repeat(32)]});
-  }
-  expect(await page.evaluate(()=>(window as unknown as {imageImport:{writes:number}}).imageImport.writes)).toBe(1);
-});
+for (const fail of [false, true])
+  test(`import into saved image collection, membership failure=${fail}`, async ({ page }) => {
+    await page.evaluate((fail) => {
+      const f = (
+        window as unknown as { imageImport: { collections: unknown; failMembership: boolean } }
+      ).imageImport;
+      f.collections = { version: 1, revision: 3, images: [], watermarks: [], backgrounds: [] };
+      f.failMembership = fail;
+    }, fail);
+    const before = await page.locator('.layer-row[data-layer-index]').count();
+    await page.locator('.file input[type=file]').setInputFiles({
+      name: 'fixture.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fixture'),
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { imageImport: { admitted: boolean } }).imageImport.admitted,
+        ),
+      )
+      .toBe(true);
+    await page.evaluate(() =>
+      (window as unknown as { imageImport: { finish(fail: boolean): void } }).imageImport.finish(
+        false,
+      ),
+    );
+    if (fail) {
+      await expect(page.getByRole('alert')).toContainText('Файл сохранён в каталоге');
+      await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before);
+    } else {
+      await expect(page.locator('.layer-row[data-layer-index]')).toHaveCount(before + 1);
+      expect(
+        await page.evaluate(
+          () =>
+            (
+              window as unknown as {
+                imageImport: { collections: { revision: number; images: string[] } };
+              }
+            ).imageImport.collections,
+        ),
+      ).toMatchObject({ revision: 4, images: ['a'.repeat(32)] });
+    }
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { imageImport: { writes: number } }).imageImport.writes,
+      ),
+    ).toBe(1);
+  });

@@ -1,9 +1,7 @@
 {
   "identifier": "main",
   "description": "Local settings window may use the bounded daemon bridge",
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     "allow-daemon-call",
     "allow-cooling-preset",

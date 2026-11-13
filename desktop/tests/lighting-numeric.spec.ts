@@ -2,25 +2,63 @@ import { test, expect } from '@playwright/test';
 test('numeric lighting validation exposes ranges and prevents invalid writes', async ({ page }) => {
   await page.addInitScript(() => {
     const writes: string[] = [];
-    const thermal = { requested: { cpu: null, gpu: null }, active_source: null, degraded_sources: [], grace_remaining_ms: 0, blocked_reason: null, fan: { last_error: null }, pump: { last_error: null } };
-    const dynamic = { base_mode: 'breathing', color_count: 1, speed_supported: true, requested: null, applied: null, degraded: false, suppressed_by_thermal: false, last_error: null };
-    Object.assign(window, { numericWrites: writes, __TAURI_INTERNALS__: { invoke: async (_: string, req: { method: string }) => {
-        if (_ === 'desktop_set_language') return null;
-      switch (req.method) {
-        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
-        case 'list_devices': return [{ id: 'mock', display_name: 'LCD', family:'galahad2-lcdv2' }];
-        case 'list_sensors': return [{ id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid' }, { id: 'pump', label: 'Pump', unit: 'rpm', value: 2200, status: 'valid' }];
-        case 'get_lcd_state': return { source: 'Idle', requested: {}, last_error: null };
-        case 'get_lighting_info': return { modes: ['breathing'] };
-        case 'get_thermal_state': return thermal;
-        case 'get_dynamic_rgb': return dynamic;
-        case 'set_thermal_config': writes.push(req.method); return thermal;
-        case 'set_dynamic_rgb': writes.push(req.method); return dynamic;
-        default: throw new Error(req.method);
-      }
-    } } });
+    const thermal = {
+      requested: { cpu: null, gpu: null },
+      active_source: null,
+      degraded_sources: [],
+      grace_remaining_ms: 0,
+      blocked_reason: null,
+      fan: { last_error: null },
+      pump: { last_error: null },
+    };
+    const dynamic = {
+      base_mode: 'breathing',
+      color_count: 1,
+      speed_supported: true,
+      requested: null,
+      applied: null,
+      degraded: false,
+      suppressed_by_thermal: false,
+      last_error: null,
+    };
+    Object.assign(window, {
+      numericWrites: writes,
+      __TAURI_INTERNALS__: {
+        invoke: async (_: string, req: { method: string }) => {
+          if (_ === 'desktop_set_language') return null;
+          switch (req.method) {
+            case 'preview_lcd_editor':
+              return { jpeg: [], layers: [] };
+            case 'list_devices':
+              return [{ id: 'mock', display_name: 'LCD', family: 'galahad2-lcdv2' }];
+            case 'list_sensors':
+              return [
+                { id: 'cpu', label: 'CPU', unit: 'celsius', value: 42, status: 'valid' },
+                { id: 'pump', label: 'Pump', unit: 'rpm', value: 2200, status: 'valid' },
+              ];
+            case 'get_lcd_state':
+              return { source: 'Idle', requested: {}, last_error: null };
+            case 'get_lighting_info':
+              return { modes: ['breathing'] };
+            case 'get_thermal_state':
+              return thermal;
+            case 'get_dynamic_rgb':
+              return dynamic;
+            case 'set_thermal_config':
+              writes.push(req.method);
+              return thermal;
+            case 'set_dynamic_rgb':
+              writes.push(req.method);
+              return dynamic;
+            default:
+              throw new Error(req.method);
+          }
+        },
+      },
+    });
   });
-  const writes = () => page.evaluate(() => (window as unknown as { numericWrites: string[] }).numericWrites);
+  const writes = () =>
+    page.evaluate(() => (window as unknown as { numericWrites: string[] }).numericWrites);
   await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Подсветка', exact: true }).click();
   await page.getByRole('button', { name: 'Загрузить текущие оповещения' }).click();
@@ -48,7 +86,8 @@ test('numeric lighting validation exposes ranges and prevents invalid writes', a
   const low = page.getByRole('spinbutton', { name: 'Нижний порог (rpm)' });
   const high = page.getByRole('spinbutton', { name: 'Верхний порог (rpm)' });
   await expect(low).toHaveAttribute('aria-valuemax', '3600');
-  await low.fill('2200'); await high.fill('3000');
+  await low.fill('2200');
+  await high.fill('3000');
   const apply = page.getByRole('button', { name: 'Применить режим по датчику' });
   const speed = page.getByRole('spinbutton', { name: 'Нижняя скорость, %' });
   for (const bad of ['', '-1', '101', '2.5']) {

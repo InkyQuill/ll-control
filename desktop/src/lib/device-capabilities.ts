@@ -4,7 +4,11 @@ export interface DisplayGeometry {
   readonly width: number;
   readonly height: number;
 }
-export interface DeviceCapabilities { display: DisplayGeometry | null; lighting: boolean; cooling: boolean }
+export interface DeviceCapabilities {
+  display: DisplayGeometry | null;
+  lighting: boolean;
+  cooling: boolean;
+}
 const none: DeviceCapabilities = { display: null, lighting: false, cooling: false };
 /** The registry describes implemented editors, not every feature advertised by a vendor. */
 export function deviceCapabilities(device: Device | undefined): DeviceCapabilities {

@@ -1,24 +1,69 @@
 import { test, expect } from '@playwright/test';
-test('cooling edits and presets stay local; Apply sends selected channel and policy', async ({ page }) => {
+test('cooling edits and presets stay local; Apply sends selected channel and policy', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     const calls: { method: string; params: Record<string, unknown> }[] = [];
-    const channel = { requested: null, applied_percent: 80, motherboard: false, fallback_active: false, last_error: null };
-    Object.assign(window, { bridgeCalls: calls, __TAURI_INTERNALS__: {
-      invoke: async (command: string, args: Record<string, unknown>) => {
-        if (command === 'desktop_set_language') return null;
-        if (command === 'cooling_preset') return { mode: 'curve_rpm', sensor_id: args.sensorId, points: [{ celsius: 30, rpm: 2000 }, { celsius: 85, rpm: 3000 }], hysteresis_c: 2, fallback_percent: 100 };
-        const request = args as { method: string; params: Record<string, unknown> }; calls.push(request);
-        switch (request.method) {
-        case 'preview_lcd_editor': return {jpeg:[],layers:[]};
-          case 'list_devices': return [{ id: 'lcd:test', display_name: 'LCDV2', family:'galahad2-lcdv2' }];
-          case 'list_sensors': return [{ id: 'cpu:test', label: 'CPU package', unit: 'celsius', value: 42, status: 'valid', age_ms: 10 }];
-          case 'get_lcd_state': return { source: 'Idle', last_error: null, requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 } };
-          case 'get_cooling_state': return { pump: channel, fan: channel };
-          case 'set_cooling_policy': return { pump: { ...channel, requested: request.params.policy, applied_percent: 65 }, fan: channel };
-          default: throw { message: 'Unhandled mock: ' + request.method };
-        }
-      }
-    } });
+    const channel = {
+      requested: null,
+      applied_percent: 80,
+      motherboard: false,
+      fallback_active: false,
+      last_error: null,
+    };
+    Object.assign(window, {
+      bridgeCalls: calls,
+      __TAURI_INTERNALS__: {
+        invoke: async (command: string, args: Record<string, unknown>) => {
+          if (command === 'desktop_set_language') return null;
+          if (command === 'cooling_preset')
+            return {
+              mode: 'curve_rpm',
+              sensor_id: args.sensorId,
+              points: [
+                { celsius: 30, rpm: 2000 },
+                { celsius: 85, rpm: 3000 },
+              ],
+              hysteresis_c: 2,
+              fallback_percent: 100,
+            };
+          const request = args as { method: string; params: Record<string, unknown> };
+          calls.push(request);
+          switch (request.method) {
+            case 'preview_lcd_editor':
+              return { jpeg: [], layers: [] };
+            case 'list_devices':
+              return [{ id: 'lcd:test', display_name: 'LCDV2', family: 'galahad2-lcdv2' }];
+            case 'list_sensors':
+              return [
+                {
+                  id: 'cpu:test',
+                  label: 'CPU package',
+                  unit: 'celsius',
+                  value: 42,
+                  status: 'valid',
+                  age_ms: 10,
+                },
+              ];
+            case 'get_lcd_state':
+              return {
+                source: 'Idle',
+                last_error: null,
+                requested: { mode: 'LocalUI', brightness_percent: 100, rotation_degrees: 0 },
+              };
+            case 'get_cooling_state':
+              return { pump: channel, fan: channel };
+            case 'set_cooling_policy':
+              return {
+                pump: { ...channel, requested: request.params.policy, applied_percent: 65 },
+                fan: channel,
+              };
+            default:
+              throw { message: 'Unhandled mock: ' + request.method };
+          }
+        },
+      },
+    });
   });
   await page.goto('/?view=display');
   await page.getByRole('button', { name: 'Охлаждение', exact: true }).click();
@@ -36,7 +81,10 @@ test('cooling edits and presets stay local; Apply sends selected channel and pol
   await expect(numeric).toHaveAttribute('aria-valuenow', '65');
   await expect(numeric).toHaveAttribute('aria-invalid', 'false');
   await page.getByRole('combobox', { name: 'Режим', exact: true }).selectOption('fixed_rpm');
-  const rpm = page.getByRole('spinbutton', { name: 'Целевые RPM (reference mapping)', exact: true });
+  const rpm = page.getByRole('spinbutton', {
+    name: 'Целевые RPM (reference mapping)',
+    exact: true,
+  });
   await expect(rpm).toHaveAttribute('aria-valuemin', '800');
   await expect(rpm).toHaveAttribute('aria-valuemax', '3600');
   await expect(rpm).toHaveAttribute('aria-valuenow', '2200');
@@ -51,7 +99,12 @@ test('cooling edits and presets stay local; Apply sends selected channel and pol
   await page.getByRole('button', { name: 'quiet', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Preset загружен в редактор');
   await expect(page.getByRole('combobox', { name: 'Режим', exact: true })).toHaveValue('curve_rpm');
-  const writes = () => page.evaluate(() => (window as unknown as { bridgeCalls: { method: string }[] }).bridgeCalls.filter(c => c.method === 'set_cooling_policy'));
+  const writes = () =>
+    page.evaluate(() =>
+      (window as unknown as { bridgeCalls: { method: string }[] }).bridgeCalls.filter(
+        (c) => c.method === 'set_cooling_policy',
+      ),
+    );
   expect(await writes()).toHaveLength(0);
   const temperature = page.getByRole('spinbutton', { name: 'Точка 1: °C', exact: true });
   await expect(temperature).toHaveAttribute('aria-valuemin', '-50');
@@ -85,10 +138,28 @@ test('cooling edits and presets stay local; Apply sends selected channel and pol
   await page.getByLabel('Точка 1: °C').fill('35');
   await page.getByRole('button', { name: 'Применить охлаждение' }).click();
   await expect(page.getByRole('status')).toContainText('Политика принята');
-  const applied = await page.evaluate(() => (window as unknown as { bridgeCalls: { method: string; params: { target: string; policy: { sensor_id: string; points: { celsius: number }[] } } }[] }).bridgeCalls.find(c => c.method === 'set_cooling_policy')?.params);
-  expect(applied?.target).toBe('pump'); expect(applied?.policy.sensor_id).toBe('cpu:test'); expect(applied?.policy.points[0].celsius).toBe(35);
-  await page.evaluate(() => { (document.activeElement as HTMLElement)?.blur(); window.scrollTo(0, 0); });
-  await page.screenshot({path:'../.impeccable/review/production-cooling.png',fullPage:true});
+  const applied = await page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          bridgeCalls: {
+            method: string;
+            params: {
+              target: string;
+              policy: { sensor_id: string; points: { celsius: number }[] };
+            };
+          }[];
+        }
+      ).bridgeCalls.find((c) => c.method === 'set_cooling_policy')?.params,
+  );
+  expect(applied?.target).toBe('pump');
+  expect(applied?.policy.sensor_id).toBe('cpu:test');
+  expect(applied?.policy.points[0].celsius).toBe(35);
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement)?.blur();
+    window.scrollTo(0, 0);
+  });
+  await page.screenshot({ path: '../.impeccable/review/production-cooling.png', fullPage: true });
   await page.getByLabel('Точка 2: °C').fill('20');
   await expect(page.getByLabel('Точка 2: °C')).toHaveAttribute('aria-invalid', 'true');
   await page.getByRole('button', { name: 'Применить охлаждение' }).click();
