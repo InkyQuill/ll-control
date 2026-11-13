@@ -8,6 +8,8 @@ use llcontrol_daemon::{
     profile_group::{GroupKind, GroupProfile},
     stats::Stats,
 };
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
 use llcontrol_hid::{DeviceFamilyId, DeviceInfo, MockBackend};
 use llcontrol_ipc::{
     client::IpcClient, server::IpcServer, DeviceId, FullGroupReadback, FullProfileGroup as G,
@@ -31,9 +33,14 @@ impl Harness {
         let socket = runtime.join("llcontrold.sock");
         let cfg = Config::default();
         let stats = Arc::new(Stats::new());
-        let manager = DeviceManager::new(Arc::new(mock), store.clone(), cfg.clone(), stats.clone())
-            .spawn()
-            .await;
+        let manager = DeviceManager::new(
+            Arc::new(display_firmware::FirmwareMock(mock)),
+            store.clone(),
+            cfg.clone(),
+            stats.clone(),
+        )
+        .spawn()
+        .await;
         let dev = tokio::time::timeout(Duration::from_secs(3), async {
             loop {
                 if let Some(d) = manager.list().await.first() {

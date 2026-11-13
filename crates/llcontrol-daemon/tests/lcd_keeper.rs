@@ -9,7 +9,7 @@ use std::time::Duration;
 use tokio::sync::{mpsc, oneshot, watch};
 
 fn jpeg(byte: u8) -> Bytes {
-    Bytes::from_static(if byte % 2 == 0 {
+    Bytes::from_static(if byte & 1 == 0 {
         include_bytes!("fixtures/lcd-480.jpg")
     } else {
         include_bytes!("fixtures/lcd-480-alternate.jpg")

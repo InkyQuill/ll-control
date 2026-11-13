@@ -520,9 +520,11 @@ async fn composition_apply_restart_sleep_missing_media_recovery_and_clear() {
                     .call("get_lcd_playback_stats", json!({"dev":device}))
                     .await
                     .unwrap();
-                assert_eq!(
-                    before["sent_frames"], after["sent_frames"],
-                    "old video output stopped"
+                assert_eq!(before["generation"], after["generation"]);
+                assert!(
+                    after["sent_frames"].as_u64().unwrap()
+                        > before["sent_frames"].as_u64().unwrap(),
+                    "reset default theme must keep streaming after the old codecs stop"
                 );
                 // Deletion while the manager is still alive proves old source and
                 // pending settings pins were released by reset, not by shutdown.

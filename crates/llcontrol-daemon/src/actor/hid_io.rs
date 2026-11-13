@@ -400,7 +400,9 @@ async fn process_one(
                 {
                     return (false, Err(error));
                 }
-                (true, collect_firmware(&*h))
+                // The Windows display startup allows three seconds for device identity.
+                // A late PN0 must not be mistaken for an unsupported firmware version.
+                (true, collect_firmware_until(&*h, Duration::from_secs(3)))
             })
             .await;
             let (written, result) = joined.unwrap_or_else(|error| {
@@ -698,8 +700,15 @@ fn drain_for_echo(
 pub(super) fn collect_firmware(
     handle: &dyn OpenHandle,
 ) -> llcontrol_hid::Result<FirmwareResponses> {
+    collect_firmware_until(handle, Duration::from_secs(1))
+}
+
+fn collect_firmware_until(
+    handle: &dyn OpenHandle,
+    budget: Duration,
+) -> llcontrol_hid::Result<FirmwareResponses> {
     use llcontrol_protocol::galahad2_lcdv2::packets::ACommandPacket;
-    let deadline = Instant::now() + Duration::from_secs(1);
+    let deadline = Instant::now() + budget;
     let mut version = None;
     let mut datetime = None;
     for _ in 0..8 {
