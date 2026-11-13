@@ -11,7 +11,7 @@ use serde_json::json;
 use std::{collections::BTreeMap, io::Cursor, sync::atomic::AtomicBool};
 const FONT: &[u8] = include_bytes!("../../llcontrol-image/assets/DejaVuSans.ttf");
 fn history(opaque: &str) -> String {
-    json!({"version":1,"format":"windows_llcontrol3_2_1_28","source":{"archive":{"backup_sha256":"a".repeat(64)},"unassigned":{"1":opaque}}}).to_string()
+    json!({"version":1,"format":"windows_lconnect3_2_1_28","source":{"archive":{"backup_sha256":"a".repeat(64)},"unassigned":{"1":opaque}}}).to_string()
 }
 fn editor(theme: Option<LcdTheme>) -> StoredScreenEditor {
     StoredScreenEditor {

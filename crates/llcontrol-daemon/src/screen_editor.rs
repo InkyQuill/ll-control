@@ -46,7 +46,7 @@ impl StoredScreenEditor {
             resources,
             theme: plan.current_editor_theme.clone(),
             source_json: serde_json::to_string(
-                &serde_json::json!({"version":1,"format":"windows_llcontrol3_2_1_28","source":source}),
+                &serde_json::json!({"version":1,"format":"windows_lconnect3_2_1_28","source":source}),
             )?,
         };
         value.validate()?;
@@ -68,7 +68,7 @@ impl StoredScreenEditor {
         );
         ensure!(
             source["version"] == 1
-                && source["format"] == "windows_llcontrol3_2_1_28"
+                && source["format"] == "windows_lconnect3_2_1_28"
                 && source["source"].is_object(),
             "invalid historical Screen source envelope"
         );

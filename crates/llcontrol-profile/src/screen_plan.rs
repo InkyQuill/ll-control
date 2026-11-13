@@ -80,7 +80,7 @@ pub fn parse_resource_map(bytes: &[u8]) -> Result<ResourceMap, Error> {
 }
 fn stage_key(backup: &str, entry: &str, digest: &str, kind: &str) -> String {
     let mut hash = Sha256::new();
-    for field in ["llcontrol-windows-stage-v1", backup, entry, digest, kind] {
+    for field in ["lconnect-windows-stage-v1", backup, entry, digest, kind] {
         hash.update(field.as_bytes());
         hash.update([0]);
     }

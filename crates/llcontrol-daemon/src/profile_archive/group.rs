@@ -72,7 +72,7 @@ impl PreparedGroup {
         let source_sha256 = format!(
             "{:x}",
             Sha256::digest(serde_json::to_vec(&(
-                "llcontrol-lcdv2-control-reset-v1",
+                "lconnect-lcdv2-control-reset-v1",
                 &profile
             ),)?)
         );
@@ -95,10 +95,7 @@ impl PreparedGroup {
         let profile = crate::windows_control::profile(draft, target)?;
         let source_sha256 = format!(
             "{:x}",
-            Sha256::digest(serde_json::to_vec(&(
-                "llcontrol-windows-control-v1",
-                draft
-            ))?)
+            Sha256::digest(serde_json::to_vec(&("lconnect-windows-control-v1", draft))?)
         );
         Ok(Self {
             source_sha256,

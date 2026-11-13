@@ -206,7 +206,7 @@ impl Harness {
             editor.version = 2;
             settings.screen_editor=Some(llcontrol_daemon::screen_editor::StoredScreenEditor {
                 version:1,theme:Some(editor),resources:std::collections::BTreeMap::from([("archive:wmsq/clip.mp4".into(),ScreenBackgroundAsset::Video(video))]),
-                source_json:serde_json::json!({"version":1,"format":"windows_llcontrol3_2_1_28","source":{"archive":{"backup_sha256":"a".repeat(64)},"unassigned":"private history"}}).to_string(),
+                source_json:serde_json::json!({"version":1,"format":"windows_lconnect3_2_1_28","source":{"archive":{"backup_sha256":"a".repeat(64)},"unassigned":"private history"}}).to_string(),
             });
         }
         let profile =

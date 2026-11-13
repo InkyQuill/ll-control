@@ -178,7 +178,7 @@ impl ProfileArchives {
         let source_sha256 = format!(
             "{:x}",
             Sha256::digest(serde_json::to_vec(&(
-                "llcontrol-windows-screen-v1",
+                "lconnect-windows-screen-v1",
                 &screen,
                 &plan.staged_resources,
             ))?)

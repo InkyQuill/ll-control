@@ -29,7 +29,7 @@ pub struct CoolingModeLibrary {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "format", rename_all = "snake_case", deny_unknown_fields)]
 pub enum CoolingBankSource {
-    #[serde(rename = "windows_llcontrol3_2_1_28")]
+    #[serde(rename = "windows_lconnect3_2_1_28")]
     Windows2128 { fan_json: String, pump_json: String },
 }
 

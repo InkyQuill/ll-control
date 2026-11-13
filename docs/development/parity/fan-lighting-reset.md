@@ -42,7 +42,7 @@ Linux policy: сохраняется, включая её возможный п�
 RPC `reset_fan_and_lighting {dev,operation_id,expected,sensor_id}` принимает target
 GroupRevision из актуального FanAndLighting snapshot. Все defaults готовятся и
 валидируются до admission; prepared content имеет отдельный source digest domain
-`llcontrol-lcdv2-control-reset-v1`. Reset нельзя принять за archive с тем же ID.
+`lconnect-lcdv2-control-reset-v1`. Reset нельзя принять за archive с тем же ID.
 
 Общий FanAndLighting coordinator удерживает оба actors, выполняет preflight,
 атомарно сохраняет settings/profiles/receipt через existing redo journal,

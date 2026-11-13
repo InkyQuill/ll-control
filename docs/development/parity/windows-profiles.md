@@ -41,7 +41,7 @@ Legacy None отсутствует в serialization, старые hashes не м
 
 Commit использует existing FanAndLighting actor coordinator, settings/profile redo
 journal и durable receipt. Новый HID/settings writer не создаётся. Digest domain
-`llcontrol-windows-control-v1` включает source draft, fingerprints и bindings,
+`lconnect-windows-control-v1` включает source draft, fingerprints и bindings,
 но не target-preserved Linux slots: это позволяет прочитать прежний receipt после
 их более нового редактирования. Target token отдельно проверяется перед новым
 commit. Потеря caller/соединения после admission не отменяет принятую операцию.
