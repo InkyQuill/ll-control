@@ -48,138 +48,142 @@
   function stateLabel(state: RecoveryState) {
     switch (state) {
       case 'no_saved_operation':
-        return t('Сохранённый журнал и блокировки прошивки не найдены.');
+        return t('No saved firmware journal or guards were found.');
       case 'journal_only':
         return t(
-          'Есть незавершённая запись в журнале прошивки. Отсутствие отметок не доказывает отсутствие записи на устройство.',
+          'An unresolved firmware journal exists. Missing markers do not prove that no device writes occurred.',
         );
       case 'guarded':
         return t(
-          'Сохранённая операция обновления прошивки заблокировала восстановление настроек. Нужны проверка устройства и разрешение исхода операции.',
+          'A saved firmware operation has quarantined settings replay. Target verification and operation resolution are required.',
         );
       case 'guard_only':
-        return t('Есть блокировка настроек без журнала прошивки. Исход операции неизвестен.');
+        return t(
+          'A settings guard exists without a firmware journal. The operation outcome is unknown.',
+        );
       case 'inconsistent':
         return t(
-          'Журнал прошивки и блокировки настроек не согласованы. Исход операции неизвестен.',
+          'The firmware journal and settings guards disagree. The operation outcome is unknown.',
         );
       case 'unreadable':
-        return t('Сохранённое состояние прошивки не удалось прочитать. Исход операции неизвестен.');
+        return t('Saved firmware state could not be read. The operation outcome is unknown.');
     }
   }
   function stageLabel(stage: SavedStage) {
     switch (stage) {
       case 'armed':
-        return t('Сохранено: операция подготовлена');
+        return t('Saved: operation armed');
       case 'effects_possible':
-        return t('Сохранено: команды могли изменить устройство');
+        return t('Saved: commands may have changed the device');
       case 'not_started':
-        return t('Сохранено: передача не начата');
+        return t('Saved: transfer not started');
       case 'unknown':
-        return t('Сохранено: исход неизвестен');
+        return t('Saved: outcome unknown');
       case 'awaiting_reconnect':
-        return t('Сохранено: ожидание переподключения');
+        return t('Saved: awaiting reconnect');
     }
   }
   const target = (value: number) => value.toString(16).padStart(4, '0');
 </script>
 
-<section aria-label={t('Сохранённое состояние прошивки')} aria-busy={busy}>
-  <h2>{t('Сохранённое состояние прошивки')}</h2>
+<section aria-label={t('Saved firmware state')} aria-busy={busy}>
+  <h2>{t('Saved firmware state')}</h2>
   <p>
     {t(
-      'Это снимок сохранённых файлов, а не текущее состояние операции или подтверждение успешного обновления. Для нового снимка нажмите чтение ещё раз.',
+      'This is a snapshot of saved files, not live status or confirmation of a successful update. Read again for a new snapshot.',
     )}
   </p>
-  <p>{t('Чтение доступно без подключённого устройства и при блокировке обычных команд daemon.')}</p>
-  <button aria-disabled={busy} onclick={read}
-    >{t('Прочитать сохранённое состояние прошивки')}</button
-  >
-  {#if busy}<p role="status">{t('Читаем сохранённое состояние прошивки…')}</p>
+  <p>
+    {t(
+      'Reading is available without a connected device and while ordinary daemon commands are blocked.',
+    )}
+  </p>
+  <button aria-disabled={busy} onclick={read}>{t('Read saved firmware state')}</button>
+  {#if busy}<p role="status">{t('Reading saved firmware state…')}</p>
   {:else if failure}<p role="alert">
       {failure === 'invalid'
-        ? t('Daemon вернул неподдерживаемое сохранённое состояние прошивки.')
-        : t('Не удалось прочитать сохранённое состояние прошивки. Повторите чтение явно.')}
+        ? t('The daemon returned unsupported saved firmware state.')
+        : t('Could not read saved firmware state. Read again explicitly.')}
     </p>
   {:else if snapshot}<p role={snapshot.state === 'no_saved_operation' ? 'status' : 'alert'}>
       {stateLabel(snapshot.state)}
     </p>
-  {:else}<p role="status">{t('Сохранённое состояние прошивки ещё не прочитано.')}</p>{/if}
+  {:else}<p role="status">{t('Saved firmware state has not been read yet.')}</p>{/if}
   {#if snapshot}
     {#if snapshot.state !== 'no_saved_operation'}<p>
         {t(
-          'Сохраните журнал и блокировки для диагностики. Это чтение не снимает блокировку, не повторяет передачу и не восстанавливает настройки устройства.',
+          'Preserve the journal and guards for diagnosis. This read does not clear quarantine, retry the transfer or replay device settings.',
         )}
       </p>{/if}
     {#if snapshot.operation}
       {@const operation = snapshot.operation}
       <dl>
-        <dt>{t('ID сохранённой операции обновления прошивки')}</dt>
+        <dt>{t('Saved firmware operation ID')}</dt>
         <dd><code>{operation.operation_id}</code></dd>
-        <dt>{t('Сохранённый этап')}</dt>
+        <dt>{t('Saved stage')}</dt>
         <dd>{stageLabel(operation.stage)}</dd>
-        <dt>{t('Сохранённая цель VID:PID')}</dt>
+        <dt>{t('Saved target VID:PID')}</dt>
         <dd><code>{target(operation.vid)}:{target(operation.pid)}</code></dd>
-        <dt>{t('Сохранённый серийный номер')}</dt>
-        <dd>{operation.serial ?? t('Серийный номер не сохранён')}</dd>
-        <dt>{t('Предыдущий HID-путь')}</dt>
+        <dt>{t('Saved serial number')}</dt>
+        <dd>{operation.serial ?? t('Serial number was not saved')}</dd>
+        <dt>{t('Previous HID path')}</dt>
         <dd><code>{operation.previous_hid_path}</code></dd>
-        <dt>{t('Ключ сохранённых настроек')}</dt>
+        <dt>{t('Saved settings key')}</dt>
         <dd><code>{operation.settings_key}</code></dd>
-        <dt>{t('SHA-256 сохранённого образа')}</dt>
+        <dt>{t('Saved image SHA-256')}</dt>
         <dd><code>{operation.image_sha256}</code></dd>
       </dl>
       {#if operation.progress}
         {@const progress = operation.progress}
-        <h3>{t('Сохранённые отметки передачи')}</h3>
+        <h3>{t('Saved transfer markers')}</h3>
         <p>
           {t(
-            'Отметки могут отставать от фактических команд после сбоя. Они не доказывают завершение операции или отсутствие других записей.',
+            'After a crash, saved markers may lag actual commands. They do not prove completion or the absence of other writes.',
           )}
         </p>
         <dl>
-          <dt>{t('Пакетов в сохранённом плане')}</dt>
+          <dt>{t('Chunks in the saved plan')}</dt>
           <dd>{progress.total_chunks}</dd>
-          <dt>{t('Сохранённых отметок отправки')}</dt>
+          <dt>{t('Saved chunk-write markers')}</dt>
           <dd>{progress.chunk_writes}</dd>
-          <dt>{t('Сохранённых отметок ответа')}</dt>
+          <dt>{t('Saved chunk-echo markers')}</dt>
           <dd>{progress.chunk_echoes}</dd>
-          <dt>{t('Отметка команды помпы')}</dt>
-          <dd>{progress.pump_hold_written ? t('Отметка сохранена') : t('Отметка не сохранена')}</dd>
-          <dt>{t('Отметка команды вентиляторов')}</dt>
-          <dd>{progress.fan_hold_written ? t('Отметка сохранена') : t('Отметка не сохранена')}</dd>
-          <dt>{t('Отметка команды активации')}</dt>
+          <dt>{t('Pump command marker')}</dt>
+          <dd>{progress.pump_hold_written ? t('Marker saved') : t('Marker not saved')}</dd>
+          <dt>{t('Fan command marker')}</dt>
+          <dd>{progress.fan_hold_written ? t('Marker saved') : t('Marker not saved')}</dd>
+          <dt>{t('Activation command marker')}</dt>
           <dd>
-            {progress.activation_written ? t('Отметка сохранена') : t('Отметка не сохранена')}
+            {progress.activation_written ? t('Marker saved') : t('Marker not saved')}
           </dd>
         </dl>
       {/if}
     {/if}
     {#if snapshot.guards.length}
-      <h3>{t('Сохранённые блокировки настроек')}</h3>
+      <h3>{t('Saved settings guards')}</h3>
       <ul>
         {#each snapshot.guards as guard (guard.settings_key)}<li>
             <dl>
-              <dt>{t('Ключ сохранённых настроек')}</dt>
+              <dt>{t('Saved settings key')}</dt>
               <dd><code>{guard.settings_key}</code></dd>
-              <dt>{t('ID сохранённой операции обновления прошивки')}</dt>
+              <dt>{t('Saved firmware operation ID')}</dt>
               <dd><code>{guard.operation_id}</code></dd>
-              <dt>{t('SHA-256 сохранённого образа')}</dt>
+              <dt>{t('Saved image SHA-256')}</dt>
               <dd><code>{guard.image_sha256}</code></dd>
             </dl>
           </li>{/each}
       </ul>
     {/if}
     <details>
-      <summary>{t('Сохранённая диагностика прошивки')}</summary><textarea
+      <summary>{t('Saved firmware diagnostics')}</summary><textarea
         readonly
         rows="12"
-        aria-label={t('Сохранённая диагностика прошивки')}
+        aria-label={t('Saved firmware diagnostics')}
         value={JSON.stringify(snapshot, null, 2)}></textarea>
     </details>
   {/if}
   {#if diagnostic}<details>
-      <summary>{t('Техническая диагностика')}</summary>
+      <summary>{t('Technical diagnostics')}</summary>
       <pre>{diagnostic}</pre>
     </details>{/if}
 </section>

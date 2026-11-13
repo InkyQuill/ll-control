@@ -23,17 +23,17 @@ export interface DeviceCoolingModes {
 type Target = 'fan' | 'pump';
 
 const factoryNames: Record<string, { name: string; label: () => string; target: Target }> = {
-  Quiet: { name: 'Quiet', label: () => t('Тихий'), target: 'fan' },
-  StandardSpeed: { name: 'Standard', label: () => t('Стандартный'), target: 'fan' },
-  HighSpeed: { name: 'High speed', label: () => t('Высокая скорость'), target: 'fan' },
-  FullSpeed: { name: 'Full speed', label: () => t('Максимальная скорость'), target: 'fan' },
-  UserDefine1: { name: 'Custom 1', label: () => t('Пользовательский 1'), target: 'fan' },
-  UserDefine2: { name: 'Custom 2', label: () => t('Пользовательский 2'), target: 'fan' },
-  UserDefine3: { name: 'Custom 3', label: () => t('Пользовательский 3'), target: 'fan' },
-  UserDefine4: { name: 'Custom 4', label: () => t('Пользовательский 4'), target: 'fan' },
-  FixRPM: { name: 'Fixed RPM', label: () => t('Фиксированные RPM'), target: 'pump' },
-  PWMPerformance: { name: 'Performance', label: () => t('Производительный'), target: 'pump' },
-  PWMQuiet: { name: 'Quiet', label: () => t('Тихий'), target: 'pump' },
+  Quiet: { name: 'Quiet', label: () => t('Quiet'), target: 'fan' },
+  StandardSpeed: { name: 'Standard', label: () => t('Standard'), target: 'fan' },
+  HighSpeed: { name: 'High speed', label: () => t('High speed'), target: 'fan' },
+  FullSpeed: { name: 'Full speed', label: () => t('Full speed'), target: 'fan' },
+  UserDefine1: { name: 'Custom 1', label: () => t('Custom 1'), target: 'fan' },
+  UserDefine2: { name: 'Custom 2', label: () => t('Custom 2'), target: 'fan' },
+  UserDefine3: { name: 'Custom 3', label: () => t('Custom 3'), target: 'fan' },
+  UserDefine4: { name: 'Custom 4', label: () => t('Custom 4'), target: 'fan' },
+  FixRPM: { name: 'Fixed RPM', label: () => t('Fixed RPM'), target: 'pump' },
+  PWMPerformance: { name: 'Performance', label: () => t('Performance'), target: 'pump' },
+  PWMQuiet: { name: 'Quiet', label: () => t('Quiet'), target: 'pump' },
 };
 export const supportsCoolingModeDefault = (id: string, target: Target) =>
   factoryNames[id]?.target === target;
@@ -114,7 +114,7 @@ export function coolingModes(value: unknown): DeviceCoolingModes | null {
   if (value === null) return null;
   const invalid = () =>
     new ValidationError(
-      'Daemon вернул некорректные сохранённые режимы охлаждения. Черновик сохранён.',
+      'The daemon returned invalid saved cooling modes. Your draft is preserved.',
     );
   const root = object(value);
   const persistence = object(root?.persistence);

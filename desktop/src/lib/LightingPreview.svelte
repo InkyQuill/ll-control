@@ -16,7 +16,7 @@
 </script>
 
 <div class="lighting-preview">
-  <svg viewBox="0 0 440 200" role="img" aria-label={t('Схема цвета выбранной зоны')}>
+  <svg viewBox="0 0 440 200" role="img" aria-label={t('Selected zone color diagram')}>
     {#if kind === 'pump'}
       <rect
         x="150"
@@ -61,9 +61,7 @@
     {/if}
   </svg>
   <p>
-    {t(
-      'Схема цвета, не симуляция эффекта. Фактическое число вентиляторов и расположение LED могут отличаться.',
-    )}
+    {t('Color diagram, not an effect simulation. Actual fan count and LED layout may differ.')}
   </p>
 </div>
 

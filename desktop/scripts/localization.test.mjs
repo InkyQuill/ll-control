@@ -23,8 +23,8 @@ test('unknown keys that name inherited object properties remain literal UI fallb
 });
 test('catalog resources interpolate filenames as literal values', () => {
   const name = 'constructor {0} <clip>';
-  assert.equal(translate('Первый кадр: {0}', 'en-US', name), 'First frame: ' + name);
-  assert.equal(translate('Первый кадр: {0}', 'ru-RU', name), 'Первый кадр: ' + name);
+  assert.equal(translate('First frame: {0}', 'en-US', name), 'First frame: ' + name);
+  assert.equal(translate('First frame: {0}', 'ru-RU', name), 'Первый кадр: ' + name);
 });
 test('strict catalog audit requires own dictionary entries and reports original TypeScript lines', () => {
   const root = mkdtempSync(join(tmpdir(), 'lconnect-locale-contract-'));
@@ -56,7 +56,7 @@ test('strict catalog audit requires own dictionary entries and reports original 
           )
           .join('\n'),
     );
-    const dictionary = join(lib, 'locales/en-US.json'),
+    const dictionary = join(lib, 'locales/ru-RU.json'),
       report = join(root, 'report.json');
     writeFileSync(dictionary, '{}');
     const run = () =>
@@ -228,4 +228,16 @@ test('new-effect layer limit is localized in both interface languages', async ()
       'A free layer is required for the new effect.',
     )(error);
   });
+});
+
+test('English is the literal source language and Russian is a separate catalog', () => {
+  assert.equal(translate('First frame: {0}', 'en-US', 'clip'), 'First frame: clip');
+  assert.equal(
+    translate('Unknown English resource {0}', 'ru-RU', 'clip'),
+    'Unknown English resource clip',
+  );
+  const catalog = JSON.parse(
+    readFileSync(new URL('../src/lib/locales/ru-RU.json', import.meta.url)),
+  );
+  for (const key of Object.keys(catalog)) assert.doesNotMatch(key, /[А-Яа-яЁё]/);
 });

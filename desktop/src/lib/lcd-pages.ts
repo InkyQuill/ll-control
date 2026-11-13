@@ -58,7 +58,7 @@ export function switchLcdPage(theme: Theme, target: LcdPageKind): Theme {
     if (target !== 'basic') {
       delete next.basic_editor;
       if (next.layers.length >= 32)
-        throw new ValidationError('Для нового эффекта нужен свободный слой.');
+        throw new ValidationError('A free layer is required for the new effect.');
       if (target === 'meteor')
         next.layers.unshift({
           kind: 'meteor',

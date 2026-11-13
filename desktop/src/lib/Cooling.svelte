@@ -49,9 +49,9 @@
   function errorText(failure: Failure | ValidationError): string {
     if (failure instanceof ValidationError) return t(failure.resource, ...failure.values);
     return failure.context === 'preset'
-      ? t('Не удалось загрузить preset охлаждения: {0}. Черновик сохранён.', failure.detail)
+      ? t('Could not load the cooling preset: {0}. The draft was preserved.', failure.detail)
       : t(
-          'Применение охлаждения не подтверждено: {0}. Проверьте состояние daemon перед повторным Apply.',
+          'Cooling application was not confirmed: {0}. Check the daemon state before applying again.',
           failure.detail,
         );
   }
@@ -169,11 +169,11 @@
       const result = await coolingPreset(target, name, sensorId);
       if (started !== generation) return;
       if (draft !== draftKey()) {
-        notice = 'Черновик изменился. Preset не заменил ваши правки.';
+        notice = 'The draft changed. The preset did not replace your edits.';
         return;
       }
       load(result);
-      notice = 'Preset загружен в редактор. Нажмите «Применить охлаждение» для отправки.';
+      notice = 'Preset loaded into the editor. Select Apply cooling to send it.';
     } catch (e) {
       if (started === generation) error = { context: 'preset', detail: message(e) };
     } finally {
@@ -194,14 +194,14 @@
   }
   function policy(): CoolingPolicy {
     if (!curve && fixedInvalid)
-      throw new ValidationError('Введите целое значение {0}–{1}', [fixedMin, fixedMax]);
+      throw new ValidationError('Enter an integer from {0} to {1}', [fixedMin, fixedMax]);
     if (mode === 'fixed' || mode === 'motherboard') return { mode, percent };
     if (mode === 'fixed_rpm') return { mode, rpm };
-    if (!sensorId) throw new ValidationError('Выберите температурный датчик');
+    if (!sensorId) throw new ValidationError('Select a temperature sensor');
     if (!Number.isFinite(hysteresis) || hysteresis < 0 || hysteresis > 10)
-      throw new ValidationError('Гистерезис должен быть от 0 до 10 °C');
+      throw new ValidationError('Hysteresis must be between 0 and 10 °C');
     if (!Number.isInteger(fallback) || fallback < minDuty || fallback > 100)
-      throw new ValidationError('Fallback PWM должен быть целым от {0} до 100%', [minDuty]);
+      throw new ValidationError('Fallback PWM must be an integer from {0} to 100%', [minDuty]);
     if (
       points.some(
         (p) =>
@@ -213,7 +213,7 @@
           p.value > fixedMax,
       )
     )
-      throw new ValidationError('Проверьте диапазоны и целые значения точек кривой');
+      throw new ValidationError('Check the ranges and integer values of curve points');
     if (
       points.length < 2 ||
       points.length > 16 ||
@@ -224,7 +224,7 @@
           (i > 0 && (p.celsius <= points[i - 1].celsius || p.value < points[i - 1].value)),
       )
     )
-      throw new ValidationError('Температуры должны возрастать, мощность не должна снижаться');
+      throw new ValidationError('Temperatures must increase and output must not decrease');
     const shared = { sensor_id: sensorId, hysteresis_c: hysteresis, fallback_percent: fallback };
     return mode === 'curve_rpm'
       ? { mode, ...shared, points: points.map((p) => ({ celsius: p.celsius, rpm: p.value })) }
@@ -261,7 +261,7 @@
       cooling = result;
       if (result[selected].last_error) throw new Error(result[selected].last_error!);
       notice =
-        'Политика принята daemon. Applied PWM показан отдельно; реальные RPM — на странице датчиков.';
+        'The daemon accepted the policy. Applied PWM is shown separately; measured RPM is on the Sensors page.';
     } catch (e) {
       if (started === generation)
         error = e instanceof ValidationError ? e : { context: 'apply', detail: message(e) };
@@ -272,10 +272,10 @@
   }
 </script>
 
-<section aria-label={t('Охлаждение')} bind:this={editor}>
+<section aria-label={t('Cooling')} bind:this={editor}>
   <div class="row">
     <label
-      >{t('Канал')}<select
+      >{t('Channel')}<select
         bind:value={target}
         onchange={() => {
           mode = 'fixed';
@@ -283,18 +283,17 @@
           error = null;
         }}
         disabled={busy}
-        ><option value="pump">{t('Помпа')}</option><option value="fan"
-          >{t('Вентиляторы LCDV2')}</option
+        ><option value="pump">{t('Pump')}</option><option value="fan">{t('LCDV2 fans')}</option
         ></select
       ></label
     >
     <label
-      >{t('Режим')}<select bind:value={mode} onchange={changeMode} disabled={busy}
-        ><option value="fixed">{t('Фиксированный PWM')}</option><option
-          value={target === 'fan' ? 'fan_curve' : 'curve'}>{t('Температурная кривая PWM')}</option
-        >{#if target === 'pump'}<option value="fixed_rpm">{t('Целевые RPM')}</option><option
-            value="curve_rpm">{t('Температурная кривая RPM')}</option
-          ><option value="motherboard">{t('Источник motherboard')}</option>{/if}</select
+      >{t('Mode')}<select bind:value={mode} onchange={changeMode} disabled={busy}
+        ><option value="fixed">{t('Fixed PWM')}</option><option
+          value={target === 'fan' ? 'fan_curve' : 'curve'}>{t('Temperature PWM curve')}</option
+        >{#if target === 'pump'}<option value="fixed_rpm">{t('Target RPM')}</option><option
+            value="curve_rpm">{t('Temperature RPM curve')}</option
+          ><option value="motherboard">{t('Motherboard source')}</option>{/if}</select
       ></label
     >
   </div>
@@ -336,49 +335,48 @@
   {#if loadedMode}<p class="mode-context">
       {matchesStored
         ? t(
-            'Черновик соответствует загруженному режиму. Apply проверит актуальность сохранённого снимка.',
+            'The draft matches the loaded mode. Apply will check that the stored snapshot is still current.',
           )
         : t(
-            'Черновик изменён. Apply применит его как пользовательские настройки; сохранённый режим останется прежним.',
+            'The draft has changed. Apply will use it as custom settings; the stored mode stays unchanged.',
           )}
     </p>{/if}
   <article class="summary">
     <h2>
-      {t('Состояние daemon ·')}
-      {target === 'pump' ? '' + t('помпа') + '' : '' + t('вентиляторы') + ''}
+      {target === 'pump' ? t('Daemon state · pump') : t('Daemon state · fans')}
     </h2>
     <div class="row">
       <strong>Applied: {current?.applied_percent ?? '—'}%</strong><span
         >{current?.motherboard ? 'Motherboard' : 'MCU'}</span
       ><span
         >{current?.fallback_active
-          ? '' + t('Fallback активен') + ''
-          : '' + t('Fallback не активен') + ''}</span
+          ? '' + t('Fallback active') + ''
+          : '' + t('Fallback inactive') + ''}</span
       >
     </div>
     {#if current?.mode_id}<p>
-        {t('Запрошенный режим устройства: {0}', current.mode_id)}
+        {t('Requested device mode: {0}', current.mode_id)}
       </p>{/if}{#if current?.last_error}<p role="alert">
-        {t('Ошибка управления охлаждением: {0}', current.last_error)}
+        {t('Cooling control error: {0}', current.last_error)}
       </p>{/if}<button
       disabled={!current?.requested || busy}
       onclick={() => {
         if (current?.requested) load(current.requested);
-      }}>{t('Загрузить текущую политику')}</button
+      }}>{t('Load current policy')}</button
     >
   </article>
   {#if target === 'fan'}<p>
       {t(
-        'Этот канал управляет вентиляторами, подключёнными к LCDV2. Вентиляторы на материнской плате управляются отдельно.',
+        'This channel controls fans connected to the LCDV2. Motherboard fans are controlled separately.',
       )}
     </p>{/if}
   <label
-    >{t('Источник температуры')}<select bind:value={sensorId}
-      ><option value="">{t('Выберите датчик для кривой / preset')}</option
+    >{t('Temperature source')}<select bind:value={sensorId}
+      ><option value="">{t('Select a sensor for the curve or preset')}</option
       >{#each temperatures as sensor (sensor.id)}<option value={sensor.id}
           >{sensor.label} · {sensor.status}</option
         >{/each}{#if sensorId && !temperatures.some((s) => s.id === sensorId)}<option
-          value={sensorId}>{t('Недоступен:')} {sensorId}</option
+          value={sensorId}>{t('Unavailable:')} {sensorId}</option
         >{/if}</select
     ></label
   >
@@ -389,7 +387,7 @@
       >{/each}
   </div>
   {#if !curve}<label
-      >{rpmMode ? '' + t('Целевые RPM (reference mapping)') + '' : 'PWM, %'}
+      >{rpmMode ? '' + t('Target RPM (reference mapping)') + '' : 'PWM, %'}
       <!-- svelte-ignore a11y_no_redundant_roles (WebKitGTK exposes number as textbox without Value; native AT-SPI regression verifies this workaround.) -->
       <input
         type="number"
@@ -407,7 +405,7 @@
         }}
       /></label
     >{:else}
-    <svg viewBox="-20 -10 330 155" role="img" aria-label={t('Черновик температурной кривой')}
+    <svg viewBox="-20 -10 330 155" role="img" aria-label={t('Temperature curve draft')}
       ><path d="M0 0V120H300" stroke="#677c98" fill="none" /><polyline
         points={graph}
         fill="none"
@@ -419,12 +417,12 @@
           r="4"
           fill="var(--accent-text)"
         />{/each}<text x="120" y="140" fill="var(--text-muted)" font-size="10"
-        >{t('Температура')} {displaySuffix}</text
+        >{t('Temperature')} {displaySuffix}</text
       ></svg
     >
     {#each points as p, i (p)}<div class="row">
         <label
-          >{t('Точка')}
+          >{t('Point')}
           {i + 1}: {displaySuffix}
           <TemperatureInput
             curve
@@ -450,7 +448,7 @@
             aria-invalid={!Number.isInteger(p.value) || p.value < fixedMin || p.value > fixedMax}
           /></label
         ><button
-          aria-label={`Удалить точку ${i + 1}`}
+          aria-label={t('Delete point {0}', i + 1)}
           disabled={points.length <= 2}
           onclick={() => removePoint(i)}>×</button
         >
@@ -460,11 +458,11 @@
       onclick={() => {
         const last = points.at(-1)!;
         points.push({ celsius: last.celsius + 5, value: last.value });
-      }}>{t('Добавить точку')}</button
+      }}>{t('Add point')}</button
     >
     <div class="row">
       <label
-        >{t('Гистерезис,')}
+        >{t('Hysteresis,')}
         {displaySuffix}
         <TemperatureInput bind:value={hysteresis} min={0} max={10} difference /></label
       ><label
@@ -485,13 +483,13 @@
     </div>
   {/if}
   {#if pollError}<p role="alert">
-      {t('Не удалось обновить состояние охлаждения: {0}', pollError)}
+      {t('Could not refresh cooling state: {0}', pollError)}
     </p>{/if}
   {#if error}<p class="error" role="alert">{errorText(error)}</p>{/if}{#if notice}<p role="status">
       {t(notice)}
     </p>{/if}
   <button class="apply" disabled={busy || !device || !connected} onclick={apply}
-    >{t('Применить охлаждение')}</button
+    >{t('Apply cooling')}</button
   >
 </section>
 

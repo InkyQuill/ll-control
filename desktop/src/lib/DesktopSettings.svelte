@@ -45,7 +45,7 @@
     try {
       const value = await invoke<Snapshot | null>('desktop_settings_get');
       if (generation !== epoch || !open) return;
-      if (!valid(value)) throw new ValidationError('Настройки приложения недоступны.');
+      if (!valid(value)) throw new ValidationError('Application settings are unavailable.');
       snapshot = value;
       if (reload || draft === null) {
         draft = { ...value.preferences };
@@ -84,13 +84,15 @@
         preferences: $state.snapshot(draft),
       });
       if (!valid(value))
-        throw new ValidationError('Ответ сохранения не подтверждён. Обновите состояние.');
+        throw new ValidationError(
+          'The save response could not be confirmed. Reload the saved state.',
+        );
       snapshot = value;
       draft = { ...value.preferences };
       base = value.revision;
       notice = value.integrationError
-        ? 'Параметры сохранены. Регистрация автозапуска требует повторной проверки.'
-        : 'Параметры приложения сохранены.';
+        ? 'Preferences saved. Autostart registration needs another check.'
+        : 'Application settings saved.';
     } catch (e) {
       error = e instanceof ValidationError ? e : message(e);
     } finally {
@@ -103,7 +105,7 @@
     error = null;
     try {
       await invoke('desktop_exit');
-      notice = 'Завершаем активные операции перед выходом…';
+      notice = 'Finishing active operations before exit…';
     } catch (e) {
       error = e instanceof ValidationError ? e : message(e);
       busy = false;
@@ -112,48 +114,50 @@
 </script>
 
 <details ontoggle={(event) => (open = event.currentTarget.open)}>
-  <summary>{t('Приложение и автозапуск')}</summary>
+  <summary>{t('Application and autostart')}</summary>
   <p>
     {t(
-      'Эти настройки относятся к окну приложения. Daemon продолжает управлять охлаждением и LCD после выхода из GUI.',
+      'These preferences control the application window. The daemon keeps controlling cooling and the LCD after the GUI exits.',
     )}
   </p>
   {#if snapshot && draft}
     <label
       ><input type="checkbox" bind:checked={draft.closeToTray} disabled={busy} />{t(
-        'Сворачивать в tray при закрытии окна',
+        'Minimize to tray when closing the window',
       )}</label
     >
     <label
       ><input type="checkbox" bind:checked={draft.startMinimized} disabled={busy} />{t(
-        'Запускать приложение свёрнутым',
+        'Start minimized',
       )}</label
     >
     <label
       ><input type="checkbox" bind:checked={draft.autostart} disabled={busy} />{t(
-        'Запускать приложение при входе в систему',
+        'Start the application at login',
       )}</label
     >
     <p role="status">
-      Tray: {snapshot.trayReady ? '' + t('доступен') + '' : '' + t('недоступен') + ''}. {snapshot.trayReady
-        ? '' + t('Команды «Показать» и «Выйти» доступны в меню значка.') + ''
+      Tray: {snapshot.trayReady ? '' + t('available') + '' : '' + t('unavailable') + ''}. {snapshot.trayReady
+        ? '' + t('Show and Exit are available in the tray menu.') + ''
         : '' +
-          t('Окно не останется скрытым. Закрытие завершит GUI с ожиданием активных операций.') +
+          t(
+            'The window will remain accessible. Closing it will finish active operations and exit the GUI.',
+          ) +
           ''}
     </p>
     <p role="status">
-      {t('Регистрация автозапуска:')}
+      {t('Autostart registration:')}
       {snapshot.registration.enabled === null
-        ? '' + t('состояние не подтверждено') + ''
+        ? '' + t('state unconfirmed') + ''
         : snapshot.registration.enabled
-          ? '' + t('включена') + ''
-          : '' + t('выключена') + ''}.
+          ? '' + t('enabled') + ''
+          : '' + t('off') + ''}.
     </p>
     {#if snapshot.trayErrorCode === 'host_unconfirmed'}
-      <p>{t('Регистрация приложения в tray host не подтверждена.')}</p>
+      <p>{t('Tray host registration for this application is unconfirmed.')}</p>
     {:else}
       {#if snapshot.trayErrorCode === 'unavailable'}<p>
-          {t('Не удалось подготовить значок tray.')}
+          {t('Could not set up the tray icon.')}
         </p>{/if}
       {#if snapshot.trayError}<p>{snapshot.trayError}</p>{/if}
     {/if}
@@ -162,20 +166,20 @@
         {snapshot.integrationError}
       </p>{:else if registrationPending}<p role="alert">
         {t(
-          'Сохранённое состояние автозапуска не подтверждено регистрацией. После устранения причины повторите регистрацию.',
+          'The saved autostart preference does not match a confirmed registration. Resolve the issue and retry registration.',
         )}
       </p>{/if}
     {#if stale}<p role="alert">
-        {t('Настройки изменились в другом окне. Обновите значения перед сохранением.')}
+        {t('Settings changed in another window. Reload before saving.')}
       </p>{/if}
     <button disabled={busy || stale} onclick={save}
       >{snapshot.integrationError || registrationPending
-        ? '' + t('Сохранить и повторить регистрацию') + ''
-        : '' + t('Сохранить параметры приложения') + ''}</button
+        ? '' + t('Save and retry registration') + ''
+        : '' + t('Save application settings') + ''}</button
     >
   {/if}
-  <button disabled={busy} onclick={() => read(true)}>{t('Обновить параметры приложения')}</button>
-  <button disabled={busy} onclick={exit}>{t('Выйти из приложения полностью')}</button>
+  <button disabled={busy} onclick={() => read(true)}>{t('Reload application settings')}</button>
+  <button disabled={busy} onclick={exit}>{t('Exit application')}</button>
   {#if notice}<p role="status">{t(notice)}</p>{/if}
   {#if readError}<p role="alert">
       {readError instanceof ValidationError

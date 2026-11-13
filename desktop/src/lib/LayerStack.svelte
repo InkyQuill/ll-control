@@ -39,9 +39,9 @@
   }
 </script>
 
-<section class="stack" aria-label={t('Слои')}>
+<section class="stack" aria-label={t('Layers')}>
   <header hidden={collapsed}>
-    <h2>{t('Слои')}</h2>
+    <h2>{t('Layers')}</h2>
     <span>{layers.length} / 32</span>
   </header>
   <div class="rows" hidden={collapsed}>
@@ -83,10 +83,10 @@
         </button>
         <button
           class="toggle"
-          aria-label={t('Видимость слоя {0}', item.index + 1)}
+          aria-label={t('Layer {0} visibility', item.index + 1)}
           aria-pressed={!item.layer.editor?.hidden}
           onclick={() => onvisibility(item.index)}
-          title={t('Видимость')}
+          title={t('Visibility')}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"
             ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" /><circle
@@ -98,10 +98,10 @@
         </button>
         <button
           class="toggle"
-          aria-label={t('Блокировка слоя {0}', item.index + 1)}
+          aria-label={t('Layer {0} lock', item.index + 1)}
           aria-pressed={!!item.layer.editor?.locked}
           onclick={() => onlock(item.index)}
-          title={t('Блокировка')}
+          title={t('Lock')}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"
             ><rect x="5" y="10" width="14" height="11" rx="2" /><path
@@ -116,20 +116,20 @@
     class="layer-row background-row"
     class:selected={selected === -1}
     aria-pressed={selected === -1}
-    onclick={() => onselect(-1)}>{t('Фон и композиция')}</button
+    onclick={() => onselect(-1)}>{t('Background and composition')}</button
   >
   <footer>
     <button
       disabled={selected < 0 || selected >= layers.length - 1 || isProcedural(layers[selected])}
       onclick={() => onmove(selected, selected + 1)}
-      aria-label={t('На передний план')}
-      title={t('На передний план')}><StudioIcon name="up" /></button
+      aria-label={t('Move forward')}
+      title={t('Move forward')}><StudioIcon name="up" /></button
     >
     <button
       disabled={selected < 0 || selected <= (isProcedural(layers[0]) ? 1 : 0)}
       onclick={() => onmove(selected, selected - 1)}
-      aria-label={t('На задний план')}
-      title={t('На задний план')}><StudioIcon name="down" /></button
+      aria-label={t('Move backward')}
+      title={t('Move backward')}><StudioIcon name="down" /></button
     >
     <button
       disabled={selected < 0 ||
@@ -137,14 +137,14 @@
         layers.length >= 32 ||
         isProcedural(layers[selected])}
       onclick={() => onduplicate(selected)}
-      aria-label={t('Дублировать')}
-      title={t('Дублировать')}><StudioIcon name="copy" /></button
+      aria-label={t('Duplicate')}
+      title={t('Duplicate')}><StudioIcon name="copy" /></button
     >
     <button
       disabled={selected < 0}
       onclick={() => onremove(selected)}
-      aria-label={t('Удалить слой')}
-      title={t('Удалить слой')}><StudioIcon name="trash" /></button
+      aria-label={t('Remove layer')}
+      title={t('Remove layer')}><StudioIcon name="trash" /></button
     >
   </footer>
 </section>

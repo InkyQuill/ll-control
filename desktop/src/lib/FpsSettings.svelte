@@ -48,7 +48,7 @@
       try {
         const saved = await rpc<FpsSourceSettings>('get_fps_source');
         if (cancelled || epoch !== generation || reading !== request) return;
-        if (!valid(saved)) throw new ValidationError('Неподдерживаемый ответ настроек FPS');
+        if (!valid(saved)) throw new ValidationError('Unsupported FPS settings response');
         current = saved;
         fresh = true;
         error = null;
@@ -89,11 +89,11 @@
         saved.enabled !== settings.enabled ||
         saved.log_path !== settings.log_path
       )
-        throw new ValidationError('Неподдерживаемый ответ настроек FPS');
+        throw new ValidationError('Unsupported FPS settings response');
       current = saved;
       draft = { ...saved };
       fresh = true;
-      notice = 'Настройки FPS сохранены.';
+      notice = 'FPS settings saved.';
     } catch (e) {
       if (epoch === generation) {
         fresh = false;
@@ -113,25 +113,23 @@
   }
 </script>
 
-<section aria-label={t('Источник FPS')}>
-  <h2>{t('Источник FPS')}</h2>
+<section aria-label={t('FPS source')}>
+  <h2>{t('FPS source')}</h2>
   <ExperimentalNotice
     feature="fps"
-    message="FPS — среднее значение по кадрам из лога MangoHud, а не проверенный аналог PresentMon. Совместимость с играми не подтверждена; используйте на свой риск."
+    message="FPS is a mean of logged MangoHud frames, not a verified PresentMon equivalent. Game compatibility is unverified; use at your own risk."
   />
   <p>
     {t(
-      'Используйте существующий лог MangoHud с log_interval=0. Включение читает новые кадры из выбранного файла.',
+      'Use an existing MangoHud log with log_interval=0. Enabling reads new frames from the selected file.',
     )}
   </p>
   {#if draft}
     <label
-      ><input type="checkbox" bind:checked={draft.enabled} disabled={busy} />{t(
-        'Читать FPS',
-      )}</label
+      ><input type="checkbox" bind:checked={draft.enabled} disabled={busy} />{t('Read FPS')}</label
     >
     <label
-      >{t('Файл лога MangoHud')}<input
+      >{t('MangoHud log file')}<input
         type="text"
         value={draft.log_path ?? ''}
         oninput={(event) => {
@@ -143,10 +141,10 @@
       /></label
     >
     {#if !validDraft}<p role="alert">
-        {t('Укажите абсолютный путь к логу MangoHud (до 384 байт).')}
+        {t('Enter an absolute MangoHud log path (up to 384 bytes).')}
       </p>{/if}
   {/if}
-  {#if !connected}<p role="status">{t('Подключите daemon для настройки FPS.')}</p>{/if}
+  {#if !connected}<p role="status">{t('Connect the daemon to configure FPS.')}</p>{/if}
   {#if error}<p role={draft ? 'alert' : 'status'}>
       {error instanceof ValidationError ? t(error.resource, ...error.values) : error}
     </p>{/if}
@@ -156,19 +154,16 @@
         : writeError}
     </p>{/if}
   {#if mustReload}<p role="alert">
-      {t(
-        'Сохранение FPS не подтверждено. Загрузите сохранённое состояние перед повторной записью.',
-      )}
+      {t('FPS save is unconfirmed. Load the saved state before writing again.')}
     </p>{/if}
   {#if conflict}<p role="alert">
-      {t('Настройки FPS изменились в другом окне. Загрузите сохранённое состояние.')}
+      {t('FPS settings changed in another window. Load the saved state.')}
     </p>{/if}
   <div class="actions">
-    <button disabled={!fresh || busy || !current} onclick={reload}
-      >{t('Загрузить настройки FPS')}</button
+    <button disabled={!fresh || busy || !current} onclick={reload}>{t('Load FPS settings')}</button
     ><button
       disabled={!connected || !fresh || busy || !validDraft || conflict || mustReload}
-      onclick={save}>{t('Сохранить настройки FPS')}</button
+      onclick={save}>{t('Save FPS settings')}</button
     >
   </div>
   {#if notice}<p role="status">{t(notice)}</p>{/if}

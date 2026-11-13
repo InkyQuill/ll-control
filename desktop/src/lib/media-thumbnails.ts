@@ -46,7 +46,7 @@ async function pump() {
 export function requestThumbnail(key: string, signal: AbortSignal): Promise<number[]> {
   if (signal.aborted) return Promise.reject(cancelled());
   if (queue.length + Number(!!active) >= 32)
-    return Promise.reject(new ValidationError('Очередь миниатюр заполнена. Повторите позже.'));
+    return Promise.reject(new ValidationError('The thumbnail queue is full. Try again later.'));
   return new Promise((resolve, reject) => {
     const job: Job = {
       id: crypto.randomUUID().replaceAll('-', ''),

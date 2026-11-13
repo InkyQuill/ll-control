@@ -45,39 +45,39 @@
   }
 </script>
 
-<section aria-label={t('Сведения о прошивке')} aria-busy={busy}>
-  <h2>{t('Сведения о прошивке')}</h2>
-  <p>{t('Чтение сведений не меняет настройки устройства.')}</p>
-  <p>{t('Устройство:')} <code>{device || '—'}</code></p>
+<section aria-label={t('Firmware information')} aria-busy={busy}>
+  <h2>{t('Firmware information')}</h2>
+  <p>{t('Reading information does not change device settings.')}</p>
+  <p>{t('Device:')} <code>{device || '—'}</code></p>
   <button disabled={!connected || !device} aria-disabled={busy} onclick={read}
-    >{t('Прочитать сведения о прошивке')}</button
+    >{t('Read firmware information')}</button
   >
   {#if !connected || !device}<p role="status">
-      {t('Подключитесь к daemon и выберите доступное устройство.')}
+      {t('Connect to the daemon and select an available device.')}
     </p>
-  {:else if busy}<p role="status">{t('Читаем сведения о прошивке…')}</p>
+  {:else if busy}<p role="status">{t('Reading firmware information…')}</p>
   {:else if failure}<p role="alert">
       {failure === 'invalid'
-        ? t('Daemon вернул неподдерживаемые сведения о прошивке.')
-        : t('Не удалось прочитать сведения о прошивке. Повторите чтение явно.')}
+        ? t('The daemon returned unsupported firmware information.')
+        : t('Could not read firmware information. Retry explicitly.')}
     </p>
-  {:else if !snapshot}<p role="status">{t('Сведения о прошивке ещё не прочитаны.')}</p>
-  {:else}<p role="status">{t('Сведения о прошивке прочитаны.')}</p>{/if}
+  {:else if !snapshot}<p role="status">{t('Firmware information has not been read yet.')}</p>
+  {:else}<p role="status">{t('Firmware information read.')}</p>{/if}
   {#if snapshot}
     <dl>
-      <dt>{t('Версия прошивки')}</dt>
+      <dt>{t('Firmware version')}</dt>
       <dd>{snapshot.version}</dd>
-      <dt>{t('Дата сборки устройства')}</dt>
-      <dd>{snapshot.build_datetime ?? t('Недоступна')}</dd>
+      <dt>{t('Device build date')}</dt>
+      <dd>{snapshot.build_datetime ?? t('Currently unavailable')}</dd>
     </dl>
-    {#if !snapshot.build_datetime}<p>{t('Устройство не сообщило дату сборки.')}</p>{/if}
+    {#if !snapshot.build_datetime}<p>{t('The device did not report a build date.')}</p>{/if}
     <details>
-      <summary>{t('Идентификация устройства')}</summary>
+      <summary>{t('Device identity')}</summary>
       <pre>{snapshot.raw_token}</pre>
     </details>
   {/if}
   {#if diagnostic}<details>
-      <summary>{t('Техническая диагностика')}</summary>
+      <summary>{t('Technical diagnostics')}</summary>
       <pre>{diagnostic}</pre>
     </details>{/if}
 </section>

@@ -38,7 +38,7 @@
   function setError(cause: unknown, context: RecordingFailure['context'] = 'direct') {
     error = { detail: message(cause), context };
   }
-  let name = $state(t('Запись экрана')),
+  let name = $state(t('Screen recording')),
     fit = $state<'contain' | 'cover' | 'stretch'>('contain'),
     clearAsked = $state(false);
   let heading = $state<HTMLHeadingElement>();
@@ -203,17 +203,17 @@
     refreshRevision = 0,
     announced: string | null = null;
   const labels: Record<RecordingStatus['phase'], string> = {
-    reserved: 'Подготовка записи',
-    selecting: 'Выберите экран или окно',
-    setup: 'Выберите область перед записью',
-    recording: 'Идёт запись',
-    paused: 'Запись приостановлена',
-    limit_reached: 'Достигнут лимит 180 секунд',
-    finalizing: 'Завершение записи',
-    ready: 'Запись готова',
-    cancelling: 'Отмена записи',
-    cancelled: 'Запись отменена',
-    failed: 'Запись не завершена',
+    reserved: 'Preparing recording',
+    selecting: 'Select a screen or window',
+    setup: 'Select a region before recording',
+    recording: 'Recording',
+    paused: 'Recording paused',
+    limit_reached: '180-second limit reached',
+    finalizing: 'Finishing recording',
+    ready: 'Recording ready',
+    cancelling: 'Cancelling recording',
+    cancelled: 'Recording cancelled',
+    failed: 'Recording incomplete',
   };
   function recordingError(value: string | null | undefined): string {
     const text = value ?? '';
@@ -221,12 +221,14 @@
       text.startsWith('Recording worker response timed out') ||
       text.startsWith('Recording worker exit timed out')
     )
-      return t('Процесс записи не отвечает. Запись остановлена. Выберите источник заново.');
+      return t(
+        'The recording process is not responding. Recording stopped. Select the source again.',
+      );
     if (
       text.startsWith('Recording worker connection closed') ||
       text.startsWith('Connection reset by peer')
     )
-      return t('Процесс записи завершился. Выберите источник заново.');
+      return t('The recording process exited. Select the source again.');
     if (
       text.startsWith('Invalid recording worker message') ||
       text.startsWith('Invalid recording startup acknowledgement') ||
@@ -235,53 +237,50 @@
       text.startsWith('Invalid recording snapshot reply') ||
       text.startsWith('Invalid recording finish reply')
     )
-      return t('Процесс записи вернул некорректный ответ. Выберите источник заново.');
+      return t('The recording process returned an invalid response. Select the source again.');
     if (
       text.startsWith('ScreenCast session closed while recording') ||
       text.startsWith('PipeWire connection closed while recording')
     )
-      return t('Сеанс захвата экрана закрыт. Выберите источник заново.');
-    if (text === 'Recording cancelled') return t('Запись отменена');
+      return t('The screen capture session closed. Select the source again.');
+    if (text === 'Recording cancelled') return t('Recording cancelled');
     if (text.startsWith('No source frame yet'))
-      return t('Источник ещё не передал кадр. Обновите кадр и повторите попытку.');
+      return t('The source has not supplied a frame yet. Refresh the frame and try again.');
     if (text.startsWith('Capture source ended unexpectedly'))
-      return t('Источник захвата завершил передачу кадров. Выберите источник заново.');
-    if (text.startsWith('Recording time limit reached')) return t('Достигнут лимит 180 секунд');
+      return t('The capture source stopped sending frames. Select the source again.');
+    if (text.startsWith('Recording time limit reached')) return t('180-second limit reached');
     if (text.startsWith('Recording contains no frames'))
-      return t('Запись не содержит кадров. Выберите источник заново.');
+      return t('The recording contains no frames. Select the source again.');
     if (
       text.startsWith('Recording exceeds output size limit') ||
       text.startsWith('Recording exceeds file size limit')
     )
       return t(
-        'Размер записи превышает допустимый лимит. Выберите меньшую область или сократите запись.',
+        'The recording exceeds the size limit. Select a smaller region or make a shorter recording.',
       );
     if (text.startsWith('Pause recording before changing capture region'))
-      return t('Приостановите запись перед изменением области захвата.');
+      return t('Pause recording before changing the capture region.');
     if (text.startsWith('ScreenCast selection timed out'))
-      return t('Истекло время выбора источника. Выберите экран или окно заново.');
+      return t('Source selection timed out. Select the screen or window again.');
     if (text.startsWith('ScreenCast portal rejected request (1)'))
-      return t('Выбор источника отменён.');
+      return t('Source selection was cancelled.');
     if (text.startsWith('PipeWire plugin lacks'))
       return t(
-        'Установленный модуль PipeWire не поддерживает запись экрана. Обновите модуль GStreamer для PipeWire.',
+        'The installed PipeWire plugin does not support screen recording. Update the GStreamer plugin for PipeWire.',
       );
     if (text.startsWith('Start isolated recording worker'))
-      return t('Не удалось запустить процесс записи. Выберите источник заново.');
+      return t('Could not start the recording process. Select the source again.');
     // Unclassified diagnostics are data, even if they equal a resource key.
     return text;
   }
   function failureText(): string {
     if (error?.context === 'return')
       return t(
-        'Не удалось отменить подготовленный вариант: {0}. Повторите возврат к редактированию.',
+        'Could not discard the prepared version: {0}. Try returning to editing again.',
         recordingError(error.detail),
       );
     if (error?.context === 'close')
-      return t(
-        'Не удалось подтвердить завершение: {0}. Повторите закрытие.',
-        recordingError(error.detail),
-      );
+      return t('Could not confirm cleanup: {0}. Try closing again.', recordingError(error.detail));
     return recordingError(error?.detail ?? status?.message);
   }
   async function refresh() {
@@ -494,56 +493,54 @@
 >
   <h3 id={limitTitle}>
     {operationReason === 'limit'
-      ? '' + t('Достигнут лимит записи') + ''
-      : '' + t('Что сделать с записью?') + ''}
+      ? '' + t('Recording limit reached') + ''
+      : '' + t('What would you like to do with the recording?') + ''}
   </h3>
   <p>
-    {operationReason === 'limit' ? '' + t('Записано 180 секунд.') + ' ' : ''}{t(
-      'Запись приостановлена. Можно отредактировать её или подготовить целиком для LCD.',
+    {operationReason === 'limit' ? '' + t('180 seconds recorded.') + ' ' : ''}{t(
+      'Recording is paused. You can edit it or prepare the entire recording for the LCD.',
     )}
   </p>
-  <button disabled={blocked} onclick={() => acceptOperation('edit')}
-    >{t('Редактировать запись')}</button
-  >
+  <button disabled={blocked} onclick={() => acceptOperation('edit')}>{t('Edit recording')}</button>
   <button disabled={blocked} onclick={() => acceptOperation('import')}
-    >{t('Подготовить запись целиком')}</button
+    >{t('Prepare entire recording')}</button
   >
-  <button disabled={closing} onclick={dismissLimit}>{t('Вернуться к записи')}</button>
+  <button disabled={closing} onclick={dismissLimit}>{t('Return to recording')}</button>
 </dialog>
-<section aria-label={t('Запись экрана')}>
-  <h3 bind:this={heading} tabindex="-1">{t('Запись экрана')}</h3>
+<section aria-label={t('Screen recording')}>
+  <h3 bind:this={heading} tabindex="-1">{t('Screen recording')}</h3>
   <p>
     {t(
-      'Выберите экран или окно в системном диалоге. Звук не записывается. Паузы не входят в лимит 180 секунд.',
+      'Select a screen or window in the system dialog. Audio is not recorded. Pauses do not count towards the 180-second limit.',
     )}
   </p>
   <p>
     {t(
-      'До начала записи выберите область или оставьте весь источник. На паузе область можно изменить для следующих кадров.',
+      'Select a region before recording, or use the entire source. While paused, you can change the region for subsequent frames.',
     )}
   </p>
   {#if status}<p role="status">
       {t(labels[status.phase])} · {(status.recordedMillis / 1000).toFixed(1)}
-      {t('с')}
+      {t('s')}
     </p>{/if}
-  {#if !capture}<button disabled={blocked} onclick={start}>{t('Выбрать экран или окно')}</button
+  {#if !capture}<button disabled={blocked} onclick={start}>{t('Select screen or window')}</button
     >{/if}
   {#if status?.phase === 'setup'}<button
       disabled={blocked || regionDirty}
-      onclick={() => control('resume')}>{t('Начать запись экрана')}</button
+      onclick={() => control('resume')}>{t('Start screen recording')}</button
     >{/if}
   {#if status?.phase === 'recording'}<button disabled={blocked} onclick={() => control('pause')}
-      >{t('Приостановить запись')}</button
+      >{t('Pause the recording')}</button
     >{/if}
   {#if status?.phase === 'paused'}<button
       disabled={blocked || regionDirty}
-      onclick={() => control('resume')}>{t('Продолжить запись')}</button
+      onclick={() => control('resume')}>{t('Resume recording')}</button
     >{/if}
   {#if status && ['setup', 'recording', 'paused', 'limit_reached'].includes(status.phase)}
-    <p aria-label={t('Применённая область захвата')}>
-      {t('Область: X')}
-      {(appliedRegion.x * 100).toFixed(1)}%, Y {(appliedRegion.y * 100).toFixed(1)}{t('%, ширина')}
-      {(appliedRegion.width * 100).toFixed(1)}{t('%, высота')}
+    <p aria-label={t('Applied capture region')}>
+      {t('Region: X')}
+      {(appliedRegion.x * 100).toFixed(1)}%, Y {(appliedRegion.y * 100).toFixed(1)}{t('%, width')}
+      {(appliedRegion.width * 100).toFixed(1)}{t('%, height')}
       {(appliedRegion.height * 100).toFixed(1)}%.
     </p>
   {/if}
@@ -563,16 +560,16 @@
     <fieldset disabled={blocked}>
       <legend
         >{status.phase === 'setup'
-          ? '' + t('Область записи') + ''
-          : '' + t('Область следующего интервала') + ''}</legend
+          ? '' + t('Recording region') + ''
+          : '' + t('Region for the next interval') + ''}</legend
       >
       <p>
         {t(
-          'Координаты — в процентах от выбранного экрана или окна. Область растягивается до постоянного размера записи.',
+          'Coordinates are percentages of the selected screen or window. The region is stretched to the fixed recording size.',
         )}
       </p>
       <label
-        >{t('Захват X, %')}<input
+        >{t('Capture X, %')}<input
           type="number"
           min="0"
           max="100"
@@ -581,7 +578,7 @@
         /></label
       >
       <label
-        >{t('Захват Y, %')}<input
+        >{t('Capture Y, %')}<input
           type="number"
           min="0"
           max="100"
@@ -590,7 +587,7 @@
         /></label
       >
       <label
-        >{t('Ширина захвата, %')}<input
+        >{t('Capture width, %')}<input
           type="number"
           min="0.1"
           max="100"
@@ -599,7 +596,7 @@
         /></label
       >
       <label
-        >{t('Высота захвата, %')}<input
+        >{t('Capture height, %')}<input
           type="number"
           min="0.1"
           max="100"
@@ -608,30 +605,28 @@
         /></label
       >
       {#if !requestedRegion}<p role="status">
-          {t('Область должна быть непустой и находиться внутри источника.')}
+          {t('The region must be nonempty and stay within the source.')}
         </p>
       {:else if regionDirty}<p role="status">
-          {t(
-            'Примените область или верните подтверждённые значения перед началом или продолжением записи.',
-          )}
+          {t('Apply the region or restore confirmed values before starting or resuming recording.')}
         </p>{/if}
       <button disabled={!requestedRegion || !regionDirty} onclick={applyRegion}
-        >{t('Применить область захвата')}</button
+        >{t('Apply capture region')}</button
       >
-      <button onclick={() => (captureRegion = fullRegion())}>{t('Весь источник')}</button>
+      <button onclick={() => (captureRegion = fullRegion())}>{t('Entire source')}</button>
       <button disabled={!regionDirty} onclick={useAppliedRegion}
-        >{t('Вернуть применённую область')}</button
+        >{t('Restore applied region')}</button
       >
     </fieldset>
   {/if}
   {#if status && ['recording', 'paused', 'limit_reached'].includes(status.phase)}<button
       bind:this={finishButton}
       disabled={blocked}
-      onclick={offerOperations}>{t('Завершить и просмотреть запись')}</button
+      onclick={offerOperations}>{t('Finish and review recording')}</button
     >{/if}
   {#if sourceUrl && status?.phase === 'ready' && !review}
     <VideoSourcePreview
-      external={{ url: sourceUrl, name: t('Запись экрана') }}
+      external={{ url: sourceUrl, name: t('Screen recording') }}
       disabled={blocked}
       crop={editEnabled ? crop : null}
       {fit}
@@ -646,40 +641,40 @@
         })}
     />
     <fieldset disabled={blocked}>
-      <legend>{t('Редактирование записи')}</legend>
+      <legend>{t('Recording edits')}</legend>
       <label
         ><input type="checkbox" bind:checked={editEnabled} onchange={toggleEdit} />{t(
-          'Обрезать готовую запись',
+          'Trim prepared recording',
         )}</label
       >
       {#if editEnabled}
-        <label for={limitTitle + '-fragment'}>{t('Фрагмент записи')}</label><select
+        <label for={limitTitle + '-fragment'}>{t('Recording segment')}</label><select
           id={limitTitle + '-fragment'}
           bind:value={selectedId}
           >{#each fragments as fragment, index (fragment.id)}<option value={fragment.id}
-              >{t('Фрагмент')} {index + 1}</option
+              >{t('Segment')} {index + 1}</option
             >{/each}</select
         >
         <button disabled={fragments.length >= 64} onclick={addFragment}
-          >{t('Добавить фрагмент записи')}</button
+          >{t('Add recording segment')}</button
         >
         <button disabled={fragments.length <= 1} onclick={removeFragment}
-          >{t('Удалить фрагмент записи')}</button
+          >{t('Delete recording segment')}</button
         >
         <button disabled={selectedId === fragments[0].id} onclick={() => moveFragment(-1)}
-          >{t('Фрагмент раньше')}</button
+          >{t('Move segment earlier')}</button
         >
         <button
           disabled={selectedId === fragments[fragments.length - 1].id}
-          onclick={() => moveFragment(1)}>{t('Фрагмент позже')}</button
+          onclick={() => moveFragment(1)}>{t('Move segment later')}</button
         >
         <p>
-          {t('Фрагменты склеиваются в указанном порядке. Общая длина:')}
+          {t('Segments are joined in this order. Total length:')}
           {Number.isFinite(cutDuration) ? (cutDuration / 1000).toFixed(3) : '—'}
-          {t('с / 180 с.')}
+          {t('s / 180 s.')}
         </p>
         <label
-          >{t('Начало записи, с')}<input
+          >{t('Recording start, s')}<input
             type="number"
             min="0"
             step="0.001"
@@ -687,10 +682,10 @@
           /></label
         >
         <button disabled={position === null} onclick={() => mark('start')}
-          >{t('Начало по текущему кадру')}</button
+          >{t('Set start to current frame')}</button
         >
         <label
-          >{t('Конец записи, с')}<input
+          >{t('Recording end, s')}<input
             type="number"
             min="0"
             step="0.001"
@@ -699,10 +694,10 @@
           /></label
         >
         <button disabled={position === null} onclick={() => mark('end')}
-          >{t('Конец по текущему кадру')}</button
+          >{t('Set end to current frame')}</button
         >
         <label
-          >{t('Область X, %')}<input
+          >{t('Region X, %')}<input
             type="number"
             min="0"
             max="100"
@@ -711,7 +706,7 @@
           /></label
         >
         <label
-          >{t('Область Y, %')}<input
+          >{t('Region Y, %')}<input
             type="number"
             min="0"
             max="100"
@@ -720,7 +715,7 @@
           /></label
         >
         <label
-          >{t('Ширина области, %')}<input
+          >{t('Region width, %')}<input
             type="number"
             min="0.1"
             max="100"
@@ -729,7 +724,7 @@
           /></label
         >
         <label
-          >{t('Высота области, %')}<input
+          >{t('Region height, %')}<input
             type="number"
             min="0.1"
             max="100"
@@ -739,60 +734,60 @@
         >
         {#if !validCut}<p role="status">
             {t(
-              'Проверьте все фрагменты: непустые интервалы внутри записи, области внутри кадра и общая длина не более 180 секунд.',
+              'Check all segments: nonempty intervals within the recording, regions within the frame and total length no greater than 180 seconds.',
             )}
           </p>{/if}
       {/if}
     </fieldset>
     <label
-      >{t('Название записи')}<input bind:value={name} maxlength="100" disabled={blocked} /></label
+      >{t('Recording name')}<input bind:value={name} maxlength="100" disabled={blocked} /></label
     >
-    <label for={limitTitle + '-fit'}>{t('Размещение записи')}</label><select
+    <label for={limitTitle + '-fit'}>{t('Recording placement')}</label><select
       id={limitTitle + '-fit'}
       bind:value={fit}
       disabled={blocked}
-      ><option value="contain">{t('Вписать')}</option><option value="cover"
-        >{t('Заполнить с обрезкой')}</option
-      ><option value="stretch">{t('Растянуть')}</option></select
+      ><option value="contain">{t('Fit')}</option><option value="cover">{t('Fill and crop')}</option
+      ><option value="stretch">{t('Stretch')}</option></select
     >
     <button disabled={blocked || !name.trim() || !validCut} onclick={prepare}
-      >{t('Подготовить запись для LCD')}</button
+      >{t('Prepare recording for LCD')}</button
     >
   {/if}
   {#if review}
     {#if result?.phase === 'review_ready'}
       <PreparedVideoPreview id={review.id} disabled={blocked || returning} />
       <button disabled={blocked || returning} onclick={save}
-        >{t('Сохранить запись в библиотеку')}</button
+        >{t('Save recording to library')}</button
       >
     {:else if result?.phase === 'complete'}<p role="status">
-        {t('Запись сохранена в библиотеке.')}
+        {t('Recording saved to the library.')}
       </p>
     {:else}<p role="status">
         {t(
           result?.message ??
             (result?.phase === 'failed'
-              ? 'Подготовка не завершена.'
+              ? 'Preparation incomplete.'
               : result?.phase === 'cancelled'
-                ? 'Подготовка отменена.'
-                : 'Подготовка или сохранение записи…'),
+                ? 'Preparation cancelled.'
+                : 'Preparing or saving recording…'),
         )}
       </p>{/if}
     {#if canReturnToEdit}<button disabled={blocked} onclick={returnToEdit}
-        >{t('Вернуться к редактированию записи')}</button
+        >{t('Return to recording edits')}</button
       >{/if}
   {/if}
   {#if error || status?.message}<p role="alert">{failureText()}</p>{/if}
   {#if capture && !clearAsked}<button
       disabled={closing || result?.phase === 'publishing'}
-      onclick={() => (clearAsked = true)}>{t('Очистить запись…')}</button
+      onclick={() => (clearAsked = true)}>{t('Clear recording…')}</button
     >{/if}
-  {#if clearAsked}<p>{t('Удалить текущую несохранённую запись?')}</p>
-    <button disabled={closing} onclick={() => close(true)}>{t('Подтвердить очистку записи')}</button
+  {#if clearAsked}<p>{t('Delete the current unsaved recording?')}</p>
+    <button disabled={closing} onclick={() => close(true)}
+      >{t('Confirm clearing the recording')}</button
     ><button disabled={closing || cleanupRequested} onclick={() => (clearAsked = false)}
-      >{t('Сохранить текущую запись')}</button
+      >{t('Keep current recording')}</button
     >{/if}
-  <button disabled={closing} onclick={() => close()}>{t('Закрыть запись экрана')}</button>
+  <button disabled={closing} onclick={() => close()}>{t('Close screen recording')}</button>
 </section>
 
 <style>

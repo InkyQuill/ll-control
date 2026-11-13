@@ -28,13 +28,13 @@ export async function readCollectionMembership(device: string): Promise<ScreenCo
     typeof state.persistence.pending !== 'boolean' ||
     (state.persistence.last_error != null && typeof state.persistence.last_error !== 'string')
   )
-    throw new ValidationError('Не удалось прочитать состав коллекций');
+    throw new ValidationError('Could not read collection membership');
   if (state.persistence.pending) {
     if (state.persistence.last_error)
-      throw new ValidationError('Коллекции ожидают сохранения. {0}', [
+      throw new ValidationError('Collections are awaiting persistence. {0}', [
         state.persistence.last_error,
       ]);
-    throw new ValidationError('Коллекции ожидают сохранения. Повторите чтение.');
+    throw new ValidationError('Collections are awaiting persistence. Read them again.');
   }
   const collections = state.collections;
   if (
@@ -53,7 +53,7 @@ export async function readCollectionMembership(device: string): Promise<ScreenCo
           typeof item.key === 'string',
       ))
   )
-    throw new ValidationError('Не удалось прочитать состав коллекций');
+    throw new ValidationError('Could not read collection membership');
   return state.collections;
 }
 export function imageInCollection(
@@ -100,7 +100,7 @@ export async function addImportedToCollection(
     readback.revision < next.revision ||
     !(kind === 'image' ? readback.images.includes(key) : videoInCollection(readback, key))
   )
-    throw new ValidationError('Добавление требует проверки состава коллекций.');
+    throw new ValidationError('Adding the asset requires checking collection membership.');
 }
 
 /** Snapshot before import so a changed collection cannot be silently overwritten. */
@@ -116,7 +116,7 @@ export async function imageReplacementSnapshot(
   }
   if (!current || !imageInCollection(current, key, context))
     throw new ValidationError(
-      'Изображение больше не входит в выбранную коллекцию. Обновите библиотеку.',
+      'The image is no longer in the selected collection. Refresh the library.',
     );
   return current;
 }
@@ -147,7 +147,7 @@ export async function replaceCollectionImage(
     !imageInCollection(readback, newKey, context) ||
     imageInCollection(readback, oldKey, context)
   )
-    throw new ValidationError('Замена требует проверки состава коллекций.');
+    throw new ValidationError('Replacement requires checking collection membership.');
 }
 
 export async function videoReplacementSnapshot(
@@ -160,7 +160,7 @@ export async function videoReplacementSnapshot(
     current = await readCollectionMembership(device);
   }
   if (!current || !videoInCollection(current, key))
-    throw new ValidationError('Ролик больше не входит в коллекцию. Обновите библиотеку.');
+    throw new ValidationError('The video is no longer in the collection. Refresh the library.');
   return structuredClone(current);
 }
 export async function replaceCollectionVideo(
@@ -188,5 +188,5 @@ export async function replaceCollectionVideo(
     !videoInCollection(readback, newKey) ||
     videoInCollection(readback, oldKey)
   )
-    throw new ValidationError('Замена требует проверки состава коллекций.');
+    throw new ValidationError('Replacement requires checking collection membership.');
 }

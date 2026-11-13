@@ -25,17 +25,17 @@
   let failure = $state.raw<{ owner: Theme; error: ValidationError } | null>(null);
   const error = $derived(failure?.owner === theme ? failure.error : null);
   const backgrounds = $derived({
-    image_video: t('Изображение или видео'),
-    background_color: t('Цвет и градиенты'),
+    image_video: t('Image or video'),
+    background_color: t('Color and gradients'),
   });
   const overlays = $derived({
-    none: t('Без текста'),
-    slider_sensor: t('Один датчик'),
-    duo_sensor: t('Два датчика'),
-    three_sensor: t('Три датчика'),
-    four_sensor: t('Четыре датчика'),
-    time: t('Часы'),
-    custom: t('Свой текст'),
+    none: t('No text'),
+    slider_sensor: t('Single sensor'),
+    duo_sensor: t('Two sensors'),
+    three_sensor: t('Three sensors'),
+    four_sensor: t('Four sensors'),
+    time: t('Clock'),
+    custom: t('Custom text'),
   });
   function create() {
     if (disabled) return;
@@ -49,7 +49,7 @@
         error:
           error instanceof ValidationError
             ? error
-            : new ValidationError('Не удалось создать варианты для этой темы.'),
+            : new ValidationError('Could not create variants for this theme.'),
       };
     }
   }
@@ -67,7 +67,7 @@
           error instanceof ValidationError
             ? error
             : new ValidationError(
-                'Не удалось переключить вариант. Черновик сохранён; загрузите тему заново.',
+                'Could not switch presets. Your draft is preserved; reload the theme.',
               ),
       };
       return false;
@@ -77,16 +77,16 @@
 
 {#if !editor && lcdPageKind(theme) === 'basic'}
   <fieldset class="basic-presets" {disabled}>
-    <legend>{t('Варианты фона и текста')}</legend>
-    <p>{t('Создайте независимые варианты из текущего черновика и настройте каждый отдельно.')}</p>
-    <button type="button" onclick={create}>{t('Создать варианты')}</button>
+    <legend>{t('Background and text presets')}</legend>
+    <p>{t('Create independent variants from the current draft and edit each one separately.')}</p>
+    <button type="button" onclick={create}>{t('Create variants')}</button>
     {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}
   </fieldset>
 {:else if editor && selected}
   <fieldset class="basic-presets" {disabled}>
-    <legend>{t('Варианты фона и текста')}</legend>
+    <legend>{t('Background and text presets')}</legend>
     <label
-      >{t('Вариант фона')}
+      >{t('Background preset')}
       <select
         value={editor.selected_background}
         onchange={(event) => {
@@ -101,7 +101,7 @@
       </select>
     </label>
     <label
-      >{t('Вариант текста')}
+      >{t('Text preset')}
       <select
         value={selected.selected_overlay}
         onchange={(event) => {
@@ -115,9 +115,9 @@
           >{/each}
       </select>
     </label>
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
-        {t('Каждый вариант сохраняет свои правки. Изменения остаются в черновике до применения.')}
+        {t('Each preset keeps its edits. Changes stay in the draft until you apply them.')}
       </p></StudioPopover
     >
     {#if error}<p role="alert">{t(error.resource, ...error.values)}</p>{/if}

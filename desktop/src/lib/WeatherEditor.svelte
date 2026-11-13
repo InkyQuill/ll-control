@@ -177,54 +177,52 @@
 </script>
 
 <fieldset {disabled}>
-  <legend>{t('Анимация LCD')}</legend>
+  <legend>{t('LCD animation')}</legend>
   <ExperimentalNotice
     feature="procedural"
-    message="Процедурные эффекты реализованы, но их внешний вид, тайминг и отказы на LCDV2 проверены не полностью. Используйте на свой риск."
+    message="Procedural effects are implemented, but their appearance, timing, and failure behavior on LCDV2 are not fully verified. Use at your own risk."
   />
   <label
-    >{t('Эффект LCD')}<select
+    >{t('LCD effect')}<select
       value={pageKind === 'basic' ? 'none' : pageKind}
       onchange={(event) => {
         if (select(event.currentTarget.value) === false)
           event.currentTarget.value = pageKind === 'basic' ? 'none' : pageKind;
       }}
     >
-      <option value="none" disabled={!settingsValid}>{t('Без эффекта')}</option>
-      <option value="rain" disabled={!canSelect('rain')}>{t('Rain — дождь')}</option>
-      <option value="snow" disabled={!canSelect('snow')}>{t('Snow — снег')}</option>
-      <option value="snow3d" disabled={!canSelect('snow3d')}>{t('Snow3D — объёмный снег')}</option>
-      <option value="fireworks" disabled={!canSelect('fireworks')}
-        >{t('Fireworks — фейерверк')}</option
-      >
-      <option value="meteor" disabled={!canSelect('meteor')}>{t('MeteorShower — метеоры')}</option>
+      <option value="none" disabled={!settingsValid}>{t('No effect')}</option>
+      <option value="rain" disabled={!canSelect('rain')}>{t('Rain')}</option>
+      <option value="snow" disabled={!canSelect('snow')}>{t('Snow')}</option>
+      <option value="snow3d" disabled={!canSelect('snow3d')}>{t('Snow3D — 3D snow')}</option>
+      <option value="fireworks" disabled={!canSelect('fireworks')}>{t('Fireworks')}</option>
+      <option value="meteor" disabled={!canSelect('meteor')}>{t('MeteorShower — meteors')}</option>
     </select></label
   >
   {#if snow3d}
     <label
-      >{t('Интенсивность Snow3D')}<select bind:value={snow3d.effect.intensity}
+      >{t('Snow3D intensity')}<select bind:value={snow3d.effect.intensity}
         ><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option
         ></select
       ></label
     >
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
         {t(
-          'Интенсивность меняет скорость и плотность объёмного снега. Текст и изображения остаются поверх эффекта.',
+          'Intensity changes the speed and density of 3D snow. Text and images remain above the effect.',
         )}
       </p></StudioPopover
     >
   {/if}
   {#if weather}
-    <StudioPopover label={t('Справка')} icon="help"
+    <StudioPopover label={t('Help')} icon="help"
       ><p>
-        {t('Эффект движется на фоне; текст, часы и изображения остаются поверх него.')}
+        {t('The effect animates in the background; text, clocks and images remain above it.')}
       </p></StudioPopover
     >
     <label
-      >{t('Интенсивность эффекта')}<select bind:value={weather.effect.intensity}
-        ><option value={1}>{t('Низкая')}</option><option value={2}>{t('Средняя')}</option><option
-          value={3}>{t('Высокая')}</option
+      >{t('Effect intensity')}<select bind:value={weather.effect.intensity}
+        ><option value={1}>{t('Low')}</option><option value={2}>{t('Medium')}</option><option
+          value={3}>{t('High')}</option
         ></select
       ></label
     >
@@ -233,39 +231,39 @@
         type="checkbox"
         checked={weather.effect.dynamic}
         onchange={(event) => dynamic(event.currentTarget.checked)}
-      />{t('Управлять эффектом от датчика')}</label
+      />{t('Control effect with a sensor')}</label
     >
     {#if binding || weather.effect.dynamic}
       <fieldset disabled={!weather.effect.dynamic}>
-        <legend>{t('Датчик эффекта')}</legend>
+        <legend>{t('Effect sensor')}</legend>
         <label
-          >{t('Источник эффекта')}<select
+          >{t('Effect source')}<select
             value={binding ? bindingKey(binding) : ''}
             onchange={(event) => {
               if (!chooseSensor(event.currentTarget.value))
                 event.currentTarget.value = binding ? bindingKey(binding) : '';
             }}
           >
-            {#if !binding}<option value="" disabled>{t('Выберите датчик')}</option>{/if}
+            {#if !binding}<option value="" disabled>{t('Select a sensor')}</option>{/if}
             {#each sources as source (sourceKey(source))}<option
                 value={sourceKey(source)}
                 disabled={!canChoose(source)}>{source.label} · {source.unit}</option
               >{/each}
             {#if binding && !sources.some((source) => sourceKey(source) === bindingKey(binding))}<option
                 value={binding ? bindingKey(binding) : ''}
-                >{t('Недоступен:')} {binding.sensor_id}</option
+                >{t('Unavailable:')} {binding.sensor_id}</option
               >{/if}
           </select></label
         >
         {#if binding}
-          <StudioPopover label={t('Справка')} icon="help"
+          <StudioPopover label={t('Help')} icon="help"
             ><p>
-              {t('Единицы порогов:')}
+              {t('Threshold units:')}
               {binding.unit === 'celsius'
                 ? displaySuffix
                 : binding.unit === 'percent'
                   ? '%'
-                  : 'RPM'}{t('. Диапазон:')}
+                  : 'RPM'}{t('. Range:')}
               {binding.unit === 'celsius'
                 ? temperatureFromCelsius(0, displayUnit)
                 : 0}–{binding.unit === 'celsius'
@@ -274,7 +272,7 @@
             </p></StudioPopover
           >
           <label
-            >{t('Нижний порог эффекта')}{#if binding.unit === 'celsius'}<TemperatureInput
+            >{t('Lower effect threshold')}{#if binding.unit === 'celsius'}<TemperatureInput
                 bind:value={binding.low}
                 min={0}
                 max={rangeMax}
@@ -289,7 +287,7 @@
               />{/if}</label
           >
           <label
-            >{t('Верхний порог эффекта')}{#if binding.unit === 'celsius'}<TemperatureInput
+            >{t('Upper effect threshold')}{#if binding.unit === 'celsius'}<TemperatureInput
                 bind:value={binding.high}
                 min={0}
                 max={rangeMax}
@@ -304,31 +302,29 @@
               />{/if}</label
           >
           {#if weather.effect.kind === 'snow' && binding.low === binding.high}<StudioPopover
-              label={t('Справка')}
+              label={t('Help')}
               icon="help"
               ><p>
-                {t(
-                  'При точном совпадении показания с порогом Snow использует минимальную скорость.',
-                )}
+                {t('When the reading exactly matches the threshold, Snow uses its minimum speed.')}
               </p></StudioPopover
             >{/if}
         {/if}
       </fieldset>
       {#if weather.effect.dynamic && !binding}<p role="status">
           {choosingSource
-            ? '' + t('Чтение источника CPU Load…') + ''
+            ? '' + t('Reading the CPU Load source…') + ''
             : sourceError
-              ? t('Источник CPU Load не прочитан: {0}. Выберите датчик вручную.', sourceError)
-              : '' + t('Выберите источник эффекта: CPU Load недоступен или неоднозначен.') + ''}
+              ? t('Could not read the CPU Load source: {0}. Select a sensor manually.', sourceError)
+              : '' + t('Select an effect source: CPU Load is unavailable or ambiguous.') + ''}
         </p>{/if}
       {#if (weather.effect.retained_sensors ?? []).length >= 63}<p role="status">
-          {t('Сохранено 64 диапазона: можно выбирать уже настроенные источники.')}
+          {t('64 ranges are saved: you can select previously configured sources.')}
         </p>{/if}
       {#if weather.effect.dynamic && unavailable}<p role="status">
-          {t('Источник недоступен: используется сохранённая интенсивность.')}
+          {t('The source is unavailable: the saved intensity is used.')}
         </p>{/if}
       {#if !thresholdsValid}<p role="status">
-          {t('Задайте целые пороги; нижний не должен превышать верхний.')}
+          {t('Enter integer thresholds; the lower threshold must not exceed the upper.')}
         </p>{/if}
     {/if}
   {/if}
