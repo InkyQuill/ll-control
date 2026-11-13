@@ -64,7 +64,10 @@ class DistributionTests(unittest.TestCase):
         for broken in (
             rule.replace('TAG+="uaccess"', ""),
             rule.replace('ATTRS{idProduct}=="7395"', 'ATTRS{idProduct}=="0000"'),
-            rule + '  GROUP="plugdev"\n',
+            rule.replace('MODE="0660"', 'MODE="0660", GROUP="plugdev"'),
+            '# ' + rule.replace('\n', '\n# '),
+            rule.replace('TAG+="uaccess", MODE="0660"', 'MODE="0660"')
+            + 'SUBSYSTEM=="hidraw", TAG+="uaccess"\n',
         ):
             with self.subTest(broken=broken), self.assertRaises(ValueError):
                 dist.require_device_ownership(broken)

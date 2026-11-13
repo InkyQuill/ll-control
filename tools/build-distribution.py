@@ -86,8 +86,13 @@ def require_device_ownership(rule):
         'TAG+="uaccess"',
         'MODE="0660"',
     )
-    missing = [token for token in required if token not in rule]
-    if missing or "GROUP=" in rule:
+    # udev continuations form one rule; comments and separate rules cannot
+    # supply matches or assignments to the device rule.
+    active_lines = [line.strip() for line in rule.splitlines()
+                    if line.strip() and not line.lstrip().startswith("#")]
+    logical_rules = "\n".join(active_lines).replace("\\\n", " ").splitlines()
+    if not any(all(token in line for token in required) and "GROUP=" not in line
+               for line in logical_rules):
         raise ValueError(
             "udev rule does not register Galahad II LCDV2 for the active session"
         )
