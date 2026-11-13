@@ -221,3 +221,15 @@ Fixed duty response, RPM-target response and both preset responses were physical
 | Zones and fan sync | Inner and outer were sent; the two visible side tracks could not be mapped to those names. Changing pump lighting alone left fans rainbow. After fan configuration, operator reported that synced fans take the pump setting; sync-on trial marked inconclusive. Sync off allowed independent fan color (static cyan requested). Fan rainbow, meteor and runway marked Works; rainbow morph restarted early. Only 360 / 24 LEDs was configured; physical count and alternative topologies remain unverified. |
 | Thermal override | First two 57°C attempts rejected because fan and pump lighting bases were not both known. After establishing both bases, the 60°C yellow rule was accepted for the CPU rule slot but bound to AMD GPU temp1. Operator saw no change while watching CPU temperature. All 75 subsequent trial samples reported no active thermal source. No recorded threshold crossing on the bound sensor; visible alert and return to base remain open. |
 | Restore | Daemon accepted 80% MCU, cleared thermal rules, and static blue on pump/all and fan (sync off, 360 / 24). Operator noted RGB appeared saved after stop; final colors were not individually identified. Test daemon exited successfully. Previous system owner was inactive. |
+
+### Pump ticker-tape retest
+
+**Passed at 75% and 100% speed** on instrumented build `c3139aa` ([#39](https://github.com/InkyQuill/lconnect-linux/pull/39)), private session `20261113-185847-298433`. The operator confirmed all four configured colors (red, blue, green, yellow) appeared and the speed changed correctly. Pump scope was all LEDs, forward direction, 100% brightness.
+
+| Trial in order | Observation window | Successful cmd 131 writes |
+|---|---:|---:|
+| 75% | 9.7 s | 1 |
+| 100% | 16.2 s | 1 |
+| 75% again | 36.7 s | 1 |
+
+Counted raw HID output attempts beginning 01 83 and their write results from each Apply through the next trial boundary. Each window contained one attempt, completed with 64 bytes written, and zero repeats. Restoring static blue produced its own successful cmd 131 write after the last ticker window. The previous 75% trial had 46 writes in about 89 seconds and restarted partway through the palette. This closes the observed pump ticker-tape restart defect on this unit. The other discontinuous effects in the preceding run still need separate physical retests.
