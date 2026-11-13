@@ -14,7 +14,7 @@ serde_json = { workspace = true }
 thiserror.workspace = true
 async-trait = "0.1"
 futures = "0.3"
-tokio = { workspace = true, features = ["sync", "io-util", "net", "rt"] }
+tokio = { workspace = true, features = ["sync", "io-util", "net", "rt", "time"] }
 tracing.workspace = true
 rustix = { version = "=1.1.6", features = ["fs", "net"] }
 bytes = "1"
