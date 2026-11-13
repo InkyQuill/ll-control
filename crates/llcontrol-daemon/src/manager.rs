@@ -657,8 +657,7 @@ impl DeviceManager {
                 )
                 .map_err(|e| e.to_string())
                 .and_then(|runtime| {
-                    let degrees = if theme.requires_streaming() && !settings.lcd.rotation.is_empty()
-                    {
+                    let degrees = if !settings.lcd.rotation.is_empty() {
                         settings.lcd.rotation.parse().unwrap_or(u16::MAX)
                     } else {
                         0
@@ -681,28 +680,17 @@ impl DeviceManager {
             };
             let (reply, rx) = tokio::sync::oneshot::channel();
             let command = match runtime {
-                Ok(runtime) if runtime.theme().requires_streaming() => {
-                    crate::media_composition::PreparedComposition::prepare(
-                        self.persistence.media_assets(),
-                        runtime,
-                    )
-                    .await
-                    .map(|prepared| crate::actor::LcdCommand::SetComposition {
-                        prepared,
-                        preparation: None,
-                        reply,
-                    })
-                    .map_err(|e| e.to_string())
-                }
-                Ok(runtime) => runtime
-                    .prepare()
-                    .await
-                    .map(|prepared| crate::actor::LcdCommand::SetTheme {
-                        prepared,
-                        preparation: None,
-                        reply,
-                    })
-                    .map_err(|e| e.to_string()),
+                Ok(runtime) => crate::media_composition::PreparedComposition::prepare(
+                    self.persistence.media_assets(),
+                    runtime,
+                )
+                .await
+                .map(|prepared| crate::actor::LcdCommand::SetComposition {
+                    prepared,
+                    preparation: None,
+                    reply,
+                })
+                .map_err(|e| e.to_string()),
                 Err(error) => Err(error),
             };
             let restored = match command {

@@ -30,6 +30,7 @@ pub struct ThemeRuntime {
     temperature_variants: [LcdTheme; 2],
     display_unit: Arc<std::sync::atomic::AtomicBool>,
     assets: ThemeAssets,
+    source_canvas: Option<RgbImage>,
     media_pin: Option<crate::media_assets::MediaPin>,
     fonts: ThemeFonts,
     sensors: Vec<SensorCache>,
@@ -47,6 +48,23 @@ impl std::fmt::Debug for ThemeRuntime {
     }
 }
 impl ThemeRuntime {
+    /// Retain a bounded, decoded still canvas for the H.264 producer.
+    pub fn from_static_jpeg(jpeg: &[u8]) -> Result<Self> {
+        let source = llcontrol_image::assets::decode_asset(jpeg)
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        if source.width() != 480 || source.height() != 480 {
+            return Err(IpcError::InvalidArgument(
+                "static canvas must be 480x480".into(),
+            ));
+        }
+        let theme = serde_json::from_value(serde_json::json!({
+            "version": 1, "name": "Static image", "background": [0, 0, 0], "layers": []
+        }))
+        .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        let mut runtime = Self::new(theme, ThemeAssets::new(), vec![])?;
+        runtime.source_canvas = Some(source.into_rgb8());
+        Ok(runtime)
+    }
     pub fn with_display_unit(mut self, unit: Arc<std::sync::atomic::AtomicBool>) -> Self {
         self.display_unit = unit;
         self
@@ -103,6 +121,7 @@ impl ThemeRuntime {
             display_unit: Arc::default(),
             theme,
             assets,
+            source_canvas: None,
             media_pin: None,
             fonts,
             sensors,
@@ -445,6 +464,7 @@ impl ThemeRuntime {
             minute: now.minute() as u8,
             second: now.second() as u8,
         };
+        let frame = frame.or_else(|| self.source_canvas.clone());
         if continuous {
             return self.render_continuous_theme(theme, &readings, clock, elapsed_millis, frame);
         }

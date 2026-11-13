@@ -2012,7 +2012,7 @@ impl DaemonRpc for IpcServerImpl {
             .await
             .map_err(lcd_closed)?;
         let preparation = Some(rx.await.map_err(lcd_closed)?);
-        let rotation = if theme.requires_streaming() {
+        let rotation = {
             let (reply, state) = oneshot::channel();
             handles
                 .lcd_tx
@@ -2023,8 +2023,6 @@ impl DaemonRpc for IpcServerImpl {
                 state.await.map_err(lcd_closed)?.requested.rotation_degrees,
             )
             .map_err(lcd_closed)?
-        } else {
-            llcontrol_image::FrameRotation::None
         };
         let caches = vec![self.sensors.clone(), handles.sensor_cache];
         let store = self.theme_assets.clone();
@@ -2032,66 +2030,40 @@ impl DaemonRpc for IpcServerImpl {
         let media = self.persistence.media_assets();
         let display_unit = self.persistence.display_settings().live_unit();
         Ok(Box::pin(async move {
-            if theme.requires_streaming() {
-                let preparation_media = media.clone();
-                let (runtime, permit) = join_theme_job(permit, async move {
-                    Self::prepare_theme_oriented(
-                        store,
-                        fonts,
-                        caches,
-                        preparation_media,
-                        theme,
-                        rotation,
-                        display_unit,
-                    )
-                    .await
-                })
-                .await?;
-                let prepared = crate::media_composition::PreparedComposition::prepare_with_permit(
-                    media,
-                    runtime,
-                    Some(permit),
+            let preparation_media = media.clone();
+            let (runtime, permit) = join_theme_job(permit, async move {
+                Self::prepare_theme_oriented(
+                    store,
+                    fonts,
+                    caches,
+                    preparation_media,
+                    theme,
+                    rotation,
+                    display_unit,
                 )
                 .await
-                .map_err(lcd_closed)?;
-                let (reply, rx) = oneshot::channel();
-                handles
-                    .lcd_tx
-                    .send(LcdCommand::SetComposition {
-                        prepared,
-                        preparation,
-                        reply,
-                    })
-                    .await
-                    .map_err(lcd_closed)?;
-                // Accepted worker owns the lease until first-frame commit or
-                // joined rejection/failure, independently of this RPC waiter.
-                return rx.await.map_err(lcd_closed)?;
-            }
-            // If the caller task is cancelled during preparation, the finished runtime is
-            // dropped with its permit. No deferred device command is sent.
-            let (prepared, permit) = join_theme_job(permit, async move {
-                let runtime =
-                    Self::prepare_theme(store, fonts, caches, media.clone(), theme, display_unit)
-                        .await?;
-                runtime.prepare().await
             })
             .await?;
+            let prepared = crate::media_composition::PreparedComposition::prepare_with_permit(
+                media,
+                runtime,
+                Some(permit),
+            )
+            .await
+            .map_err(lcd_closed)?;
             let (reply, rx) = oneshot::channel();
             handles
                 .lcd_tx
-                .send(LcdCommand::SetTheme {
+                .send(LcdCommand::SetComposition {
                     prepared,
                     preparation,
                     reply,
                 })
                 .await
                 .map_err(lcd_closed)?;
-            // Once enqueued, only the LCD owner may finish the accepted mutation.
-            // Keep its slot occupied even if the caller no longer waits for the reply.
-            let (state, _permit) =
-                join_theme_job(permit, async move { rx.await.map_err(lcd_closed)? }).await?;
-            Ok(state)
+            // Accepted worker owns the lease until first-frame commit or
+            // joined rejection/failure, independently of this RPC waiter.
+            rx.await.map_err(lcd_closed)?
         }))
     }
     async fn get_imported_lcd_editor(
