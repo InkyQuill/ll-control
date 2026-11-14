@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run GJS transport fixtures without installing an extension or touching a session."""
-import argparse,json,os,signal,subprocess,tempfile
+import argparse,json,os,signal,shutil,subprocess,tempfile
 from pathlib import Path
 parser=argparse.ArgumentParser();parser.add_argument('package',type=Path);parser.add_argument('--gjs',required=True);args=parser.parse_args()
 package=args.package.resolve()
@@ -17,8 +17,10 @@ assert "|| 'LL-Control Mini';" in extension
 assert 'L-Connect' not in extension
 with tempfile.TemporaryDirectory(prefix='llcontrol-mini-gjs-feed-') as tmp:
  root=Path(tmp);(root/'bin').mkdir()
- env=dict(os.environ,LLCONTROL_MINI_TEST_ROOT=str(root),PATH=str(root/'bin')+':'+os.environ.get('PATH',''),XDG_CONFIG_HOME=str(root/'config'),XDG_DATA_HOME=str(root/'data'),XDG_CACHE_HOME=str(root/'cache'),XDG_RUNTIME_DIR=str(root))
- process=subprocess.Popen([args.gjs,'-m',str(Path(__file__).with_name('feed.test.js')),str(args.package.resolve())],env=env,start_new_session=True)
+ gjs=shutil.which(args.gjs)
+ assert gjs, 'GJS executable missing'
+ env=dict(os.environ,LLCONTROL_MINI_TEST_ROOT=str(root),PATH=str(root/'bin'),XDG_CONFIG_HOME=str(root/'config'),XDG_DATA_HOME=str(root/'data'),XDG_CACHE_HOME=str(root/'cache'),XDG_RUNTIME_DIR=str(root))
+ process=subprocess.Popen([gjs,'-m',str(Path(__file__).with_name('feed.test.js')),str(args.package.resolve())],env=env,start_new_session=True)
  try:code=process.wait(timeout=35)
  finally:
   try:os.killpg(process.pid,signal.SIGTERM)
