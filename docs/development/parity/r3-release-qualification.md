@@ -15,7 +15,7 @@ installed-session or physical observations.
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
 | Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13). [Thermal trigger and recovery on both targets passed](#thermal-recovery-with-both-effects-saved) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity |
-| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart) | Cold boot, sleep/wake and agreed USB reconnect |
+| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart)  and [sleep/wake passed](#installed-package-sleepwake) | Cold boot and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
 ### Completed physical display checks on Galahad II LCDV2
@@ -263,3 +263,7 @@ The operator confirmed the clock advanced, Tctl tracked the motherboard display,
 ### Installed daemon restart
 
 **Passed** on installed package `0.1.0-1` (revision `5c2e354`). After a user-service restart the new daemon was the sole owner of the Galahad II LCDV2 (firmware 1.6). Readback matched the pre-restart settings: LocalUI at 0° and 100% brightness, green breathing fan LEDs, red/blue runway pump LEDs, and 80% pump duty. The post-restart sample was 3,030 RPM. The operator confirmed the LCD and both LED effects looked as before and noticed no jump or spike during the transition.
+
+### Installed package sleep/wake
+
+**Passed** on 2026-11-14 with the saved R3 lifecycle sweep theme. The system journal recorded suspend at 04:59:44 MSK and resume at 05:00:05. The operator saw the animation stop for sleep and resume automatically on wake. Post-wake readback showed the saved theme active, 2,310 frames sent and zero failed frame transactions.
