@@ -2309,6 +2309,7 @@ dependencies = [
  "llcontrol-ipc",
  "llcontrol-media",
  "llcontrol-profile",
+ "llcontrol-protocol",
  "rustix",
  "serde",
  "serde_json",

@@ -30,6 +30,7 @@ gstreamer = "0.21"
 uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
+llcontrol-protocol = { path = "../../crates/protocol" }
 base64 = "0.22.1"
 zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2"] }
 llcontrol-media = { path = "../../crates/llcontrol-media", features = ["test-support"] }

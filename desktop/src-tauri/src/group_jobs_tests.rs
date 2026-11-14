@@ -1,3 +1,5 @@
+#[path = "../../../crates/llcontrol-daemon/tests/support/display_firmware.rs"]
+mod display_firmware;
 use super::*;
 use llcontrol_daemon::{
     config::Config,
@@ -62,9 +64,14 @@ impl Harness {
         mock.add_device(info);
         let stats = Arc::new(Stats::new());
         let cfg = Config::default();
-        let manager = DeviceManager::new(Arc::new(mock), store.clone(), cfg.clone(), stats.clone())
-            .spawn()
-            .await;
+        let manager = DeviceManager::new(
+            Arc::new(display_firmware::FirmwareMock(mock)),
+            store.clone(),
+            cfg.clone(),
+            stats.clone(),
+        )
+        .spawn()
+        .await;
         let dev = tokio::time::timeout(Duration::from_secs(3), async {
             loop {
                 if let Some(d) = manager.list().await.first() {
