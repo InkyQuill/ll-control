@@ -521,6 +521,8 @@ mod ownership_tests {
         let temp = tempfile::tempdir().unwrap();
         let path = socket_path(temp.path());
         let stale = UnixListener::bind(&path).unwrap();
+        // Keep the unlinked inode allocated so the filesystem cannot reuse its number.
+        std::fs::hard_link(&path, temp.path().join("stale.sock")).unwrap();
         let stale_identity = SocketIdentity::of_path(&path).unwrap();
         drop(stale);
 
