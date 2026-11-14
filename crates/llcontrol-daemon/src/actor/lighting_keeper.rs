@@ -178,14 +178,16 @@ pub fn spawn_with_profiles(
                             let result=if GroupBarrier::owns(&mut group_barrier,&barrier) && prepared_group.as_ref().is_some_and(|(ticket,_)|ticket.matches(&barrier)) {
                                 let (ticket,prepared)=prepared_group.take().expect("checked lighting preparation");
                                 revision.advance();
+                                let previous_pump = pump.as_ref().and_then(Output::pump_state);
                                 fan_topology=prepared.topology;fan=prepared.fan;pump=prepared.pump;profiles=prepared.profiles;thermal=prepared.thermal;
+                                thermal.retained_pump = pump.as_ref().and_then(Output::pump_state).or(previous_pump).or(thermal.retained_pump);
                                 installed_group=Some(ticket);Ok(())
                             } else {Err(GroupBarrier::busy())};
                             let _=reply.send(result);
                         }
                         LightingStateMsg::ApplyGroup {barrier,reply} => {
                             let result=if GroupBarrier::owns(&mut group_barrier,&barrier) && installed_group.as_ref().is_some_and(|ticket|ticket.matches(&barrier)) {
-                                thermal.refresh(&hid_io_tx,&fan,&pump,&shutdown,true).await;
+                                thermal.refresh(&hid_io_tx,&fan,&pump,&fan_topology,&shutdown,true).await;
                                 Ok(super::LightingRuntimeState {thermal:thermal.snapshot(),dynamic:thermal.dynamic_snapshot(&pump)})
                             } else {Err(GroupBarrier::busy())};
                             let _=reply.send(result);
@@ -215,7 +217,7 @@ pub fn spawn_with_profiles(
                                     };
                                     if let Err(e)=retained {let _=reply.send(Err(e));continue;}
                                     thermal.dynamic = llcontrol_ipc::DynamicRgbState { requested: config.clone(),profiles, ..Default::default() };
-                                    thermal.refresh(&hid_io_tx, &fan, &pump, &shutdown, true).await;
+                                    thermal.refresh(&hid_io_tx, &fan, &pump, &fan_topology, &shutdown, true).await;
                                     settings.send(SettingsUpdate::DynamicRgbSnapshot {config,profiles:thermal.dynamic.profiles.clone()}).await
                                         .map_err(|_| IpcError::DeviceBusy("settings actor closed after dynamic RGB update".into()))
                                         .map(|()| thermal.dynamic_snapshot(&pump))
@@ -225,14 +227,14 @@ pub fn spawn_with_profiles(
                         }
                         LightingStateMsg::ThermalState(reply) => { let _ = reply.send(thermal.snapshot()); }
                         LightingStateMsg::SetThermal { config, reply } => {
-                            let validation = thermal.validate(&config, &fan, &pump, true);
+                            let validation = thermal.validate(&config, true);
                             let result = match validation {
                                 Err(e) => Err(e),
                                 Ok(()) => {
                                     thermal.evaluator.reconfigure(&thermal.state.requested, &config);
                                     thermal.state.requested = config.clone();
                                     thermal.grace = None;
-                                    thermal.refresh(&hid_io_tx, &fan, &pump, &shutdown, true).await;
+                                    thermal.refresh(&hid_io_tx, &fan, &pump, &fan_topology, &shutdown, true).await;
                                     settings.send(SettingsUpdate::Thermal(config)).await
                                         .map_err(|_| IpcError::DeviceBusy("settings actor closed after thermal update".into()))
                                         .map(|()| thermal.snapshot())
@@ -245,7 +247,7 @@ pub fn spawn_with_profiles(
                                 Err(IpcError::InvalidArgument("disable thermal/dynamic policies and restore base before clearing lighting".into()))
                             } else { match kind {
                                 LightingKind::Fan => { fan = None; thermal.state.fan = Default::default(); Ok(()) },
-                                LightingKind::Pump => { pump = None; thermal.state.pump = Default::default(); Ok(()) },
+                                LightingKind::Pump => { thermal.retained_pump = pump.as_ref().and_then(Output::pump_state).or(thermal.retained_pump); pump = None; thermal.state.pump = Default::default(); Ok(()) },
                                 _ => Err(IpcError::InvalidArgument("unsupported lighting kind".into())),
                             }};
                             let _ = reply.send(result);
@@ -287,7 +289,7 @@ pub fn spawn_with_profiles(
                                     }
                                     // Restore both zones first, including an old pump scope,
                                     // before allowing a manual mode to replace its base.
-                                    let restore = thermal.restore_overlay(&hid_io_tx, &fan, &pump, &shutdown).await;
+                                    let restore = thermal.restore_overlay(&hid_io_tx, &fan, &pump, &fan_topology, &shutdown).await;
                                     let write_result = match restore {
                                         Ok(()) => {
                                             let old = if output.kind() == LightingKind::Fan { &fan } else { &pump };
@@ -337,7 +339,7 @@ pub fn spawn_with_profiles(
                                                 None => Ok(()),
                                             };
                                             if restore_dynamic {
-                                                thermal.refresh(&hid_io_tx, &fan, &pump, &shutdown, true).await;
+                                                thermal.refresh(&hid_io_tx, &fan, &pump, &fan_topology, &shutdown, true).await;
                                             }
                                             persisted.and_then(|()| if restore_dynamic {
                                                 match &thermal.dynamic.last_error {Some(e)=>Err(IpcError::DeviceBusy(e.clone())),None=>Ok(())}
@@ -353,7 +355,7 @@ pub fn spawn_with_profiles(
                 },
                 _ = tokio::time::sleep_until(next_tick) => {
                     if !GroupBarrier::held(&mut group_barrier) {
-                        thermal.refresh(&hid_io_tx, &fan, &pump, &shutdown, false).await;
+                        thermal.refresh(&hid_io_tx, &fan, &pump, &fan_topology, &shutdown, false).await;
                     }
                     next_tick = tokio::time::Instant::now() + tick_period;
                     command_turn = true;
@@ -426,17 +428,13 @@ impl PreparedLightingGroup {
         // Global warnings retain history even when samples disappear during
         // transfer. Replacing bases must not reset an active thermal warning.
         thermal.evaluator = current.evaluator.clone();
+        thermal.retained_pump = current.retained_pump.clone();
+        thermal.retained_alert = current.retained_alert;
+        thermal.overlay_pending = current.overlay_pending;
         thermal.grace = current.grace;
         thermal.state.active_source = current.state.active_source;
         thermal.state.degraded_sources = current.state.degraded_sources.clone();
-        if (current.overlay_pending[0] && fan.is_none())
-            || (current.overlay_pending[1] && pump.is_none())
-        {
-            return Err(IpcError::InvalidArgument(
-                "restore retained thermal overlay before removing its lighting base".into(),
-            ));
-        }
-        thermal.validate(&thermal.state.requested, &fan, &pump, false)?;
+        thermal.validate(&thermal.state.requested, false)?;
         thermal.validate_dynamic(thermal.dynamic.requested.as_ref(), &pump, false)?;
         Ok(Self {
             topology,
@@ -458,6 +456,8 @@ struct ThermalRuntime {
     cadence: Duration,
     last_refresh: Option<tokio::time::Instant>,
     overlay_pending: [bool; 2],
+    retained_pump: Option<PumpLightingState>,
+    retained_alert: [Option<llcontrol_ipc::Rgb>; 2],
 }
 impl ThermalRuntime {
     fn new(inputs: ThermalInputs, cadence: Duration) -> Self {
@@ -478,6 +478,8 @@ impl ThermalRuntime {
             cadence,
             last_refresh: None,
             overlay_pending: [false; 2],
+            retained_pump: None,
+            retained_alert: [None; 2],
         }
     }
     fn snapshot(&self) -> ThermalState {
@@ -494,21 +496,10 @@ impl ThermalRuntime {
         rows.extend(self.device.readings());
         rows
     }
-    fn validate(
-        &self,
-        config: &ThermalConfig,
-        fan: &Option<Output>,
-        pump: &Option<Output>,
-        require_known: bool,
-    ) -> Result<()> {
+    fn validate(&self, config: &ThermalConfig, require_known: bool) -> Result<()> {
         config.validate()?;
         if !config.enabled() {
             return Ok(());
-        }
-        if fan.is_none() || pump.is_none() {
-            return Err(IpcError::InvalidArgument(
-                "thermal alerts require known fan and pump lighting bases".into(),
-            ));
         }
         let rows = self.rows();
         for rule in [&config.cpu, &config.gpu].into_iter().flatten() {
@@ -627,8 +618,9 @@ impl ThermalRuntime {
         layer: ThermalLayer,
     ) -> Result<()> {
         let index = Self::zone_index(base.kind());
-        if matches!(layer, ThermalLayer::Alert { .. }) {
+        if let ThermalLayer::Alert { color } = layer {
             self.overlay_pending[index] = true;
+            self.retained_alert[index] = Some(color);
         }
         let prepared = base
             .prepare_direct(hid, self.zone(base.kind()).applied.is_none())
@@ -667,14 +659,55 @@ impl ThermalRuntime {
         }
         result
     }
+    fn fallbacks(&self, topology: &llcontrol_ipc::FanLightingTopology) -> [Output; 2] {
+        [
+            Output::Fan(LightingState {
+                fan_topology: Some(topology.clone()),
+                ..Default::default()
+            }),
+            Output::Pump(
+                self.retained_pump
+                    .clone()
+                    .unwrap_or_else(|| PumpLightingState {
+                        scope: "inner".into(),
+                        ..Default::default()
+                    }),
+            ),
+        ]
+    }
+    async fn replay_retained_alert(
+        &mut self,
+        hid: &mpsc::Sender<HidCommand>,
+        fallback: &Output,
+        index: usize,
+    ) -> Result<()> {
+        if let Some(color) = self.retained_alert[index] {
+            self.apply(hid, fallback, ThermalLayer::Alert { color })
+                .await?;
+        }
+        self.overlay_pending[index] = false;
+        Ok(())
+    }
     async fn restore_overlay(
         &mut self,
         hid: &mpsc::Sender<HidCommand>,
         fan: &Option<Output>,
         pump: &Option<Output>,
+        fan_topology: &llcontrol_ipc::FanLightingTopology,
         shutdown: &Shutdown,
     ) -> Result<()> {
-        for base in [fan, pump].into_iter().flatten() {
+        let fallbacks = self.fallbacks(fan_topology);
+        for (index, base) in [fan, pump].into_iter().enumerate() {
+            let Some(base) = base else {
+                if self.overlay_pending[index] {
+                    if *shutdown.borrow() || shutdown.has_changed().is_err() {
+                        return Err(IpcError::DeviceBusy("lighting shutting down".into()));
+                    }
+                    self.replay_retained_alert(hid, &fallbacks[index], index)
+                        .await?;
+                }
+                continue;
+            };
             if self.overlay_pending[Self::zone_index(base.kind())] {
                 if *shutdown.borrow() || shutdown.has_changed().is_err() {
                     return Err(IpcError::DeviceBusy("lighting shutting down".into()));
@@ -689,6 +722,7 @@ impl ThermalRuntime {
         hid: &mpsc::Sender<HidCommand>,
         fan: &Option<Output>,
         pump: &Option<Output>,
+        fan_topology: &llcontrol_ipc::FanLightingTopology,
         shutdown: &Shutdown,
         force: bool,
     ) {
@@ -707,7 +741,7 @@ impl ThermalRuntime {
             self.dynamic.applied = None;
         }
         self.state.blocked_reason = self
-            .validate(&self.state.requested, fan, pump, false)
+            .validate(&self.state.requested, false)
             .err()
             .map(|e| e.to_string());
         let active = if self.state.blocked_reason.is_none() {
@@ -727,18 +761,37 @@ impl ThermalRuntime {
             || self
                 .last_refresh
                 .is_none_or(|t| t.elapsed() >= self.cadence);
-        for base in [fan, pump].into_iter().flatten() {
+        let fallbacks = self.fallbacks(fan_topology);
+        for (index, (base, fallback)) in [(fan, &fallbacks[0]), (pump, &fallbacks[1])]
+            .into_iter()
+            .enumerate()
+        {
             if *shutdown.borrow() || shutdown.has_changed().is_err() {
-                let zone = self.zone(base.kind());
+                let zone = self.zone(fallback.kind());
                 zone.last_error = Some("lighting shutdown interrupted application".into());
                 continue;
             }
+            let base = match base.as_ref() {
+                Some(base) => base,
+                None if matches!(layer, ThermalLayer::Alert { .. }) => fallback,
+                None => {
+                    if self.overlay_pending[index] {
+                        if let Err(e) = self.replay_retained_alert(hid, fallback, index).await {
+                            warn!("thermal retained lighting replay failed: {e}");
+                        }
+                    }
+                    continue;
+                }
+            };
             let dynamic_due = base.kind() == LightingKind::Pump && self.dynamic.requested.is_some();
+            let entering_alert =
+                matches!(layer, ThermalLayer::Alert { .. }) && !self.overlay_pending[index];
             let zone = self.zone(base.kind());
             // Firmware runs manual effects autonomously. Rewriting cmd 131/133
             // on the refresh timer can restart the device's animation phase.
             let direct_due = due && matches!(base, Output::Direct { .. });
             if force
+                || entering_alert
                 || direct_due
                 || dynamic_due
                 || zone.applied.as_ref() != Some(&layer)
@@ -768,6 +821,12 @@ enum Output {
     },
 }
 impl Output {
+    fn pump_state(&self) -> Option<PumpLightingState> {
+        match self {
+            Self::Pump(state) => Some(state.clone()),
+            _ => None,
+        }
+    }
     fn base_config(&self) -> Option<llcontrol_ipc::LightingConfig> {
         let (mode, color, additional, brightness, speed, direction, scope, disabled) = match self {
             Self::Fan(s) => (
