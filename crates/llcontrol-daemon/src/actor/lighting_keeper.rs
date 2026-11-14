@@ -766,6 +766,11 @@ impl ThermalRuntime {
             .into_iter()
             .enumerate()
         {
+            if *shutdown.borrow() || shutdown.has_changed().is_err() {
+                let zone = self.zone(fallback.kind());
+                zone.last_error = Some("lighting shutdown interrupted application".into());
+                continue;
+            }
             let base = match base.as_ref() {
                 Some(base) => base,
                 None if matches!(layer, ThermalLayer::Alert { .. }) => fallback,
@@ -778,11 +783,6 @@ impl ThermalRuntime {
                     continue;
                 }
             };
-            if *shutdown.borrow() || shutdown.has_changed().is_err() {
-                let zone = self.zone(base.kind());
-                zone.last_error = Some("lighting shutdown interrupted application".into());
-                continue;
-            }
             let dynamic_due = base.kind() == LightingKind::Pump && self.dynamic.requested.is_some();
             let entering_alert =
                 matches!(layer, ThermalLayer::Alert { .. }) && !self.overlay_pending[index];

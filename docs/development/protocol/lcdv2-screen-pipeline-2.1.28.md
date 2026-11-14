@@ -206,8 +206,9 @@ References below use the 2.1.28.0 decompilation identified at the top of this do
 | Display the frame | Service `Galahad2VisionController.cs:212,1037–1043,1077–1085,1253–1281` uses a 480×480, 24 fps encoder. Core `Galahad2VisionDevice.cs:168–172,221–225` sends cmd 13; firmware ≥1.5 selects C/512. Cmd 14 exists in the product enum, but no cmd 14 call was identified in this product's ordinary still-image display path. |
 | Change brightness | Service `Galahad2VisionController.cs:793–810` sends LCDSetting with brightness and 24 FPS. Core `LCDControlSetting.cs:7–17` defaults hardware rotation to zero. Core `Galahad2VisionDevice.cs:162–166` writes cmd 12 and reads a response. No Application-mode switch was identified in the normal stream startup sequence. |
 
-Linux `actor/lcd_keeper.rs` (SetImage, config, send_frame) sends static JPEGs
-with cmd 14 and passes requested rotation to cmd 12 for this source. Normal
+The current Linux SetImage path streams host-rotated H.264 with cmd 13.
+The historical bench build sent static JPEGs
+with cmd 14 and passed requested rotation to cmd 12 for this source. Normal
 refresh bursts in the bench trace were 15 seconds apart. Cmd 12 echoes matched
 the requested angles while the chart stayed upright. The last instrumented
 transaction cannot establish what the separately installed daemon sent later.

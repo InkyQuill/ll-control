@@ -216,7 +216,12 @@ fn spawn_inner(
                     reply,
                     ..
                 } => {
-                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let cleanup = prepared
+                        .worker
+                        .stop()
+                        .await
+                        .inspect_err(|error| display.record_cleanup_error(error))
+                        .map_err(busy);
                     let _ = reply.send(cleanup.and(Err(busy("LCD actor shutting down"))));
                 }
                 LcdCommand::ReapplyScreenReset {
@@ -224,7 +229,12 @@ fn spawn_inner(
                     reply,
                     ..
                 } => {
-                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let cleanup = prepared
+                        .worker
+                        .stop()
+                        .await
+                        .inspect_err(|error| display.record_cleanup_error(error))
+                        .map_err(busy);
                     let _ = reply.send(cleanup.and(Err(busy("LCD actor shutting down"))));
                 }
                 LcdCommand::CommitScreenGroup {
@@ -938,6 +948,11 @@ impl Display {
                     return Err(error);
                 }
             };
+            self.stats = LcdPlaybackStats {
+                generation: self.state.generation,
+                ..Default::default()
+            };
+            self.started = Some(Instant::now());
             self.state.applied = Some(applied);
             self.source = Source::Composition {
                 worker: composition.worker,
