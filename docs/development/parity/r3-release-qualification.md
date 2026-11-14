@@ -45,7 +45,7 @@ qualification ledger belongs to development documentation.
 
 ## GitHub publication
 
-[Repository](https://github.com/InkyQuill/lconnect-linux) is private. At Pavel's
+[Repository](https://github.com/InkyQuill/lconnect-linux) was private during R3 qualification. At Pavel's
 request, publication used a separate filtered copy: 421 historical evidence paths
 were removed, while all 195 master commits and the current source tree were
 preserved. Local history was not rewritten. Legacy implementation sources were

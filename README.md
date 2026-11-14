@@ -1,5 +1,7 @@
 # LL-Control
 
+[![Linux checks](https://github.com/InkyQuill/ll-control/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/InkyQuill/ll-control/actions/workflows/linux.yml)
+
 ![LL-Control icon](assets/icon.png)
 
 **ll-control** (UI: **LL-Control**) is an independent Rust application for Lian Li
