@@ -628,7 +628,15 @@
             const signature = JSON.stringify([
               layer,
               dynamic ? Math.floor(Date.now() / 1000) : 0,
-              dynamic ? sensors : [],
+              layer.kind === 'sensor' || layer.kind === 'sensor_cycle'
+                ? sensors
+                    .filter((sensor) =>
+                      layer.kind === 'sensor'
+                        ? sensor.id === layer.sensor_id
+                        : layer.sensors.some((source) => source.sensor_id === sensor.id),
+                    )
+                    .map(({ id, status, value, unit }) => [id, status, value, unit])
+                : [],
               presentation.settings?.temperature_unit,
             ]);
             let raster = rasterCache.get(signature);

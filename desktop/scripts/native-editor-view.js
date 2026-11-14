@@ -81,7 +81,7 @@
         if (performance.now() - time > 5000) throw new Error('label pixel timeout');
         await new Promise(requestAnimationFrame);
       }
-      await pixel().decode();
+      // The URL change was observed at a frame boundary. Sample on the next frame.
       await new Promise(requestAnimationFrame);
       samples.property.push(performance.now() - time);
       await wait(
