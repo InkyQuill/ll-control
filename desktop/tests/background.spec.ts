@@ -66,7 +66,7 @@ test('gradient settings survive mode changes and explicit save/load without appl
     );
   expect(await writes()).toHaveLength(0);
   await page.getByRole('button', { name: 'Применить к LCD', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Тема отправлена');
+  await expect(page.getByRole('status').filter({ hasText: 'Тема отправлена' })).toBeVisible();
   expect((await writes())[0].params.theme).toMatchObject({
     background: [18, 52, 86],
     background_fill: {
