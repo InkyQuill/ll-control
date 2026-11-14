@@ -15,7 +15,7 @@ installed-session or physical observations.
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
 | Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13). [Thermal trigger and recovery on both targets passed](#thermal-recovery-with-both-effects-saved) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity |
-| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart)  and [sleep/wake passed](#installed-package-sleepwake)  and [reboot recovery passed](#installed-package-reboot)  and [cold boot passed](#installed-package-cold-boot) | Agreed USB reconnect |
+| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart)  and [sleep/wake passed](#installed-package-sleepwake)  and [reboot recovery passed](#installed-package-reboot)  and [cold boot passed](#installed-package-cold-boot); [software USB reconnect passed](#software-usb-reconnect) | Complete for the agreed lifecycle scenarios |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
 ### Completed physical display checks on Galahad II LCDV2
@@ -275,3 +275,9 @@ The operator confirmed the clock advanced, Tctl tracked the motherboard display,
 ### Installed package cold boot
 
 **Passed after full shutdown and power-on** on 2026-11-14. The operator saw the LCD clock stop at 05:14:37 MSK and resume at the login screen at 05:16:05, 88 seconds later. The boot ID changed and the installed user service started at 05:15:54, about 11 seconds before visible recovery. Readback confirmed the saved R3 lifecycle sweep theme active, 2,611 frames sent, zero failed frame transactions and 3,030 pump RPM. The daemon reported fan breathing and pump runway. The physical observation for this run was the LCD clock.
+
+### Software USB reconnect
+
+**Passed** on 2026-11-14 with the installed service streaming the R3 lifecycle sweep. Linux deauthorized only the cooler’s USB interfaces for five seconds, with the motherboard cable in place. The cooler disappeared from the daemon’s device list and reappeared at 05:19:48 MSK. The same daemon process resumed the saved theme and lighting. About eight seconds into playback it reported 184 frames sent, zero failed frame transactions, both lighting bases applied and 3,030 pump RPM at 80% duty.
+
+The operator saw the display and RGB go black for a couple of seconds and return automatically, without an intervening LocalUI logo. The physical cable remained connected throughout.
