@@ -533,11 +533,21 @@ async fn thermal_rpc_configures_restores_and_persists_only_base_and_rules() {
     let h = make_harness_with_sensors(false, cache).await;
     let dev = "galahad2-lcdv2:0001";
     let config = json!({"cpu":{"sensor_id":"cpu:test","threshold_c":70,"color":{"r":255,"g":0,"b":0}},"gpu":null});
-    assert!(h
-        .client
-        .call("set_thermal_config", json!({"dev":dev,"config":config}))
-        .await
-        .is_err());
+    let initial: ThermalState = serde_json::from_value(
+        h.client
+            .call("set_thermal_config", json!({"dev":dev,"config":config}))
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert!(matches!(
+        initial.fan.applied,
+        Some(ThermalLayer::Alert { .. })
+    ));
+    assert!(matches!(
+        initial.pump.applied,
+        Some(ThermalLayer::Alert { .. })
+    ));
     for kind in ["fan", "pump"] {
         h.client.call("set_lighting",json!({"dev":dev,"kind":kind,"cfg":{"mode":"static","color":{"r":1,"g":2,"b":3},"brightness_percent":50,"speed_percent":50,"direction":"forward","scope":"outer","disabled":false}})).await.unwrap();
     }
