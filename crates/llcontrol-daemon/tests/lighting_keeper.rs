@@ -1,7 +1,7 @@
 //! Integration test for the `lighting_keeper` actor.
 //!
 //! Wires a real `hid_io::spawn` over a `MockBackend`, then asserts that
-//! the keeper emits cmd-133 / cmd-131 writes at the configured cadence
+//! the keeper applies autonomous fan and pump modes exactly once
 //! and that state replacement / clearing behave as documented.
 
 use llcontrol_daemon::actor::{hid_io, lighting_keeper, LightingStateMsg};
@@ -46,7 +46,7 @@ fn fan_state() -> LightingState {
 fn pump_state() -> PumpLightingState {
     PumpLightingState {
         scope: "inner".into(),
-        mode: "rainbow".into(),
+        mode: "ticker_tape".into(),
         brightness: 3,
         speed: 1,
         direction: "forward".into(),
@@ -64,7 +64,7 @@ fn count_writes_for_cmd(history: &[Vec<u8>], cmd: u8) -> usize {
 }
 
 #[tokio::test]
-async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
+async fn keeper_applies_saved_fan_and_manual_ticker_tape_once_across_refresh_ticks() {
     let mock = MockBackend::new();
     mock.add_device(lcdv2_info());
     let backend: Arc<dyn HidBackend> = Arc::new(mock.clone());
@@ -93,17 +93,15 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
         sd_rx.clone(),
     );
 
-    // Wait long enough for the periodic interval to fire several times.
-    // tokio::time::interval's first tick fires immediately, but with
-    // MissedTickBehavior::Delay still ticks at the configured cadence.
+    // Allow several keeper ticks after initial replay.
     tokio::time::sleep(Duration::from_millis(180)).await;
 
-    // Fan re-issues should already be visible.
+    // Startup replays the saved fan configuration once.
     let history_after_fan = mock.write_history(&lcdv2_info());
     let fan_writes = count_writes_for_cmd(&history_after_fan, CMD_SET_FAN_LIGHTING);
     assert!(
-        fan_writes >= 1,
-        "expected >=1 SetFanLighting (cmd 133) write, history={:?}",
+        fan_writes == 1,
+        "expected one SetFanLighting (cmd 133) write, history={:?}",
         history_after_fan
             .iter()
             .map(|w| (w.first().copied(), w.get(1).copied()))
@@ -116,7 +114,7 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
         history_after_fan
     );
 
-    // Replace pump state -> next tick should also emit a cmd-131 write.
+    // A manual pump Apply sends cmd 131 immediately.
     let (reply, done) = oneshot::channel();
     state_tx
         .send(LightingStateMsg::SetPump {
@@ -132,8 +130,8 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
     let history_after_pump = mock.write_history(&lcdv2_info());
     let pump_writes = count_writes_for_cmd(&history_after_pump, CMD_SET_PUMP_LIGHTING);
     assert!(
-        pump_writes >= 1,
-        "expected >=1 SetPumpLighting (cmd 131) write after SetPump, history={:?}",
+        pump_writes == 1,
+        "expected one SetPumpLighting (cmd 131) write after SetPump, history={:?}",
         history_after_pump
     );
 
@@ -161,12 +159,12 @@ async fn keeper_reissues_fan_then_pump_and_stops_after_clear() {
         baseline, after
     );
 
-    // Pump must still be re-issuing.
+    // Clearing the fan must not restart the pump animation.
     let pump_after =
         count_writes_for_cmd(&mock.write_history(&lcdv2_info()), CMD_SET_PUMP_LIGHTING);
     assert!(
-        pump_after > pump_writes,
-        "pump writes did not advance after Clear(Fan): before={}, after={}",
+        pump_after == pump_writes,
+        "pump writes advanced after Clear(Fan): before={}, after={}",
         pump_writes,
         pump_after
     );

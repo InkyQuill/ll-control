@@ -29,7 +29,6 @@ pub struct ScreenReapplyResult {
 
 pub(crate) enum PreparedSource {
     Idle,
-    Theme(crate::theme_runtime::PreparedTheme),
     Media {
         key: String,
         source: crate::media_assets::PinnedMedia,
@@ -84,11 +83,7 @@ impl PreparedScreen {
         .validate()
         .map_err(invalid)?;
         let config = screen_config(settings)?;
-        let streaming = settings.media_clip.is_some()
-            || settings
-                .theme
-                .as_ref()
-                .is_some_and(|theme| theme.requires_streaming());
+        let streaming = settings.media_clip.is_some() || settings.theme.is_some();
         let rotation = llcontrol_image::FrameRotation::try_from(if streaming {
             config.rotation_degrees
         } else {
@@ -113,17 +108,15 @@ impl PreparedScreen {
             })
             .await
             .map_err(invalid)??;
-            if streaming {
-                PreparedSource::Composition {
-                    prepared: crate::media_composition::PreparedComposition::prepare(
-                        media, runtime,
-                    )
-                    .await
-                    .map_err(invalid)?,
-                    media: None,
-                }
+            let prepared = if runtime.theme().requires_streaming() {
+                crate::media_composition::PreparedComposition::prepare(media, runtime).await
             } else {
-                PreparedSource::Theme(runtime.prepare().await?)
+                crate::media_composition::PreparedComposition::prepare_canvas(runtime).await
+            }
+            .map_err(invalid)?;
+            PreparedSource::Composition {
+                prepared,
+                media: None,
             }
         } else if let Some(key) = settings.media_clip.clone() {
             if rotation != llcontrol_image::FrameRotation::None {

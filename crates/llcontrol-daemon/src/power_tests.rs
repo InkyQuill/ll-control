@@ -288,14 +288,14 @@ impl llcontrol_hid::HidBackend for GatedBackend {
     }
     fn open(&self, info: &DeviceInfo) -> llcontrol_hid::Result<Box<dyn llcontrol_hid::OpenHandle>> {
         Ok(Box::new(GatedHandle {
-            inner: self.mock.open(info)?,
+            inner: crate::display_firmware::FirmwareMock(self.mock.clone()).open(info)?,
             gate: self.gate.clone(),
         }))
     }
 }
 impl llcontrol_hid::OpenHandle for GatedHandle {
     fn write(&self, bytes: &[u8]) -> llcontrol_hid::Result<()> {
-        if bytes.get(1) == Some(&14) {
+        if bytes.starts_with(&[3, 13]) {
             self.gate.started.notify_one();
             let mut released = self.gate.released.lock().unwrap();
             while !*released {
@@ -359,7 +359,7 @@ async fn blocked_write_scenario(exceed_deadline: bool) {
     handles
         .lcd_tx
         .send(crate::actor::LcdCommand::SetImage {
-            jpeg: bytes::Bytes::from_static(&[255, 216, 255, 217]),
+            jpeg: bytes::Bytes::from_static(include_bytes!("../tests/fixtures/lcd-480.jpg")),
             reply,
         })
         .await

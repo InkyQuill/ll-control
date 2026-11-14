@@ -1,3 +1,5 @@
+#[path = "support/firmware_fixture.rs"]
+mod firmware_fixture;
 use llcontrol_daemon::{
     actor::{
         command_dispatch::spawn_updates, lcd_keeper, FrameOutcome, HidCommand, LcdCommand,
@@ -66,6 +68,10 @@ impl Harness {
         let injected = failure.clone();
         let transport = tokio::spawn(async move {
             while let Some(request) = requests.recv().await {
+                if let HidCommand::Firmware { reply } = request {
+                    let _ = reply.send(Ok(firmware_fixture::reply()));
+                    continue;
+                }
                 let read_store = read_store.clone();
                 let committed = tokio::task::spawn_blocking(move || {
                     read_store
@@ -126,7 +132,7 @@ impl Harness {
                 operation_id: id.into(),
                 expected_profile_revision: revision,
                 expected_collection_revision: 0,
-                prepared: default_theme().await,
+                prepared: default_composition().await,
                 reply,
             })
             .await
@@ -254,7 +260,7 @@ async fn lost_reset_reply_still_finishes_and_can_be_read_back_without_reapplicat
             operation_id: id.clone(),
             expected_profile_revision: 0,
             expected_collection_revision: 0,
-            prepared: default_theme().await,
+            prepared: default_composition().await,
             reply,
         })
         .await
@@ -352,7 +358,7 @@ async fn delayed_reset_is_rejected_before_storage_after_newer_clear_or_apply() {
                 operation_id: id,
                 expected_profile_revision: 0,
                 expected_collection_revision: 0,
-                prepared: default_theme().await,
+                prepared: default_composition().await,
                 reply,
             })
             .await
@@ -423,7 +429,27 @@ async fn duplicate_reset_admission_preserves_pending_theme_ticket() {
     harness.finish().await;
 }
 
-async fn prepare_reapply(h: &Harness, id: &str, generation: u64) -> (PreparedTheme, u64) {
+async fn default_composition() -> llcontrol_daemon::media_composition::PreparedComposition {
+    let ProfileContent::Screen(theme) = NamedProfile::defaults(ProfileGroup::Screen, 0, None)
+        .unwrap()
+        .content
+    else {
+        panic!("screen theme")
+    };
+    let runtime = Arc::new(ThemeRuntime::new(theme, ThemeAssets::new(), vec![]).unwrap());
+    llcontrol_daemon::media_composition::PreparedComposition::prepare_canvas(runtime)
+        .await
+        .unwrap()
+}
+
+async fn prepare_reapply(
+    h: &Harness,
+    id: &str,
+    generation: u64,
+) -> (
+    llcontrol_daemon::media_composition::PreparedComposition,
+    u64,
+) {
     let (reply, response) = oneshot::channel();
     h.commands
         .send(LcdCommand::PrepareScreenResetReapply {
@@ -434,7 +460,12 @@ async fn prepare_reapply(h: &Harness, id: &str, generation: u64) -> (PreparedThe
         .await
         .unwrap();
     let (runtime, ticket) = response.await.unwrap().unwrap();
-    (runtime.prepare().await.unwrap(), ticket)
+    (
+        llcontrol_daemon::media_composition::PreparedComposition::prepare_canvas(runtime)
+            .await
+            .unwrap(),
+        ticket,
+    )
 }
 
 #[tokio::test]

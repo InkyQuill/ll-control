@@ -1,4 +1,10 @@
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
+#[path = "support/display_pixels.rs"]
+mod display_pixels;
 use bytes::Bytes;
+use display_firmware::FirmwareMock;
+use display_pixels::{decode_packets, distance, preview_pixels};
 use llcontrol_daemon::{
     actor::LcdCommand,
     config::Config,
@@ -87,14 +93,14 @@ impl HidBackend for GatedBackend {
     fn open(&self, info: &DeviceInfo) -> llcontrol_hid::Result<Box<dyn OpenHandle>> {
         self.gate.opens.fetch_add(1, Ordering::SeqCst);
         Ok(Box::new(GatedHandle {
-            inner: self.mock.open(info)?,
+            inner: FirmwareMock(self.mock.clone()).open(info)?,
             gate: self.gate.clone(),
         }))
     }
 }
 impl OpenHandle for GatedHandle {
     fn write(&self, bytes: &[u8]) -> llcontrol_hid::Result<()> {
-        if bytes.get(1) == Some(&14) && self.gate.first.swap(false, Ordering::SeqCst) {
+        if bytes.starts_with(&[3, 13]) && self.gate.first.swap(false, Ordering::SeqCst) {
             self.gate.started.notify_one();
             let mut released = self.gate.released.lock().unwrap();
             while !*released {
@@ -162,7 +168,18 @@ async fn reattach_waits_for_old_batch_and_restores_stable_settings_with_idle_sou
     handles
         .lcd_tx
         .send(LcdCommand::SetImage {
-            jpeg: Bytes::from_static(&[255, 216, 255, 217]),
+            jpeg: Bytes::from(
+                llcontrol_image::prepare_jpeg_from_path(
+                    std::path::Path::new(concat!(
+                        env!("CARGO_MANIFEST_DIR"),
+                        "/../llcontrol-image/test-images/03-strawberry.png"
+                    )),
+                    llcontrol_image::FitMode::Stretch,
+                    Default::default(),
+                )
+                .unwrap()
+                .bytes,
+            ),
             reply,
         })
         .await
@@ -211,7 +228,7 @@ async fn reattach_waits_for_old_batch_and_restores_stable_settings_with_idle_sou
     assert_eq!(
         mock.write_history(&old)
             .iter()
-            .filter(|p| p[1] == 14)
+            .filter(|p| p.starts_with(&[3, 13]) && p[6..9] == [0, 0, 0])
             .count(),
         1
     );
@@ -225,7 +242,7 @@ async fn ambiguous_serialless_units_are_not_assigned_singleton_settings() {
     mock.add_device(info(None, "/mock/b"));
     let tmp = tempfile::tempdir().unwrap();
     let store = Arc::new(PersistenceStore::new_with_root(tmp.path().to_path_buf()));
-    let backend: Arc<dyn HidBackend> = Arc::new(mock.clone());
+    let backend: Arc<dyn HidBackend> = Arc::new(FirmwareMock(mock.clone()));
     let manager = DeviceManager::new(backend, store, Config::default(), Arc::new(Stats::new()))
         .spawn()
         .await;
@@ -246,7 +263,7 @@ async fn legacy_runtime_settings_are_preserved_but_not_automatically_replayed() 
     settings.fan.pwm_percent = 75;
     store.write("galahad2-lcdv2:0001", &settings).unwrap();
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         Config::default(),
         Arc::new(Stats::new()),
@@ -277,7 +294,7 @@ async fn theme_follows_serial_to_new_path_without_leaking_to_replacement_unit() 
     let mut config = Config::default();
     config.poll.hotplug_ms = 10;
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         config.clone(),
         stats.clone(),
@@ -295,12 +312,7 @@ async fn theme_follows_serial_to_new_path_without_leaking_to_replacement_unit() 
     }))
     .unwrap();
     let preview = rpc.preview_lcd_theme(None, theme.clone()).await.unwrap();
-    let expected: Vec<Vec<u8>> =
-        llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request(&preview)
-            .unwrap()
-            .into_iter()
-            .map(|p| p.to_vec())
-            .collect();
+    let expected = preview_pixels(&preview);
     rpc.set_lcd_theme(original_id.clone(), theme.clone())
         .await
         .unwrap();
@@ -336,7 +348,7 @@ async fn theme_follows_serial_to_new_path_without_leaking_to_replacement_unit() 
     assert!(
         !mock.write_history(&replacement)[before_replacement..]
             .iter()
-            .any(|p| p.get(1) == Some(&14)),
+            .any(|p| p.starts_with(&[3, 13])),
         "replacement must not receive the original owner's image"
     );
     assert_eq!(
@@ -361,20 +373,11 @@ async fn theme_follows_serial_to_new_path_without_leaking_to_replacement_unit() 
     let state = rpc.get_lcd_state(returned_id).await.unwrap();
     assert_eq!(state.source, LcdSourceKind::Theme);
     assert!(state.last_error.is_none());
-    tokio::time::timeout(Duration::from_secs(3), async {
-        loop {
-            if mock
-                .write_history(&returned)
-                .windows(expected.len())
-                .any(|batch| batch == expected)
-            {
-                break;
-            }
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    })
-    .await
-    .expect("returned serial must send its own complete rendered frame");
+    let decoded = decode_packets(&mock.write_history(&returned));
+    assert!(
+        distance(&decoded[0], &expected) / (120 * 120) < 30,
+        "returned serial must replay its own rendered pixels"
+    );
     manager.shutdown().await;
     assert_eq!(
         store.read(&settings_key(&returned)).unwrap().theme,
@@ -445,7 +448,18 @@ async fn sleep_ack_waits_for_old_batch_and_wake_reopens_still_present_device() {
     handles
         .lcd_tx
         .send(LcdCommand::SetImage {
-            jpeg: Bytes::from_static(&[255, 216, 255, 217]),
+            jpeg: Bytes::from(
+                llcontrol_image::prepare_jpeg_from_path(
+                    std::path::Path::new(concat!(
+                        env!("CARGO_MANIFEST_DIR"),
+                        "/../llcontrol-image/test-images/03-strawberry.png"
+                    )),
+                    llcontrol_image::FitMode::Stretch,
+                    Default::default(),
+                )
+                .unwrap()
+                .bytes,
+            ),
             reply,
         })
         .await
@@ -504,7 +518,7 @@ async fn sleep_ack_waits_for_old_batch_and_wake_reopens_still_present_device() {
     assert_eq!(
         mock.write_history(&old)
             .iter()
-            .filter(|p| p[1] == 14)
+            .filter(|p| p.starts_with(&[3, 13]) && p[6..9] == [0, 0, 0])
             .count(),
         1
     );
@@ -527,7 +541,7 @@ async fn sleep_flushes_theme_and_wake_restores_it_without_daemon_restart() {
     let stats = Arc::new(Stats::new());
     let config = Config::default();
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         config.clone(),
         stats.clone(),
@@ -559,7 +573,7 @@ async fn sleep_flushes_theme_and_wake_restores_it_without_daemon_restart() {
     assert!(state.last_error.is_none());
     assert!(mock.write_history(&device)[before..]
         .iter()
-        .any(|p| p.get(1) == Some(&14)));
+        .any(|p| p.starts_with(&[3, 13])));
     // Shutdown while suspended must not wait for a wake event.
     manager.prepare_for_sleep(true).await.unwrap();
     tokio::time::timeout(Duration::from_secs(3), manager.shutdown())
@@ -583,7 +597,7 @@ async fn panic_exit_releases_blocked_mock_hid_worker_before_runtime_shutdown() {
         inner: mock.open(&target).unwrap(),
         gate: gate.clone(),
     };
-    let writer = std::thread::spawn(move || handle.write(&[1, 14]));
+    let writer = std::thread::spawn(move || handle.write(&[3, 13]));
     tokio::time::timeout(Duration::from_secs(2), gate.started.notified())
         .await
         .unwrap();
@@ -593,5 +607,5 @@ async fn panic_exit_releases_blocked_mock_hid_worker_before_runtime_shutdown() {
     });
     assert!(exit.join().is_err());
     writer.join().unwrap().unwrap();
-    assert_eq!(mock.write_history(&target), vec![vec![1, 14]]);
+    assert_eq!(mock.write_history(&target), vec![vec![3, 13]]);
 }

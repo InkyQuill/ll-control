@@ -1,3 +1,9 @@
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
+#[path = "support/display_pixels.rs"]
+mod display_pixels;
+use display_firmware::FirmwareMock;
+use display_pixels::{decode_packets, distance, preview_pixels};
 use llcontrol_daemon::{
     config::Config,
     ipc_server::IpcServerImpl,
@@ -30,7 +36,7 @@ async fn preview_does_not_apply_and_failed_theme_preserves_active_composition() 
     let mut cfg = Config::default();
     cfg.poll.hotplug_ms = 20;
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         cfg.clone(),
         stats.clone(),
@@ -411,7 +417,7 @@ async fn preview_does_not_apply_and_failed_theme_preserves_active_composition() 
         theme
     );
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         cfg.clone(),
         stats.clone(),
@@ -431,7 +437,7 @@ async fn preview_does_not_apply_and_failed_theme_preserves_active_composition() 
     manager.shutdown().await;
     std::fs::remove_file(&font_path).unwrap();
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         cfg.clone(),
         stats.clone(),
@@ -451,9 +457,7 @@ async fn preview_does_not_apply_and_failed_theme_preserves_active_composition() 
     rpc.set_lcd_theme(dev.clone(), serde_json::from_value(theme.clone()).unwrap())
         .await
         .unwrap();
-    rpc.set_lcd_image(dev, vec![255, 216, 255, 217])
-        .await
-        .unwrap();
+    rpc.set_lcd_image(dev, later_bytes.clone()).await.unwrap();
     manager.shutdown().await;
     assert!(
         store.read(&key).unwrap().theme.is_none(),
@@ -465,9 +469,14 @@ async fn preview_does_not_apply_and_failed_theme_preserves_active_composition() 
     missing["layers"] = json!([{"kind":"image","asset":"lost","x":0,"y":0,"width":480,"height":480,"fit":"crop","opacity":255}]);
     saved.theme = Some(serde_json::from_value(missing).unwrap());
     store.write(&key, &saved).unwrap();
-    let manager = DeviceManager::new(Arc::new(mock), store.clone(), cfg.clone(), stats.clone())
-        .spawn()
-        .await;
+    let manager = DeviceManager::new(
+        Arc::new(FirmwareMock(mock)),
+        store.clone(),
+        cfg.clone(),
+        stats.clone(),
+    )
+    .spawn()
+    .await;
     let dev = wait_device(&manager).await;
     let rpc = IpcServerImpl::new(manager.clone(), stats, cfg, store.clone());
     let state = rpc.get_lcd_state(dev).await.unwrap();
@@ -513,7 +522,7 @@ async fn cycle_continues_after_ipc_disconnect_and_replays_after_manager_restart(
     let mut cfg = Config::default();
     cfg.poll.hotplug_ms = 20;
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         cfg.clone(),
         stats.clone(),
@@ -551,13 +560,7 @@ async fn cycle_continues_after_ipc_disconnect_and_replays_after_manager_restart(
                 .unwrap(),
         )
         .unwrap();
-        expected.push(
-            llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request(&bytes)
-                .unwrap()
-                .into_iter()
-                .map(|packet| packet.to_vec())
-                .collect::<Vec<_>>(),
-        );
+        expected.push(preview_pixels(&bytes));
     }
     assert_ne!(expected[0], expected[1]);
     client
@@ -577,7 +580,7 @@ async fn cycle_continues_after_ipc_disconnect_and_replays_after_manager_restart(
     drop(rpc);
     let before_restart = mock.write_history(&info).len();
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         cfg.clone(),
         stats.clone(),
@@ -602,23 +605,38 @@ async fn wait_for_cycle_packets(
     mock: &MockBackend,
     info: &DeviceInfo,
     after: usize,
-    expected: &[Vec<Vec<u8>>],
+    expected: &[Vec<u8>],
 ) {
-    tokio::time::timeout(Duration::from_secs(6), async {
-        loop {
-            let history = mock.write_history(info);
-            if expected.iter().all(|frame| {
-                history[after..]
-                    .windows(frame.len())
-                    .any(|batch| batch == frame)
-            }) {
-                break;
-            }
+    // Include the initial IDR for decoding even when observations begin later.
+    let history = mock.write_history(info);
+    let initial_frames = history[after..]
+        .iter()
+        .filter(|p| p.starts_with(&[3, 13]) && p[6..9] == [0, 0, 0])
+        .count();
+    tokio::time::timeout(Duration::from_secs(12), async {
+        while mock.write_history(info)[after..]
+            .iter()
+            .filter(|p| p.starts_with(&[3, 13]) && p[6..9] == [0, 0, 0])
+            .count()
+            < initial_frames + 52
+        {
             tokio::time::sleep(Duration::from_millis(50)).await;
         }
     })
     .await
-    .expect("both complete cycle frames must reach the LCD owner without an IPC client");
+    .unwrap();
+    let writes = mock.write_history(info);
+    let frames = decode_packets(&writes);
+    let recent = &frames[frames.len() - 50..];
+    for index in 0..2 {
+        assert!(
+            recent
+                .iter()
+                .any(|frame| distance(frame, &expected[index])
+                    < distance(frame, &expected[1 - index])),
+            "missing cycle phase {index}"
+        );
+    }
 }
 
 #[tokio::test]
@@ -659,18 +677,18 @@ async fn corrupt_image_or_font_on_restart_preserves_intent_and_recovers_without_
     let mock = MockBackend::new();
     mock.add_device(info.clone());
     let stats = Arc::new(Stats::new());
-    let manager = DeviceManager::new(Arc::new(mock), store.clone(), cfg.clone(), stats.clone())
-        .spawn()
-        .await;
+    let manager = DeviceManager::new(
+        Arc::new(FirmwareMock(mock)),
+        store.clone(),
+        cfg.clone(),
+        stats.clone(),
+    )
+    .spawn()
+    .await;
     let dev = wait_device(&manager).await;
     let rpc = IpcServerImpl::new(manager.clone(), stats, cfg.clone(), store.clone());
     let jpeg = rpc.preview_lcd_theme(None, theme.clone()).await.unwrap();
-    let expected: Vec<Vec<u8>> =
-        llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request(&jpeg)
-            .unwrap()
-            .into_iter()
-            .map(|p| p.to_vec())
-            .collect();
+    let expected = preview_pixels(&jpeg);
     rpc.set_lcd_theme(dev, theme.clone()).await.unwrap();
     manager.shutdown().await;
     let saved = serde_json::to_value(store.read(&key).unwrap()).unwrap();
@@ -694,7 +712,7 @@ async fn corrupt_image_or_font_on_restart_preserves_intent_and_recovers_without_
             mock.add_device(info.clone());
             let stats = Arc::new(Stats::new());
             let manager = DeviceManager::new(
-                Arc::new(mock.clone()),
+                Arc::new(FirmwareMock(mock.clone())),
                 store.clone(),
                 cfg.clone(),
                 stats.clone(),
@@ -722,14 +740,12 @@ async fn corrupt_image_or_font_on_restart_preserves_intent_and_recovers_without_
             let history = mock.write_history(&info);
             if damaged {
                 assert!(
-                    !history.iter().any(|packet| packet.get(1) == Some(&14)),
-                    "corrupt dependency must not start a JPEG"
+                    !history.iter().any(|packet| packet.starts_with(&[3, 13])),
+                    "corrupt dependency must not start a stream"
                 );
             } else {
                 assert!(
-                    history
-                        .windows(expected.len())
-                        .any(|batch| batch == expected),
+                    distance(&decode_packets(&history)[0], &expected) / (120 * 120) < 30,
                     "repaired theme must send the original full JPEG batch without Apply"
                 );
             }

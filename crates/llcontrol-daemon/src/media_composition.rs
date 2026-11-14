@@ -44,6 +44,31 @@ impl std::fmt::Debug for PreparedComposition {
     }
 }
 impl PreparedComposition {
+    /// Prepare a retained still canvas without acquiring a managed media store.
+    pub async fn prepare_canvas(runtime: Arc<ThemeRuntime>) -> Result<Self> {
+        runtime.theme().validate()?;
+        anyhow::ensure!(
+            runtime.theme().background_video.is_none(),
+            "canvas cannot reference video"
+        );
+        let mut worker =
+            MediaComposition::spawn_owned(None, runtime.clone(), OsString::from("ffmpeg"), None);
+        match worker.next_unit().await {
+            Ok(first) => Ok(Self {
+                worker,
+                first,
+                runtime,
+                pin: None,
+            }),
+            Err(error) => {
+                worker
+                    .stop()
+                    .await
+                    .context("failed canvas preparation cleanup")?;
+                Err(error)
+            }
+        }
+    }
     pub async fn prepare(
         store: crate::media_assets::MediaAssetStore,
         runtime: Arc<ThemeRuntime>,
@@ -56,9 +81,6 @@ impl PreparedComposition {
         permit: Option<crate::admission::WorkPermit>,
     ) -> Result<Self> {
         runtime.theme().validate()?;
-        if !runtime.theme().requires_streaming() {
-            bail!("composition requires video or procedural weather");
-        }
         let key = runtime.theme().background_video.clone();
         let (source, permit) = tokio::task::spawn_blocking(move || {
             key.map(|key| store.acquire_source(&key))
@@ -1765,6 +1787,165 @@ time.sleep(60)
                 );
             }
         }
+    }
+
+    #[tokio::test]
+    async fn retained_jpeg_canvas_is_encoded_at_every_rotation() {
+        let image = RgbImage::from_fn(480, 480, |x, y| {
+            let color = match (x < 240, y < 240) {
+                (true, true) => [240, 0, 0],
+                (false, true) => [0, 240, 0],
+                (true, false) => [0, 0, 240],
+                (false, false) => [240, 240, 0],
+            };
+            color.into()
+        });
+        let jpeg = llcontrol_image::prepare_jpeg_from_image(
+            image.into(),
+            llcontrol_image::FitMode::Stretch,
+            llcontrol_image::Quality::default(),
+        )
+        .unwrap()
+        .bytes;
+        for (degrees, expected) in [
+            (0, [240u8, 0, 0]),
+            (90, [0, 0, 240]),
+            (180, [240, 240, 0]),
+            (270, [0, 240, 0]),
+        ] {
+            let runtime = Arc::new(
+                ThemeRuntime::from_static_jpeg(&jpeg)
+                    .unwrap()
+                    .with_output_rotation(
+                        llcontrol_image::FrameRotation::try_from(degrees).unwrap(),
+                    ),
+            );
+            let mut prepared = PreparedComposition::prepare_canvas(runtime).await.unwrap();
+            let frame = decode_preview_frame(
+                prepared.first.clone(),
+                OsStr::new("ffmpeg"),
+                Duration::from_secs(5),
+            )
+            .await
+            .unwrap();
+            prepared.worker.stop().await.unwrap();
+            assert!(
+                frame
+                    .get_pixel(20, 20)
+                    .0
+                    .iter()
+                    .zip(expected)
+                    .all(|(a, b)| a.abs_diff(b) < 25),
+                "angle {degrees}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn retained_jpeg_live_rotation_reaches_encoded_stream() {
+        let image = RgbImage::from_fn(480, 480, |x, y| {
+            match (x < 240, y < 240) {
+                (true, true) => [240u8, 0, 0],
+                (false, true) => [0, 240, 0],
+                (true, false) => [0, 0, 240],
+                (false, false) => [240, 240, 0],
+            }
+            .into()
+        });
+        let jpeg = llcontrol_image::prepare_jpeg_from_image(
+            image.into(),
+            llcontrol_image::FitMode::Stretch,
+            llcontrol_image::Quality::default(),
+        )
+        .unwrap()
+        .bytes;
+        let runtime = Arc::new(ThemeRuntime::from_static_jpeg(&jpeg).unwrap());
+        let mut prepared = PreparedComposition::prepare_canvas(runtime.clone())
+            .await
+            .unwrap();
+        let mut bytes = prepared.first.bytes.to_vec();
+        let mut expected = vec![0usize];
+        for (angle, quadrant) in [(0, 0), (90, 2), (180, 3), (270, 1)] {
+            runtime.set_output_rotation(llcontrol_image::FrameRotation::try_from(angle).unwrap());
+            for offset in 0..16 {
+                bytes.extend_from_slice(&prepared.worker.next_unit().await.unwrap().bytes);
+                // Bounded prefetch permits a few frames from the preceding angle.
+                expected.push(if offset >= PIPELINE_FRAMES + 2 {
+                    quadrant
+                } else {
+                    usize::MAX
+                });
+            }
+        }
+        prepared.worker.stop().await.unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("rotating-still.h264");
+        std::fs::write(&path, bytes).unwrap();
+        let decoded = tokio::task::spawn_blocking(move || {
+            std::process::Command::new("ffmpeg")
+                .args(["-v", "error", "-threads", "1", "-i"])
+                .arg(path)
+                .args(["-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"])
+                .output()
+                .unwrap()
+        })
+        .await
+        .unwrap();
+        assert!(
+            decoded.status.success(),
+            "{}",
+            String::from_utf8_lossy(&decoded.stderr)
+        );
+        let frames: Vec<_> = decoded.stdout.chunks_exact(FRAME_BYTES).collect();
+        assert_eq!(frames.len(), expected.len());
+        let colors = [[240u8, 0, 0], [0, 240, 0], [0, 0, 240], [240, 240, 0]];
+        let orders = [[0, 1, 2, 3], [1, 3, 0, 2], [2, 0, 3, 1], [3, 2, 1, 0]];
+        for (index, (frame, quadrant)) in frames.into_iter().zip(expected).enumerate() {
+            if quadrant == usize::MAX {
+                continue;
+            }
+            for ((x, y), color) in [(20, 20), (460, 20), (20, 460), (460, 460)]
+                .into_iter()
+                .zip(orders[quadrant])
+            {
+                assert!(
+                    frame[(y * 480 + x) * 3..][..3]
+                        .iter()
+                        .zip(colors[color])
+                        .all(|(a, b)| a.abs_diff(b) < 25),
+                    "frame {index} corner {x}/{y}"
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn ordinary_theme_background_survives_composition_preparation() {
+        let theme = serde_json::from_value(
+            serde_json::json!({"version":1,"name":"Solid", "background":[255,0,0],"background_image":{"asset":"0123456789abcdef0123456789abcdef","fit":"crop"},"layers":[]}),
+        )
+        .unwrap();
+        let mut assets = ThemeAssets::new();
+        assets.insert(
+            "0123456789abcdef0123456789abcdef".into(),
+            Arc::new(RgbImage::from_pixel(480, 480, [35, 120, 210].into()).into()),
+        );
+        let runtime = Arc::new(ThemeRuntime::new(theme, assets, vec![]).unwrap());
+        let mut prepared = PreparedComposition::prepare_canvas(runtime).await.unwrap();
+        let frame = decode_preview_frame(
+            prepared.first.clone(),
+            OsStr::new("ffmpeg"),
+            Duration::from_secs(5),
+        )
+        .await
+        .unwrap();
+        prepared.worker.stop().await.unwrap();
+        assert!(frame
+            .get_pixel(20, 20)
+            .0
+            .iter()
+            .zip([35u8, 120, 210])
+            .all(|(a, b)| a.abs_diff(b) < 15));
     }
 
     #[tokio::test]

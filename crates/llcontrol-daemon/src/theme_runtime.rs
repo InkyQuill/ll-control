@@ -20,7 +20,6 @@ use std::sync::{
 #[derive(Debug)]
 pub struct PreparedTheme {
     pub(crate) runtime: Arc<ThemeRuntime>,
-    pub(crate) jpeg: bytes::Bytes,
 }
 
 /// Immutable assets shared across frames; sensor caches remain live.
@@ -30,6 +29,7 @@ pub struct ThemeRuntime {
     temperature_variants: [LcdTheme; 2],
     display_unit: Arc<std::sync::atomic::AtomicBool>,
     assets: ThemeAssets,
+    source_canvas: Option<RgbImage>,
     media_pin: Option<crate::media_assets::MediaPin>,
     fonts: ThemeFonts,
     sensors: Vec<SensorCache>,
@@ -47,6 +47,37 @@ impl std::fmt::Debug for ThemeRuntime {
     }
 }
 impl ThemeRuntime {
+    /// Retain a bounded, decoded still canvas for the H.264 producer.
+    pub fn from_static_jpeg(jpeg: &[u8]) -> Result<Self> {
+        if !jpeg.starts_with(&[0xff, 0xd8])
+            || jpeg.len() > llcontrol_protocol::galahad2_lcdv2::jpeg::MAX_JPEG_BYTES
+        {
+            return Err(IpcError::InvalidArgument(
+                "expected a bounded JPEG input".into(),
+            ));
+        }
+        let source = llcontrol_image::assets::decode_asset(jpeg)
+            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        if source.width() != 480 || source.height() != 480 {
+            return Err(IpcError::InvalidArgument(
+                "static canvas must be 480x480".into(),
+            ));
+        }
+        let theme = LcdTheme {
+            version: 1,
+            name: "Static image".into(),
+            background: [0; 3],
+            background_video: None,
+            background_image: None,
+            background_fill: None,
+            layers: vec![],
+            page_cache: vec![],
+            basic_editor: None,
+        };
+        let mut runtime = Self::new(theme, ThemeAssets::new(), vec![])?;
+        runtime.source_canvas = Some(source.into_rgb8());
+        Ok(runtime)
+    }
     pub fn with_display_unit(mut self, unit: Arc<std::sync::atomic::AtomicBool>) -> Self {
         self.display_unit = unit;
         self
@@ -103,6 +134,7 @@ impl ThemeRuntime {
             display_unit: Arc::default(),
             theme,
             assets,
+            source_canvas: None,
             media_pin: None,
             fonts,
             sensors,
@@ -128,12 +160,11 @@ impl ThemeRuntime {
 
     /// Render and validate the first frame without holding the display actor.
     pub async fn prepare(self: &Arc<Self>) -> Result<PreparedTheme> {
-        let jpeg = self.frame().await?;
-        llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request(&jpeg)
-            .map_err(|e| IpcError::InvalidArgument(e.to_string()))?;
+        // Validate rendering before enqueueing. The keeper separately preflights
+        // the H.264 first frame before replacing the current source.
+        self.frame().await?;
         Ok(PreparedTheme {
             runtime: self.clone(),
-            jpeg,
         })
     }
 
@@ -445,6 +476,7 @@ impl ThemeRuntime {
             minute: now.minute() as u8,
             second: now.second() as u8,
         };
+        let frame = frame.or_else(|| self.source_canvas.clone());
         if continuous {
             return self.render_continuous_theme(theme, &readings, clock, elapsed_millis, frame);
         }

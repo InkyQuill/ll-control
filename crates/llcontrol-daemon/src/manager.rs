@@ -657,8 +657,7 @@ impl DeviceManager {
                 )
                 .map_err(|e| e.to_string())
                 .and_then(|runtime| {
-                    let degrees = if theme.requires_streaming() && !settings.lcd.rotation.is_empty()
-                    {
+                    let degrees = if !settings.lcd.rotation.is_empty() {
                         settings.lcd.rotation.parse().unwrap_or(u16::MAX)
                     } else {
                         0
@@ -681,28 +680,17 @@ impl DeviceManager {
             };
             let (reply, rx) = tokio::sync::oneshot::channel();
             let command = match runtime {
-                Ok(runtime) if runtime.theme().requires_streaming() => {
-                    crate::media_composition::PreparedComposition::prepare(
-                        self.persistence.media_assets(),
-                        runtime,
-                    )
-                    .await
-                    .map(|prepared| crate::actor::LcdCommand::SetComposition {
-                        prepared,
-                        preparation: None,
-                        reply,
-                    })
-                    .map_err(|e| e.to_string())
-                }
-                Ok(runtime) => runtime
-                    .prepare()
-                    .await
-                    .map(|prepared| crate::actor::LcdCommand::SetTheme {
-                        prepared,
-                        preparation: None,
-                        reply,
-                    })
-                    .map_err(|e| e.to_string()),
+                Ok(runtime) => crate::media_composition::PreparedComposition::prepare(
+                    self.persistence.media_assets(),
+                    runtime,
+                )
+                .await
+                .map(|prepared| crate::actor::LcdCommand::SetComposition {
+                    prepared,
+                    preparation: None,
+                    reply,
+                })
+                .map_err(|e| e.to_string()),
                 Err(error) => Err(error),
             };
             let restored = match command {
@@ -865,6 +853,11 @@ async fn replay_persisted_settings(handles: &DeviceHandles, settings: &DeviceSet
         tokio::time::sleep(REPLAY_GAP).await;
     }
 
+    // The stream startup applies backlight and zero hardware rotation itself.
+    // Replaying LocalUI here would flash it and can clear the saved stream intent.
+    if settings.theme.is_some() || settings.media_clip.is_some() {
+        return;
+    }
     let lcd = &settings.lcd;
     if lcd.brightness != 0 || !lcd.rotation.is_empty() || !lcd.control_mode.is_empty() {
         let rotation = match lcd.rotation.parse::<u16>() {

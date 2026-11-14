@@ -95,12 +95,9 @@ async fn delayed_refresh_cannot_overtake_manual_and_ack_includes_settings() {
         panic!("persist manual")
     };
     assert_eq!(saved.color, "#00ff00");
-    let (repeated, reply) = h.write().await;
-    assert_eq!(
-        repeated, new,
-        "old refresh state cannot follow successful manual"
-    );
-    reply.send(Ok(())).unwrap();
+    tokio::time::advance(Duration::from_secs(10)).await;
+    tokio::task::yield_now().await;
+    assert!(h.writes.try_recv().is_err(), "manual mode was restarted");
     h.stop().await;
 }
 #[tokio::test(start_paused = true)]
@@ -187,7 +184,7 @@ async fn invalid_direct_data_and_closed_settings_are_reported() {
     assert!(h.writes.try_recv().is_err());
     h.settings.close();
     let done = h.set("#123456").await;
-    let (written, reply) = h.write().await;
+    let (_, reply) = h.write().await;
     reply.send(Ok(())).unwrap();
     assert!(done
         .await
@@ -195,12 +192,15 @@ async fn invalid_direct_data_and_closed_settings_are_reported() {
         .unwrap_err()
         .to_string()
         .contains("settings actor closed"));
-    let (repeated, reply) = h.write().await;
     assert_eq!(
-        repeated, written,
-        "physical write happened despite settings failure"
+        h.base().await.unwrap().color,
+        Rgb {
+            r: 0x12,
+            g: 0x34,
+            b: 0x56
+        }
     );
-    reply.send(Ok(())).unwrap();
+    assert!(h.writes.try_recv().is_err());
     h.stop().await;
 }
 #[tokio::test(start_paused = true)]

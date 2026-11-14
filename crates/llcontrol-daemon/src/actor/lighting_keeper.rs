@@ -735,7 +735,11 @@ impl ThermalRuntime {
             }
             let dynamic_due = base.kind() == LightingKind::Pump && self.dynamic.requested.is_some();
             let zone = self.zone(base.kind());
-            if due
+            // Firmware runs manual effects autonomously. Rewriting cmd 131/133
+            // on the refresh timer can restart the device's animation phase.
+            let direct_due = due && matches!(base, Output::Direct { .. });
+            if force
+                || direct_due
                 || dynamic_due
                 || zone.applied.as_ref() != Some(&layer)
                 || zone.last_error.is_some()
