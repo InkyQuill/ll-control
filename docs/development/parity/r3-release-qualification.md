@@ -15,7 +15,7 @@ installed-session or physical observations.
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
 | Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13). [Thermal trigger and recovery on both targets passed](#thermal-recovery-with-both-effects-saved) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity |
-| Combined lifecycle | Not run | Thirty-minute measured combined run, restart, cold boot, sleep/wake and agreed USB reconnect |
+| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart)  and [sleep/wake passed](#installed-package-sleepwake)  and [reboot recovery passed](#installed-package-reboot)  and [cold boot passed](#installed-package-cold-boot); [software USB reconnect passed](#software-usb-reconnect) | Complete for the agreed lifecycle scenarios |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
 ### Completed physical display checks on Galahad II LCDV2
@@ -253,3 +253,31 @@ This matches the Windows 2.1.28 restore path for the tested cases. The three man
 **Passed on the Galahad II LCDV2.** Session `20261113-193523-927080`, build `ec5e587`. Daemon readback confirmed green breathing on the fan (sync off) and red/blue runway on all pump LEDs. The CPU rule used `k10temp: Tctl`, a 63 °C threshold and static red.
 
 Two alert/clear cycles occurred before teardown. The first showed active at 64.125 °C and clear at 60.875 °C. The second showed active at 63.875 °C and clear at 60.125 °C. In both cycles the HID log shows successful static red writes to fan (133) and pump (131), then replay of each target’s original effect packet on cooling. The operator confirmed both effects visibly resumed. This closes the saved-fan recovery case left open in the previous session.
+
+### Installed package combined soak
+
+Arch package `ll-control 0.1.0-1`, revision `5c2e354`, Galahad II LCDV2 firmware 1.6. The installed user service streamed a video background with live Tctl and clock overlays, ran the pump at 80%, and drove green breathing fan LEDs and red/blue runway pump LEDs. Over 1,800.016 seconds and 361 samples it sent 42,007 frames (23.34 fps), with zero failed frame transactions, 40,955 empty optional readbacks and at most one frame pending. All sampled temperatures were valid. Pump speed was 3,030–3,060 RPM, maximum snapshot age 714 ms (rounded up), snapshot RPC p95 2.35 ms, and peak daemon RSS growth after minute one 2.64 MiB.
+
+The operator confirmed the clock advanced, Tctl tracked the motherboard display, and both RGB effects worked. The known panel flicker persisted and the dark background made its motion difficult to judge. In a separate follow-up on the same installed service, the operator confirmed a yellow bar swept smoothly across a blue background behind the live overlays. Afterward the daemon reported LocalUI applied and the LCD source idle.
+
+### Installed daemon restart
+
+**Passed** on installed package `0.1.0-1` (revision `5c2e354`). After a user-service restart the new daemon was the sole owner of the Galahad II LCDV2 (firmware 1.6). Readback matched the pre-restart settings: LocalUI at 0° and 100% brightness, green breathing fan LEDs, red/blue runway pump LEDs, and 80% pump duty. The post-restart sample was 3,030 RPM. The operator confirmed the LCD and both LED effects looked as before and noticed no jump or spike during the transition.
+
+### Installed package sleep/wake
+
+**Passed** on 2026-11-14 with the saved R3 lifecycle sweep theme. The system journal recorded suspend at 04:59:44 MSK and resume at 05:00:05. The operator saw the animation stop for sleep and resume automatically on wake. Post-wake readback showed the saved theme active, 2,310 frames sent and zero failed frame transactions.
+
+### Installed package reboot
+
+**Automatic recovery after reboot passed** on 2026-11-14. The boot ID changed. The last visible clock update was 05:08:23 MSK. Systemd started the enabled user service at 05:09:29, and the operator saw updates resume at 05:09:40 (77 seconds between displayed times, about 11 seconds after service start). Both the theme and lighting visibly recovered. Readback showed the saved theme active, fan breathing, pump runway, 3,030 pump RPM and 3,709 frames sent with zero failed frame transactions. The operator described a reboot; a full shutdown followed by power-on was not explicitly confirmed.
+
+### Installed package cold boot
+
+**Passed after full shutdown and power-on** on 2026-11-14. The operator saw the LCD clock stop at 05:14:37 MSK and resume at the login screen at 05:16:05, 88 seconds later. The boot ID changed and the installed user service started at 05:15:54, about 11 seconds before visible recovery. Readback confirmed the saved R3 lifecycle sweep theme active, 2,611 frames sent, zero failed frame transactions and 3,030 pump RPM. The daemon reported fan breathing and pump runway. The physical observation for this run was the LCD clock.
+
+### Software USB reconnect
+
+**Passed** on 2026-11-14 with the installed service streaming the R3 lifecycle sweep. Linux deauthorized only the cooler’s USB interfaces for five seconds, with the motherboard cable in place. The cooler disappeared from the daemon’s device list and reappeared at 05:19:48 MSK. The same daemon process resumed the saved theme and lighting. About eight seconds into playback it reported 184 frames sent, zero failed frame transactions, both lighting bases applied and 3,030 pump RPM at 80% duty.
+
+The operator saw the display and RGB go black for a couple of seconds and return automatically, without an intervening LocalUI logo. The physical cable remained connected throughout.
