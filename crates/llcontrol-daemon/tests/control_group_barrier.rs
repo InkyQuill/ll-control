@@ -830,7 +830,7 @@ async fn group_replacement_retains_global_thermal_history_on_missing_samples_and
     let mut no_base = (*candidate()).clone();
     no_base.lighting.fan = None;
     let (_, b) = h.prepare_group(&again, Arc::new(no_base)).await;
-    assert!(b.is_err(), "global thermal needs both replacement bases");
+    b.expect("global thermal supports a fallback when the replacement omits a base");
     let (a, b) = h.prepare_group(&again, candidate()).await;
     a.unwrap();
     b.unwrap();
