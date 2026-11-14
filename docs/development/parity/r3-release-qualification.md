@@ -15,7 +15,7 @@ installed-session or physical observations.
 | Hardware preflight | USB product reports LCDV2; this is not a firmware RPC or ownership audit | Establish current firmware/identity, single HID owner, backup, safe pump/source/RGB restore and fan wiring |
 | Display and controls | [H.264 retest](#host-rotated-h264-retest): chart rotation passed at all four angles; brightness response observed; stable-display qualification blocked by a [cross-platform panel fault](#cross-platform-panel-fault) | Video/overlays/units, stop/replace, stale/recovery, operation after GUI close, stable LocalUI, cooling and RGB observations |
 | Pump and RGB | [Duty, target RPM, Quiet/Performance and multiple pump/fan effects physically exercised](#pump-and-rgb-manual-run-2026-11-13). [Thermal trigger and recovery on both targets passed](#thermal-recovery-with-both-effects-saved) | Motherboard source, fallback/recovery, fan output/wiring, zone map, count/sync, animation continuity |
-| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart)  and [sleep/wake passed](#installed-package-sleepwake) | Cold boot and agreed USB reconnect |
+| Combined lifecycle | [Thirty-minute combined run completed; smooth motion confirmed in a separate high-contrast check](#installed-package-combined-soak); [installed daemon restart passed](#installed-daemon-restart)  and [sleep/wake passed](#installed-package-sleepwake)  and [reboot recovery passed](#installed-package-reboot) | Full power-off cold boot if distinct from the reported reboot, and agreed USB reconnect |
 | Restoration and cutover | System service restarted; its journal reported LCDV2 open failure. Stable display restoration failed | Restore agreed cooling/RGB and LocalUI; publish accurate release notes/support table only after gates pass |
 
 ### Completed physical display checks on Galahad II LCDV2
@@ -267,3 +267,7 @@ The operator confirmed the clock advanced, Tctl tracked the motherboard display,
 ### Installed package sleep/wake
 
 **Passed** on 2026-11-14 with the saved R3 lifecycle sweep theme. The system journal recorded suspend at 04:59:44 MSK and resume at 05:00:05. The operator saw the animation stop for sleep and resume automatically on wake. Post-wake readback showed the saved theme active, 2,310 frames sent and zero failed frame transactions.
+
+### Installed package reboot
+
+**Automatic recovery after reboot passed** on 2026-11-14. The boot ID changed. The last visible clock update was 05:08:23 MSK. Systemd started the enabled user service at 05:09:29, and the operator saw updates resume at 05:09:40 (77 seconds between displayed times, about 11 seconds after service start). Both the theme and lighting visibly recovered. Readback showed the saved theme active, fan breathing, pump runway, 3,030 pump RPM and 3,709 frames sent with zero failed frame transactions. The operator described a reboot; a full shutdown followed by power-on was not explicitly confirmed.
