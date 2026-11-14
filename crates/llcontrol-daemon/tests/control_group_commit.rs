@@ -485,8 +485,7 @@ async fn lost_commit_reply_completes_and_duplicate_never_overwrites_newer_manual
     h.finish().await;
 }
 #[tokio::test]
-async fn preflight_rejects_incompatible_retained_global_alert_without_commit_or_output_and_releases_actors(
-) {
+async fn group_without_pump_base_commits_and_retains_global_thermal_policy() {
     let thermal = ThermalConfig {
         cpu: Some(ThermalRule {
             sensor_id: "cpu:test".into(),
@@ -498,13 +497,13 @@ async fn preflight_rejects_incompatible_retained_global_alert_without_commit_or_
     let h = Harness::new(thermal.clone());
     let p = prepared(&h.store, true);
     let expected = h.revision().await;
-    assert!(h.commit(ID, expected, p).await.is_err());
-    assert!(h.writes.lock().unwrap().is_empty());
+    h.commit(ID, expected, p).await.unwrap();
     let saved = h.store.read("device").unwrap();
-    assert!(saved.group_imports.is_empty());
+    assert_eq!(saved.group_imports.len(), 1);
+    assert!(saved.lighting.pump.is_none());
     assert_eq!(saved.thermal, thermal);
     assert_eq!(saved.lcd.brightness, 81);
-    assert_eq!(h.store.profiles().list().unwrap().revision, 0);
+    assert_eq!(h.store.profiles().list().unwrap().revision, 1);
     h.manual(45).await.unwrap();
     assert_eq!(
         h.state().await.cooling.unwrap().fan.applied_percent,
