@@ -723,8 +723,16 @@ async fn stale_prepared_media_cannot_replace_a_newer_image_or_persist_selection(
         .to_string()
         .contains("superseded"));
     store.delete_unreferenced(&saved.key, || Ok(false)).unwrap();
-    assert_eq!(h.state().await.generation, image_state.generation);
-    assert!(h.hid.try_recv().is_err());
+    // The retained image continues streaming on its own timer.
+    let current = h.state().await;
+    assert_eq!(current.generation, image_state.generation);
+    assert_eq!(current.source, llcontrol_ipc::LcdSourceKind::Jpeg);
+    if let Ok(command) = h.hid.try_recv() {
+        match command {
+            llcontrol_daemon::actor::HidCommand::FrameBatch { reply, .. } => complete(reply),
+            _ => panic!("unexpected HID command after stale selection"),
+        }
+    }
     assert!(h.settings.try_recv().is_err());
     let (reply, rx) = oneshot::channel();
     h.tx.send(LcdCommand::MediaClip { reply }).await.unwrap();
