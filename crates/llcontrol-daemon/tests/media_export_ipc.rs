@@ -60,7 +60,7 @@ async fn long_export_and_disconnected_slow_consumer_release_source() {
         async move { IpcServer::new(rpc).serve_stream(b).await }
     });
     let client = IpcClient::from_stream(a).await.unwrap();
-    let mut events = client.subscribe("media_export").await;
+    let mut events = client.subscribe_reliable("media_export").await;
     let id = "a".repeat(32);
     assert!(client
         .call(
