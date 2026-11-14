@@ -68,6 +68,7 @@ jobs:
         run: pnpm --dir desktop install --frozen-lockfile
       - name: Build production payload with both shell integrations
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           python3 tools/build-distribution.py --output target/distribution --gnome-shell-version 51
           df -h .
       - name: Build Arch package without installing it
