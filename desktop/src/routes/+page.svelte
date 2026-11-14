@@ -581,7 +581,8 @@
             started: animationOrigin - animationElapsed,
           }
         : null;
-    if (previewJob && (live || manual || editor)) previewTimer = setTimeout(runPreview, 50);
+    if (previewJob && (live || manual || editor))
+      previewTimer = setTimeout(runPreview, editor ? 0 : 50);
     return () => {
       previewJob = null;
       clearTimeout(previewTimer);
@@ -691,7 +692,9 @@
                 ))
               ? Math.max(0, 1000 / 24 - (performance.now() - frameStarted))
               : 1000
-            : 50,
+            : previewJob.editor
+              ? 0
+              : 50,
         );
       }
     }

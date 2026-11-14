@@ -40,6 +40,9 @@ def main():
     parser.add_argument('--release', action='store_true', help='Use optimized binaries for performance measurements')
     parser.add_argument('--language', choices=['en-US','ru-RU'], default='en-US')
     parser.add_argument('--size', choices=['1280x800','1024x768'], default='1280x800')
+    parser.add_argument('--stress-assets', action='store_true', help='Replace two decorative layers with translucent PNG and fireworks')
+    parser.add_argument('--soak-seconds', type=int, default=0)
+    parser.add_argument('--no-screenshots', action='store_true')
     args = parser.parse_args()
     assert os.environ.get('WAYLAND_DISPLAY'), 'Run in the target Wayland desktop session'
     root = Path(tempfile.mkdtemp(prefix='llcontrol-editor-wayland-'))
@@ -51,9 +54,10 @@ def main():
     env.update(LLCONTROL_SMOKE_ROOT=str(root), XDG_RUNTIME_DIR=str(root),
                XDG_CONFIG_HOME=str(root/'config'), XDG_DATA_HOME=str(root/'data'),
                XDG_CACHE_HOME=str(root/'cache'), WAYLAND_DISPLAY=str(wayland),
-               GDK_BACKEND='wayland', WEBKIT_DISABLE_DMABUF_RENDERER='1',
+               GDK_BACKEND='wayland',
                LLCONTROL_NATIVE_EDITOR_VIEW='1', LLCONTROL_NATIVE_EDITOR_SIZE=args.size,
                LLCONTROL_NATIVE_DESKTOP_LANGUAGE=args.language)
+    env['LLCONTROL_NATIVE_EDITOR_SOAK'] = '1' if args.soak_seconds else '0'
     binaries=REPO/'target'/('release' if args.release else 'debug')
     children = []
     with (root/'session.log').open('w') as log:
@@ -85,6 +89,15 @@ def main():
                 assert temperatures,'mock temperature sensor required'
                 for layer in theme['layers']:
                     if layer['kind']=='sensor':layer['sensor_id']=temperatures[0]['id']
+            if args.stress_assets:
+                theme['version'] = 3
+                png = subprocess.check_output(['ffmpeg','-v','error','-f','lavfi','-i',
+                    'color=c=red@0.5:s=32x32,format=rgba','-frames:v','1','-c:v','png','-f','image2pipe','pipe:1'])
+                key = rpc(root,'import_theme_asset',dict(bytes=list(png),name='Translucent overlay'))
+                theme['layers'][-1] = dict(kind='image',asset=key,x=20,y=20,width=48,height=48,fit='stretch',opacity=100)
+                theme['layers'][-2] = dict(kind='fireworks',effect=dict(intensity=1,colors=[[0,255,0]]*6,
+                    dynamic=False,sensor=None,seed=42))
+                theme['layers'].insert(0, theme['layers'].pop(-2))
             rpc(root,'set_lcd_theme',dict(dev=device,theme=theme))
             children.append(subprocess.Popen(['dbus-run-session','--',str(binaries/'llcontrol-gui')],env=env,stdout=log,stderr=log,start_new_session=True))
             deadline=time.monotonic()+90
@@ -93,13 +106,37 @@ def main():
                 time.sleep(.1)
             result=json.loads((root/'result.json').read_text())
             assert result['ok'],result
-            subprocess.run(['spectacle','-b','-n','-a','-o',str(root/'editor.png')],check=True,timeout=30)
-            if args.layers:
+            if not args.no_screenshots:
+                subprocess.run(['spectacle','-b','-n','-a','-o',str(root/'editor.png')],check=True,timeout=30)
+            if args.layers and not args.no_screenshots:
                 deadline=time.monotonic()+10
                 while json.loads((root/'result.json').read_text()).get('pane')!='layers':
                     assert time.monotonic()<deadline,'layer pane capture timeout'
                     time.sleep(.1)
                 subprocess.run(['spectacle','-b','-n','-a','-o',str(root/'layers.png')],check=True,timeout=30)
+            if args.soak_seconds:
+                samples = []
+                deadline = time.monotonic() + args.soak_seconds
+                while time.monotonic() < deadline:
+                    sample = dict(time=time.time(),playback=rpc(root,'get_lcd_playback_stats',dict(dev=device)),
+                                  sensors=rpc(root,'list_sensors',{}),processes=[])
+                    for proc in Path('/proc').iterdir():
+                        if not proc.name.isdigit():
+                            continue
+                        try:
+                            environment=(proc/'environ').read_bytes()
+                            if str(root).encode() not in environment:
+                                continue
+                            stat=(proc/'stat').read_text().rsplit(')',1)[1].split()
+                            sample['processes'].append(dict(pid=int(proc.name),ticks=int(stat[11])+int(stat[12]),
+                                rss=int(stat[21])*os.sysconf('SC_PAGE_SIZE')))
+                        except (PermissionError,FileNotFoundError,ProcessLookupError):
+                            continue
+                    samples.append(sample)
+                    (root/'soak.json').write_text(json.dumps(samples))
+                    time.sleep(5)
+                result=json.loads((root/'result.json').read_text())
+                assert result.get('edits',0) >= args.soak_seconds//4, result
             print(json.dumps(dict(root=str(root),language=args.language,size=args.size,result=result)),flush=True)
         finally:
             (root/'stop').touch()

@@ -1375,6 +1375,8 @@ fn main() {
                 let fps_log=std::env::var("LLCONTROL_NATIVE_FPS_LOG").unwrap_or_default();
                 webview.eval(format!("window.__nativeFpsLog={};",serde_json::to_string(&fps_log).expect("encode private FPS log"))).expect("expose private FPS log");
                 let script = if std::env::var("LLCONTROL_NATIVE_EDITOR_VIEW").as_deref()==Ok("1") {
+                    let soak = std::env::var("LLCONTROL_NATIVE_EDITOR_SOAK").as_deref()==Ok("1");
+                    webview.eval(format!("window.__nativeEditorSoak={soak};")).expect("expose editor fixture mode");
                     include_str!("../../scripts/native-editor-view.js")
                 } else if std::env::var("LLCONTROL_NATIVE_RECOVERY").as_deref()==Ok("1") {
                     include_str!("../../scripts/native-firmware-recovery.js")
