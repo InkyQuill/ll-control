@@ -11,43 +11,9 @@ use llcontrol_ipc::{client::IpcClient, server::IpcServer, transport_memory::mem_
 use serde_json::json;
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
-// The real transport drains stale reads before a command. Queue the firmware
-// reply only when that command is written, exactly as a device would answer.
-struct FirmwareMock(MockBackend);
-struct FirmwareHandle {
-    inner: Box<dyn llcontrol_hid::OpenHandle>,
-    mock: MockBackend,
-    info: DeviceInfo,
-}
-impl llcontrol_hid::HidBackend for FirmwareMock {
-    fn enumerate(&self) -> llcontrol_hid::Result<Vec<DeviceInfo>> {
-        self.0.enumerate()
-    }
-    fn open(&self, info: &DeviceInfo) -> llcontrol_hid::Result<Box<dyn llcontrol_hid::OpenHandle>> {
-        Ok(Box::new(FirmwareHandle {
-            inner: self.0.open(info)?,
-            mock: self.0.clone(),
-            info: info.clone(),
-        }))
-    }
-}
-impl llcontrol_hid::OpenHandle for FirmwareHandle {
-    fn write(&self, bytes: &[u8]) -> llcontrol_hid::Result<()> {
-        self.inner.write(bytes)?;
-        if bytes.starts_with(&[1, 134]) {
-            let packet = llcontrol_protocol::galahad2_lcdv2::packets::ACommandPacket::new_request(
-                134,
-                b"N9,01,HS,SQ,CA_II-Vision,V2.01.041,1.6",
-            );
-            self.mock
-                .queue_response(&self.info, packet.as_bytes().to_vec());
-        }
-        Ok(())
-    }
-    fn read_timeout(&self, bytes: &mut [u8], timeout_ms: i32) -> llcontrol_hid::Result<usize> {
-        self.inner.read_timeout(bytes, timeout_ms)
-    }
-}
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
+use display_firmware::FirmwareMock;
 
 // Fail only response writes after the hello handshake. The request still reaches
 // the real dispatcher; the test observes a failed reply, not a fake RPC error.
@@ -524,7 +490,7 @@ async fn composition_apply_restart_sleep_missing_media_recovery_and_clear() {
                         operation_id: "a".repeat(32),
                         expected_profile_revision: store.profiles().list().unwrap().revision,
                         expected_collection_revision: 0,
-                        prepared: runtime.prepare().await.unwrap(),
+                        prepared: llcontrol_daemon::media_composition::PreparedComposition::prepare_canvas(runtime).await.unwrap(),
                         reply,
                     })
                     .await
@@ -554,9 +520,11 @@ async fn composition_apply_restart_sleep_missing_media_recovery_and_clear() {
                     .call("get_lcd_playback_stats", json!({"dev":device}))
                     .await
                     .unwrap();
-                assert_eq!(
-                    before["sent_frames"], after["sent_frames"],
-                    "old video output stopped"
+                assert_eq!(before["generation"], after["generation"]);
+                assert!(
+                    after["sent_frames"].as_u64().unwrap()
+                        > before["sent_frames"].as_u64().unwrap(),
+                    "reset default theme must keep streaming after the old codecs stop"
                 );
                 // Deletion while the manager is still alive proves old source and
                 // pending settings pins were released by reset, not by shutdown.
@@ -970,8 +938,8 @@ async fn rotated_media_and_theme_start_and_manager_replay_preserve_identity_and_
             .unwrap();
             assert_eq!(
                 last.data()[2],
-                3,
-                "JPEG after rotated H264 must restore hardware270 orientation"
+                0,
+                "switching to a still scene keeps rotation on the host"
             );
             client
                 .call(

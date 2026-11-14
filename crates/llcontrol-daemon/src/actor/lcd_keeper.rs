@@ -3,12 +3,7 @@ use super::{
     command_dispatch::SettingsUpdate, lcd_state::merge_lcd_config, FrameOutcome, FrameReadPolicy,
     HidCommand, LcdCommand, Shutdown,
 };
-use crate::{
-    codec_str::{parse_lcd_mode, rotation_from_degrees},
-    media_reader::MediaReader,
-    persistence::LcdSection,
-};
-use bytes::Bytes;
+use crate::{codec_str::parse_lcd_mode, media_reader::MediaReader, persistence::LcdSection};
 use llcontrol_ipc::{
     validate_h264_clip, H264Clip, IpcError, LcdConfig, LcdConfigPatch, LcdPlaybackStats,
     LcdSourceKind, LcdState, Result,
@@ -16,7 +11,6 @@ use llcontrol_ipc::{
 use llcontrol_protocol::galahad2_lcdv2::{
     firmware::FirmwareVersion,
     h264::build_send_h264_frame_512_request,
-    jpeg::build_send_jpeg_request,
     lcd::{build_lcd_control_request, Brightness, LCDControlMode, LCDControlSetting},
     packets::ACommandPacket,
 };
@@ -29,7 +23,6 @@ use tokio::{
 
 enum ConfigTarget {
     Requested,
-    Jpeg,
     HostRotated,
 }
 
@@ -41,8 +34,6 @@ enum Source {
         runtime: std::sync::Arc<crate::theme_runtime::ThemeRuntime>,
         first: Option<llcontrol_ipc::H264AccessUnit>,
     },
-    Jpeg(Bytes),
-    Theme(std::sync::Arc<crate::theme_runtime::ThemeRuntime>),
     Clip {
         clip: H264Clip,
         index: usize,
@@ -66,7 +57,6 @@ struct Display {
     stats: LcdPlaybackStats,
     started: Option<Instant>,
     deadline: Instant,
-    refresh: Duration,
 }
 
 pub fn spawn(
@@ -106,7 +96,7 @@ pub(super) fn spawn_observed(
 
 fn spawn_inner(
     hid: mpsc::Sender<HidCommand>,
-    refresh_ms: u64,
+    _refresh_ms: u64,
     initial: LcdSection,
     settings: mpsc::Sender<SettingsUpdate>,
     mut commands: mpsc::Receiver<LcdCommand>,
@@ -175,7 +165,6 @@ fn spawn_inner(
             stats: LcdPlaybackStats::default(),
             started: None,
             deadline: Instant::now(),
-            refresh: Duration::from_millis(refresh_ms.max(1)),
         };
         loop {
             if *shutdown.borrow() {
@@ -186,12 +175,7 @@ fn spawn_inner(
                 _ = shutdown.changed() => break,
                 command = commands.recv() => match command { Some(command) => display.command(command).await, None => break },
                 _ = tokio::time::sleep_until(display.deadline), if !matches!(display.source, Source::Idle) => {
-                    if let Source::Theme(runtime) = &display.source {
-                        let runtime = runtime.clone();
-                        if !display.refresh_theme(runtime.frame(), &mut commands, &mut shutdown).await {
-                            break;
-                        }
-                    } else if matches!(display.source, Source::Media(_) | Source::Composition { .. }) {
+                    if matches!(display.source, Source::Media(_) | Source::Composition { .. }) {
                         if !display.refresh_media(&mut commands, &mut shutdown).await {
                             break;
                         }
@@ -206,7 +190,12 @@ fn spawn_inner(
         commands.close();
         while let Some(command) = commands.recv().await {
             match command {
-                LcdCommand::SetComposition {
+                LcdCommand::SetImagePrepared {
+                    mut prepared,
+                    reply,
+                    ..
+                }
+                | LcdCommand::SetComposition {
                     mut prepared,
                     reply,
                     ..
@@ -221,6 +210,22 @@ fn spawn_inner(
                         display.record_cleanup_error(&error);
                     }
                     let _ = reply.send(Err(busy("LCD actor shutting down")));
+                }
+                LcdCommand::ResetScreen {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(cleanup.and(Err(busy("LCD actor shutting down"))));
+                }
+                LcdCommand::ReapplyScreenReset {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(cleanup.and(Err(busy("LCD actor shutting down"))));
                 }
                 LcdCommand::CommitScreenGroup {
                     mut prepared,
@@ -384,12 +389,29 @@ impl Display {
                     let _ = reply.send(Err(busy("screen reset recovery requires daemon restart")));
                     return;
                 }
-                LcdCommand::ResetScreen { reply, .. } => {
-                    let _ = reply.send(Err(busy("screen reset recovery requires daemon restart")));
+                LcdCommand::ResetScreen {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(
+                        cleanup.and(Err(busy("screen reset recovery requires daemon restart"))),
+                    );
                     return;
                 }
-                LcdCommand::ReapplyScreenReset { reply, .. }
-                | LcdCommand::SetTheme { reply, .. }
+                LcdCommand::ReapplyScreenReset {
+                    mut prepared,
+                    reply,
+                    ..
+                } => {
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(
+                        cleanup.and(Err(busy("screen reset recovery requires daemon restart"))),
+                    );
+                    return;
+                }
+                LcdCommand::SetTheme { reply, .. }
                 | LcdCommand::SetMediaClip { reply, .. }
                 | LcdCommand::SetImage { reply, .. }
                 | LcdCommand::Patch { reply, .. }
@@ -420,7 +442,12 @@ impl Display {
                     );
                     return;
                 }
-                LcdCommand::SetComposition {
+                LcdCommand::SetImagePrepared {
+                    mut prepared,
+                    reply,
+                    ..
+                }
+                | LcdCommand::SetComposition {
                     mut prepared,
                     reply,
                     ..
@@ -543,20 +570,28 @@ impl Display {
                 operation_id,
                 expected_generation,
                 preparation,
-                prepared,
+                mut prepared,
                 reply,
             } => {
-                let result = async {
-                    let runtime = self.reset_retry_runtime(&operation_id, expected_generation)?;
-                    if preparation != self.preparation
-                        || !std::sync::Arc::ptr_eq(&runtime, &prepared.runtime)
-                    {
-                        return Err(busy("screen reset reapply superseded"));
-                    }
+                let valid = self
+                    .reset_retry_runtime(&operation_id, expected_generation)
+                    .is_ok_and(|runtime| {
+                        preparation == self.preparation
+                            && std::sync::Arc::ptr_eq(&runtime, &prepared.runtime)
+                    });
+                let result = if !valid {
+                    prepared
+                        .worker
+                        .stop()
+                        .await
+                        .map_err(busy)
+                        .and(Err(busy("screen reset reapply superseded")))
+                } else if let Err(error) = self.check_playback_firmware().await {
+                    prepared.worker.stop().await.map_err(busy).and(Err(error))
+                } else {
                     self.apply_screen_reset(operation_id, prepared).await;
                     Ok(self.state.clone())
-                }
-                .await;
+                };
                 let _ = reply.send(result);
             }
             LcdCommand::BeginScreenReset {
@@ -613,13 +648,14 @@ impl Display {
                 operation_id,
                 expected_profile_revision,
                 expected_collection_revision,
-                prepared,
+                mut prepared,
                 reply,
             } => {
                 if preparation.is_some_and(|ticket| ticket != self.preparation) {
-                    let _ = reply.send(Err(busy(
+                    let cleanup = prepared.worker.stop().await.map_err(busy);
+                    let _ = reply.send(cleanup.and(Err(busy(
                         "screen reset preparation superseded by a newer display request",
-                    )));
+                    ))));
                     return;
                 }
                 let result = self
@@ -682,8 +718,8 @@ impl Display {
             }
             LcdCommand::Theme { reply } => {
                 let theme = match &self.source {
-                    Source::Theme(runtime) | Source::Composition { runtime, .. }
-                        if self.media_key.is_none() =>
+                    Source::Composition { runtime, .. }
+                        if self.state.source == LcdSourceKind::Theme =>
                     {
                         Some(runtime.theme().clone())
                     }
@@ -707,38 +743,22 @@ impl Display {
                     )));
                     return;
                 }
-                // Rendering happened before enqueueing. The ticket still guards
-                // against Clear/newer intent during that potentially slow work.
-                let crate::theme_runtime::PreparedTheme { runtime, jpeg } = prepared;
-                let result = async {
-                    self.settings
-                        .send(SettingsUpdate::PinnedTheme {
-                            theme: runtime.theme().clone(),
-                            pin: runtime.media_pin(),
-                            images: runtime.image_leases(),
-                        })
+                let runtime = prepared.runtime;
+                runtime.set_output_rotation(
+                    llcontrol_image::FrameRotation::try_from(self.state.requested.rotation_degrees)
+                        .map_err(invalid)
+                        .unwrap_or(llcontrol_image::FrameRotation::None),
+                );
+                let result =
+                    match crate::media_composition::PreparedComposition::prepare_canvas(runtime)
                         .await
-                        .map_err(|_| busy("settings actor closed"))?;
-                    self.source_saved = true;
-                    self.media_key = None;
-                    self.media_pin = None;
-                    self.replace().await?;
-                    self.restore_jpeg_orientation().await?;
-                    self.source = Source::Jpeg(jpeg);
-                    match self.frame().await {
-                        Ok(()) => {
-                            self.source = Source::Theme(runtime);
-                            self.state.source = LcdSourceKind::Theme;
-                            self.deadline = Instant::now() + Duration::from_secs(1);
-                            Ok(self.state.clone())
-                        }
-                        Err(error) => {
-                            self.fail(&error).await;
-                            Err(error)
-                        }
-                    }
-                }
-                .await;
+                    {
+                        Ok(prepared) => self
+                            .play_composition(prepared, None)
+                            .await
+                            .map(|()| self.state.clone()),
+                        Err(error) => Err(invalid(error)),
+                    };
                 let _ = reply.send(result);
             }
             LcdCommand::State { reply } => {
@@ -765,25 +785,41 @@ impl Display {
                     .await;
                 let _ = reply.send(result.map(|()| self.state.clone()));
             }
-            LcdCommand::SetImage { jpeg, reply } => {
-                let result = match build_send_jpeg_request(&jpeg) {
-                    Err(error) => Err(invalid(error)),
-                    Ok(_) => {
-                        async {
-                            self.persist_theme(None).await?;
-                            self.replace().await?;
-                            self.restore_jpeg_orientation().await?;
-                            self.source = Source::Jpeg(jpeg);
-                            self.state.source = LcdSourceKind::Jpeg;
-                            let result = self.frame().await;
-                            if let Err(error) = &result {
-                                self.fail(error).await;
-                            }
-                            result
-                        }
+            LcdCommand::SetImagePrepared {
+                preparation,
+                mut prepared,
+                reply,
+            } => {
+                let result = if preparation != self.preparation {
+                    prepared
+                        .worker
+                        .stop()
                         .await
-                    }
+                        .map_err(busy)
+                        .and(Err(busy("image preparation superseded")))
+                } else {
+                    self.play_image_composition(prepared).await
                 };
+                let _ = reply.send(result.map(|()| self.state.clone()));
+            }
+            LcdCommand::SetImage { jpeg, reply } => {
+                let result = async {
+                    let runtime = std::sync::Arc::new(
+                        crate::theme_runtime::ThemeRuntime::from_static_jpeg(&jpeg)?,
+                    );
+                    runtime.set_output_rotation(
+                        llcontrol_image::FrameRotation::try_from(
+                            self.state.requested.rotation_degrees,
+                        )
+                        .map_err(invalid)?,
+                    );
+                    let prepared =
+                        crate::media_composition::PreparedComposition::prepare_canvas(runtime)
+                            .await
+                            .map_err(invalid)?;
+                    self.play_image_composition(prepared).await
+                }
+                .await;
                 let _ = reply.send(result.map(|()| self.state.clone()));
             }
             LcdCommand::PlayClip { clip, loops, reply } => {
@@ -797,18 +833,24 @@ impl Display {
         operation_id: String,
         expected_profile_revision: u64,
         expected_collection_revision: u64,
-        prepared: crate::theme_runtime::PreparedTheme,
+        mut composition: crate::media_composition::PreparedComposition,
     ) -> Result<super::ScreenResetState> {
         use super::command_dispatch::ScreenResetError;
         let default =
             llcontrol_ipc::NamedProfile::defaults(llcontrol_ipc::ProfileGroup::Screen, 0, None)?;
-        if llcontrol_ipc::ProfileContent::Screen(prepared.runtime.theme().clone())
+        if llcontrol_ipc::ProfileContent::Screen(composition.runtime.theme().clone())
             != default.content
         {
+            composition.worker.stop().await.map_err(busy)?;
             return Err(invalid("screen reset requires the prepared default theme"));
         }
+        if let Err(error) = self.check_playback_firmware().await {
+            composition.worker.stop().await.map_err(busy)?;
+            return Err(error);
+        }
         let (reply, response) = oneshot::channel();
-        self.settings
+        if self
+            .settings
             .send(SettingsUpdate::ResetScreen {
                 operation_id,
                 expected_profile_revision,
@@ -816,16 +858,24 @@ impl Display {
                 reply,
             })
             .await
-            .map_err(|_| busy("settings actor closed"))?;
+            .is_err()
+        {
+            composition.worker.stop().await.map_err(busy)?;
+            return Err(busy("settings actor closed"));
+        }
         let committed = match response.await {
             Ok(Ok(committed)) => committed,
-            Ok(Err(ScreenResetError::Rejected(error))) => return Err(invalid(error)),
+            Ok(Err(ScreenResetError::Rejected(error))) => {
+                composition.worker.stop().await.map_err(busy)?;
+                return Err(invalid(error));
+            }
             uncertain => {
                 let error = match uncertain {
                     Ok(Err(error)) => error.to_string(),
                     Err(error) => format!("screen reset reply lost: {error}"),
                     Ok(Ok(_)) => unreachable!(),
                 };
+                let _ = composition.worker.stop().await;
                 self.reset_recovery_required = true;
                 self.reset_retry = None;
                 self.preparation = self.preparation.wrapping_add(1);
@@ -834,13 +884,15 @@ impl Display {
                 return Err(busy(error));
             }
         };
-        let receipt = committed
-            .settings
-            .screen_reset_receipt
-            .ok_or_else(|| busy("screen reset committed without receipt"))?;
+        let Some(receipt) = committed.settings.screen_reset_receipt else {
+            composition.worker.stop().await.map_err(busy)?;
+            return Err(busy("screen reset committed without receipt"));
+        };
         if !committed.repeated {
-            self.apply_screen_reset(receipt.operation_id.clone(), prepared)
+            self.apply_screen_reset(receipt.operation_id.clone(), composition)
                 .await;
+        } else {
+            composition.worker.stop().await.map_err(busy)?;
         }
         Ok(super::ScreenResetState {
             receipt,
@@ -864,24 +916,39 @@ impl Display {
     async fn apply_screen_reset(
         &mut self,
         operation_id: String,
-        prepared: crate::theme_runtime::PreparedTheme,
+        mut composition: crate::media_composition::PreparedComposition,
     ) {
-        let retry_runtime = prepared.runtime.clone();
+        let retry_runtime = composition.runtime.clone();
         self.source_saved = true;
         self.media_key = None;
         self.media_pin = None;
         self.state.requested = LcdConfig::new("Application", 50, 0);
         let apply = async {
-            self.replace().await?;
-            let applied = self
-                .config(&self.state.requested, ConfigTarget::Requested)
-                .await?;
+            if let Err(error) = self.replace().await {
+                composition.worker.stop().await.map_err(busy)?;
+                return Err(error);
+            }
+            let applied = match self
+                .config(&self.state.requested, ConfigTarget::HostRotated)
+                .await
+            {
+                Ok(applied) => applied,
+                Err(error) => {
+                    composition.worker.stop().await.map_err(busy)?;
+                    return Err(error);
+                }
+            };
             self.state.applied = Some(applied);
-            self.source = Source::Jpeg(prepared.jpeg);
-            self.frame().await?;
-            self.source = Source::Theme(prepared.runtime);
+            self.source = Source::Composition {
+                worker: composition.worker,
+                runtime: composition.runtime,
+                first: Some(composition.first),
+            };
             self.state.source = LcdSourceKind::Theme;
-            self.deadline = Instant::now() + Duration::from_secs(1);
+            self.frame().await?;
+            if let Source::Composition { worker, .. } = &self.source {
+                worker.release_preparation_permit();
+            }
             Ok::<(), IpcError>(())
         }
         .await;
@@ -949,7 +1016,6 @@ impl Display {
                     Source::Clip { .. } | Source::Media(_) | Source::Composition { .. } => {
                         ConfigTarget::HostRotated
                     }
-                    Source::Jpeg(_) | Source::Theme(_) => ConfigTarget::Jpeg,
                     Source::Idle => ConfigTarget::Requested,
                 },
             )
@@ -1064,24 +1130,6 @@ impl Display {
             .map_err(|_| busy("settings actor closed"))?;
         Ok(())
     }
-    async fn restore_jpeg_orientation(&mut self) -> Result<()> {
-        if self.state.requested.rotation_degrees != 0
-            && self
-                .state
-                .applied
-                .as_ref()
-                .is_some_and(|config| config.mode == "LCDSetting")
-        {
-            match self.config(&self.state.requested, ConfigTarget::Jpeg).await {
-                Ok(config) => self.state.applied = Some(config),
-                Err(error) => {
-                    self.fail(&error).await;
-                    return Err(error);
-                }
-            }
-        }
-        Ok(())
-    }
     async fn config(&self, config: &LcdConfig, target: ConfigTarget) -> Result<LcdConfig> {
         let settings_only = !matches!(target, ConfigTarget::Requested);
         let mut setting = LCDControlSetting::default();
@@ -1091,15 +1139,8 @@ impl Display {
             parse_lcd_mode(&config.mode)
         };
         setting.brightness = Brightness::new(config.brightness_percent).map_err(invalid)?;
-        // H264 frames are rotated by the host. JPEG sources retain the
-        // firmware rotation field, but still need LCDSetting: replaying the
-        // requested LocalUI here interrupts the active image with the logo.
-        let host_rotated = matches!(target, ConfigTarget::HostRotated);
-        setting.rotation = rotation_from_degrees(if host_rotated {
-            0
-        } else {
-            config.rotation_degrees
-        });
+        // Mount rotation belongs to the frame producer, even across handoff to LocalUI.
+        // LCDControlSetting::default leaves the hardware rotation byte at zero.
         setting.video_fps = 24;
         let (reply, rx) = oneshot::channel();
         self.hid
@@ -1157,7 +1198,7 @@ impl Display {
         let preparation = async {
             let media = match (theme.background_video.clone(), pin) {
                 (Some(key), Some(pin)) => Some((key, pin)),
-                (None, None) if theme.has_procedural_effect() => None,
+                (None, None) => None,
                 _ => return Err(invalid("composition source pin does not match theme")),
             };
             let saved_theme = if let Some(key) = &logical_media {
@@ -1186,6 +1227,37 @@ impl Display {
         } else {
             LcdSourceKind::Theme
         };
+        let result = self.frame().await;
+        if let Err(error) = &result {
+            self.fail(error).await;
+        } else if let Source::Composition { worker, .. } = &self.source {
+            worker.release_preparation_permit();
+        }
+        result
+    }
+    async fn play_image_composition(
+        &mut self,
+        prepared: crate::media_composition::PreparedComposition,
+    ) -> Result<()> {
+        let crate::media_composition::PreparedComposition {
+            mut worker,
+            first,
+            runtime,
+            ..
+        } = prepared;
+        if let Err(error) = self
+            .prepare_playback(None, None, runtime.output_rotation().degrees())
+            .await
+        {
+            worker.stop().await.map_err(busy)?;
+            return Err(error);
+        }
+        self.source = Source::Composition {
+            worker,
+            runtime,
+            first: Some(first),
+        };
+        self.state.source = LcdSourceKind::Jpeg;
         let result = self.frame().await;
         if let Err(error) = &result {
             self.fail(error).await;
@@ -1291,48 +1363,6 @@ impl Display {
         }
         result
     }
-    // Keep the render joined while servicing control commands. There is only one
-    // periodic job in flight; replacement invalidates its output, not its lifetime.
-    async fn refresh_theme(
-        &mut self,
-        frame: impl std::future::Future<Output = Result<Bytes>>,
-        commands: &mut mpsc::Receiver<LcdCommand>,
-        shutdown: &mut Shutdown,
-    ) -> bool {
-        let generation = self.state.generation;
-        tokio::pin!(frame);
-        loop {
-            tokio::select! {
-                biased;
-                _ = shutdown.changed() => {
-                    // spawn_blocking cannot be cancelled once running. Join it so
-                    // reconnect cannot accumulate abandoned encoder jobs.
-                    let _ = frame.await;
-                    return false;
-                }
-                // A ready result wins over a stream of read-only requests.
-                result = &mut frame => {
-                    if self.state.generation == generation && matches!(self.source, Source::Theme(_)) {
-                        let sent = match result {
-                            Ok(jpeg) => self.send_frame(Some(jpeg), None).await,
-                            Err(error) => Err(error),
-                        };
-                        if let Err(error) = sent {
-                            self.fail(&error).await;
-                        }
-                    }
-                    return true;
-                },
-                command = commands.recv() => match command {
-                    Some(command) => self.command(command).await,
-                    None => {
-                        let _ = frame.await;
-                        return false;
-                    }
-                }
-            }
-        }
-    }
     async fn refresh_media(
         &mut self,
         commands: &mut mpsc::Receiver<LcdCommand>,
@@ -1348,7 +1378,7 @@ impl Display {
             },
             unit = next_video_unit(source) => {
                 let result = match unit {
-                    Ok(unit) => self.send_frame(None, Some(unit)).await,
+                    Ok(unit) => self.send_frame(Some(unit)).await,
                     Err(error) => Err(busy(error)),
                 };
                 if let Err(error) = result { self.fail(&error).await; }
@@ -1357,50 +1387,19 @@ impl Display {
         }
     }
     async fn frame(&mut self) -> Result<()> {
-        let theme_frame = if let Source::Theme(runtime) = &self.source {
-            Some(runtime.frame().await?)
-        } else {
-            None
-        };
         let media_frame = if matches!(self.source, Source::Media(_) | Source::Composition { .. }) {
             Some(next_video_unit(&mut self.source).await.map_err(busy)?)
         } else {
             None
         };
-        self.send_frame(theme_frame, media_frame).await
+        self.send_frame(media_frame).await
     }
     async fn send_frame(
         &mut self,
-        theme_frame: Option<Bytes>,
         media_frame: Option<llcontrol_ipc::H264AccessUnit>,
     ) -> Result<()> {
         let (packets, read_policy, length, clip_frame) = match &self.source {
-            Source::Theme(_) => {
-                let jpeg = theme_frame
-                    .as_ref()
-                    .ok_or_else(|| busy("missing rendered frame"))?;
-                (
-                    build_send_jpeg_request(jpeg)
-                        .map_err(invalid)?
-                        .iter()
-                        .map(|p| p.to_vec())
-                        .collect::<Vec<_>>(),
-                    FrameReadPolicy::None,
-                    jpeg.len(),
-                    false,
-                )
-            }
             Source::Idle => return Ok(()),
-            Source::Jpeg(jpeg) => (
-                build_send_jpeg_request(jpeg)
-                    .map_err(invalid)?
-                    .iter()
-                    .map(|p| p.to_vec())
-                    .collect::<Vec<_>>(),
-                FrameReadPolicy::None,
-                jpeg.len(),
-                false,
-            ),
             Source::Media(_) | Source::Composition { .. } => {
                 let unit = media_frame
                     .as_ref()
@@ -1481,8 +1480,6 @@ impl Display {
                 self.deadline =
                     (start + Duration::from_nanos(1_000_000_000 / 24)).max(Instant::now());
             }
-            Source::Theme(_) => self.deadline = Instant::now() + Duration::from_secs(1),
-            Source::Jpeg(_) => self.deadline = Instant::now() + self.refresh,
             Source::Idle => {}
         }
         Ok(())

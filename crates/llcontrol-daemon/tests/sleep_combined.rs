@@ -1,4 +1,10 @@
 //! Whole actor-tree sleep recovery with synthetic sensors and MockBackend only.
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
+#[path = "support/display_pixels.rs"]
+mod display_pixels;
+use display_firmware::FirmwareMock;
+use display_pixels::{decode_packets, distance, preview_pixels};
 use llcontrol_daemon::{
     config::Config,
     ipc_server::IpcServerImpl,
@@ -40,13 +46,6 @@ async fn wait_for<F: std::future::Future<Output = bool>>(mut check: impl FnMut()
     })
     .await
     .expect("combined actor state must converge");
-}
-fn packets(jpeg: &[u8]) -> Vec<Vec<u8>> {
-    llcontrol_protocol::galahad2_lcdv2::jpeg::build_send_jpeg_request(jpeg)
-        .unwrap()
-        .into_iter()
-        .map(|packet| packet.to_vec())
-        .collect()
 }
 fn last_packet(mock: &MockBackend, device: &DeviceInfo, command: u8) -> Vec<u8> {
     mock.write_history(device)
@@ -96,7 +95,7 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
     let mut config = Config::default();
     config.poll.hotplug_ms = 20;
     let manager = DeviceManager::new(
-        Arc::new(mock.clone()),
+        Arc::new(FirmwareMock(mock.clone())),
         store.clone(),
         config.clone(),
         stats.clone(),
@@ -121,13 +120,16 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
     })
     .await;
     let hot_jpeg = rpc.preview_lcd_theme(None, theme.clone()).await.unwrap();
-    let hot_packets = packets(&hot_jpeg);
+    let hot_packets = preview_pixels(&hot_jpeg);
     let hot_fan = last_packet(&mock, &device, 133);
     let hot_pump = last_packet(&mock, &device, 131);
-    assert!(mock
-        .write_history(&device)
-        .windows(hot_packets.len())
-        .any(|p| p == hot_packets));
+    assert!(
+        distance(
+            &decode_packets(&mock.write_history(&device))[0],
+            &hot_packets
+        ) / (120 * 120)
+            < 30
+    );
 
     manager.prepare_for_sleep(true).await.unwrap();
     let before_wake = mock.write_history(&device).len();
@@ -136,7 +138,7 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
     assert_eq!(cache.readings()[0].status, SensorStatus::Stale);
     let stale_jpeg = rpc.preview_lcd_theme(None, theme.clone()).await.unwrap();
     assert_ne!(stale_jpeg, hot_jpeg);
-    let stale_packets = packets(&stale_jpeg);
+    let stale_packets = preview_pixels(&stale_jpeg);
     manager.prepare_for_sleep(false).await.unwrap();
     let current = manager.list().await[0].id.clone();
     assert_ne!(current, old);
@@ -153,14 +155,10 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
     })
     .await;
     let writes = mock.write_history(&device);
-    assert!(writes[before_wake..]
-        .windows(stale_packets.len())
-        .any(|p| p == stale_packets));
+    let wake = decode_packets(&writes[before_wake..]);
     assert!(
-        !writes[before_wake..]
-            .windows(hot_packets.len())
-            .any(|p| p == hot_packets),
-        "pre-sleep value must not be rendered as current"
+        distance(&wake[0], &stale_packets) < distance(&wake[0], &hot_packets),
+        "wake must render stale readings"
     );
     for command in [138, 139] {
         let pwm: Vec<_> = writes[before_wake..]
@@ -199,10 +197,15 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
             && thermal.fan.applied == Some(alert.clone())
             && thermal.pump.applied == Some(alert.clone())
             && mock.write_history(&device)[fresh_start..]
-                .windows(hot_packets.len())
-                .any(|p| p == hot_packets)
+                .iter()
+                .filter(|p| p.starts_with(&[3, 13]) && p[6..9] == [0, 0, 0])
+                .count()
+                >= 15
     })
     .await;
+    let frames = decode_packets(&mock.write_history(&device)[before_wake..]);
+    let last = frames.last().unwrap();
+    assert!(distance(last, &hot_packets) < distance(last, &stale_packets));
     assert_eq!(last_packet(&mock, &device, 139)[7], 90);
     assert_eq!(last_packet(&mock, &device, 138)[7], 80);
     assert_eq!(last_packet(&mock, &device, 133), hot_fan);
@@ -210,7 +213,7 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
 
     let cool_start = mock.write_history(&device).len();
     publish(&cache, 40.0);
-    let cool_packets = packets(&rpc.preview_lcd_theme(None, theme.clone()).await.unwrap());
+    let cool_packets = preview_pixels(&rpc.preview_lcd_theme(None, theme.clone()).await.unwrap());
     assert_ne!(cool_packets, hot_packets);
     assert_ne!(cool_packets, stale_packets);
     wait_for(|| async {
@@ -225,10 +228,15 @@ async fn sleep_wake_restores_theme_cooling_and_thermal_rgb_through_stale_hot_and
             && thermal.fan.applied == Some(ThermalLayer::Base)
             && thermal.pump.applied == Some(ThermalLayer::Base)
             && mock.write_history(&device)[cool_start..]
-                .windows(cool_packets.len())
-                .any(|p| p == cool_packets)
+                .iter()
+                .filter(|p| p.starts_with(&[3, 13]) && p[6..9] == [0, 0, 0])
+                .count()
+                >= 15
     })
     .await;
+    let frames = decode_packets(&mock.write_history(&device)[before_wake..]);
+    let last = frames.last().unwrap();
+    assert!(distance(last, &cool_packets) < distance(last, &hot_packets));
     assert_eq!(last_packet(&mock, &device, 139)[7], 45);
     assert_eq!(last_packet(&mock, &device, 138)[7], 50);
     assert_eq!(last_packet(&mock, &device, 133), base_fan);

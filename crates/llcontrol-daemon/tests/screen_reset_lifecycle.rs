@@ -1,4 +1,7 @@
 //! Software lifecycle qualification only: temporary stores and MockBackend.
+#[path = "support/display_firmware.rs"]
+mod display_firmware;
+use display_firmware::FirmwareMock;
 use llcontrol_daemon::{
     config::Config,
     ipc_server::IpcServerImpl,
@@ -75,7 +78,7 @@ async fn verify_replay(
         .expect("transport config acknowledged");
     assert_eq!(applied.brightness_percent, 50);
     assert_eq!(applied.rotation_degrees, 0);
-    assert_eq!(applied.mode, "Application");
+    assert_eq!(applied.mode, "LCDSetting");
     assert_eq!(
         rpc.get_lcd_theme(dev.clone()).await.unwrap().as_ref(),
         Some(default)
@@ -142,7 +145,7 @@ async fn screen_reset_replays_across_sleep_reattach_and_fresh_daemon_without_res
         .import(include_bytes!("../../../desktop/src-tauri/icons/icon.png"))
         .unwrap();
     mock.add_device(info.clone());
-    let (manager, rpc) = start(Arc::new(mock.clone()), store.clone()).await;
+    let (manager, rpc) = start(Arc::new(FirmwareMock(mock.clone())), store.clone()).await;
     let first = ready(&manager, &rpc).await;
     rpc.migrate_screen_collections(first.clone()).await.unwrap();
     let id = "a".repeat(32);
@@ -176,7 +179,7 @@ async fn screen_reset_replays_across_sleep_reattach_and_fresh_daemon_without_res
     drop(store);
 
     let fresh = Arc::new(PersistenceStore::new_with_root(dir.path().into()));
-    let (manager, rpc) = start(Arc::new(mock.clone()), fresh.clone()).await;
+    let (manager, rpc) = start(Arc::new(FirmwareMock(mock.clone())), fresh.clone()).await;
     let restarted = ready(&manager, &rpc).await;
     verify_replay(&rpc, restarted, &id, &default).await;
     manager.shutdown().await;
@@ -222,7 +225,7 @@ impl HidBackend for FailResetConfig {
     }
     fn open(&self, info: &DeviceInfo) -> llcontrol_hid::Result<Box<dyn OpenHandle>> {
         Ok(Box::new(FailingHandle {
-            inner: self.mock.open(info)?,
+            inner: FirmwareMock(self.mock.clone()).open(info)?,
             fail: self.fail.clone(),
         }))
     }
@@ -312,7 +315,7 @@ async fn failed_reset_replays_after_sleep_without_reusing_old_retry_capability()
             applied.brightness_percent,
             applied.rotation_degrees
         ),
-        ("Application", 50, 0)
+        ("LCDSetting", 50, 0)
     );
     assert_eq!(rpc.get_lcd_theme(new.clone()).await.unwrap(), Some(theme));
     assert!(rpc
@@ -359,7 +362,7 @@ impl HidBackend for HeldResetBackend {
     }
     fn open(&self, info: &DeviceInfo) -> llcontrol_hid::Result<Box<dyn OpenHandle>> {
         Ok(Box::new(HeldResetHandle {
-            inner: self.mock.open(info)?,
+            inner: FirmwareMock(self.mock.clone()).open(info)?,
             gate: self.gate.clone(),
         }))
     }

@@ -26,7 +26,7 @@ sensor bindings, локальные координаты editor или сохр�
 
 | Source | Подготовка output | LCDControl rotation | Observable state |
 | --- | --- | --- | --- |
-| JPEG/theme | Обычный JPEG | Сохранённый угол | Requested/applied угол пользователя |
+| Статический JPEG/тема | Декодирование на хосте, поворот итогового RGB, непрерывный H.264 при 24 кадрах/с | Всегда 0 | JPEG/Theme обозначают источник; requested/applied содержат угол пользователя |
 | H.264 theme/composition | Поворот финального RGB перед encoding | Всегда0 | Effective requested/applied угол пользователя, mode LCDSetting |
 | Managed media, старт при0° | Direct AU path до первого поворота |0 | Media ID и DiagnosticClip |
 | Managed media90/180/270° | Runtime-only empty theme с video background и software rotation |0 | Прежний Media ID/DiagnosticClip; get_lcd_theme возвращает null |
@@ -39,8 +39,7 @@ Synthetic media wrapper не записывается как пользоват�
 Ориентация prepared composition сверяется с requested angle LCD actor до
 изменения source. Если угол сменился во время подготовки, старый результат
 отклоняется и worker stop/join выполняется. Brightness change при уже подготовленном
-угле работает, не меняя ориентацию или media identity. Возврат от rotated H.264
-к JPEG восстанавливает hardware rotation, чтобы JPEG не стал выглядеть как0°.
+угле работает, не меняя ориентацию или media identity. При смене видео на статическое изображение тот же угол применяется на хосте. Декодированные исходные пиксели сохраняются для следующего поворота.
 
 Manager replay использует тот же output angle для media/themes. Group import
 сохраняет полный desired профиль и receipt до первого config/frame; group
