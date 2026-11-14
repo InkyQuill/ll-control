@@ -122,18 +122,62 @@ async fn live_theme_updates_and_manual_image_replaces_its_producer() {
     let (reply, response) = oneshot::channel();
     commands
         .send(LcdCommand::SetImage {
-            jpeg: runtime.frame().await.unwrap(),
+            jpeg: llcontrol_image::prepare_jpeg_from_image(
+                llcontrol_image::theme::RgbImage::from_pixel(480, 480, [220, 30, 30].into()).into(),
+                llcontrol_image::FitMode::Stretch,
+                llcontrol_image::Quality::default(),
+            )
+            .unwrap()
+            .bytes
+            .into(),
             reply,
         })
         .await
         .unwrap();
     assert_eq!(response.await.unwrap().unwrap().source, LcdSourceKind::Jpeg);
-    observed.recv().await.unwrap();
-    let next = tokio::time::timeout(Duration::from_secs(2), observed.recv())
-        .await
-        .unwrap()
+    publish(&cache, 99.0);
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("manual.h264");
+    let mut stream = Vec::new();
+    // Capture past the next keyframe so queued live frames cannot mask a stale producer.
+    for _ in 0..48 {
+        let packets = tokio::time::timeout(Duration::from_secs(2), observed.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        for packet in packets {
+            assert!(packet.starts_with(&[3, 13]));
+            let length = usize::from(u16::from_be_bytes([packet[9], packet[10]]));
+            stream.extend_from_slice(&packet[11..11 + length]);
+        }
+    }
+    std::fs::write(&path, stream).unwrap();
+    let decoded = std::process::Command::new("ffmpeg")
+        .args(["-v", "error", "-f", "h264", "-i"])
+        .arg(path)
+        .args([
+            "-vf",
+            "scale=1:1",
+            "-pix_fmt",
+            "rgb24",
+            "-f",
+            "rawvideo",
+            "pipe:1",
+        ])
+        .output()
         .unwrap();
-    assert!(next.iter().all(|report| report.starts_with(&[3, 13])));
+    assert!(
+        decoded.status.success(),
+        "{}",
+        String::from_utf8_lossy(&decoded.stderr)
+    );
+    assert!(decoded.stdout.len() >= 24 * 3);
+    for pixel in decoded.stdout.rchunks_exact(3).take(24) {
+        assert!(
+            pixel[0] > 190 && pixel[1] < 60 && pixel[2] < 60,
+            "{pixel:?}"
+        );
+    }
     let (reply, response) = oneshot::channel();
     commands.send(LcdCommand::Theme { reply }).await.unwrap();
     assert!(
